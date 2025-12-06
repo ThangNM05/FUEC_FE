@@ -7,6 +7,7 @@ import StudentManagement from './pages/dashboard/student-management';
 import TeacherManagement from './pages/dashboard/teacher-management';
 import HomePage from './pages/home';
 import SignInPage from './pages/sign-in';
+import SSOCallback from './pages/sso-callback';
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
           <Route path="/teacher-management" element={<TeacherManagement />} />
         </Route>
         <Route path="/sign-in" element={<SignInPage />} />
+        <Route path="/sso-callback" element={<SSOCallback />} />
       </Routes>
     </>
   );
