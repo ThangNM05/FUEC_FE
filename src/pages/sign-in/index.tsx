@@ -1,8 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { useSignIn, useAuth } from '@clerk/clerk-react';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
 import './sign-in.css';
+
+import { useState } from 'react';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { Link,useNavigate } from 'react-router-dom';
+
+import { useAuth,useSignIn } from '@clerk/clerk-react';
 
 function SignInPage() {
   const [email, setEmail] = useState('');
@@ -68,7 +70,7 @@ function SignInPage() {
         {/* Logo and Title */}
         <div className="login-brand-center">
           <div className="login-logo-center">F</div>
-          <h1 className="login-title">FUEC</h1>
+          <h1 className="login-title">EduConnect</h1>
           <h2 className="login-welcome">Welcome Back</h2>
           <p className="login-subtitle">Sign in to access your learning portal</p>
         </div>
@@ -120,9 +122,9 @@ function SignInPage() {
                 <input type="checkbox" disabled={isLoading} />
                 <span>Remember me</span>
               </label>
-              <a href="#" className="forgot-link">
+              <Link to="/forgot-password" className="forgot-link">
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             {/* Login Button */}
