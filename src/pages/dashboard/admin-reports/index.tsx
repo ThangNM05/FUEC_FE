@@ -25,22 +25,23 @@ function AdminReports() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-start mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reports</h1>
-          <p className="text-gray-600 mt-2">Generate and download system reports.</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Reports</h1>
+          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Generate and download system reports.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors">
+        <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 text-white rounded-lg text-sm md:text-base font-semibold hover:bg-orange-600 transition-colors">
           <Download className="w-4 h-4" />
-          Generate Custom Report
+          <span className="hidden sm:inline">Generate Custom Report</span>
+          <span className="sm:hidden">Generate Report</span>
         </button>
       </div>
 
       {/* Report Types */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Report Types</h2>
+      <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 mb-4 md:mb-6">
+        <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6">Report Types</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {reportTypes.map(report => {
             const Icon = report.icon;
@@ -66,9 +67,9 @@ function AdminReports() {
       </div>
 
       {/* Recent Reports */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Recent Reports</h2>
+      <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 mb-4 md:mb-6">
+        <div className="flex justify-between items-center mb-4 md:mb-6">
+          <h2 className="text-lg md:text-xl font-bold text-gray-900">Recent Reports</h2>
           <a href="#" className="text-orange-500 text-sm font-medium hover:underline">View All</a>
         </div>
         <div className="overflow-x-auto">
@@ -105,9 +106,9 @@ function AdminReports() {
       </div>
 
       {/* Quick Stats */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Stats</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
+        <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6">Quick Stats</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
           <div className="bg-white border border-gray-200 rounded-lg p-5">
             <div className="flex items-start justify-between mb-4">
               <div>

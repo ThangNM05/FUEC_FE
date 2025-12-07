@@ -11,6 +11,7 @@ interface Column<T> {
   filterable?: boolean;
   align?: 'left' | 'center' | 'right';
   render?: (item: T) => React.ReactNode;
+  hideOnMobile?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -109,68 +110,72 @@ function DataTable<T extends { id: string | number }>({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">{title}</h2>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200">
-              <Search className="w-4 h-4 text-gray-400" />
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4 md:mb-6">
+        <div className="flex-1">
+          <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">{title}</h2>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 flex-1 sm:flex-initial">
+              <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-transparent outline-none text-sm w-64"
+                className="bg-transparent outline-none text-sm w-full sm:w-48 md:w-64"
               />
             </div>
             {selectable && (
-              <span className="text-sm text-gray-500">
+              <span className="text-xs sm:text-sm text-gray-500">
                 Selected {selectedItems.length} of {sortedData.length}
               </span>
             )}
           </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           {onImport && (
             <button 
-              className="flex items-center gap-2 px-4 py-2 border-2 border-orange-500 text-orange-500 rounded-lg font-semibold hover:bg-orange-50 transition-colors"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-orange-500 text-orange-500 rounded-lg text-xs sm:text-sm font-semibold hover:bg-orange-50 transition-colors"
               onClick={onImport}
             >
-              <Download className="w-4 h-4" /> {importLabel}
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
+              <span className="hidden sm:inline">{importLabel}</span>
+              <span className="sm:hidden">Import</span>
             </button>
           )}
           {onCreate && (
             <button 
-              className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-orange-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-orange-600 transition-colors"
               onClick={onCreate}
             >
-              <Plus className="w-4 h-4" /> {createLabel}
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
+              <span className="hidden sm:inline">{createLabel}</span>
+              <span className="sm:hidden">Add</span>
             </button>
           )}
         </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto border border-gray-200 rounded-lg">
-        <table className="w-full">
+      <div className="overflow-x-auto border border-gray-200 rounded-lg -mx-4 md:mx-0">
+        <table className="w-full min-w-[600px]">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               {selectable && (
-                <th className="p-3 w-10">
+                <th className="p-2 md:p-3 w-10">
                   <input
                     type="checkbox"
                     onChange={handleSelectAll}
                     checked={currentData.length > 0 && selectedItems.length === currentData.length}
-                    className="w-4 h-4 accent-orange-500"
+                    className="custom-checkbox"
                   />
                 </th>
               )}
               {columns.map((col, index) => (
                 <th
                   key={index}
-                  className={`p-3 text-${col.align || 'left'} text-xs font-semibold text-gray-600 ${col.sortable ? 'cursor-pointer select-none' : ''}`}
+                  className={`p-2 md:p-3 text-${col.align || 'left'} text-[10px] md:text-xs font-semibold text-gray-600 ${col.sortable ? 'cursor-pointer select-none' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
                   onClick={() => col.sortable && requestSort(col.accessor)}
                 >
                   <div className={`flex items-center gap-1 ${col.align === 'center' ? 'justify-center' : 'justify-start'}`}>
@@ -185,7 +190,7 @@ function DataTable<T extends { id: string | number }>({
                         />
                       </div>
                     )}
-                    {col.filterable && <Filter className="w-3 h-3 text-gray-400" />}
+                    {col.filterable && <Filter className="w-3 h-3 text-gray-400 hidden md:block" />}
                   </div>
                 </th>
               ))}
@@ -196,17 +201,17 @@ function DataTable<T extends { id: string | number }>({
               currentData.map((item, rowIndex) => (
                 <tr key={item.id || rowIndex} className="border-b border-gray-100 hover:bg-gray-50">
                   {selectable && (
-                    <td className="p-3">
+                    <td className="p-2 md:p-3">
                       <input
                         type="checkbox"
                         checked={selectedItems.includes(item.id)}
                         onChange={() => handleSelect(item.id)}
-                        className="w-4 h-4 accent-orange-500"
+                        className="custom-checkbox"
                       />
                     </td>
                   )}
                   {columns.map((col, colIndex) => (
-                    <td key={colIndex} className={`p-3 text-${col.align || 'left'} text-sm text-gray-900`}>
+                    <td key={colIndex} className={`p-2 md:p-3 text-${col.align || 'left'} text-xs md:text-sm text-gray-900 ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}>
                       {col.render ? col.render(item) : String(item[col.accessor])}
                     </td>
                   ))}
@@ -214,7 +219,7 @@ function DataTable<T extends { id: string | number }>({
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length + (selectable ? 1 : 0)} className="p-8 text-center text-gray-500">
+                <td colSpan={columns.length + (selectable ? 1 : 0)} className="p-6 md:p-8 text-center text-gray-500 text-sm">
                   No data found
                 </td>
               </tr>
@@ -224,13 +229,14 @@ function DataTable<T extends { id: string | number }>({
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-4">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>Rows per page:</span>
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+          <span className="hidden sm:inline">Rows per page:</span>
+          <span className="sm:hidden">Per page:</span>
           <select
             value={itemsPerPage}
             onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-            className="px-2 py-1 border border-gray-300 rounded"
+            className="px-2 py-1 border border-gray-300 rounded text-xs sm:text-sm"
           >
             <option value={10}>10</option>
             <option value={20}>20</option>
@@ -244,18 +250,18 @@ function DataTable<T extends { id: string | number }>({
 
         <div className="flex gap-1">
           <button
-            className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-2 sm:px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+          {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => {
             const page = i + 1;
             return (
               <button
                 key={page}
-                className={`px-3 py-1.5 rounded min-w-[32px] ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded min-w-[28px] sm:min-w-[32px] text-xs sm:text-sm ${
                   currentPage === page 
                     ? 'bg-orange-500 text-white' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -267,7 +273,7 @@ function DataTable<T extends { id: string | number }>({
             );
           })}
           <button
-            className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-2 sm:px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
           >

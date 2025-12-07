@@ -28,19 +28,19 @@ function AdminDashboard() {
   ];
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">System Administration</h1>
-          <p className="text-gray-600 mt-2">Monitor and manage the FUEC platform.</p>
+      <div className="mb-6 md:mb-8">
+        <div className="mb-4 md:mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">System Administration</h1>
+          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Monitor and manage the FUEC platform.</p>
         </div>
-        <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-lg border border-gray-200">
-          <Search className="w-5 h-5 text-gray-400" />
+        <div className="flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 bg-white rounded-lg border border-gray-200">
+          <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
           <input 
             type="text" 
             placeholder="Search users, courses, logs..." 
-            className="flex-1 outline-none text-gray-900"
+            className="flex-1 outline-none text-sm md:text-base text-gray-900"
           />
         </div>
       </div>
