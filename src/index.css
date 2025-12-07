@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Increase base UI size by 10% */
+html {
+  font-size: 17.6px; /* 16px * 1.1 = 17.6px (110%) */
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -140,3 +145,44 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom Checkbox - Orange background with white checkmark */
+.custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease-in-out;
+}
+
+.custom-checkbox:hover {
+  border-color: #f97316;
+}
+
+.custom-checkbox:checked {
+  background-color: #f97316;
+  border-color: #f97316;
+}
+
+.custom-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.custom-checkbox:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+}
+
