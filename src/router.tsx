@@ -1,33 +1,30 @@
-import { Route, Routes, Navigate } from 'react-router';
+import { Navigate,Route, Routes } from 'react-router';
 
 import AdminLayout from './components/layouts/admin/AdminLayout';
 import StudentLayout from './components/layouts/student/StudentLayout';
-
 // Admin Pages
 import AdminDashboard from './pages/admin';
+import AdminClasses from './pages/admin/classes';
+import AdminCourses from './pages/admin/courses';
+import AdminDatabase from './pages/admin/database';
+import AdminExams from './pages/admin/exams';
+import AdminReports from './pages/admin/reports';
 import AdminStudents from './pages/admin/students';
 import AdminTeachers from './pages/admin/teachers';
-import AdminClasses from './pages/admin/classes';
-import AdminReports from './pages/admin/reports';
-import AdminDatabase from './pages/admin/database';
-import AdminCourses from './pages/admin/courses';
-import AdminExams from './pages/admin/exams';
-
-// Student Pages
-import StudentDashboard from './pages/student';
-import StudentCourses from './pages/student/courses';
-import StudentForums from './pages/student/forums';
-import StudentExamsPage from './pages/student/exams';
-import StudentGrades from './pages/student/grades';
-import CourseDetails from './pages/student/course-details';
-import AssignmentDetails from './pages/student/assignment';
-import QuizTest from './pages/student/quiz';
-import StudentSchedule from './pages/student/schedule';
-import StudentProfile from './pages/student/profile';
-
 // Auth
 import SignInPage from './pages/sign-in';
 import SSOCallback from './pages/sso-callback';
+// Student Pages
+import StudentDashboard from './pages/student';
+import AssignmentDetails from './pages/student/assignment';
+import CourseDetails from './pages/student/course-details';
+import StudentCourses from './pages/student/courses';
+import StudentExamsPage from './pages/student/exams';
+import StudentForums from './pages/student/forums';
+import StudentGrades from './pages/student/grades';
+import StudentProfile from './pages/student/profile';
+import QuizTest from './pages/student/quiz';
+import StudentSchedule from './pages/student/schedule';
 
 function Router() {
   return (
