@@ -21,9 +21,19 @@ function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!signIn) return;
-    
     setIsLoading(true);
+    
+    // Simple admin login for testing (bypass Clerk)
+    if (email === 'admin@gmail.com' && password === '123') {
+      localStorage.setItem('user', JSON.stringify({ email: 'admin@gmail.com', role: 'admin' }));
+      navigate('/admin');
+      return;
+    }
+    
+    if (!signIn) {
+      setIsLoading(false);
+      return;
+    }
     
     try {
       // Create sign-in with email and password
