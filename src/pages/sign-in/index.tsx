@@ -17,7 +17,7 @@ function SignInPage() {
 
   // Redirect if already signed in
   if (isSignedIn) {
-    navigate('/student-management');
+    navigate('/admin');
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
