@@ -104,7 +104,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
 
       <div 
         className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200 transition-all duration-200 z-50 flex flex-col ${
-          isMobile ? 'w-64' : isOpen ? 'w-60' : 'w-20'
+          isMobile ? 'w-72' : isOpen ? 'w-64' : 'w-20'
         }`}
         style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
       >

@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router';
 import { Menu } from 'lucide-react';
-import AdminSidebar from './AdminSidebar';
+import StudentSidebar from './StudentSidebar';
 
-function AdminLayout() {
+function StudentLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Check screen size
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
@@ -30,7 +29,7 @@ function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <AdminSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} isMobile={isMobile} />
+      <StudentSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} isMobile={isMobile} />
       
       {/* Mobile Header */}
       {isMobile && !isSidebarOpen && (
@@ -45,11 +44,10 @@ function AdminLayout() {
         </div>
       )}
       
-      {/* Main Content */}
       <div className={`transition-all duration-200 ${
         isMobile 
           ? 'ml-0 pt-14' 
-          : isSidebarOpen ? 'ml-64' : 'ml-20'
+          : isSidebarOpen ? 'ml-60' : 'ml-20'
       }`}>
         <Outlet />
       </div>
@@ -57,4 +55,4 @@ function AdminLayout() {
   );
 }
 
-export default AdminLayout;
+export default StudentLayout;

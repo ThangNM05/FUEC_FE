@@ -32,6 +32,13 @@ function SignInPage() {
       return;
     }
     
+    // Simple student login for testing (bypass Clerk)
+    if (email === 'student@gmail.com' && password === '123') {
+      localStorage.setItem('user', JSON.stringify({ email: 'student@gmail.com', role: 'student' }));
+      navigate('/student');
+      return;
+    }
+    
     if (!signIn) {
       setIsLoading(false);
       return;
