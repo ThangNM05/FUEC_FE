@@ -14,7 +14,7 @@ function AdminClasses() {
   const classes: Class[] = [
     {
       id: 1,
-      name: 'SE1701',
+      name: 'SE18B04',
       course: 'Software Engineering',
       students: 30,
       teacher: 'Prof. Tran Thi B',
@@ -22,7 +22,7 @@ function AdminClasses() {
     },
     {
       id: 2,
-      name: 'SE1702',
+      name: 'SE18B05',
       course: 'Web Development',
       students: 28,
       teacher: 'Prof. Nguyen Van A',
