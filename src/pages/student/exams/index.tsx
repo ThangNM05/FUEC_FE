@@ -80,7 +80,7 @@ function StudentExams() {
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-gray-900">Upcoming Exams</h2>
-          <button className="px-4 py-2 bg-orange-500 text-white font-medium text-sm rounded-lg hover:bg-orange-600">
+          <button className="px-4 py-2 bg-[#F37022] text-white font-medium text-sm rounded-lg hover:bg-[#D96419]">
             Notify me
           </button>
         </div>

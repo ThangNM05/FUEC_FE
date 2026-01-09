@@ -1,4 +1,4 @@
-import { Navigate,Route, Routes } from 'react-router';
+import { Navigate, Route, Routes } from 'react-router';
 
 import AdminLayout from './components/layouts/admin/AdminLayout';
 import StudentLayout from './components/layouts/student/StudentLayout';
@@ -8,9 +8,17 @@ import AdminClasses from './pages/admin/classes';
 import AdminCourses from './pages/admin/courses';
 import AdminDatabase from './pages/admin/database';
 import AdminExams from './pages/admin/exams';
-import AdminReports from './pages/admin/reports';
+import AdminSchedule from './pages/admin/schedule';
 import AdminStudents from './pages/admin/students';
 import AdminTeachers from './pages/admin/teachers';
+// Admin Settings Pages
+import AdminDepartments from './pages/admin/settings/departments';
+import AdminClassrooms from './pages/admin/settings/classrooms';
+import AdminSubjects from './pages/admin/settings/subjects';
+import AdminExamTypes from './pages/admin/settings/exam-types';
+import AdminSemesters from './pages/admin/settings/semesters';
+import AdminCurriculum from './pages/admin/settings/curriculum';
+import AdminSyllabus from './pages/admin/settings/syllabus';
 // Auth
 import SignInPage from './pages/sign-in';
 import SSOCallback from './pages/sso-callback';
@@ -25,23 +33,35 @@ import StudentGrades from './pages/student/grades';
 import StudentProfile from './pages/student/profile';
 import QuizTest from './pages/student/quiz';
 import StudentSchedule from './pages/student/schedule';
+// Teacher Components
+import TeacherLayout from './components/layouts/teacher/TeacherLayout';
+// Teacher Pages
+import TeacherDashboard from './pages/teacher';
+import TeacherClassrooms from './pages/teacher/classrooms';
 
 function Router() {
   return (
     <Routes>
       {/* Root redirect to sign-in */}
       <Route path="/" element={<Navigate to="/sign-in" replace />} />
-      
+
       {/* Admin Routes with AdminLayout */}
       <Route element={<AdminLayout />}>
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/students" element={<AdminStudents />} />
         <Route path="/admin/classes" element={<AdminClasses />} />
         <Route path="/admin/teachers" element={<AdminTeachers />} />
-        <Route path="/admin/reports" element={<AdminReports />} />
+        <Route path="/admin/schedule" element={<AdminSchedule />} />
         <Route path="/admin/database" element={<AdminDatabase />} />
         <Route path="/admin/settings/courses" element={<AdminCourses />} />
         <Route path="/admin/settings/exams" element={<AdminExams />} />
+        <Route path="/admin/settings/departments" element={<AdminDepartments />} />
+        <Route path="/admin/settings/classrooms" element={<AdminClassrooms />} />
+        <Route path="/admin/settings/subjects" element={<AdminSubjects />} />
+        <Route path="/admin/settings/exam-types" element={<AdminExamTypes />} />
+        <Route path="/admin/settings/semesters" element={<AdminSemesters />} />
+        <Route path="/admin/settings/curriculum" element={<AdminCurriculum />} />
+        <Route path="/admin/settings/syllabus" element={<AdminSyllabus />} />
       </Route>
 
       {/* Student Routes with StudentLayout */}
@@ -56,6 +76,12 @@ function Router() {
         <Route path="/student/grades" element={<StudentGrades />} />
         <Route path="/student/schedule" element={<StudentSchedule />} />
         <Route path="/student/profile" element={<StudentProfile />} />
+      </Route>
+
+      {/* Teacher Routes with TeacherLayout */}
+      <Route element={<TeacherLayout />}>
+        <Route path="/teacher" element={<TeacherDashboard />} />
+        <Route path="/teacher/classrooms" element={<TeacherClassrooms />} />
       </Route>
 
       <Route path="/sign-in" element={<SignInPage />} />

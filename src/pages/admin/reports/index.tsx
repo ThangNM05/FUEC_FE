@@ -16,7 +16,7 @@ function AdminReports() {
 
   const getIconBgColor = (color: string) => {
     const colors: { [key: string]: string } = {
-      orange: 'bg-orange-100 text-orange-600',
+      orange: 'bg-[#FFF5ED] text-[#F37022]',
       blue: 'bg-blue-100 text-blue-600',
       green: 'bg-green-100 text-green-600',
       purple: 'bg-purple-100 text-purple-600'
@@ -32,7 +32,7 @@ function AdminReports() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Reports</h1>
           <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Generate and download system reports.</p>
         </div>
-        <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 text-white rounded-lg text-sm md:text-base font-semibold hover:bg-orange-600 transition-colors">
+        <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F37022] text-white rounded-lg text-sm md:text-base font-semibold">
           <Download className="w-4 h-4" />
           <span className="hidden sm:inline">Generate Custom Report</span>
           <span className="sm:hidden">Generate Report</span>
@@ -56,7 +56,7 @@ function AdminReports() {
                     <p className="text-sm text-gray-600">{report.description}</p>
                   </div>
                 </div>
-                <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors">
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F37022] text-white rounded-lg font-semibold">
                   <Download className="w-4 h-4" />
                   Generate Report
                 </button>
@@ -70,7 +70,7 @@ function AdminReports() {
       <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 mb-4 md:mb-6">
         <div className="flex justify-between items-center mb-4 md:mb-6">
           <h2 className="text-lg md:text-xl font-bold text-gray-900">Recent Reports</h2>
-          <a href="#" className="text-orange-500 text-sm font-medium hover:underline">View All</a>
+          <a href="#" className="text-[#F37022] text-sm font-medium hover:underline">View All</a>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -93,7 +93,7 @@ function AdminReports() {
                   <td className="p-4 text-sm text-gray-600">{report.generatedBy}</td>
                   <td className="p-4 text-center text-sm text-gray-600">{report.size}</td>
                   <td className="p-4 text-center">
-                    <button className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-orange-500 text-white rounded-lg text-sm font-semibold hover:bg-orange-600 transition-colors">
+                    <button className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#F37022] text-white rounded-lg text-sm font-semibold">
                       <Download className="w-3.5 h-3.5" />
                       Download
                     </button>
@@ -115,8 +115,8 @@ function AdminReports() {
                 <div className="text-2xl font-bold text-gray-900">2,847</div>
                 <div className="text-sm text-gray-600">Total Users</div>
               </div>
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Users className="w-5 h-5 text-orange-600" />
+              <div className="p-3 bg-[#FFF5ED] rounded-lg">
+                <Users className="w-5 h-5 text-[#F37022]" />
               </div>
             </div>
             <div className="text-sm text-green-600 font-medium">+137 this month</div>

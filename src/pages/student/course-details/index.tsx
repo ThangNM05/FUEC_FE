@@ -71,7 +71,7 @@ function CourseDetails() {
                     className={`px-4 py-2 rounded-lg text-sm font-medium ${
                       material.submitted 
                         ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
-                        : 'bg-orange-500 text-white hover:bg-orange-600'
+                        : 'bg-[#F37022] text-white hover:bg-[#D96419]'
                     }`}
                     onClick={() => navigate('/student/assignment')}
                   >
@@ -126,7 +126,7 @@ function CourseDetails() {
                   </div>
                   {test.status === 'available' ? (
                     <button 
-                      className="w-full px-4 py-2.5 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 flex items-center justify-center gap-2"
+                      className="w-full px-4 py-2.5 bg-[#F37022] text-white rounded-lg font-medium hover:bg-[#D96419] flex items-center justify-center gap-2"
                       onClick={() => navigate('/student/quiz')}
                     >
                       <Play className="w-4 h-4" /> Start Test

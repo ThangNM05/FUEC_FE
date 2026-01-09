@@ -147,7 +147,7 @@ function QuizTest() {
             </button>
             <button 
               onClick={() => navigate('/student/courses')}
-              className="px-6 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600"
+              className="px-6 py-3 bg-[#F37022] text-white rounded-lg font-semibold hover:bg-[#D96419]"
             >
               View All Courses
             </button>
@@ -197,7 +197,7 @@ function QuizTest() {
                 >
                   <span className={`inline-block w-8 h-8 rounded-full mr-3 text-center leading-8 ${
                     answers[currentQ.id] === index
-                      ? 'bg-orange-500 text-white'
+                      ? 'bg-[#F37022] text-white'
                       : 'bg-gray-100 text-gray-600'
                   }`}>
                     {String.fromCharCode(65 + index)}
@@ -225,7 +225,7 @@ function QuizTest() {
               ) : (
                 <button
                   onClick={() => setCurrentQuestion(prev => Math.min(questions.length - 1, prev + 1))}
-                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600"
+                  className="flex items-center gap-2 px-4 py-2 bg-[#F37022] text-white rounded-lg font-medium hover:bg-[#D96419]"
                 >
                   Next <ChevronRight className="w-4 h-4" />
                 </button>
@@ -245,7 +245,7 @@ function QuizTest() {
                   onClick={() => setCurrentQuestion(index)}
                   className={`w-10 h-10 rounded-lg font-medium text-sm ${
                     currentQuestion === index
-                      ? 'bg-orange-500 text-white'
+                      ? 'bg-[#F37022] text-white'
                       : answers[q.id] !== undefined
                       ? 'bg-green-100 text-green-700 border border-green-300'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'

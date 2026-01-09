@@ -59,23 +59,23 @@ function StudentGrades() {
             <Search className="w-5 h-5 text-gray-400" />
             <input type="text" placeholder="Search courses..." className="outline-none text-sm text-gray-900 bg-transparent w-40" />
           </div>
-          
+
           {/* Semester Selector */}
           <div className="relative">
-            <button 
+            <button
               className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg font-medium text-sm"
               onClick={() => setShowSemesterDropdown(!showSemesterDropdown)}
             >
               <span>{currentSemester}</span>
               <ChevronDown className="w-4 h-4" />
             </button>
-            
+
             {showSemesterDropdown && (
               <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
                 {semesters.map(semester => (
                   <div
                     key={semester}
-                    className={`px-4 py-2.5 cursor-pointer hover:bg-gray-50 ${currentSemester === semester ? 'bg-orange-50 text-orange-600' : ''}`}
+                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-50 ${currentSemester === semester ? 'bg-orange-50 text-orange-600' : ''}`}
                     onClick={() => {
                       setCurrentSemester(semester);
                       setShowSemesterDropdown(false);
