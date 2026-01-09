@@ -5,6 +5,7 @@ import {
   ChevronDown, ChevronRight, User, LogOut, PanelLeftClose, Menu, Layers,
   Building2, DoorOpen, GraduationCap, ClipboardList, Calendar, FileText, BookMarked
 } from 'lucide-react';
+import img_fpt from '../../../assets/img_fpt.svg';
 
 interface MenuItem {
   id: string;
@@ -118,7 +119,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
           <div className={`flex items-center ${isOpen || isMobile ? 'justify-between' : 'justify-center'}`}>
             <div className={`flex items-center ${isOpen || isMobile ? 'gap-3' : ''}`}>
               <div className="w-16 h-16 rounded-xl flex items-center justify-center p-2">
-                <img src="/src/assets/img_fpt.svg" alt="FPT Logo" className="w-full h-full object-contain" />
+                <img src={img_fpt} alt="FPT Logo" className="w-full h-full object-contain" />
               </div>
               {(isOpen || isMobile) && (
                 <div className="overflow-hidden">

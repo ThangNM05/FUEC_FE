@@ -5,6 +5,7 @@ import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth, useSignIn } from '@clerk/clerk-react';
+import img_fpt from '../../assets/img_fpt.svg';
 
 function SignInPage() {
   const [email, setEmail] = useState('');
@@ -94,7 +95,7 @@ function SignInPage() {
         {/* Logo and Title */}
         <div className="login-brand-center">
           <div className="login-logo-center">
-            <img src="/src/assets/img_fpt.svg" alt="FPT Logo" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+            <img src={img_fpt} alt="FPT Logo" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
           </div>
           <h1 className="login-title">EduConnect</h1>
           <h2 className="login-welcome">Welcome Back</h2>
