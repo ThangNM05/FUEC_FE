@@ -39,7 +39,7 @@ function StudentProfile() {
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold ${
             isEditing 
               ? 'bg-green-500 text-white hover:bg-green-600' 
-              : 'bg-orange-500 text-white hover:bg-orange-600'
+              : 'bg-[#F37022] text-white hover:bg-[#D96419]'
           }`}
         >
           {isEditing ? <><Save className="w-4 h-4" /> Save Changes</> : <><Edit2 className="w-4 h-4" /> Edit Profile</>}
@@ -56,7 +56,7 @@ function StudentProfile() {
                   {profile.name.charAt(0)}
                 </div>
                 {isEditing && (
-                  <button className="absolute bottom-0 right-0 p-2 bg-orange-500 text-white rounded-full hover:bg-orange-600">
+                  <button className="absolute bottom-0 right-0 p-2 bg-[#F37022] text-white rounded-full hover:bg-[#D96419]">
                     <Camera className="w-4 h-4" />
                   </button>
                 )}

@@ -24,7 +24,7 @@ createRoot(document.getElementById('root')!).render(
         <BrowserRouter>
           <Router />
         </BrowserRouter>
-        <Toaster />
+        <Toaster richColors position="top-right" />
       </ClerkProvider>
     </Provider>
   </StrictMode>,

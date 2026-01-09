@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import {
-  LayoutDashboard, Users, BookOpen, BarChart3, Database, Settings,
-  ChevronDown, ChevronRight, User, LogOut, X, Menu, Layers
+  LayoutDashboard, Users, BookOpen, Database, Settings,
+  ChevronDown, ChevronRight, User, LogOut, PanelLeftClose, Menu, Layers,
+  Building2, DoorOpen, GraduationCap, ClipboardList, Calendar, FileText, BookMarked
 } from 'lucide-react';
 
 interface MenuItem {
@@ -50,15 +51,20 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
       ]
     },
     { id: 'teachers', label: 'Teacher Management', icon: Users, path: '/admin/teachers' },
-    { id: 'reports', label: 'Reports', icon: BarChart3, path: '/admin/reports' },
+    { id: 'schedule', label: 'Schedule', icon: Calendar, path: '/admin/schedule' },
     { id: 'database', label: 'Database', icon: Database, path: '/admin/database' },
     {
       id: 'settings',
       label: 'Settings',
       icon: Settings,
       subItems: [
-        { id: 'courses', label: 'Courses', icon: BookOpen, path: '/admin/settings/courses' },
-        { id: 'exams', label: 'Exams', icon: BookOpen, path: '/admin/settings/exams' }
+        { id: 'departments', label: 'Departments', icon: Building2, path: '/admin/settings/departments' },
+        { id: 'classrooms', label: 'Classrooms', icon: DoorOpen, path: '/admin/settings/classrooms' },
+        { id: 'subjects', label: 'Subjects', icon: GraduationCap, path: '/admin/settings/subjects' },
+        { id: 'exam-types', label: 'Exam Types', icon: ClipboardList, path: '/admin/settings/exam-types' },
+        { id: 'semesters', label: 'Semesters', icon: Calendar, path: '/admin/settings/semesters' },
+        { id: 'curriculum', label: 'Curriculum', icon: BookMarked, path: '/admin/settings/curriculum' },
+        { id: 'syllabus', label: 'Syllabus', icon: FileText, path: '/admin/settings/syllabus' }
       ]
     }
   ];
@@ -96,28 +102,27 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
     <>
       {/* Mobile Overlay */}
       {isMobile && isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40"
           onClick={toggleSidebar}
         />
       )}
 
-      <div 
-        className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200 transition-all duration-200 z-50 flex flex-col ${
-          isMobile ? 'w-72' : isOpen ? 'w-64' : 'w-20'
-        }`}
+      <div
+        className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200 transition-all duration-200 z-50 flex flex-col ${isMobile ? 'w-72' : isOpen ? 'w-64' : 'w-20'
+          }`}
         style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
       >
         {/* Header - Logo */}
         <div className={`p-4 ${!isOpen && !isMobile ? 'flex justify-center' : ''}`}>
           <div className={`flex items-center ${isOpen || isMobile ? 'justify-between' : 'justify-center'}`}>
             <div className={`flex items-center ${isOpen || isMobile ? 'gap-3' : ''}`}>
-              <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
-                <BookOpen className="w-5 h-5" />
+              <div className="w-16 h-16 rounded-xl flex items-center justify-center p-2">
+                <img src="/src/assets/img_fpt.svg" alt="FPT Logo" className="w-full h-full object-contain" />
               </div>
               {(isOpen || isMobile) && (
                 <div className="overflow-hidden">
-                  <h3 className="font-semibold text-gray-900 text-base">EduConnect</h3>
+                  <h3 className="font-semibold text-[#F37022] text-base">EduConnect</h3>
                   <p className="text-[11px] text-gray-500">www.fpt.edu.vn</p>
                 </div>
               )}
@@ -127,7 +132,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
                 onClick={toggleSidebar}
                 className="w-8 h-8 flex items-center justify-center border border-gray-200 bg-white rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all flex-shrink-0"
               >
-                <X className="w-4 h-4 text-gray-500" />
+                <PanelLeftClose className="w-4 h-4 text-gray-500" />
               </button>
             )}
           </div>
@@ -148,7 +153,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
         {/* Menu Items */}
         <div className="flex-1 py-4 px-3 overflow-y-auto">
           {(isOpen || isMobile) && <div className="px-3 mb-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide">MENU</div>}
-          
+
           {menuItems.map(item => {
             const Icon = item.icon;
             const isExpanded = expandedMenus[item.id];
@@ -157,15 +162,14 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
             return (
               <div key={item.id}>
                 <button
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all mb-1 ${
-                    isActive 
-                      ? 'bg-orange-50 text-orange-600' 
-                      : 'text-gray-700 hover:bg-gray-50'
-                  } ${!isOpen && !isMobile ? 'justify-center' : ''}`}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all mb-1 ${isActive
+                    ? 'bg-orange-50 text-orange-600'
+                    : 'text-gray-700 hover:bg-gray-50'
+                    } ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                   onClick={() => handleMenuClick(item)}
                   title={!isOpen && !isMobile ? item.label : ''}
                 >
-                  <Icon className="w-[18px] h-[18px] flex-shrink-0" />
+                  <Icon className="w-5 h-5 flex-shrink-0" />
                   {(isOpen || isMobile) && (
                     <>
                       <span className="flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
@@ -184,18 +188,17 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
                     {item.subItems.map(sub => {
                       const SubIcon = sub.icon;
                       const isSubActive = location.pathname === sub.path;
-                      
+
                       return (
                         <button
                           key={sub.id}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all ${
-                            isSubActive 
-                              ? 'bg-orange-50 text-orange-600' 
-                              : 'text-gray-600 hover:bg-gray-50'
-                          }`}
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all ${isSubActive
+                            ? 'bg-orange-50 text-orange-600'
+                            : 'text-gray-600 hover:bg-gray-50'
+                            }`}
                           onClick={() => handleSubMenuClick(sub.path)}
                         >
-                          <SubIcon className="w-[14px] h-[14px] flex-shrink-0" />
+                          <SubIcon className="w-4 h-4 flex-shrink-0" />
                           <span className="font-medium">{sub.label}</span>
                         </button>
                       );
@@ -213,7 +216,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
             className={`w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-all mb-1 ${!isOpen && !isMobile ? 'justify-center' : ''}`}
             title={!isOpen && !isMobile ? 'Profile' : ''}
           >
-            <User className="w-[18px] h-[18px] flex-shrink-0" />
+            <User className="w-5 h-5 flex-shrink-0" />
             {(isOpen || isMobile) && <span className="text-sm font-medium">Profile</span>}
           </button>
           <button
@@ -224,7 +227,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
               navigate('/sign-in');
             }}
           >
-            <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
+            <LogOut className="w-5 h-5 flex-shrink-0" />
             {(isOpen || isMobile) && <span className="text-sm font-medium">Logout</span>}
           </button>
         </div>

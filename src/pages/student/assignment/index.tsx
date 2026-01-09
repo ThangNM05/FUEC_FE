@@ -104,7 +104,7 @@ function AssignmentDetails() {
                     <>
                       <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                       <p className="text-gray-600 mb-2">Drag and drop your file here, or</p>
-                      <label className="inline-block px-4 py-2 bg-orange-500 text-white rounded-lg font-medium cursor-pointer hover:bg-orange-600">
+                      <label className="inline-block px-4 py-2 bg-[#F37022] text-white rounded-lg font-medium cursor-pointer hover:bg-[#D96419]">
                         Browse Files
                         <input type="file" className="hidden" onChange={handleFileChange} />
                       </label>
@@ -115,7 +115,7 @@ function AssignmentDetails() {
                 <button 
                   className={`w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${
                     selectedFile 
-                      ? 'bg-orange-500 text-white hover:bg-orange-600' 
+                      ? 'bg-[#F37022] text-white hover:bg-[#D96419]' 
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                   onClick={handleSubmit}

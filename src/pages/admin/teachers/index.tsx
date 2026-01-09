@@ -63,10 +63,10 @@ function AdminTeachers() {
       accessor: 'joinedDate' as keyof Teacher,
       sortable: true,
       align: 'center' as const,
-      render: (item: Teacher) => new Date(item.joinedDate).toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
+      render: (item: Teacher) => new Date(item.joinedDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
       })
     },
     { header: 'Last Active', accessor: 'lastActive' as keyof Teacher, align: 'center' as const },

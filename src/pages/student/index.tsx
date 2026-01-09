@@ -103,7 +103,7 @@ function StudentDashboard() {
                     </span>
                     <h3 className="font-semibold text-gray-900 mb-1">{announcement.title}</h3>
                     <p className="text-sm text-gray-600 line-clamp-2">{announcement.description}</p>
-                    <button className="mt-3 px-4 py-2 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600">
+                    <button className="mt-3 px-4 py-2 bg-[#F37022] text-white text-sm font-semibold rounded-lg hover:bg-[#D96419]">
                       Read More
                     </button>
                   </div>
@@ -131,7 +131,7 @@ function StudentDashboard() {
                   <div className="flex items-center gap-3 w-48">
                     <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-orange-500 rounded-full transition-all duration-1000"
+                        className="h-full bg-[#F37022] rounded-full transition-all duration-1000"
                         style={{ width: progressAnimated ? `${course.progress}%` : '0%' }}
                       />
                     </div>
@@ -218,7 +218,7 @@ function StudentDashboard() {
                   key={index}
                   className={`py-2 rounded cursor-pointer text-sm ${
                     dayObj.otherMonth ? 'text-gray-300' : 
-                    dayObj.today ? 'bg-orange-500 text-white font-bold' :
+                    dayObj.today ? 'bg-[#F37022] text-white font-bold' :
                     dayObj.hasEvent ? 'bg-orange-100 text-orange-600 font-medium' :
                     'hover:bg-gray-100'
                   }`}

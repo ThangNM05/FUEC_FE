@@ -76,7 +76,7 @@ function AdminCourses() {
       sortable: true,
       align: 'center' as const,
       render: (item: Course) => (
-        <span className="font-semibold text-orange-600">{item.students}</span>
+        <span className="font-semibold" style={{ color: '#0A1B3C' }}>{item.students}</span>
       )
     },
     { header: 'Sections', accessor: 'sections' as keyof Course, sortable: true, align: 'center' as const },

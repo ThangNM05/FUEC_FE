@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router';
 import { Menu } from 'lucide-react';
 import StudentSidebar from './StudentSidebar';
+import StudentHeader from './StudentHeader';
 
 function StudentLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -30,7 +31,7 @@ function StudentLayout() {
   return (
     <div className="min-h-screen bg-gray-50">
       <StudentSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} isMobile={isMobile} />
-      
+
       {/* Mobile Header */}
       {isMobile && !isSidebarOpen && (
         <div className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 z-30 flex items-center px-4">
@@ -43,12 +44,15 @@ function StudentLayout() {
           <span className="ml-3 font-semibold text-gray-900">EduConnect</span>
         </div>
       )}
-      
-      <div className={`transition-all duration-200 ${
-        isMobile 
-          ? 'ml-0 pt-14' 
-          : isSidebarOpen ? 'ml-60' : 'ml-20'
-      }`}>
+
+      <div className={`transition-all duration-200 ${isMobile
+        ? 'ml-0 pt-14'
+        : isSidebarOpen ? 'ml-60' : 'ml-20'
+        }`}>
+        {/* Student Header - Only on desktop */}
+        {!isMobile && (
+          <StudentHeader />
+        )}
         <Outlet />
       </div>
     </div>

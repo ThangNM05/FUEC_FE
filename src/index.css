@@ -3,7 +3,8 @@
 
 /* Increase base UI size by 10% */
 html {
-  font-size: 17.6px; /* 16px * 1.1 = 17.6px (110%) */
+  font-size: 17.6px;
+  /* 16px * 1.1 = 17.6px (110%) */
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -44,6 +45,9 @@ html {
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Custom gray-900 color override */
+  --color-gray-900: #0A1B3C;
 }
 
 :root {
@@ -79,12 +83,12 @@ html {
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  
+
   /* FPT Orange Colors */
-  --fpt-orange: #FF6C00;
-  --fpt-orange-dark: #E65C00;
-  --fpt-orange-bg: rgba(255, 108, 0, 0.1);
-  
+  --fpt-orange: #F37022;
+  --fpt-orange-dark: #D96419;
+  --fpt-orange-bg: rgba(243, 112, 34, 0.1);
+
   /* Gray Scale */
   --white: #FFFFFF;
   --gray-50: #F9FAFB;
@@ -96,8 +100,8 @@ html {
   --gray-600: #4B5563;
   --gray-700: #374151;
   --gray-800: #1F2937;
-  --gray-900: #111827;
-  
+  --gray-900: #0A1B3C;
+
   /* Transitions */
   --transition: all 0.3s ease;
   --transition-fast: all 0.15s ease;
@@ -141,8 +145,10 @@ html {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
 }
 
@@ -161,12 +167,12 @@ html {
 }
 
 .custom-checkbox:hover {
-  border-color: #f97316;
+  border-color: #F37022;
 }
 
 .custom-checkbox:checked {
-  background-color: #f97316;
-  border-color: #f97316;
+  background-color: #F37022;
+  border-color: #F37022;
 }
 
 .custom-checkbox:checked::after {
@@ -183,6 +189,5 @@ html {
 
 .custom-checkbox:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+  box-shadow: 0 0 0 2px rgba(243, 112, 34, 0.2);
 }
-
