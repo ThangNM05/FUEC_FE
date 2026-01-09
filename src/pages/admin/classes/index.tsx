@@ -17,7 +17,7 @@ function AdminClasses() {
       name: 'SE18B04',
       course: 'Software Engineering',
       students: 30,
-      teacher: 'Prof. Tran Thi B',
+      teacher: 'Tran Thi B',
       status: 'Active'
     },
     {
