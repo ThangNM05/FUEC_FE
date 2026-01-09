@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { 
-  Search, Filter, ChevronLeft, ChevronRight, Download, Plus, 
-  ArrowUp, ArrowDown 
+import {
+  Search, Filter, ChevronLeft, ChevronRight, Download, Plus,
+  ArrowUp, ArrowDown
 } from 'lucide-react';
 
 interface Column<T> {
@@ -40,9 +40,9 @@ function DataTable<T extends { id: string | number }>({
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [sortConfig, setSortConfig] = useState<{ key: keyof T | null; direction: 'asc' | 'desc' }>({ 
-    key: null, 
-    direction: 'asc' 
+  const [sortConfig, setSortConfig] = useState<{ key: keyof T | null; direction: 'asc' | 'desc' }>({
+    key: null,
+    direction: 'asc'
   });
   const [selectedItems, setSelectedItems] = useState<(string | number)[]>([]);
 
@@ -135,21 +135,21 @@ function DataTable<T extends { id: string | number }>({
         </div>
         <div className="flex gap-2 sm:gap-3">
           {onImport && (
-            <button 
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-orange-500 text-orange-500 rounded-lg text-xs sm:text-sm font-semibold hover:bg-orange-50 transition-colors"
+            <button
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-[#F37022] text-[#F37022] rounded-lg text-xs sm:text-sm font-medium"
               onClick={onImport}
             >
-              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">{importLabel}</span>
               <span className="sm:hidden">Import</span>
             </button>
           )}
           {onCreate && (
-            <button 
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-orange-500 text-white rounded-lg text-xs sm:text-sm font-semibold hover:bg-orange-600 transition-colors"
+            <button
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#F37022] text-white rounded-lg text-xs sm:text-sm font-medium"
               onClick={onCreate}
             >
-              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> 
+              <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">{createLabel}</span>
               <span className="sm:hidden">Add</span>
             </button>
@@ -164,12 +164,14 @@ function DataTable<T extends { id: string | number }>({
             <tr className="bg-gray-50 border-b border-gray-200">
               {selectable && (
                 <th className="p-2 md:p-3 w-10">
-                  <input
-                    type="checkbox"
-                    onChange={handleSelectAll}
-                    checked={currentData.length > 0 && selectedItems.length === currentData.length}
-                    className="custom-checkbox"
-                  />
+                  <div className="flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      onChange={handleSelectAll}
+                      checked={currentData.length > 0 && selectedItems.length === currentData.length}
+                      className="custom-checkbox"
+                    />
+                  </div>
                 </th>
               )}
               {columns.map((col, index) => (
@@ -182,11 +184,11 @@ function DataTable<T extends { id: string | number }>({
                     {col.header}
                     {col.sortable && (
                       <div className="flex flex-col">
-                        <ArrowUp 
-                          className={`w-2 h-2 ${sortConfig.key === col.accessor && sortConfig.direction === 'asc' ? 'text-orange-500' : 'text-gray-400'}`}
+                        <ArrowUp
+                          className={`w-2 h-2 ${sortConfig.key === col.accessor && sortConfig.direction === 'asc' ? 'text-[#F37022]' : 'text-gray-400'}`}
                         />
-                        <ArrowDown 
-                          className={`w-2 h-2 ${sortConfig.key === col.accessor && sortConfig.direction === 'desc' ? 'text-orange-500' : 'text-gray-400'}`}
+                        <ArrowDown
+                          className={`w-2 h-2 ${sortConfig.key === col.accessor && sortConfig.direction === 'desc' ? 'text-[#F37022]' : 'text-gray-400'}`}
                         />
                       </div>
                     )}
@@ -202,12 +204,14 @@ function DataTable<T extends { id: string | number }>({
                 <tr key={item.id || rowIndex} className="border-b border-gray-100 hover:bg-gray-50">
                   {selectable && (
                     <td className="p-2 md:p-3">
-                      <input
-                        type="checkbox"
-                        checked={selectedItems.includes(item.id)}
-                        onChange={() => handleSelect(item.id)}
-                        className="custom-checkbox"
-                      />
+                      <div className="flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.includes(item.id)}
+                          onChange={() => handleSelect(item.id)}
+                          className="custom-checkbox"
+                        />
+                      </div>
                     </td>
                   )}
                   {columns.map((col, colIndex) => (
@@ -261,11 +265,10 @@ function DataTable<T extends { id: string | number }>({
             return (
               <button
                 key={page}
-                className={`px-2.5 sm:px-3 py-1.5 rounded min-w-[28px] sm:min-w-[32px] text-xs sm:text-sm ${
-                  currentPage === page 
-                    ? 'bg-orange-500 text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`px-2.5 sm:px-3 py-1.5 rounded min-w-[28px] sm:min-w-[32px] text-xs sm:text-sm ${currentPage === page
+                  ? 'bg-[#F37022] text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
                 onClick={() => setCurrentPage(page)}
               >
                 {page}

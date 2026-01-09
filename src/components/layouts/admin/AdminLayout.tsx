@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router';
 import { Menu } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
+import AdminHeader from './AdminHeader';
 
 function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -31,7 +32,7 @@ function AdminLayout() {
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} isMobile={isMobile} />
-      
+
       {/* Mobile Header */}
       {isMobile && !isSidebarOpen && (
         <div className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 z-30 flex items-center px-4">
@@ -44,13 +45,16 @@ function AdminLayout() {
           <span className="ml-3 font-semibold text-gray-900">EduConnect</span>
         </div>
       )}
-      
+
       {/* Main Content */}
-      <div className={`transition-all duration-200 ${
-        isMobile 
-          ? 'ml-0 pt-14' 
+      <div className={`transition-all duration-200 ${isMobile
+          ? 'ml-0 pt-14'
           : isSidebarOpen ? 'ml-64' : 'ml-20'
-      }`}>
+        }`}>
+        {/* Admin Header - Only on desktop */}
+        {!isMobile && (
+          <AdminHeader />
+        )}
         <Outlet />
       </div>
     </div>

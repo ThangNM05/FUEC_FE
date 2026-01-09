@@ -116,7 +116,7 @@ function StudentCourses() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => navigate('/student/course-details')}
-                  className="flex-1 px-4 py-2.5 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 transition-colors"
+                  className="flex-1 px-4 py-2.5 bg-[#F37022] text-white font-semibold rounded-lg hover:bg-[#D96419] transition-colors"
                 >
                   View Course
                 </button>
