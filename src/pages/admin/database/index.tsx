@@ -59,7 +59,7 @@ function AdminDatabase() {
       sortable: true,
       align: 'center' as const,
       render: (item: Backup) => (
-        <div className={`flex items-center justify-center gap-1.5 ${item.status === 'Success' ? 'text-green-600' : 'text-red-600'}`}>
+        <div className={`flex items-center justify-center gap-1.5 ${item.status === 'Success' ? 'text-[#F37022]' : 'text-red-600'}`}>
           {item.status === 'Success' ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           {item.status}
         </div>
@@ -87,7 +87,7 @@ function AdminDatabase() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Database Management</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Database Management</h1>
           <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">System backups and data integrity.</p>
         </div>
         <div className="flex gap-2 sm:gap-3">
@@ -107,33 +107,33 @@ function AdminDatabase() {
         <div className="bg-white border border-gray-200 rounded-lg p-5">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-2xl font-bold text-gray-900">4.5 GB</div>
+              <div className="text-2xl font-bold text-[#0A1B3C]">4.5 GB</div>
               <div className="text-sm text-gray-600">Total Storage Used</div>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Database className="w-5 h-5 text-blue-600" />
+            <div className="p-3 bg-orange-100 rounded-lg">
+              <Database className="w-5 h-5 text-[#F37022]" />
             </div>
           </div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-5">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-2xl font-bold text-gray-900">Daily</div>
+              <div className="text-2xl font-bold text-[#0A1B3C]">Daily</div>
               <div className="text-sm text-gray-600">Backup Schedule</div>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <RefreshCw className="w-5 h-5 text-green-600" />
+            <div className="p-3 bg-orange-50 rounded-lg">
+              <RefreshCw className="w-5 h-5 text-orange-500" />
             </div>
           </div>
         </div>
         <div className="bg-white border border-gray-200 rounded-lg p-5">
           <div className="flex items-start justify-between">
             <div>
-              <div className="text-2xl font-bold text-gray-900">Healthy</div>
+              <div className="text-2xl font-bold text-[#0A1B3C]">Healthy</div>
               <div className="text-sm text-gray-600">System Status</div>
             </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-purple-600" />
+            <div className="p-3 bg-orange-100 rounded-lg">
+              <CheckCircle className="w-5 h-5 text-[#F37022]" />
             </div>
           </div>
         </div>

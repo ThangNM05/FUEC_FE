@@ -64,7 +64,7 @@ function AdminCourses() {
       sortable: true,
       filterable: true,
       render: (item: Course) => (
-        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold">
+        <span className="px-3 py-1 bg-orange-100 text-[#F37022] rounded-full text-xs font-semibold">
           {item.code}
         </span>
       )
@@ -87,7 +87,7 @@ function AdminCourses() {
       sortable: true,
       align: 'center' as const,
       render: (item: Course) => (
-        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
+        <span className="px-3 py-1 bg-orange-50 text-orange-600 rounded-full text-xs font-semibold">
           {item.status}
         </span>
       )
@@ -98,8 +98,8 @@ function AdminCourses() {
       align: 'center' as const,
       render: () => (
         <div className="flex gap-2 justify-center">
-          <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors">
-            <Edit className="w-4 h-4 text-blue-600" />
+          <button className="p-2 hover:bg-orange-50 rounded-lg transition-colors">
+            <Edit className="w-4 h-4 text-[#F37022]" />
           </button>
           <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
             <Trash2 className="w-4 h-4 text-red-600" />
@@ -112,7 +112,7 @@ function AdminCourses() {
   return (
     <div className="p-4 md:p-6">
       <div className="mb-4 md:mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Course Management</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Course Management</h1>
         <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Manage courses, instructors, and enrollments.</p>
       </div>
 

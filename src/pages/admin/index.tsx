@@ -1,17 +1,20 @@
+import { useState } from 'react';
 import { Search, Users, Book, Activity, Server, AlertCircle } from 'lucide-react';
 
 function AdminDashboard() {
+  const [semester, setSemester] = useState('SPRING2025');
+
   const stats = [
     { label: 'Total Users', value: '2,847', icon: Users, color: 'orange', change: '+127 this month' },
-    { label: 'Active Courses', value: '156', icon: Book, color: 'blue', change: '12 new courses' },
-    { label: 'System Uptime', value: '99.9%', icon: Activity, color: 'green', change: 'Last 30 days' },
-    { label: 'Storage Used', value: '67%', icon: Server, color: 'purple', change: '2.4 TB / 3.6 TB' }
+    { label: 'Active Courses', value: '156', icon: Book, color: 'orange', change: '12 new courses' },
+    { label: 'System Uptime', value: '99.9%', icon: Activity, color: 'orange', change: 'Last 30 days' },
+    { label: 'Storage Used', value: '67%', icon: Server, color: 'orange', change: '2.4 TB / 3.6 TB' }
   ];
 
   const userStats = [
-    { role: 'Students', count: 2456, percentage: 86, color: '#ff6c00' },
-    { role: 'Teachers', count: 342, percentage: 12, color: '#3b82f6' },
-    { role: 'Admins', count: 49, percentage: 2, color: '#10b981' }
+    { role: 'Students', count: 2456, percentage: 86, color: '#F37022' },
+    { role: 'Teachers', count: 342, percentage: 12, color: '#ff8a33' },
+    { role: 'Admins', count: 49, percentage: 2, color: '#ffb380' }
   ];
 
   const recentActivities = [
@@ -32,15 +35,26 @@ function AdminDashboard() {
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <div className="mb-4 md:mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">System Administration</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Monitor and manage the FUEC platform.</p>
+          <div className="flex items-center gap-4 mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">System Administration</h1>
+            <select
+              value={semester}
+              onChange={(e) => setSemester(e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-[#0A1B3C] focus:border-[#F37022] outline-none"
+            >
+              <option value="SPRING2025">Spring 2025</option>
+              <option value="FALL2024">Fall 2024</option>
+              <option value="SUMMER2024">Summer 2024</option>
+            </select>
+          </div>
+          <p className="text-sm md:text-base text-gray-600">Monitor and manage the FUEC platform.</p>
         </div>
         <div className="flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 bg-white rounded-lg border border-gray-200">
           <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search users, courses, logs..." 
-            className="flex-1 outline-none text-sm md:text-base text-gray-900"
+          <input
+            type="text"
+            placeholder="Search users, courses, logs..."
+            className="flex-1 outline-none text-sm md:text-base text-[#0A1B3C]"
           />
         </div>
       </div>
@@ -53,14 +67,14 @@ function AdminDashboard() {
             <div key={index} className="bg-white p-6 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
+                  <div className="text-3xl font-bold text-[#0A1B3C]">{stat.value}</div>
                   <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
                 </div>
                 <div className={`p-3 rounded-lg bg-${stat.color}-100`}>
                   <Icon className={`w-6 h-6 text-${stat.color}-600`} />
                 </div>
               </div>
-              <div className="text-sm text-green-600 font-medium">{stat.change}</div>
+              <div className="text-sm text-[#F37022] font-medium">{stat.change}</div>
             </div>
           );
         })}
@@ -72,18 +86,18 @@ function AdminDashboard() {
           {/* User Distribution */}
           <div className="bg-white p-6 rounded-xl border border-gray-200">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">User Distribution</h2>
+              <h2 className="text-xl font-bold text-[#0A1B3C]">User Distribution</h2>
               <a href="#" className="text-orange-500 text-sm font-medium hover:underline">View Details</a>
             </div>
             {userStats.map(stat => (
               <div key={stat.role} className="mb-5 last:mb-0">
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm font-semibold text-gray-900">{stat.role}</span>
+                  <span className="text-sm font-semibold text-[#0A1B3C]">{stat.role}</span>
                   <span className="text-sm font-semibold text-gray-700">{stat.count} ({stat.percentage}%)</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
-                  <div 
-                    className="h-2.5 rounded-full transition-all" 
+                  <div
+                    className="h-2.5 rounded-full transition-all"
                     style={{ width: `${stat.percentage}%`, backgroundColor: stat.color }}
                   />
                 </div>
@@ -94,7 +108,7 @@ function AdminDashboard() {
           {/* Recent Activities */}
           <div className="bg-white p-6 rounded-xl border border-gray-200">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Recent Activities</h2>
+              <h2 className="text-xl font-bold text-[#0A1B3C]">Recent Activities</h2>
               <a href="#" className="text-orange-500 text-sm font-medium hover:underline">View All Logs</a>
             </div>
             {recentActivities.map(activity => (
@@ -106,7 +120,7 @@ function AdminDashboard() {
                   {activity.type === 'system' && <Server className="w-5 h-5 text-orange-600" />}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 text-sm">{activity.action}</h4>
+                  <h4 className="font-semibold text-[#0A1B3C] text-sm">{activity.action}</h4>
                   <p className="text-sm text-gray-600 mt-1">{activity.user} • {activity.time}</p>
                 </div>
               </div>
@@ -118,15 +132,13 @@ function AdminDashboard() {
         <div className="space-y-6">
           {/* System Alerts */}
           <div className="bg-white p-6 rounded-xl border border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">System Alerts</h2>
+            <h2 className="text-xl font-bold text-[#0A1B3C] mb-6">System Alerts</h2>
             {systemAlerts.map(alert => (
               <div key={alert.id} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors mb-2 last:mb-0">
-                <div className={`p-2 rounded-lg ${
-                  alert.severity === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
-                }`}>
-                  <AlertCircle className={`w-5 h-5 ${
-                    alert.severity === 'warning' ? 'text-yellow-600' : 'text-blue-600'
-                  }`} />
+                <div className={`p-2 rounded-lg ${alert.severity === 'warning' ? 'bg-orange-100' : 'bg-orange-50'
+                  }`}>
+                  <AlertCircle className={`w-5 h-5 ${alert.severity === 'warning' ? 'text-[#F37022]' : 'text-orange-400'
+                    }`} />
                 </div>
                 <p className="text-sm text-gray-700 flex-1">{alert.message}</p>
               </div>
@@ -135,7 +147,7 @@ function AdminDashboard() {
 
           {/* Quick Actions */}
           <div className="bg-white p-6 rounded-xl border border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Quick Actions</h2>
+            <h2 className="text-xl font-bold text-[#0A1B3C] mb-6">Quick Actions</h2>
             <button className="w-full px-4 py-3 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition-colors mb-2">
               Add New User
             </button>
