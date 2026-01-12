@@ -1,8 +1,11 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { useSignIn, useAuth } from '@clerk/clerk-react';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
 import './sign-in.css';
+
+import { useState } from 'react';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { Link, useNavigate } from 'react-router-dom';
+
+import { useAuth, useSignIn } from '@clerk/clerk-react';
+import img_fpt from '../../assets/img_fpt.svg';
 
 function SignInPage() {
   const [email, setEmail] = useState('');
@@ -15,16 +18,40 @@ function SignInPage() {
 
   // Redirect if already signed in
   if (isSignedIn) {
-    navigate('/student-management');
+    navigate('/admin');
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!signIn) return;
-    
+
     setIsLoading(true);
-    
+
+    // Simple admin login for testing (bypass Clerk)
+    if (email === 'admin@gmail.com' && password === '123') {
+      localStorage.setItem('user', JSON.stringify({ email: 'admin@gmail.com', role: 'admin' }));
+      navigate('/admin');
+      return;
+    }
+
+    // Simple student login for testing (bypass Clerk)
+    if (email === 'student@gmail.com' && password === '123') {
+      localStorage.setItem('user', JSON.stringify({ email: 'student@gmail.com', role: 'student' }));
+      navigate('/student');
+      return;
+    }
+
+    // Simple teacher login for testing (bypass Clerk)
+    if (email === 'teacher@gmail.com' && password === '123') {
+      localStorage.setItem('user', JSON.stringify({ email: 'teacher@gmail.com', role: 'teacher' }));
+      navigate('/teacher');
+      return;
+    }
+
+    if (!signIn) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Create sign-in with email and password
       const result = await signIn.create({
@@ -48,7 +75,7 @@ function SignInPage() {
 
   const handleGoogleSignIn = () => {
     if (!signIn) return;
-    
+
     // Redirect to Clerk's Google OAuth page (not modal)
     signIn.authenticateWithRedirect({
       strategy: 'oauth_google',
@@ -67,8 +94,10 @@ function SignInPage() {
       <div className="login-content">
         {/* Logo and Title */}
         <div className="login-brand-center">
-          <div className="login-logo-center">F</div>
-          <h1 className="login-title">FUEC</h1>
+          <div className="login-logo-center">
+            <img src={img_fpt} alt="FPT Logo" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+          </div>
+          <h1 className="login-title">EduConnect</h1>
           <h2 className="login-welcome">Welcome Back</h2>
           <p className="login-subtitle">Sign in to access your learning portal</p>
         </div>
@@ -120,9 +149,9 @@ function SignInPage() {
                 <input type="checkbox" disabled={isLoading} />
                 <span>Remember me</span>
               </label>
-              <a href="#" className="forgot-link">
+              <Link to="/forgot-password" className="forgot-link">
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             {/* Login Button */}
@@ -137,8 +166,8 @@ function SignInPage() {
 
             {/* Google Sign In Button - Redirect to Clerk OAuth */}
             <div className="social-buttons">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn-social btn-social-full"
                 onClick={handleGoogleSignIn}
                 disabled={isLoading}

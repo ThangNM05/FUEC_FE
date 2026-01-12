@@ -1,31 +1,92 @@
-import { Route,Routes } from 'react-router';
+import { Navigate, Route, Routes } from 'react-router';
 
-import DashboardLayout from './components/layouts/dashboard/layout';
-import LandingLayout from './components/layouts/landing/layout';
-import BookingPage from './pages/booking';
-import StudentManagement from './pages/dashboard/student-management';
-import TeacherManagement from './pages/dashboard/teacher-management';
-import HomePage from './pages/home';
+import AdminLayout from './components/layouts/admin/AdminLayout';
+import StudentLayout from './components/layouts/student/StudentLayout';
+// Admin Pages
+import AdminDashboard from './pages/admin';
+import AdminClasses from './pages/admin/classes';
+import AdminCourses from './pages/admin/courses';
+import AdminDatabase from './pages/admin/database';
+import AdminExams from './pages/admin/exams';
+import AdminSchedule from './pages/admin/schedule';
+import AdminStudents from './pages/admin/students';
+import AdminTeachers from './pages/admin/teachers';
+// Admin Settings Pages
+import AdminDepartments from './pages/admin/settings/departments';
+import AdminClassrooms from './pages/admin/settings/classrooms';
+import AdminSubjects from './pages/admin/settings/subjects';
+import AdminExamTypes from './pages/admin/settings/exam-types';
+import AdminSemesters from './pages/admin/settings/semesters';
+import AdminCurriculum from './pages/admin/settings/curriculum';
+import AdminSyllabus from './pages/admin/settings/syllabus';
+// Auth
 import SignInPage from './pages/sign-in';
 import SSOCallback from './pages/sso-callback';
+// Student Pages
+import StudentDashboard from './pages/student';
+import AssignmentDetails from './pages/student/assignment';
+import CourseDetails from './pages/student/course-details';
+import StudentCourses from './pages/student/courses';
+import StudentExamsPage from './pages/student/exams';
+import StudentForums from './pages/student/forums';
+import StudentGrades from './pages/student/grades';
+import StudentProfile from './pages/student/profile';
+import QuizTest from './pages/student/quiz';
+import StudentSchedule from './pages/student/schedule';
+// Teacher Components
+import TeacherLayout from './components/layouts/teacher/TeacherLayout';
+// Teacher Pages
+import TeacherDashboard from './pages/teacher';
+import TeacherClassrooms from './pages/teacher/classrooms';
 
 function Router() {
   return (
-    <>
-      <Routes>
-        <Route element={<LandingLayout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/booking" element={<BookingPage />} />
-        </Route>
-        <Route element={<DashboardLayout />}>
-          <Route path="/student-management" element={<StudentManagement />} />
-          <Route path="/teacher-management" element={<TeacherManagement />} />
-        </Route>
-        <Route path="/sign-in" element={<SignInPage />} />
-        <Route path="/sso-callback" element={<SSOCallback />} />
-      </Routes>
-    </>
+    <Routes>
+      {/* Root redirect to sign-in */}
+      <Route path="/" element={<Navigate to="/sign-in" replace />} />
+
+      {/* Admin Routes with AdminLayout */}
+      <Route element={<AdminLayout />}>
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/students" element={<AdminStudents />} />
+        <Route path="/admin/classes" element={<AdminClasses />} />
+        <Route path="/admin/teachers" element={<AdminTeachers />} />
+        <Route path="/admin/schedule" element={<AdminSchedule />} />
+        <Route path="/admin/database" element={<AdminDatabase />} />
+        <Route path="/admin/settings/courses" element={<AdminCourses />} />
+        <Route path="/admin/settings/exams" element={<AdminExams />} />
+        <Route path="/admin/settings/departments" element={<AdminDepartments />} />
+        <Route path="/admin/settings/classrooms" element={<AdminClassrooms />} />
+        <Route path="/admin/settings/subjects" element={<AdminSubjects />} />
+        <Route path="/admin/settings/exam-types" element={<AdminExamTypes />} />
+        <Route path="/admin/settings/semesters" element={<AdminSemesters />} />
+        <Route path="/admin/settings/curriculum" element={<AdminCurriculum />} />
+        <Route path="/admin/settings/syllabus" element={<AdminSyllabus />} />
+      </Route>
+
+      {/* Student Routes with StudentLayout */}
+      <Route element={<StudentLayout />}>
+        <Route path="/student" element={<StudentDashboard />} />
+        <Route path="/student/courses" element={<StudentCourses />} />
+        <Route path="/student/course-details" element={<CourseDetails />} />
+        <Route path="/student/assignment" element={<AssignmentDetails />} />
+        <Route path="/student/quiz" element={<QuizTest />} />
+        <Route path="/student/forums" element={<StudentForums />} />
+        <Route path="/student/exams" element={<StudentExamsPage />} />
+        <Route path="/student/grades" element={<StudentGrades />} />
+        <Route path="/student/schedule" element={<StudentSchedule />} />
+        <Route path="/student/profile" element={<StudentProfile />} />
+      </Route>
+
+      {/* Teacher Routes with TeacherLayout */}
+      <Route element={<TeacherLayout />}>
+        <Route path="/teacher" element={<TeacherDashboard />} />
+        <Route path="/teacher/classrooms" element={<TeacherClassrooms />} />
+      </Route>
+
+      <Route path="/sign-in" element={<SignInPage />} />
+      <Route path="/sso-callback" element={<SSOCallback />} />
+    </Routes>
   );
 }
 
