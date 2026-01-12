@@ -107,7 +107,7 @@ function ImportExcelModal({
                 </button>
 
                 {/* Title */}
-                <h2 className="text-xl font-bold text-gray-900 mb-1">{title}</h2>
+                <h2 className="text-xl font-bold text-[#0A1B3C] mb-1">{title}</h2>
                 <p className="text-sm text-gray-600 mb-4">{description}</p>
 
                 {/* Upload Area */}
@@ -142,7 +142,7 @@ function ImportExcelModal({
                         </>
                     ) : (
                         <>
-                            <p className="text-base font-semibold text-gray-900 mb-1">
+                            <p className="text-base font-semibold text-[#0A1B3C] mb-1">
                                 Drag & drop or click
                             </p>
                             <p className="text-sm text-gray-500">

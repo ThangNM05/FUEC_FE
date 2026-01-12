@@ -130,7 +130,7 @@ function QuizTest() {
           }`}>
             <CheckCircle className={`w-12 h-12 ${score >= 70 ? 'text-green-600' : 'text-red-600'}`} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Quiz Completed!</h1>
+          <h1 className="text-2xl font-bold text-[#0A1B3C] mb-2">Quiz Completed!</h1>
           <p className="text-gray-600 mb-6">{quiz.title}</p>
           <div className={`text-5xl font-bold mb-2 ${score >= 70 ? 'text-green-600' : 'text-red-600'}`}>
             {score}%
@@ -164,7 +164,7 @@ function QuizTest() {
       {/* Timer Header */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{quiz.title}</h1>
+          <h1 className="text-xl font-bold text-[#0A1B3C]">{quiz.title}</h1>
           <p className="text-sm text-gray-600">{quiz.course}</p>
         </div>
         <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold ${
@@ -181,7 +181,7 @@ function QuizTest() {
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="mb-6">
               <span className="text-sm text-orange-600 font-medium">Question {currentQuestion + 1} of {questions.length}</span>
-              <h2 className="text-xl font-bold text-gray-900 mt-2">{currentQ.question}</h2>
+              <h2 className="text-xl font-bold text-[#0A1B3C] mt-2">{currentQ.question}</h2>
             </div>
 
             <div className="space-y-3">
@@ -237,7 +237,7 @@ function QuizTest() {
         {/* Question Navigator */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-xl border border-gray-200 p-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Question Navigator</h3>
+            <h3 className="font-semibold text-[#0A1B3C] mb-4">Question Navigator</h3>
             <div className="grid grid-cols-5 gap-2">
               {questions.map((q, index) => (
                 <button

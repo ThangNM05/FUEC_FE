@@ -42,7 +42,7 @@ function AdminLayout() {
           >
             <Menu className="w-5 h-5 text-gray-700" />
           </button>
-          <span className="ml-3 font-semibold text-gray-900">EduConnect</span>
+          <span className="ml-3 font-semibold text-[#0A1B3C]">EduConnect</span>
         </div>
       )}
 

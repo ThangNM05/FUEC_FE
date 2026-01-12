@@ -31,7 +31,7 @@ function StudentProfile() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">My Profile</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Profile</h1>
           <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Manage your personal information.</p>
         </div>
         <button
@@ -61,7 +61,7 @@ function StudentProfile() {
                   </button>
                 )}
               </div>
-              <h2 className="text-xl font-bold text-gray-900 mt-4">{profile.name}</h2>
+              <h2 className="text-xl font-bold text-[#0A1B3C] mt-4">{profile.name}</h2>
               <p className="text-gray-600">{profile.studentId}</p>
               <span className="inline-block mt-2 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
                 {profile.major}
@@ -73,7 +73,7 @@ function StudentProfile() {
                 <BookOpen className="w-5 h-5 text-gray-500" />
                 <div>
                   <span className="text-xs text-gray-500">Year</span>
-                  <p className="font-medium text-gray-900">{profile.year}</p>
+                  <p className="font-medium text-[#0A1B3C]">{profile.year}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
@@ -88,7 +88,7 @@ function StudentProfile() {
 
           {/* Achievements */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
-            <h3 className="font-bold text-gray-900 mb-4">Achievements</h3>
+            <h3 className="font-bold text-[#0A1B3C] mb-4">Achievements</h3>
             <div className="space-y-3">
               {achievements.map(achievement => (
                 <div key={achievement.id} className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
@@ -96,7 +96,7 @@ function StudentProfile() {
                     <Award className="w-5 h-5 text-yellow-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 text-sm">{achievement.title}</p>
+                    <p className="font-medium text-[#0A1B3C] text-sm">{achievement.title}</p>
                     <p className="text-xs text-gray-500">{achievement.semester}</p>
                   </div>
                 </div>
@@ -108,7 +108,7 @@ function StudentProfile() {
         {/* Profile Form */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h3 className="font-bold text-gray-900 mb-6">Personal Information</h3>
+            <h3 className="font-bold text-[#0A1B3C] mb-6">Personal Information</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -183,7 +183,7 @@ function StudentProfile() {
 
           {/* Academic Info */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
-            <h3 className="font-bold text-gray-900 mb-6">Academic Information</h3>
+            <h3 className="font-bold text-[#0A1B3C] mb-6">Academic Information</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>

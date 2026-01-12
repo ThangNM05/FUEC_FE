@@ -63,11 +63,11 @@ function AdminSchedule() {
 
     const getBlockColor = (type: string) => {
         switch (type) {
-            case 'lecture': return 'bg-blue-500';
-            case 'lab': return 'bg-green-500';
-            case 'exam': return 'bg-yellow-500';
+            case 'lecture': return 'bg-[#F37022]';
+            case 'lab': return 'bg-orange-400';
+            case 'exam': return 'bg-orange-600';
             case 'blocked': return 'bg-gray-500';
-            default: return 'bg-blue-500';
+            default: return 'bg-[#F37022]';
         }
     };
 
@@ -88,7 +88,7 @@ function AdminSchedule() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Schedule Management</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Schedule Management</h1>
                     <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">View and manage class schedules.</p>
                 </div>
                 <div className="flex gap-2">
@@ -113,7 +113,7 @@ function AdminSchedule() {
                                 key={mode}
                                 onClick={() => setViewMode(mode)}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === mode
-                                    ? 'bg-[#0A1B3C] text-white'
+                                    ? 'bg-[#F37022] text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                     }`}
                             >
@@ -127,7 +127,7 @@ function AdminSchedule() {
                         <button className="p-2 hover:bg-gray-100 rounded-lg">
                             <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <span className="text-lg font-semibold text-gray-900 min-w-[180px] text-center">
+                        <span className="text-lg font-semibold text-[#0A1B3C] min-w-[180px] text-center">
                             {currentDate.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
                         </span>
                         <button className="p-2 hover:bg-gray-100 rounded-lg">
@@ -156,7 +156,7 @@ function AdminSchedule() {
                     {classrooms.map((classroom) => (
                         <div key={classroom} className="flex border-b border-gray-100 last:border-b-0 min-h-[60px] relative">
                             <div className="w-32 flex-shrink-0 p-3 flex items-center">
-                                <span className="text-sm font-medium text-gray-900">{classroom}</span>
+                                <span className="text-sm font-medium text-[#0A1B3C]">{classroom}</span>
                             </div>
                             <div className="flex-1 relative border-l border-gray-200">
                                 {/* Time slot backgrounds */}
@@ -196,15 +196,15 @@ function AdminSchedule() {
             <div className="mt-4 flex gap-4 items-center text-sm">
                 <span className="text-gray-600">Legend:</span>
                 <div className="flex gap-2 items-center">
-                    <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                    <div className="w-4 h-4 bg-[#F37022] rounded"></div>
                     <span>Lecture</span>
                 </div>
                 <div className="flex gap-2 items-center">
-                    <div className="w-4 h-4 bg-green-500 rounded"></div>
+                    <div className="w-4 h-4 bg-orange-400 rounded"></div>
                     <span>Lab</span>
                 </div>
                 <div className="flex gap-2 items-center">
-                    <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                    <div className="w-4 h-4 bg-orange-600 rounded"></div>
                     <span>Exam</span>
                 </div>
                 <div className="flex gap-2 items-center">

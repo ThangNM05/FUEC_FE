@@ -38,12 +38,12 @@ function AssignmentDetails() {
       <div className="mb-6">
         <button 
           onClick={() => navigate('/student/course-details')} 
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+          className="flex items-center gap-2 text-gray-600 hover:text-[#0A1B3C] mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Course
         </button>
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">{assignment.title}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">{assignment.title}</h1>
         <p className="text-sm md:text-base text-gray-600 mt-1">{assignment.course}</p>
       </div>
 
@@ -52,13 +52,13 @@ function AssignmentDetails() {
         <div className="lg:col-span-2 space-y-6">
           {/* Assignment Details */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Assignment Description</h2>
+            <h2 className="text-lg font-bold text-[#0A1B3C] mb-4">Assignment Description</h2>
             <p className="text-gray-700 leading-relaxed">{assignment.description}</p>
           </div>
 
           {/* Attachments */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Attachments</h2>
+            <h2 className="text-lg font-bold text-[#0A1B3C] mb-4">Attachments</h2>
             <div className="space-y-3">
               {assignment.attachments.map((file, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -67,7 +67,7 @@ function AssignmentDetails() {
                       <FileText className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">{file.name}</p>
+                      <p className="font-medium text-[#0A1B3C] text-sm">{file.name}</p>
                       <p className="text-xs text-gray-500">{file.size}</p>
                     </div>
                   </div>
@@ -81,7 +81,7 @@ function AssignmentDetails() {
 
           {/* Submission */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Your Submission</h2>
+            <h2 className="text-lg font-bold text-[#0A1B3C] mb-4">Your Submission</h2>
             
             {!assignment.submitted ? (
               <>
@@ -90,7 +90,7 @@ function AssignmentDetails() {
                     <div className="flex items-center justify-center gap-3">
                       <File className="w-8 h-8 text-orange-500" />
                       <div className="text-left">
-                        <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                        <p className="font-medium text-[#0A1B3C]">{selectedFile.name}</p>
                         <p className="text-sm text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                       </div>
                       <button 
@@ -140,7 +140,7 @@ function AssignmentDetails() {
         <div className="space-y-6">
           {/* Status Card */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Assignment Info</h2>
+            <h2 className="text-lg font-bold text-[#0A1B3C] mb-4">Assignment Info</h2>
             <div className="space-y-4">
               <div>
                 <span className="text-sm text-gray-500">Due Date</span>
@@ -148,7 +148,7 @@ function AssignmentDetails() {
               </div>
               <div>
                 <span className="text-sm text-gray-500">Max Score</span>
-                <p className="font-semibold text-gray-900">{assignment.maxScore} points</p>
+                <p className="font-semibold text-[#0A1B3C]">{assignment.maxScore} points</p>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Status</span>

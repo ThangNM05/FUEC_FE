@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Calendar, Clock, MapPin, BookOpen } from 'lucide-react';
 
 function StudentSchedule() {
+  const [semester, setSemester] = useState('SPRING2025');
   const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-  
+
   const schedule = [
     { day: 'Monday', time: '08:00 - 10:00', course: 'Software Engineering', code: 'SWE101', room: 'Room 301', teacher: 'Prof. Nguyen Van A' },
     { day: 'Monday', time: '10:30 - 12:30', course: 'Database Systems', code: 'DBS202', room: 'Room B205', teacher: 'Prof. Tran Thi B' },
@@ -18,7 +20,7 @@ function StudentSchedule() {
     return schedule.filter(item => item.day === day);
   };
 
-  const colors = ['bg-orange-100 border-orange-300', 'bg-blue-100 border-blue-300', 'bg-green-100 border-green-300', 'bg-purple-100 border-purple-300', 'bg-pink-100 border-pink-300'];
+  const colors = ['bg-orange-50 border-orange-200', 'bg-orange-100 border-orange-300', 'bg-orange-100 border-[#F37022]', 'bg-white border-orange-200', 'bg-orange-50 border-orange-300'];
   const courseColors: { [key: string]: string } = {};
   let colorIndex = 0;
 
@@ -33,10 +35,21 @@ function StudentSchedule() {
     <div className="p-4 md:p-6">
       {/* Header */}
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Weekly Schedule</h1>
-        <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Your class timetable for this week.</p>
+        <div className="flex items-center gap-4 mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Weekly Schedule</h1>
+          <select
+            value={semester}
+            onChange={(e) => setSemester(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-[#0A1B3C] focus:border-[#F37022] outline-none"
+          >
+            <option value="SPRING2025">Spring 2025</option>
+            <option value="FALL2024">Fall 2024</option>
+            <option value="SUMMER2024">Summer 2024</option>
+          </select>
+        </div>
+        <p className="text-sm md:text-base text-gray-600">Your class timetable for this week.</p>
       </div>
-      
+
       {/* Schedule Grid */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {/* Desktop View */}
@@ -45,7 +58,7 @@ function StudentSchedule() {
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 {weekDays.map(day => (
-                  <th key={day} className="p-4 text-left font-semibold text-gray-900 min-w-[200px]">
+                  <th key={day} className="p-4 text-left font-semibold text-[#0A1B3C] min-w-[200px]">
                     {day}
                   </th>
                 ))}
@@ -57,11 +70,11 @@ function StudentSchedule() {
                   <td key={day} className="p-3 align-top border-r border-gray-100 last:border-0">
                     <div className="space-y-3">
                       {getScheduleForDay(day).map((item, index) => (
-                        <div 
-                          key={index} 
+                        <div
+                          key={index}
                           className={`p-3 rounded-lg border ${courseColors[item.code]}`}
                         >
-                          <div className="font-medium text-gray-900 text-sm">{item.course}</div>
+                          <div className="font-medium text-[#0A1B3C] text-sm">{item.course}</div>
                           <div className="text-xs text-gray-600 mt-1">{item.code}</div>
                           <div className="flex items-center gap-1 text-xs text-gray-500 mt-2">
                             <Clock className="w-3 h-3" /> {item.time}
@@ -86,15 +99,15 @@ function StudentSchedule() {
         <div className="lg:hidden">
           {weekDays.map(day => (
             <div key={day} className="border-b border-gray-200 last:border-0">
-              <div className="bg-gray-50 px-4 py-3 font-semibold text-gray-900">{day}</div>
+              <div className="bg-gray-50 px-4 py-3 font-semibold text-[#0A1B3C]">{day}</div>
               <div className="p-3 space-y-3">
                 {getScheduleForDay(day).length > 0 ? (
                   getScheduleForDay(day).map((item, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className={`p-3 rounded-lg border ${courseColors[item.code]}`}
                     >
-                      <div className="font-medium text-gray-900">{item.course}</div>
+                      <div className="font-medium text-[#0A1B3C]">{item.course}</div>
                       <div className="text-sm text-gray-600">{item.code}</div>
                       <div className="flex flex-wrap gap-4 text-sm text-gray-500 mt-2">
                         <span className="flex items-center gap-1">
