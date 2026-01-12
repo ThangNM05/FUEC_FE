@@ -9,9 +9,9 @@ function StudentGrades() {
 
   const gradesSummary = [
     { label: 'GPA', value: '3.65', icon: TrendingUp, color: 'orange' },
-    { label: 'Credits Earned', value: '48', icon: Award, color: 'blue' },
-    { label: 'Courses Completed', value: '12', icon: CheckCircle, color: 'green' },
-    { label: 'Current Semester', value: '4.0', icon: BarChart2, color: 'purple' }
+    { label: 'Credits Earned', value: '48', icon: Award, color: 'orange-light' },
+    { label: 'Courses Completed', value: '12', icon: CheckCircle, color: 'orange' },
+    { label: 'Current Semester', value: '4.0', icon: BarChart2, color: 'orange-light' }
   ];
 
   const courses = [
@@ -30,18 +30,16 @@ function StudentGrades() {
   ];
 
   const getGradeColor = (grade: string) => {
-    if (grade === 'A' || grade === 'A+') return 'text-green-600 bg-green-50';
-    if (grade === 'B+' || grade === 'B') return 'text-blue-600 bg-blue-50';
-    if (grade === 'In Progress') return 'text-orange-600 bg-orange-50';
+    if (grade === 'A' || grade === 'A+') return 'text-[#F37022] bg-orange-50 font-bold';
+    if (grade === 'B+' || grade === 'B') return 'text-orange-600 bg-orange-50';
+    if (grade === 'In Progress') return 'text-orange-500 bg-orange-50';
     return 'text-gray-600 bg-gray-50';
   };
 
   const getIconColor = (color: string) => {
     const colors: { [key: string]: string } = {
-      orange: 'bg-orange-100 text-orange-600',
-      blue: 'bg-blue-100 text-blue-600',
-      green: 'bg-green-100 text-green-600',
-      purple: 'bg-purple-100 text-purple-600'
+      orange: 'bg-orange-100 text-[#F37022]',
+      'orange-light': 'bg-orange-50 text-orange-500'
     };
     return colors[color] || colors.orange;
   };
@@ -51,13 +49,13 @@ function StudentGrades() {
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">My Grades</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Grades</h1>
           <p className="text-gray-600 mt-1">Track your academic performance and progress.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-lg border border-gray-200">
             <Search className="w-5 h-5 text-gray-400" />
-            <input type="text" placeholder="Search courses..." className="outline-none text-sm text-gray-900 bg-transparent w-40" />
+            <input type="text" placeholder="Search courses..." className="outline-none text-sm text-[#0A1B3C] bg-transparent w-40" />
           </div>
 
           {/* Semester Selector */}
@@ -98,7 +96,7 @@ function StudentGrades() {
             <div key={index} className="bg-white rounded-xl border border-gray-200 p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
+                  <div className="text-3xl font-bold text-[#0A1B3C]">{stat.value}</div>
                   <div className="text-sm text-gray-600 mt-1">{stat.label}</div>
                 </div>
                 <div className={`w-12 h-12 ${getIconColor(stat.color)} rounded-xl flex items-center justify-center`}>
@@ -113,7 +111,7 @@ function StudentGrades() {
       {/* Course Grades Table */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-          <h2 className="text-lg font-bold text-gray-900">Course Grades</h2>
+          <h2 className="text-lg font-bold text-[#0A1B3C]">Course Grades</h2>
           <div className="flex gap-2">
             <button className="px-4 py-2 bg-gray-100 text-gray-700 font-medium text-sm rounded-lg hover:bg-gray-200">Fall 2024</button>
             <button className="px-4 py-2 bg-gray-100 text-gray-700 font-medium text-sm rounded-lg hover:bg-gray-200">All Semesters</button>
@@ -137,11 +135,11 @@ function StudentGrades() {
             <tbody>
               {courses.map(course => (
                 <tr key={course.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="p-4 font-medium text-gray-900">{course.name}</td>
+                  <td className="p-4 font-medium text-[#0A1B3C]">{course.name}</td>
                   <td className="p-4 text-gray-600">{course.code}</td>
-                  <td className="p-4 text-center font-medium text-gray-900">{course.assignments}</td>
-                  <td className="p-4 text-center font-medium text-gray-900">{course.midterm}</td>
-                  <td className="p-4 text-center font-medium text-gray-900">
+                  <td className="p-4 text-center font-medium text-[#0A1B3C]">{course.assignments}</td>
+                  <td className="p-4 text-center font-medium text-[#0A1B3C]">{course.midterm}</td>
+                  <td className="p-4 text-center font-medium text-[#0A1B3C]">
                     {course.final || <span className="text-gray-400">-</span>}
                   </td>
                   <td className="p-4 text-center font-semibold text-orange-600">{course.overall}</td>
@@ -160,7 +158,7 @@ function StudentGrades() {
 
       {/* Grade Distribution */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-lg font-bold text-gray-900 mb-5">Grade Distribution</h2>
+        <h2 className="text-lg font-bold text-[#0A1B3C] mb-5">Grade Distribution</h2>
         <div className="grid grid-cols-5 gap-4">
           {gradeDistribution.map(item => (
             <div key={item.grade} className="text-center">

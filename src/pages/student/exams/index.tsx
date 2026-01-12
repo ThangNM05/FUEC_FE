@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { Search, Calendar, Clock, MapPin, AlertCircle } from 'lucide-react';
 
 function StudentExams() {
+  const [semester, setSemester] = useState('SPRING2025');
+
   const upcomingExams = [
     {
       id: 1,
@@ -57,13 +60,21 @@ function StudentExams() {
     <div className="p-4 md:p-6">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Exam Schedule</h1>
-          <p className="text-gray-600 mt-1">View your upcoming exams and past results.</p>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Exam Schedule</h1>
+          <select
+            value={semester}
+            onChange={(e) => setSemester(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-[#0A1B3C] focus:border-[#F37022] outline-none"
+          >
+            <option value="SPRING2025">Spring 2025</option>
+            <option value="FALL2024">Fall 2024</option>
+            <option value="SUMMER2024">Summer 2024</option>
+          </select>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-lg border border-gray-200">
           <Search className="w-5 h-5 text-gray-400" />
-          <input type="text" placeholder="Search exams..." className="outline-none text-sm text-gray-900 bg-transparent w-40" />
+          <input type="text" placeholder="Search exams..." className="outline-none text-sm text-[#0A1B3C] bg-transparent w-40" />
         </div>
       </div>
 
@@ -79,7 +90,7 @@ function StudentExams() {
       {/* Upcoming Exams */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-bold text-gray-900">Upcoming Exams</h2>
+          <h2 className="text-lg font-bold text-[#0A1B3C]">Upcoming Exams</h2>
           <button className="px-4 py-2 bg-[#F37022] text-white font-medium text-sm rounded-lg hover:bg-[#D96419]">
             Notify me
           </button>
@@ -91,9 +102,9 @@ function StudentExams() {
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-3 mb-3">
-                    <h3 className="font-semibold text-gray-900 text-lg">{exam.course}</h3>
+                    <h3 className="font-semibold text-[#0A1B3C] text-lg">{exam.course}</h3>
                     <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded">{exam.code}</span>
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded">{exam.type}</span>
+                    <span className="px-2 py-0.5 bg-orange-50 text-orange-600 text-xs font-semibold rounded">{exam.type}</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -101,7 +112,7 @@ function StudentExams() {
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <div>
                         <div className="text-xs text-gray-500">Date</div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-[#0A1B3C]">
                           {new Date(exam.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </div>
                       </div>
@@ -110,23 +121,22 @@ function StudentExams() {
                       <Clock className="w-4 h-4 text-gray-400" />
                       <div>
                         <div className="text-xs text-gray-500">Time</div>
-                        <div className="text-sm font-medium text-gray-900">{exam.time}</div>
+                        <div className="text-sm font-medium text-[#0A1B3C]">{exam.time}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-gray-400" />
                       <div>
                         <div className="text-xs text-gray-500">Location</div>
-                        <div className="text-sm font-medium text-gray-900">{exam.room}</div>
+                        <div className="text-sm font-medium text-[#0A1B3C]">{exam.room}</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="text-right flex-shrink-0">
-                  <div className={`inline-block px-4 py-2 rounded-lg font-semibold text-sm ${
-                    exam.daysLeft <= 3 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
-                  }`}>
+                  <div className={`inline-block px-4 py-2 rounded-lg font-semibold text-sm ${exam.daysLeft <= 3 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
+                    }`}>
                     In {exam.daysLeft} days
                   </div>
                   <div className="text-xs text-gray-500 mt-2">Duration: {exam.duration}</div>
@@ -140,7 +150,7 @@ function StudentExams() {
       {/* Past Exams */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-lg font-bold text-gray-900">Past Exams</h2>
+          <h2 className="text-lg font-bold text-[#0A1B3C]">Past Exams</h2>
           <a href="#" className="text-orange-500 text-sm font-medium hover:underline">View All Results</a>
         </div>
 
@@ -159,7 +169,7 @@ function StudentExams() {
             <tbody>
               {pastExams.map(exam => (
                 <tr key={exam.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="p-4 font-medium text-gray-900">{exam.course}</td>
+                  <td className="p-4 font-medium text-[#0A1B3C]">{exam.course}</td>
                   <td className="p-4 text-gray-600">{exam.code}</td>
                   <td className="p-4 text-gray-600">{exam.type}</td>
                   <td className="p-4 text-center text-gray-600">
@@ -167,7 +177,7 @@ function StudentExams() {
                   </td>
                   <td className="p-4 text-center font-semibold text-orange-600">{exam.score}</td>
                   <td className="p-4 text-center">
-                    <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full">
+                    <span className="px-3 py-1 bg-orange-100 text-[#F37022] text-sm font-semibold rounded-full">
                       {exam.grade}
                     </span>
                   </td>

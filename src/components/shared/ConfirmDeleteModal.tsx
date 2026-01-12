@@ -56,7 +56,7 @@ function ConfirmDeleteModal({
                 </div>
 
                 {/* Title */}
-                <h2 className="text-base font-bold text-gray-900 text-center mb-2">
+                <h2 className="text-base font-bold text-[#0A1B3C] text-center mb-2">
                     {title}
                 </h2>
 

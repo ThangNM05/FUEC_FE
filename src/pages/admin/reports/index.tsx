@@ -29,7 +29,7 @@ function AdminReports() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 md:mb-8">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Reports</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Reports</h1>
           <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Generate and download system reports.</p>
         </div>
         <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F37022] text-white rounded-lg text-sm md:text-base font-semibold">
@@ -41,7 +41,7 @@ function AdminReports() {
 
       {/* Report Types */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 mb-4 md:mb-6">
-        <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6">Report Types</h2>
+        <h2 className="text-lg md:text-xl font-bold text-[#0A1B3C] mb-4 md:mb-6">Report Types</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {reportTypes.map(report => {
             const Icon = report.icon;
@@ -52,7 +52,7 @@ function AdminReports() {
                     <Icon className="w-6 h-6" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">{report.name}</h3>
+                    <h3 className="text-base font-semibold text-[#0A1B3C] mb-1">{report.name}</h3>
                     <p className="text-sm text-gray-600">{report.description}</p>
                   </div>
                 </div>
@@ -69,7 +69,7 @@ function AdminReports() {
       {/* Recent Reports */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 mb-4 md:mb-6">
         <div className="flex justify-between items-center mb-4 md:mb-6">
-          <h2 className="text-lg md:text-xl font-bold text-gray-900">Recent Reports</h2>
+          <h2 className="text-lg md:text-xl font-bold text-[#0A1B3C]">Recent Reports</h2>
           <a href="#" className="text-[#F37022] text-sm font-medium hover:underline">View All</a>
         </div>
         <div className="overflow-x-auto">
@@ -86,7 +86,7 @@ function AdminReports() {
             <tbody>
               {recentReports.map(report => (
                 <tr key={report.id} className="border-b border-gray-100">
-                  <td className="p-4 text-sm font-medium text-gray-900">{report.name}</td>
+                  <td className="p-4 text-sm font-medium text-[#0A1B3C]">{report.name}</td>
                   <td className="p-4 text-center text-sm text-gray-600">
                     {new Date(report.generatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </td>
@@ -107,12 +107,12 @@ function AdminReports() {
 
       {/* Quick Stats */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
-        <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-4 md:mb-6">Quick Stats</h2>
+        <h2 className="text-lg md:text-xl font-bold text-[#0A1B3C] mb-4 md:mb-6">Quick Stats</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
           <div className="bg-white border border-gray-200 rounded-lg p-5">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <div className="text-2xl font-bold text-gray-900">2,847</div>
+                <div className="text-2xl font-bold text-[#0A1B3C]">2,847</div>
                 <div className="text-sm text-gray-600">Total Users</div>
               </div>
               <div className="p-3 bg-[#FFF5ED] rounded-lg">
@@ -124,7 +124,7 @@ function AdminReports() {
           <div className="bg-white border border-gray-200 rounded-lg p-5">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <div className="text-2xl font-bold text-gray-900">156</div>
+                <div className="text-2xl font-bold text-[#0A1B3C]">156</div>
                 <div className="text-sm text-gray-600">Active Courses</div>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -136,7 +136,7 @@ function AdminReports() {
           <div className="bg-white border border-gray-200 rounded-lg p-5">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <div className="text-2xl font-bold text-gray-900">89%</div>
+                <div className="text-2xl font-bold text-[#0A1B3C]">89%</div>
                 <div className="text-sm text-gray-600">Completion Rate</div>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
@@ -148,7 +148,7 @@ function AdminReports() {
           <div className="bg-white border border-gray-200 rounded-lg p-5">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <div className="text-2xl font-bold text-gray-900">99.9%</div>
+                <div className="text-2xl font-bold text-[#0A1B3C]">99.9%</div>
                 <div className="text-sm text-gray-600">System Uptime</div>
               </div>
               <div className="p-3 bg-purple-100 rounded-lg">

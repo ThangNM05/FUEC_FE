@@ -114,7 +114,7 @@ function DataTable<T extends { id: string | number }>({
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4 md:mb-6">
         <div className="flex-1">
-          <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2">{title}</h2>
+          <h2 className="text-lg md:text-xl font-bold text-[#0A1B3C] mb-2">{title}</h2>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 flex-1 sm:flex-initial">
               <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -215,7 +215,7 @@ function DataTable<T extends { id: string | number }>({
                     </td>
                   )}
                   {columns.map((col, colIndex) => (
-                    <td key={colIndex} className={`p-2 md:p-3 text-${col.align || 'left'} text-xs md:text-sm text-gray-900 ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}>
+                    <td key={colIndex} className={`p-2 md:p-3 text-${col.align || 'left'} text-xs md:text-sm text-[#0A1B3C] ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}>
                       {col.render ? col.render(item) : String(item[col.accessor])}
                     </td>
                   ))}

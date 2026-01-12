@@ -36,7 +36,6 @@ function TeacherSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
         if (isMobile) toggleSidebar();
     };
 
-    // Don't render on mobile when closed
     if (isMobile && !isOpen) {
         return null;
     }
@@ -95,7 +94,9 @@ function TeacherSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
 
                 {/* Menu Items */}
                 <div className="flex-1 py-4 px-3 overflow-y-auto">
-                    {(isOpen || isMobile) && <div className="px-3 mb-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide">MENU</div>}
+                    {(isOpen || isMobile) && (
+                        <div className="px-3 mb-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wide">MENU</div>
+                    )}
 
                     {menuItems.map(item => {
                         const Icon = item.icon;
@@ -105,15 +106,17 @@ function TeacherSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
                             <button
                                 key={item.id}
                                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all mb-1 ${isActive
-                                    ? 'bg-orange-50 text-orange-600'
-                                    : 'text-gray-700 hover:bg-gray-50'
+                                    ? 'bg-orange-50 text-[#F37022]'
+                                    : 'text-[#0A1B3C] hover:bg-gray-50'
                                     } ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                                 onClick={() => handleMenuClick(item.path)}
                                 title={!isOpen && !isMobile ? item.label : ''}
                             >
                                 <Icon className="w-5 h-5 flex-shrink-0" />
                                 {(isOpen || isMobile) && (
-                                    <span className="flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
+                                    <span className="flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                        {item.label}
+                                    </span>
                                 )}
                             </button>
                         );
@@ -123,7 +126,8 @@ function TeacherSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
                 {/* Sidebar Footer */}
                 <div className="border-t border-gray-100 p-3 bg-white">
                     <button
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-all mb-1 ${!isOpen && !isMobile ? 'justify-center' : ''}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-[#0A1B3C] hover:bg-gray-50 rounded-lg transition-all mb-1 ${!isOpen && !isMobile ? 'justify-center' : ''
+                            }`}
                         title={!isOpen && !isMobile ? 'Profile' : ''}
                         onClick={() => handleMenuClick('/teacher/profile')}
                     >
@@ -131,7 +135,8 @@ function TeacherSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
                         {(isOpen || isMobile) && <span className="text-sm font-medium">Profile</span>}
                     </button>
                     <button
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-all ${!isOpen && !isMobile ? 'justify-center' : ''}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-[#0A1B3C] hover:bg-gray-50 rounded-lg transition-all ${!isOpen && !isMobile ? 'justify-center' : ''
+                            }`}
                         title={!isOpen && !isMobile ? 'Logout' : ''}
                         onClick={() => {
                             localStorage.removeItem('user');

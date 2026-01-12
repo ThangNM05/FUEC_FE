@@ -32,6 +32,7 @@ interface Assignment {
 function TeacherClassrooms() {
     const [selectedClass, setSelectedClass] = useState<Class | null>(null);
     const [activeTab, setActiveTab] = useState<'students' | 'assignments' | 'create'>('students');
+    const [semester, setSemester] = useState('SPRING2025');
 
     const classes: Class[] = [
         {
@@ -85,7 +86,7 @@ function TeacherClassrooms() {
             sortable: true,
             align: 'center' as const,
             render: (item: Student) => (
-                <span className="font-semibold text-gray-900">{item.attendance}</span>
+                <span className="font-semibold text-[#0A1B3C]">{item.attendance}</span>
             )
         },
     ];
@@ -94,7 +95,19 @@ function TeacherClassrooms() {
         <div className="h-[calc(100vh-4rem)] flex flex-col p-6">
             {/* Top Toolbar */}
             <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-4 flex-1">
+                <div className="flex items-center gap-4">
+                    <h1 className="text-2xl font-bold text-[#0A1B3C]">My Classes</h1>
+                    <select
+                        value={semester}
+                        onChange={(e) => setSemester(e.target.value)}
+                        className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-[#0A1B3C] focus:border-[#F37022] outline-none"
+                    >
+                        <option value="SPRING2025">Spring 2025</option>
+                        <option value="FALL2024">Fall 2024</option>
+                        <option value="SUMMER2024">Summer 2024</option>
+                    </select>
+                </div>
+                <div className="flex items-center gap-2">
                     <div className="relative w-64">
                         <input
                             type="text"
@@ -102,19 +115,6 @@ function TeacherClassrooms() {
                             className="w-full pl-9 pr-4 py-2 bg-gray-100 border-none rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F37022]"
                         />
                         <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500">Filter:</span>
-                        <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                            <button className="px-3 py-1 text-xs font-medium text-gray-600 rounded hover:bg-white hover:shadow-sm">All</button>
-                            <button className="px-3 py-1 text-xs font-medium text-[#F37022] bg-white shadow-sm rounded">My Classes</button>
-                        </div>
-                        <button className="px-3 py-1.5 text-xs text-[#F37022] border border-[#F37022] rounded-full hover:bg-orange-50 font-medium">
-                            Active
-                        </button>
-                        <button className="px-3 py-1.5 text-xs text-gray-500 border border-gray-200 rounded-full hover:bg-gray-50">
-                            Archived
-                        </button>
                     </div>
                 </div>
             </div>
@@ -134,9 +134,9 @@ function TeacherClassrooms() {
                             >
                                 <div className="text-[10px] text-gray-500 font-medium mb-1">{cls.schedule.split(' ')[0] + ' ' + cls.schedule.split(' ')[1]}</div>
                                 <div className="flex justify-between items-start mb-2">
-                                    <h3 className="font-bold text-gray-900 text-lg">{cls.code}</h3>
+                                    <h3 className="font-bold text-[#0A1B3C] text-lg">{cls.code}</h3>
                                     {selectedClass?.id === cls.id && (
-                                        <div className="w-2 h-2 rounded-full bg-blue-500 mt-2"></div>
+                                        <div className="w-2 h-2 rounded-full bg-[#F37022] mt-2"></div>
                                     )}
                                 </div>
                                 <div className="inline-block px-2 py-0.5 rounded border border-[#F37022] text-[#F37022] text-[10px] font-medium mb-3">
@@ -144,8 +144,8 @@ function TeacherClassrooms() {
                                 </div>
                                 <div className="flex items-center justify-between mt-1">
                                     <span className="text-xs text-gray-500 font-medium truncate max-w-[150px]">{cls.name}</span>
-                                    <div className="flex items-center gap-1 text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                                    <div className="flex items-center gap-1 text-[10px] text-[#F37022] bg-orange-50 px-2 py-0.5 rounded-full">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-[#F37022]"></div>
                                         Active
                                     </div>
                                 </div>
@@ -164,13 +164,13 @@ function TeacherClassrooms() {
                                     <div>
                                         <h2 className="text-xl font-bold text-[#F37022] flex items-center gap-2">
                                             {selectedClass.code} - {selectedClass.name}
-                                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                            <span className="w-2 h-2 rounded-full bg-[#F37022]"></span>
                                         </h2>
                                         <div className="text-xs text-gray-400 mt-1">{selectedClass.semester}</div>
                                     </div>
                                     <div className="flex gap-2">
                                         <div className="px-3 py-1 bg-gray-100 rounded-lg text-xs font-medium text-gray-600 flex items-center gap-1">
-                                            Status: <span className="text-blue-600">Ongoing</span>
+                                            Status: <span className="text-[#F37022]">Ongoing</span>
                                         </div>
                                         <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400">
                                             <MoreHorizontal className="w-5 h-5" />
@@ -181,11 +181,11 @@ function TeacherClassrooms() {
                                 <div className="grid grid-cols-2 gap-8 mb-6">
                                     <div>
                                         <div className="mb-4">
-                                            <span className="text-xs font-bold text-gray-900 block mb-1">Subject:</span>
+                                            <span className="text-xs font-bold text-[#0A1B3C] block mb-1">Subject:</span>
                                             <span className="text-sm text-gray-600">{selectedClass.name}</span>
                                         </div>
                                         <div>
-                                            <span className="text-xs font-bold text-gray-900 block mb-1">Schedule:</span>
+                                            <span className="text-xs font-bold text-[#0A1B3C] block mb-1">Schedule:</span>
                                             <span className="text-sm text-gray-600 flex items-center gap-2">
                                                 <Clock className="w-4 h-4" />
                                                 {selectedClass.schedule}
@@ -194,25 +194,25 @@ function TeacherClassrooms() {
                                     </div>
                                     <div>
                                         <div className="mb-4">
-                                            <span className="text-xs font-bold text-gray-900 block mb-1">Location:</span>
+                                            <span className="text-xs font-bold text-[#0A1B3C] block mb-1">Location:</span>
                                             <span className="text-sm text-gray-600 flex items-center gap-2">
                                                 <MapPin className="w-4 h-4" />
                                                 {selectedClass.room}
                                             </span>
                                         </div>
                                         <div>
-                                            <span className="text-xs font-bold text-gray-900 block mb-1">Students:</span>
+                                            <span className="text-xs font-bold text-[#0A1B3C] block mb-1">Students:</span>
                                             <div className="flex items-center gap-2">
                                                 <span className="text-sm text-gray-600">{selectedClass.studentCount} enrolled</span>
                                                 <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                                                <span className="text-xs text-blue-600 cursor-pointer hover:underline">View list</span>
+                                                <span className="text-xs text-[#F37022] cursor-pointer hover:underline">View list</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="bg-gray-50 rounded-lg p-3">
-                                    <h4 className="text-xs font-bold text-gray-900 mb-2">Description</h4>
+                                    <h4 className="text-xs font-bold text-[#0A1B3C] mb-2">Description</h4>
                                     <p className="text-sm text-gray-600">
                                         This course covers the fundamentals of {selectedClass.name}, including key concepts, methodologies, and practical applications.
                                     </p>
@@ -226,7 +226,7 @@ function TeacherClassrooms() {
                                         onClick={() => setActiveTab('students')}
                                         className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'students'
                                             ? 'border-[#F37022] text-[#F37022]'
-                                            : 'border-transparent text-gray-500 hover:text-gray-900'
+                                            : 'border-transparent text-gray-500 hover:text-[#0A1B3C]'
                                             }`}
                                     >
                                         Student List
@@ -235,7 +235,7 @@ function TeacherClassrooms() {
                                         onClick={() => setActiveTab('assignments')}
                                         className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'assignments'
                                             ? 'border-[#F37022] text-[#F37022]'
-                                            : 'border-transparent text-gray-500 hover:text-gray-900'
+                                            : 'border-transparent text-gray-500 hover:text-[#0A1B3C]'
                                             }`}
                                     >
                                         Assignments
@@ -244,7 +244,7 @@ function TeacherClassrooms() {
                                         onClick={() => setActiveTab('create')}
                                         className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'create'
                                             ? 'border-[#F37022] text-[#F37022]'
-                                            : 'border-transparent text-gray-500 hover:text-gray-900'
+                                            : 'border-transparent text-gray-500 hover:text-[#0A1B3C]'
                                             }`}
                                     >
                                         Create Assignment
@@ -271,13 +271,13 @@ function TeacherClassrooms() {
                                                 <div className="flex items-start justify-between">
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-3 mb-2">
-                                                            <div className="p-2 bg-indigo-50 rounded-lg">
-                                                                <FileText className="w-5 h-5 text-indigo-600" />
+                                                            <div className="p-2 bg-orange-50 rounded-lg">
+                                                                <FileText className="w-5 h-5 text-[#F37022]" />
                                                             </div>
                                                             <div>
-                                                                <h3 className="font-bold text-gray-900 text-sm">{assignment.title}</h3>
+                                                                <h3 className="font-bold text-[#0A1B3C] text-sm">{assignment.title}</h3>
                                                                 <span className={`inline-flex items-center px-2 py-0.5 mt-1 text-[10px] font-medium rounded-full ${assignment.status === 'Active'
-                                                                    ? 'bg-green-50 text-green-700'
+                                                                    ? 'bg-orange-50 text-[#F37022]'
                                                                     : 'bg-gray-100 text-gray-600'
                                                                     }`}>
                                                                     {assignment.status}
@@ -307,7 +307,7 @@ function TeacherClassrooms() {
                                 {activeTab === 'create' && (
                                     <div className="max-w-2xl">
                                         <div className="flex items-center justify-between mb-6">
-                                            <h3 className="text-lg font-bold text-gray-900">New Assignment Details</h3>
+                                            <h3 className="text-lg font-bold text-[#0A1B3C]">New Assignment Details</h3>
                                         </div>
                                         <form className="space-y-6">
                                             <div>
@@ -353,7 +353,7 @@ function TeacherClassrooms() {
                                                     {classes.filter(c => c.id !== selectedClass.id).map((cls) => (
                                                         <label key={cls.id} className="flex items-center gap-3 cursor-pointer group">
                                                             <input type="checkbox" className="w-5 h-5 text-[#F37022] rounded focus:ring-[#F37022] border-gray-300" />
-                                                            <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900 transition-colors">{cls.code} - {cls.name}</span>
+                                                            <span className="text-sm font-medium text-gray-600 group-hover:text-[#0A1B3C] transition-colors">{cls.code} - {cls.name}</span>
                                                         </label>
                                                     ))}
                                                 </div>
@@ -383,13 +383,13 @@ function TeacherClassrooms() {
                             <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
                                 <BookOpen className="w-10 h-10 text-gray-300" />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-900 mb-1">No Class Selected</h3>
+                            <h3 className="text-lg font-bold text-[#0A1B3C] mb-1">No Class Selected</h3>
                             <p className="text-sm text-gray-500">Select a class from the list to view details</p>
                         </div>
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 

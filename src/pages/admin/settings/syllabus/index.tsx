@@ -97,7 +97,7 @@ function AdminSyllabus() {
     return (
         <div className="p-4 md:p-6">
             <div className="mb-4 md:mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Syllabus Management</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Syllabus Management</h1>
                 <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Manage course syllabi and learning outcomes.</p>
             </div>
 
