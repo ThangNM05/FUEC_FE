@@ -103,37 +103,24 @@ function StudentCourses() {
 
         {/* Card View */}
         {viewMode === 'card' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredCourses.map((course) => (
               <div
                 key={course.id}
                 className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group"
                 onClick={() => navigate('/student/course-details')}
               >
-                <div className="flex items-start justify-between mb-2">
-                  <span className="text-xs font-semibold text-white bg-[#0A1B3C] px-2 py-1 rounded">
+                <div className="mb-3">
+                  <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2.5 py-1 rounded">
                     {course.code}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                      Active
-                    </span>
-                    {course.favorited && (
-                      <Star className="w-4 h-4 text-[#F39C12] fill-[#F39C12]" />
-                    )}
-                  </div>
                 </div>
-                <h3 className="font-semibold text-[#0A1B3C] text-base mb-1 group-hover:text-[#F37022] transition-colors">
+                <h3 className="font-bold text-[#0A1B3C] text-lg mb-2">
                   {course.name}
                 </h3>
-                <p className="text-sm text-gray-500 mb-2">{course.instructor}</p>
-                <p className="text-xs text-gray-400 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {course.className} • {course.schedule}
-                </p>
-                <button className="text-[#F37022] text-sm font-medium hover:underline flex items-center gap-1 mt-3">
-                  View course <ArrowRight className="w-4 h-4" />
+                <p className="text-sm text-gray-500 mb-3">{course.instructor}</p>
+                <button className="text-[#1a73e8] text-sm font-medium hover:underline">
+                  View course
                 </button>
               </div>
             ))}
