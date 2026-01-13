@@ -116,7 +116,7 @@ function TeacherDashboard() {
                                     {/* Course Header */}
                                     <div className="p-5 border-b border-gray-100">
                                         <div className="flex items-start justify-between mb-2">
-                                            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                            <span className="text-xs font-semibold text-white bg-[#0A1B3C] px-2 py-1 rounded">
                                                 {course.code}
                                             </span>
                                             {course.pendingGrading > 0 && (

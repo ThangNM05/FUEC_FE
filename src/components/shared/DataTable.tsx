@@ -177,7 +177,7 @@ function DataTable<T extends { id: string | number }>({
               {columns.map((col, index) => (
                 <th
                   key={index}
-                  className={`p-2 md:p-3 text-${col.align || 'left'} text-[10px] md:text-xs font-semibold text-gray-600 ${col.sortable ? 'cursor-pointer select-none' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
+                  className={`p-2 md:p-3 text-${col.align || 'left'} text-[10px] md:text-xs font-bold text-[#0A1B3C] ${col.sortable ? 'cursor-pointer select-none' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
                   onClick={() => col.sortable && requestSort(col.accessor)}
                 >
                   <div className={`flex items-center gap-1 ${col.align === 'center' ? 'justify-center' : 'justify-start'}`}>

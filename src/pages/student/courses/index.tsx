@@ -111,12 +111,18 @@ function StudentCourses() {
                 onClick={() => navigate('/student/course-details')}
               >
                 <div className="flex items-start justify-between mb-2">
-                  <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  <span className="text-xs font-semibold text-white bg-[#0A1B3C] px-2 py-1 rounded">
                     {course.code}
                   </span>
-                  {course.favorited && (
-                    <Star className="w-4 h-4 text-[#F39C12] fill-[#F39C12]" />
-                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                      Active
+                    </span>
+                    {course.favorited && (
+                      <Star className="w-4 h-4 text-[#F39C12] fill-[#F39C12]" />
+                    )}
+                  </div>
                 </div>
                 <h3 className="font-semibold text-[#0A1B3C] text-base mb-1 group-hover:text-[#F37022] transition-colors">
                   {course.name}
