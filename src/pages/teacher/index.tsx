@@ -115,18 +115,12 @@ function TeacherDashboard() {
                                 >
                                     {/* Course Header */}
                                     <div className="p-5 border-b border-gray-100">
-                                        <div className="flex items-start justify-between mb-2">
-                                            <span className="text-xs font-semibold text-white bg-[#0A1B3C] px-2 py-1 rounded">
+                                        <div className="mb-3">
+                                            <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2.5 py-1 rounded">
                                                 {course.code}
                                             </span>
-                                            {course.pendingGrading > 0 && (
-                                                <span className="text-xs text-[#F37022] font-medium flex items-center gap-1">
-                                                    <FileText className="w-3 h-3" />
-                                                    {course.pendingGrading} to grade
-                                                </span>
-                                            )}
                                         </div>
-                                        <h3 className="font-semibold text-[#0A1B3C] text-base mb-1">
+                                        <h3 className="font-bold text-[#0A1B3C] text-lg mb-1">
                                             {course.name}
                                         </h3>
                                         <p className="text-sm text-gray-500 flex items-center gap-2">
