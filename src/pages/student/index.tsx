@@ -95,7 +95,7 @@ function StudentDashboard() {
                   onClick={() => navigate('/student/course-details')}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    <span className="text-xs font-semibold text-white bg-[#0A1B3C] px-2 py-1 rounded">
                       {course.code}
                     </span>
                     {course.newItems > 0 && (

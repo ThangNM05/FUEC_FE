@@ -127,12 +127,12 @@ function TeacherClassrooms() {
                             <button
                                 key={cls.id}
                                 onClick={() => setSelectedClass(cls)}
-                                className={`w-full text-left p-4 rounded-xl border transition-all relative ${selectedClass?.id === cls.id
-                                    ? 'bg-gray-100 border-transparent'
+                                className={`w-full text-left p-4 rounded-xl border-2 transition-all relative ${selectedClass?.id === cls.id
+                                    ? 'bg-white border-[#F37022] shadow-md'
                                     : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
                                     }`}
                             >
-                                <div className="text-[10px] text-gray-500 font-medium mb-1">{cls.schedule.split(' ')[0] + ' ' + cls.schedule.split(' ')[1]}</div>
+                                <div className="text-xs text-gray-500 font-semibold mb-1">{cls.schedule.split(' ')[0] + ' ' + cls.schedule.split(' ')[1]}</div>
                                 <div className="flex justify-between items-start mb-2">
                                     <h3 className="font-bold text-[#0A1B3C] text-lg">{cls.code}</h3>
                                     {selectedClass?.id === cls.id && (
@@ -144,8 +144,8 @@ function TeacherClassrooms() {
                                 </div>
                                 <div className="flex items-center justify-between mt-1">
                                     <span className="text-xs text-gray-500 font-medium truncate max-w-[150px]">{cls.name}</span>
-                                    <div className="flex items-center gap-1 text-[10px] text-[#F37022] bg-orange-50 px-2 py-0.5 rounded-full">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-[#F37022]"></div>
+                                    <div className="flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
                                         Active
                                     </div>
                                 </div>
@@ -170,7 +170,7 @@ function TeacherClassrooms() {
                                     </div>
                                     <div className="flex gap-2">
                                         <div className="px-3 py-1 bg-gray-100 rounded-lg text-xs font-medium text-gray-600 flex items-center gap-1">
-                                            Status: <span className="text-[#F37022]">Ongoing</span>
+                                            Status: <span className="text-green-600">Ongoing</span>
                                         </div>
                                         <button className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400">
                                             <MoreHorizontal className="w-5 h-5" />
@@ -277,7 +277,7 @@ function TeacherClassrooms() {
                                                             <div>
                                                                 <h3 className="font-bold text-[#0A1B3C] text-sm">{assignment.title}</h3>
                                                                 <span className={`inline-flex items-center px-2 py-0.5 mt-1 text-[10px] font-medium rounded-full ${assignment.status === 'Active'
-                                                                    ? 'bg-orange-50 text-[#F37022]'
+                                                                    ? 'bg-green-50 text-green-600'
                                                                     : 'bg-gray-100 text-gray-600'
                                                                     }`}>
                                                                     {assignment.status}
