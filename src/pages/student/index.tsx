@@ -87,29 +87,24 @@ function StudentDashboard() {
         <div className="flex-1 p-6">
           {/* Card View - Simple Style */}
           {viewMode === 'card' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {courses.map((course) => (
                 <div
                   key={course.id}
                   className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group"
                   onClick={() => navigate('/student/course-details')}
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <span className="text-xs font-semibold text-white bg-[#0A1B3C] px-2 py-1 rounded">
+                  <div className="mb-3">
+                    <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2.5 py-1 rounded">
                       {course.code}
                     </span>
-                    {course.newItems > 0 && (
-                      <span className="w-5 h-5 bg-[#F37022] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                        {course.newItems}
-                      </span>
-                    )}
                   </div>
-                  <h3 className="font-semibold text-[#0A1B3C] text-base mb-2 group-hover:text-[#F37022] transition-colors">
+                  <h3 className="font-bold text-[#0A1B3C] text-lg mb-2">
                     {course.name}
                   </h3>
-                  <p className="text-sm text-gray-500 mb-4">{course.instructor}</p>
-                  <button className="text-[#F37022] text-sm font-medium hover:underline flex items-center gap-1">
-                    View course <ArrowRight className="w-4 h-4" />
+                  <p className="text-sm text-gray-500 mb-3">{course.instructor}</p>
+                  <button className="text-[#0066CC] text-sm font-medium hover:underline">
+                    View course
                   </button>
                 </div>
               ))}
@@ -180,19 +175,15 @@ function StudentDashboard() {
         <div className="w-[300px] border-l border-gray-200 bg-white p-4 hidden lg:block">
           {/* To Do Section */}
           <div className="mb-6">
-            <h2 className="text-lg font-semibold text-[#0A1B3C] mb-4">To Do</h2>
-            <div className="space-y-3">
+            <h2 className="text-xl font-bold text-[#1a1f36] mb-4">To Do</h2>
+            <div className="space-y-4">
               {todoItems.map((item) => (
-                <div key={item.id} className="group cursor-pointer">
-                  <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 rounded border-2 border-gray-300 flex-shrink-0 mt-0.5 group-hover:border-[#F37022] transition-colors" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#0A1B3C] hover:text-[#F37022] truncate transition-colors">
-                        {item.title}
-                      </p>
-                      <p className="text-xs text-gray-500">{item.course}</p>
-                      <p className="text-xs text-gray-500">{item.points} pts • {item.dueDate}</p>
-                    </div>
+                <div key={item.id} className="flex items-start gap-3">
+                  <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0 mt-1" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
+                    <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
+                    <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
                   </div>
                 </div>
               ))}
@@ -201,42 +192,36 @@ function StudentDashboard() {
 
           {/* Coming Up Section */}
           <div className="mb-6">
-            <h2 className="text-lg font-semibold text-[#0A1B3C] mb-4 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-gray-500" />
-              Coming Up
-            </h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center gap-2 text-[#0A1B3C]">
-                <Clock className="w-4 h-4 text-gray-500" />
-                <span>SWE101 Class - Today 2:00 PM</span>
-              </div>
-              <div className="flex items-center gap-2 text-[#0A1B3C]">
-                <Clock className="w-4 h-4 text-gray-500" />
-                <span>DBS202 Lab - Tomorrow 9:00 AM</span>
-              </div>
+            <h2 className="text-xl font-bold text-[#1a1f36] mb-4">Coming Up</h2>
+            <div className="space-y-4">
+              {todoItems.slice(0, 2).map((item) => (
+                <div key={item.id} className="flex items-start gap-3">
+                  <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0 mt-1" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
+                    <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
+                    <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Recent Feedback Section */}
           <div>
-            <h2 className="text-lg font-semibold text-[#0A1B3C] mb-4 flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-gray-500" />
-              Recent Feedback
-            </h2>
-            <div className="space-y-3">
+            <h2 className="text-xl font-bold text-[#1a1f36] mb-4">Recent Feedback</h2>
+            <div className="space-y-4">
               {recentFeedback.map((item) => (
-                <div key={item.id} className="text-sm">
-                  <p className="font-medium text-[#0A1B3C] hover:text-[#F37022] cursor-pointer transition-colors">
-                    {item.title}
-                  </p>
-                  <p className="text-gray-500">{item.course} • {item.grade}</p>
-                  <p className="text-xs text-gray-400">{item.date}</p>
+                <div key={item.id} className="flex items-start gap-3">
+                  <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0 mt-1" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
+                    <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
+                    <p className="text-xs text-gray-400">{item.grade}    {item.date}</p>
+                  </div>
                 </div>
               ))}
             </div>
-            <button className="text-sm text-[#F37022] hover:underline mt-3">
-              View Grades →
-            </button>
           </div>
         </div>
       </div>
