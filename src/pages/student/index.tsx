@@ -9,6 +9,14 @@ function StudentDashboard() {
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<'card' | 'list' | 'activity'>('card');
   const [semester, setSemester] = useState('SPRING2025');
+  const [checkedItems, setCheckedItems] = useState<{ [key: number]: boolean }>({});
+
+  const toggleCheckbox = (id: number) => {
+    setCheckedItems((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   const courses = [
     { id: 1, code: 'SWE101', name: 'Software Engineering', term: 'Spring 2025', instructor: 'Prof. Nguyen Van A', newItems: 3 },
@@ -126,7 +134,7 @@ function StudentDashboard() {
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-500">{course.code}</span>
+                        <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded">{course.code}</span>
                         <h3 className="font-medium text-[#0A1B3C] group-hover:text-[#F37022] transition-colors">
                           {course.name}
                         </h3>
@@ -160,7 +168,7 @@ function StudentDashboard() {
                 ].map((activity, index) => (
                   <div key={index} className="flex items-start px-4 py-4 hover:bg-gray-50 cursor-pointer">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-[#0A1B3C]">{activity.course}</p>
+                      <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{activity.course}</span>
                       <p className="text-sm text-gray-600">{activity.title}</p>
                       <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
                     </div>
@@ -172,31 +180,45 @@ function StudentDashboard() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="w-[300px] border-l border-gray-200 bg-white p-4 hidden lg:block">
-          {/* To Do Section */}
-          <div className="mb-6">
+        <div className="w-[300px] border-l border-gray-200 bg-gray-50 p-4 hidden lg:block space-y-3">
+          {/* To Do Card */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
             <h2 className="text-xl font-bold text-[#1a1f36] mb-4">To Do</h2>
             <div className="space-y-4">
-              {todoItems.map((item) => (
-                <div key={item.id} className="flex items-start gap-3">
-                  <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0 mt-1" />
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
-                    <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
-                    <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
+              {todoItems.map((item) => {
+                const isChecked = checkedItems[item.id] || false;
+                return (
+                  <div key={item.id} className="flex items-start gap-3">
+                    <button
+                      onClick={() => toggleCheckbox(item.id)}
+                      className={`w-4 h-4 rounded flex-shrink-0 mt-1 flex items-center justify-center transition-colors ${isChecked
+                        ? 'bg-[#F37022] border-[#F37022]'
+                        : 'border border-gray-300 hover:border-gray-400'
+                        }`}
+                    >
+                      {isChecked && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
+                      <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
+                      <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
-          {/* Coming Up Section */}
-          <div className="mb-6">
+          {/* Coming Up Card */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
             <h2 className="text-xl font-bold text-[#1a1f36] mb-4">Coming Up</h2>
             <div className="space-y-4">
               {todoItems.slice(0, 2).map((item) => (
-                <div key={item.id} className="flex items-start gap-3">
-                  <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0 mt-1" />
+                <div key={item.id} className="flex items-start gap-0">
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
                     <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
@@ -207,13 +229,12 @@ function StudentDashboard() {
             </div>
           </div>
 
-          {/* Recent Feedback Section */}
-          <div>
+          {/* Recent Feedback Card */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
             <h2 className="text-xl font-bold text-[#1a1f36] mb-4">Recent Feedback</h2>
             <div className="space-y-4">
               {recentFeedback.map((item) => (
-                <div key={item.id} className="flex items-start gap-3">
-                  <div className="w-4 h-4 rounded border border-gray-300 flex-shrink-0 mt-1" />
+                <div key={item.id} className="flex items-start gap-0">
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
                     <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>

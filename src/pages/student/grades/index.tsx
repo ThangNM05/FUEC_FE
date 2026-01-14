@@ -136,7 +136,11 @@ function StudentGrades() {
               {courses.map(course => (
                 <tr key={course.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="p-4 font-medium text-[#0A1B3C]">{course.name}</td>
-                  <td className="p-4 text-gray-600">{course.code}</td>
+                  <td className="p-4">
+                    <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block">
+                      {course.code}
+                    </span>
+                  </td>
                   <td className="p-4 text-center font-medium text-[#0A1B3C]">{course.assignments}</td>
                   <td className="p-4 text-center font-medium text-[#0A1B3C]">{course.midterm}</td>
                   <td className="p-4 text-center font-medium text-[#0A1B3C]">

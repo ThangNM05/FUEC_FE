@@ -1,15 +1,21 @@
 import { useState } from 'react';
-import { BookOpen, Users, Clock, MapPin, FileText, Plus, Search, Filter, MoreHorizontal, MessageSquare, Send } from 'lucide-react';
+import { BookOpen, Users, Clock, MapPin, FileText, Plus, Search, Filter, MoreHorizontal, MessageSquare, Send, ChevronDown, ChevronRight } from 'lucide-react';
 import DataTable from '../../../components/shared/DataTable';
 
 interface Class {
-    id: number;
-    code: string;
+    id: string;
     name: string;
     schedule: string;
     room: string;
     studentCount: number;
+}
+
+interface Course {
+    id: number;
+    code: string;
+    name: string;
     semester: string;
+    classes: Class[];
 }
 
 interface Student {
@@ -30,37 +36,42 @@ interface Assignment {
 }
 
 function TeacherClassrooms() {
+    const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+    const [expandedCourse, setExpandedCourse] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<'students' | 'assignments' | 'create'>('students');
     const [semester, setSemester] = useState('SPRING2025');
 
-    const classes: Class[] = [
+    const courses: Course[] = [
         {
             id: 1,
-            code: 'SE101',
+            code: 'SWE101',
             name: 'Software Engineering',
-            schedule: 'Mon, Wed 8:00 - 10:00',
-            room: 'Room 301',
-            studentCount: 45,
-            semester: 'Spring2025'
+            semester: 'Spring2025',
+            classes: [
+                { id: 'a', name: 'SE1801', schedule: 'Mon, Wed 8:00 - 10:00', room: 'Room 301', studentCount: 45 },
+                { id: 'b', name: 'SE1802', schedule: 'Mon, Wed 2:00 - 4:00', room: 'Room 302', studentCount: 42 },
+                { id: 'c', name: 'SE1803', schedule: 'Tue, Thu 8:00 - 10:00', room: 'Room 303', studentCount: 38 },
+            ]
         },
         {
             id: 2,
             code: 'DBS202',
             name: 'Database Systems',
-            schedule: 'Tue, Thu 10:00 - 12:00',
-            room: 'Room 205',
-            studentCount: 38,
-            semester: 'Spring2025'
+            semester: 'Spring2025',
+            classes: [
+                { id: 'a', name: 'DB1801', schedule: 'Tue, Thu 10:00 - 12:00', room: 'Room 205', studentCount: 40 },
+                { id: 'b', name: 'DB1802', schedule: 'Wed, Fri 9:00 - 11:00', room: 'Room 206', studentCount: 38 },
+            ]
         },
         {
             id: 3,
             code: 'WEB301',
             name: 'Web Development',
-            schedule: 'Wed, Fri 2:00 - 4:00',
-            room: 'Room 402',
-            studentCount: 42,
-            semester: 'Spring2025'
+            semester: 'Spring2025',
+            classes: [
+                { id: 'a', name: 'WE1801', schedule: 'Wed, Fri 2:00 - 4:00', room: 'Room 402', studentCount: 42 },
+            ]
         },
     ];
 
@@ -91,6 +102,11 @@ function TeacherClassrooms() {
         },
     ];
 
+    const handleClassSelect = (course: Course, classItem: Class) => {
+        setSelectedCourse(course);
+        setSelectedClass(classItem);
+    };
+
     return (
         <div className="h-[calc(100vh-4rem)] flex flex-col p-6">
             {/* Top Toolbar */}
@@ -120,53 +136,83 @@ function TeacherClassrooms() {
             </div>
 
             <div className="flex gap-6 flex-1 min-h-0">
-                {/* Left Panel - Class List */}
+                {/* Left Panel - Course & Class List */}
                 <div className="w-[320px] flex flex-col border-r border-gray-200 pr-4 overflow-y-auto">
-                    <div className="space-y-3 pb-4">
-                        {classes.map((cls) => (
-                            <button
-                                key={cls.id}
-                                onClick={() => setSelectedClass(cls)}
-                                className={`w-full text-left p-4 rounded-xl border-2 transition-all relative ${selectedClass?.id === cls.id
-                                    ? 'bg-white border-[#F37022] shadow-md'
-                                    : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm'
-                                    }`}
-                            >
-                                <div className="text-xs text-gray-500 font-semibold mb-1">{cls.schedule.split(' ')[0] + ' ' + cls.schedule.split(' ')[1]}</div>
-                                <div className="flex justify-between items-start mb-2">
-                                    <h3 className="font-bold text-[#0A1B3C] text-lg">{cls.code}</h3>
-                                    {selectedClass?.id === cls.id && (
-                                        <div className="w-2 h-2 rounded-full bg-[#F37022] mt-2"></div>
-                                    )}
-                                </div>
-                                <div className="inline-block px-2 py-0.5 rounded border border-[#F37022] text-[#F37022] text-[10px] font-medium mb-3">
-                                    {cls.room}
-                                </div>
-                                <div className="flex items-center justify-between mt-1">
-                                    <span className="text-xs text-gray-500 font-medium truncate max-w-[150px]">{cls.name}</span>
-                                    <div className="flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                        Active
+                    <div className="space-y-2 pb-4">
+                        {courses.map((course) => (
+                            <div key={course.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                                {/* Course Header */}
+                                <button
+                                    onClick={() => setExpandedCourse(expandedCourse === course.id ? null : course.id)}
+                                    className="w-full text-left p-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded">{course.code}</span>
+                                                <span className="text-sm font-bold text-[#0A1B3C]">{course.name}</span>
+                                            </div>
+                                            <div className="text-xs text-gray-500">{course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'}</div>
+                                        </div>
+                                        {expandedCourse === course.id ? (
+                                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                                        ) : (
+                                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                                        )}
                                     </div>
-                                </div>
-                            </button>
+                                </button>
+
+                                {/* Expanded Classes */}
+                                {expandedCourse === course.id && (
+                                    <div className="bg-white">
+                                        {course.classes.map((classItem) => (
+                                            <button
+                                                key={classItem.id}
+                                                onClick={() => handleClassSelect(course, classItem)}
+                                                className={`w-full text-left p-3 border-t border-gray-100 hover:bg-gray-50 transition-all ${selectedClass?.id === classItem.id && selectedCourse?.id === course.id
+                                                    ? 'bg-orange-50 border-l-4 border-l-[#F37022]'
+                                                    : ''
+                                                    }`}
+                                            >
+                                                <div className="text-xs text-gray-500 font-semibold mb-1">{classItem.schedule.split(' ')[0] + ' ' + classItem.schedule.split(' ')[1]}</div>
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <h3 className="font-bold text-[#0A1B3C]">{classItem.name}</h3>
+                                                    {selectedClass?.id === classItem.id && selectedCourse?.id === course.id && (
+                                                        <div className="w-2 h-2 rounded-full bg-[#F37022]"></div>
+                                                    )}
+                                                </div>
+                                                <div className="inline-block px-2 py-0.5 rounded border border-[#F37022] text-[#F37022] text-[10px] font-medium mb-2">
+                                                    {classItem.room}
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs text-gray-500">{classItem.studentCount} students</span>
+                                                    <div className="flex items-center gap-1 text-[10px] text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                                                        Active
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Right Panel - Class Details */}
                 <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-white rounded-2xl border border-gray-100 shadow-sm">
-                    {selectedClass ? (
+                    {selectedClass && selectedCourse ? (
                         <>
                             {/* Class Header */}
                             <div className="p-6 border-b border-gray-100">
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <h2 className="text-xl font-bold text-[#F37022] flex items-center gap-2">
-                                            {selectedClass.code} - {selectedClass.name}
+                                            {selectedCourse.code} - {selectedClass.name}
                                             <span className="w-2 h-2 rounded-full bg-[#F37022]"></span>
                                         </h2>
-                                        <div className="text-xs text-gray-400 mt-1">{selectedClass.semester}</div>
+                                        <div className="text-xs text-gray-400 mt-1">{selectedCourse.name} • {selectedCourse.semester}</div>
                                     </div>
                                     <div className="flex gap-2">
                                         <div className="px-3 py-1 bg-gray-100 rounded-lg text-xs font-medium text-gray-600 flex items-center gap-1">
@@ -348,12 +394,12 @@ function TeacherClassrooms() {
                                                 <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
                                                     <label className="flex items-center gap-3 cursor-pointer">
                                                         <input type="checkbox" checked disabled className="w-5 h-5 text-[#F37022] rounded focus:ring-[#F37022] border-gray-300" />
-                                                        <span className="text-sm font-medium text-gray-700">{selectedClass.code} - {selectedClass.name}</span>
+                                                        <span className="text-sm font-medium text-gray-700">{selectedCourse.code} - {selectedClass.name}</span>
                                                     </label>
-                                                    {classes.filter(c => c.id !== selectedClass.id).map((cls) => (
+                                                    {selectedCourse.classes.filter((c: Class) => c.id !== selectedClass.id).map((cls: Class) => (
                                                         <label key={cls.id} className="flex items-center gap-3 cursor-pointer group">
                                                             <input type="checkbox" className="w-5 h-5 text-[#F37022] rounded focus:ring-[#F37022] border-gray-300" />
-                                                            <span className="text-sm font-medium text-gray-600 group-hover:text-[#0A1B3C] transition-colors">{cls.code} - {cls.name}</span>
+                                                            <span className="text-sm font-medium text-gray-600 group-hover:text-[#0A1B3C] transition-colors">{cls.name}</span>
                                                         </label>
                                                     ))}
                                                 </div>
