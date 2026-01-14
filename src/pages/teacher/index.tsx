@@ -166,7 +166,7 @@ function TeacherDashboard() {
                                         >
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-medium text-gray-500">{course.code}</span>
+                                                    <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded">{course.code}</span>
                                                     <h3 className="font-medium text-[#0A1B3C]">{course.name}</h3>
                                                 </div>
                                                 <p className="text-sm text-gray-500">
@@ -209,10 +209,10 @@ function TeacherDashboard() {
                 </div>
 
                 {/* Right Sidebar */}
-                <div className="w-[300px] border-l border-gray-200 bg-white p-4 hidden lg:block">
-                    {/* Needs Grading */}
-                    <div className="mb-6">
-                        <h2 className="text-lg font-semibold text-[#0A1B3C] mb-4 flex items-center gap-2">
+                <div className="w-[300px] border-l border-gray-200 bg-gray-50 p-4 hidden lg:block space-y-3">
+                    {/* Needs Grading Card */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4 flex items-center gap-2">
                             <AlertCircle className="w-5 h-5 text-[#F37022]" />
                             Needs Grading
                         </h2>
@@ -224,7 +224,7 @@ function TeacherDashboard() {
                                             {item.submissions}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-[#0A1B3C] truncate">{item.title}</p>
+                                            <p className="text-sm font-semibold text-[#1a1f36] truncate">{item.title}</p>
                                             <p className="text-xs text-gray-500">{item.course}</p>
                                             <p className="text-xs text-[#F37022]">Due: {item.dueDate}</p>
                                         </div>
@@ -234,16 +234,16 @@ function TeacherDashboard() {
                         </div>
                     </div>
 
-                    {/* Upcoming Classes */}
-                    <div className="mb-6">
-                        <h2 className="text-lg font-semibold text-[#0A1B3C] mb-4 flex items-center gap-2">
+                    {/* Upcoming Classes Card */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4 flex items-center gap-2">
                             <Calendar className="w-5 h-5 text-gray-500" />
                             Upcoming Classes
                         </h2>
                         <div className="space-y-3">
                             {upcomingClasses.map((cls) => (
                                 <div key={cls.id} className="p-2 hover:bg-gray-50 rounded-lg -mx-2 cursor-pointer">
-                                    <p className="text-sm font-medium text-[#0A1B3C]">{cls.course} - {cls.className}</p>
+                                    <p className="text-sm font-semibold text-[#1a1f36]">{cls.course} - {cls.className}</p>
                                     <p className="text-xs text-gray-500 flex items-center gap-1">
                                         <Clock className="w-3 h-3" />
                                         {cls.time} • {cls.room}
@@ -253,9 +253,9 @@ function TeacherDashboard() {
                         </div>
                     </div>
 
-                    {/* Quick Stats */}
-                    <div className="bg-gray-50 rounded-lg p-4">
-                        <h2 className="text-sm font-semibold text-[#0A1B3C] mb-3">This Week</h2>
+                    {/* Quick Stats Card */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4">This Week</h2>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="text-center">
                                 <p className="text-2xl font-bold text-[#F37022]">23</p>
