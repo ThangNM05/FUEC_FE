@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, Users, FileText, Calendar, Clock, ArrowRight, AlertCircle } from 'lucide-react';
+import { ChevronRight, ChevronDown, Users, FileText, Calendar, Clock, ArrowRight, AlertCircle, ChevronLeft, X, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
 function TeacherDashboard() {
@@ -7,6 +7,7 @@ function TeacherDashboard() {
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
     const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
     const [semester, setSemester] = useState('SPRING2025');
+    const [activeSidebarPanel, setActiveSidebarPanel] = useState<'grading' | 'classes' | 'stats' | null>(null);
 
     // Courses with multiple classes
     const courses = [
@@ -102,7 +103,7 @@ function TeacherDashboard() {
                 </div>
             </div>
 
-            <div className="flex">
+            <div className={`flex pr-0 ${activeSidebarPanel ? 'lg:pr-[380px]' : 'lg:pr-[60px]'}`}>
                 {/* Main Content */}
                 <div className="flex-1 p-6">
                     {/* Card View */}
@@ -208,73 +209,134 @@ function TeacherDashboard() {
                     )}
                 </div>
 
-                {/* Right Sidebar */}
-                <div className="w-[300px] border-l border-gray-200 bg-gray-50 p-4 hidden lg:block space-y-3">
-                    {/* Needs Grading Card */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4 flex items-center gap-2">
-                            <AlertCircle className="w-5 h-5 text-[#F37022]" />
-                            Needs Grading
-                        </h2>
-                        <div className="space-y-3">
-                            {todoItems.map((item) => (
-                                <div key={item.id} className="group cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2">
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-8 h-8 rounded bg-orange-100 flex items-center justify-center flex-shrink-0 text-[#F37022] text-sm font-bold">
-                                            {item.submissions}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-[#1a1f36] truncate">{item.title}</p>
-                                            <p className="text-xs text-gray-500">{item.course}</p>
-                                            <p className="text-xs text-[#F37022]">Due: {item.dueDate}</p>
+
+                {/* Right Sidebar - Google Calendar Style */}
+                <div className="fixed right-0 top-16 bottom-0 hidden lg:block z-10">
+                    {/* Icon Bar */}
+                    <div className="w-[60px] h-full bg-white flex flex-col items-center py-4 gap-4 shadow-sm">
+                        <button
+                            onClick={() => setActiveSidebarPanel(activeSidebarPanel === 'grading' ? null : 'grading')}
+                            className={`relative p-3 rounded-lg transition-colors ${activeSidebarPanel === 'grading' ? 'bg-orange-100 text-[#F37022]' : 'text-gray-600 hover:bg-gray-100'
+                                }`}
+                            title="Needs Grading"
+                        >
+                            <AlertCircle className="w-5 h-5" />
+                            {todoItems.length > 0 && (
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F37022] text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                    {todoItems.length}
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            onClick={() => setActiveSidebarPanel(activeSidebarPanel === 'classes' ? null : 'classes')}
+                            className={`relative p-3 rounded-lg transition-colors ${activeSidebarPanel === 'classes' ? 'bg-orange-100 text-[#F37022]' : 'text-gray-600 hover:bg-gray-100'
+                                }`}
+                            title="Upcoming Classes"
+                        >
+                            <Calendar className="w-5 h-5" />
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F37022] text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                {upcomingClasses.length}
+                            </span>
+                        </button>
+                        <button
+                            onClick={() => setActiveSidebarPanel(activeSidebarPanel === 'stats' ? null : 'stats')}
+                            className={`relative p-3 rounded-lg transition-colors ${activeSidebarPanel === 'stats' ? 'bg-orange-100 text-[#F37022]' : 'text-gray-600 hover:bg-gray-100'
+                                }`}
+                            title="This Week"
+                        >
+                            <FileText className="w-5 h-5" />
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F37022] text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                23
+                            </span>
+                        </button>
+                    </div>
+
+                    {/* Popup Panels */}
+                    {activeSidebarPanel && (
+                        <div className="absolute right-0 top-0 w-[320px] h-full bg-white border-l border-gray-200 shadow-lg">
+                            <div className="p-4 h-full overflow-y-auto">
+                                {/* Close Button */}
+                                <button
+                                    onClick={() => setActiveSidebarPanel(null)}
+                                    className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded"
+                                >
+                                    <X className="w-4 h-4 text-gray-600" />
+                                </button>
+
+                                {/* Needs Grading Panel */}
+                                {activeSidebarPanel === 'grading' && (
+                                    <div>
+                                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4 pr-8 flex items-center gap-2">
+                                            <AlertCircle className="w-4 h-4 text-[#F37022]" />
+                                            Needs Grading
+                                        </h2>
+                                        <div className="space-y-3">
+                                            {todoItems.map((item) => (
+                                                <div key={item.id} className="group cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="w-8 h-8 rounded bg-orange-100 flex items-center justify-center flex-shrink-0 text-[#F37022] text-sm font-bold">
+                                                            {item.submissions}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-semibold text-[#1a1f36] truncate">{item.title}</p>
+                                                            <p className="text-xs text-gray-500">{item.course}</p>
+                                                            <p className="text-xs text-[#F37022]">Due: {item.dueDate}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                                )}
 
-                    {/* Upcoming Classes Card */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4 flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-gray-500" />
-                            Upcoming Classes
-                        </h2>
-                        <div className="space-y-3">
-                            {upcomingClasses.map((cls) => (
-                                <div key={cls.id} className="p-2 hover:bg-gray-50 rounded-lg -mx-2 cursor-pointer">
-                                    <p className="text-sm font-semibold text-[#1a1f36]">{cls.course} - {cls.className}</p>
-                                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        {cls.time} • {cls.room}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                                {/* Upcoming Classes Panel */}
+                                {activeSidebarPanel === 'classes' && (
+                                    <div>
+                                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4 pr-8 flex items-center gap-2">
+                                            <Calendar className="w-4 h-4 text-gray-500" />
+                                            Upcoming Classes
+                                        </h2>
+                                        <div className="space-y-3">
+                                            {upcomingClasses.map((cls) => (
+                                                <div key={cls.id} className="p-2 hover:bg-gray-50 rounded-lg -mx-2 cursor-pointer">
+                                                    <p className="text-sm font-semibold text-[#1a1f36]">{cls.course} - {cls.className}</p>
+                                                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                                                        <Clock className="w-3 h-3" />
+                                                        {cls.time} • {cls.room}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
-                    {/* Quick Stats Card */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4">This Week</h2>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[#F37022]">23</p>
-                                <p className="text-xs text-gray-500">To Grade</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[#0A1B3C]">156</p>
-                                <p className="text-xs text-gray-500">Graded</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[#0A1B3C]">8</p>
-                                <p className="text-xs text-gray-500">Classes</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[#0A1B3C]">247</p>
-                                <p className="text-xs text-gray-500">Students</p>
+                                {/* Stats Panel */}
+                                {activeSidebarPanel === 'stats' && (
+                                    <div>
+                                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4 pr-8">This Week</h2>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                                <p className="text-2xl font-bold text-[#F37022]">23</p>
+                                                <p className="text-xs text-gray-500">To Grade</p>
+                                            </div>
+                                            <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                                <p className="text-2xl font-bold text-[#0A1B3C]">156</p>
+                                                <p className="text-xs text-gray-500">Graded</p>
+                                            </div>
+                                            <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                                <p className="text-2xl font-bold text-[#0A1B3C]">8</p>
+                                                <p className="text-xs text-gray-500">Classes</p>
+                                            </div>
+                                            <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                                <p className="text-2xl font-bold text-[#0A1B3C]">247</p>
+                                                <p className="text-xs text-gray-500">Students</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
