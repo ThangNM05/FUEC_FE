@@ -44,7 +44,12 @@ function CourseDetails() {
           Back to Courses
         </button>
         <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">{course.name}</h1>
-        <p className="text-sm md:text-base text-gray-600 mt-1">{course.code} • {course.instructor}</p>
+        <p className="text-sm md:text-base text-gray-600 mt-1">
+          <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mr-2">
+            {course.code}
+          </span>
+          • {course.instructor}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -69,8 +74,8 @@ function CourseDetails() {
                   </div>
                   <button
                     className={`px-4 py-2 rounded-lg text-sm font-medium ${material.submitted
-                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        : 'bg-[#F37022] text-white hover:bg-[#D96419]'
+                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-[#F37022] text-white hover:bg-[#D96419]'
                       }`}
                     onClick={() => navigate('/student/assignment')}
                   >

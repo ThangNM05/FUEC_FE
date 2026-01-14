@@ -145,7 +145,7 @@ function StudentCourses() {
                 >
                   <div className="col-span-5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-gray-500">{course.code}</span>
+                      <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded">{course.code}</span>
                       <h3 className="font-medium text-[#0A1B3C] group-hover:text-[#F37022] transition-colors">
                         {course.name}
                       </h3>
