@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, Users, FileText, Calendar, Clock, ArrowRight, AlertCircle } from 'lucide-react';
+import { ChevronRight, ChevronDown, Users, FileText, Calendar, Clock, ArrowRight, AlertCircle, Search } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
 function TeacherDashboard() {
@@ -61,12 +61,13 @@ function TeacherDashboard() {
     ];
 
     return (
-        <div className="min-h-screen">
-            {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <h1 className="text-2xl font-bold text-[#0A1B3C]">Dashboard</h1>
+        <div className="flex">
+            {/* Main Content */}
+            <div className="flex-1 p-6">
+                {/* Title and Semester */}
+                <div className="mb-4">
+                    <div className="flex items-center gap-4 mb-2">
+                        <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Dashboard</h1>
                         <select
                             value={semester}
                             onChange={(e) => setSemester(e.target.value)}
@@ -77,202 +78,208 @@ function TeacherDashboard() {
                             <option value="SUMMER2024">Summer 2024</option>
                         </select>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-                            <button
-                                onClick={() => setViewMode('card')}
-                                className={`px-4 py-2 text-sm font-medium transition-colors ${viewMode === 'card'
-                                    ? 'bg-[#F37022] text-white'
-                                    : 'bg-white text-[#0A1B3C] hover:bg-gray-50'
-                                    }`}
-                            >
-                                Card View
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={`px-4 py-2 text-sm font-medium border-l border-gray-200 transition-colors ${viewMode === 'list'
-                                    ? 'bg-[#F37022] text-white'
-                                    : 'bg-white text-[#0A1B3C] hover:bg-gray-50'
-                                    }`}
-                            >
-                                List View
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex">
-                {/* Main Content */}
-                <div className="flex-1 p-6">
-                    {/* Card View */}
-                    {viewMode === 'card' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                            {courses.map((course) => (
-                                <div
-                                    key={course.id}
-                                    className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all"
-                                >
-                                    {/* Course Header */}
-                                    <div className="p-5 border-b border-gray-100">
-                                        <div className="mb-3">
-                                            <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2.5 py-1 rounded">
-                                                {course.code}
-                                            </span>
-                                        </div>
-                                        <h3 className="font-bold text-[#0A1B3C] text-lg mb-1">
-                                            {course.name}
-                                        </h3>
-                                        <p className="text-sm text-gray-500 flex items-center gap-2">
-                                            <Users className="w-4 h-4" />
-                                            {course.totalStudents} students • {course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'}
-                                        </p>
-                                    </div>
-
-                                    {/* Classes List */}
-                                    <div className="divide-y divide-gray-100">
-                                        {course.classes.map((cls) => (
-                                            <div
-                                                key={cls.id}
-                                                className="px-5 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
-                                                onClick={() => navigate('/teacher/classrooms')}
-                                            >
-                                                <div>
-                                                    <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
-                                                    <p className="text-xs text-gray-500">{cls.students} students • {cls.room}</p>
-                                                </div>
-                                                <ChevronRight className="w-4 h-4 text-gray-400" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* List View */}
-                    {viewMode === 'list' && (
-                        <div className="bg-white rounded-lg border border-gray-200">
-                            <div className="p-4 border-b border-gray-200">
-                                <h2 className="font-semibold text-[#0A1B3C]">My Courses & Classes</h2>
-                            </div>
-                            <div className="divide-y divide-gray-200">
-                                {courses.map((course) => (
-                                    <div key={course.id}>
-                                        {/* Course Row */}
-                                        <div
-                                            className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer"
-                                            onClick={() => setExpandedCourse(expandedCourse === course.code ? null : course.code)}
-                                        >
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">{course.code}</span>
-                                                    <h3 className="font-medium text-[#0A1B3C]">{course.name}</h3>
-                                                </div>
-                                                <p className="text-sm text-gray-500">
-                                                    {course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'} • {course.totalStudents} students
-                                                    {course.pendingGrading > 0 && (
-                                                        <span className="ml-2 text-[#F37022]">• {course.pendingGrading} to grade</span>
-                                                    )}
-                                                </p>
-                                            </div>
-                                            {expandedCourse === course.code ? (
-                                                <ChevronDown className="w-5 h-5 text-gray-400" />
-                                            ) : (
-                                                <ChevronRight className="w-5 h-5 text-gray-400" />
-                                            )}
-                                        </div>
-
-                                        {/* Expanded Classes */}
-                                        {expandedCourse === course.code && (
-                                            <div className="bg-gray-50 border-t border-gray-100">
-                                                {course.classes.map((cls) => (
-                                                    <div
-                                                        key={cls.id}
-                                                        className="flex items-center px-4 py-3 pl-8 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                                        onClick={() => navigate('/teacher/classrooms')}
-                                                    >
-                                                        <div className="flex-1">
-                                                            <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
-                                                            <p className="text-xs text-gray-500">{cls.students} students • {cls.room} • {cls.schedule}</p>
-                                                        </div>
-                                                        <ArrowRight className="w-4 h-4 text-[#F37022]" />
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
+                    <p className="text-sm md:text-base text-gray-600">Manage your classes and students.</p>
                 </div>
 
-                {/* Right Sidebar */}
-                <div className="w-[300px] border-l border-gray-200 bg-gray-50 p-4 hidden lg:block space-y-3">
-                    {/* Needs Grading Card */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4 flex items-center gap-2">
-                            <AlertCircle className="w-5 h-5 text-[#F37022]" />
-                            Needs Grading
-                        </h2>
-                        <div className="space-y-3">
-                            {todoItems.map((item) => (
-                                <div key={item.id} className="group cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2">
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-8 h-8 rounded bg-orange-100 flex items-center justify-center flex-shrink-0 text-[#F37022] text-sm font-bold">
-                                            {item.submissions}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-[#1a1f36] truncate">{item.title}</p>
-                                            <p className="text-xs text-gray-500">{item.course}</p>
-                                            <p className="text-xs text-[#F37022]">Due: {item.dueDate}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                {/* Search Bar */}
+                <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-lg border border-gray-200 mb-6">
+                    <Search className="w-5 h-5 text-gray-400" />
+                    <input
+                        type="text"
+                        placeholder="Search classes, students..."
+                        className="flex-1 outline-none text-sm md:text-base text-[#0A1B3C]"
+                    />
+                </div>
 
-                    {/* Upcoming Classes Card */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4 flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-gray-500" />
-                            Upcoming Classes
-                        </h2>
-                        <div className="space-y-3">
-                            {upcomingClasses.map((cls) => (
-                                <div key={cls.id} className="p-2 hover:bg-gray-50 rounded-lg -mx-2 cursor-pointer">
-                                    <p className="text-sm font-semibold text-[#1a1f36]">{cls.course} - {cls.className}</p>
-                                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        {cls.time} • {cls.room}
+                {/* View Options */}
+                <div className="flex items-center gap-2 mb-6">
+                    <button
+                        onClick={() => setViewMode('card')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'card'
+                            ? 'bg-[#F37022] text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                    >
+                        Card View
+                    </button>
+                    <button
+                        onClick={() => setViewMode('list')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'list'
+                            ? 'bg-[#F37022] text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                    >
+                        List View
+                    </button>
+                </div>
+
+                {/* Card View */}
+                {viewMode === 'card' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {courses.map((course) => (
+                            <div
+                                key={course.id}
+                                className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md hover:border-gray-300 transition-all"
+                            >
+                                {/* Course Header */}
+                                <div className="p-5 border-b border-gray-100">
+                                    <div className="mb-3">
+                                        <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2.5 py-1 rounded">
+                                            {course.code}
+                                        </span>
+                                    </div>
+                                    <h3 className="font-bold text-[#0A1B3C] text-lg mb-1">
+                                        {course.name}
+                                    </h3>
+                                    <p className="text-sm text-gray-500 flex items-center gap-2">
+                                        <Users className="w-4 h-4" />
+                                        {course.totalStudents} students • {course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'}
                                     </p>
                                 </div>
+
+                                {/* Classes List */}
+                                <div className="divide-y divide-gray-100">
+                                    {course.classes.map((cls) => (
+                                        <div
+                                            key={cls.id}
+                                            className="px-5 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+                                            onClick={() => navigate('/teacher/classrooms')}
+                                        >
+                                            <div>
+                                                <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
+                                                <p className="text-xs text-gray-500">{cls.students} students • {cls.room}</p>
+                                            </div>
+                                            <ChevronRight className="w-4 h-4 text-gray-400" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* List View */}
+                {viewMode === 'list' && (
+                    <div className="bg-white rounded-lg border border-gray-200">
+                        <div className="p-4 border-b border-gray-200">
+                            <h2 className="font-semibold text-[#0A1B3C]">My Courses & Classes</h2>
+                        </div>
+                        <div className="divide-y divide-gray-200">
+                            {courses.map((course) => (
+                                <div key={course.id}>
+                                    {/* Course Row */}
+                                    <div
+                                        className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                                        onClick={() => setExpandedCourse(expandedCourse === course.code ? null : course.code)}
+                                    >
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">{course.code}</span>
+                                                <h3 className="font-medium text-[#0A1B3C]">{course.name}</h3>
+                                            </div>
+                                            <p className="text-sm text-gray-500">
+                                                {course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'} • {course.totalStudents} students
+                                                {course.pendingGrading > 0 && (
+                                                    <span className="ml-2 text-[#F37022]">• {course.pendingGrading} to grade</span>
+                                                )}
+                                            </p>
+                                        </div>
+                                        {expandedCourse === course.code ? (
+                                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                                        ) : (
+                                            <ChevronRight className="w-5 h-5 text-gray-400" />
+                                        )}
+                                    </div>
+
+                                    {/* Expanded Classes */}
+                                    {expandedCourse === course.code && (
+                                        <div className="bg-gray-50 border-t border-gray-100">
+                                            {course.classes.map((cls) => (
+                                                <div
+                                                    key={cls.id}
+                                                    className="flex items-center px-4 py-3 pl-8 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                                    onClick={() => navigate('/teacher/classrooms')}
+                                                >
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
+                                                        <p className="text-xs text-gray-500">{cls.students} students • {cls.room} • {cls.schedule}</p>
+                                                    </div>
+                                                    <ArrowRight className="w-4 h-4 text-[#F37022]" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             ))}
                         </div>
                     </div>
+                )}
+            </div>
 
-                    {/* Quick Stats Card */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                        <h2 className="text-xl font-bold text-[#1a1f36] mb-4">This Week</h2>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[#F37022]">23</p>
-                                <p className="text-xs text-gray-500">To Grade</p>
+            {/* Right Sidebar */}
+            <div className="w-[300px] border-l border-gray-200 bg-gray-50 p-4 hidden lg:block space-y-3">
+                {/* Needs Grading Card */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <h2 className="text-xl font-bold text-[#1a1f36] mb-4 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-[#F37022]" />
+                        Needs Grading
+                    </h2>
+                    <div className="space-y-3">
+                        {todoItems.map((item) => (
+                            <div key={item.id} className="group cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded bg-orange-100 flex items-center justify-center flex-shrink-0 text-[#F37022] text-sm font-bold">
+                                        {item.submissions}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold text-[#1a1f36] truncate">{item.title}</p>
+                                        <p className="text-xs text-gray-500">{item.course}</p>
+                                        <p className="text-xs text-[#F37022]">Due: {item.dueDate}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[#0A1B3C]">156</p>
-                                <p className="text-xs text-gray-500">Graded</p>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Upcoming Classes Card */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <h2 className="text-xl font-bold text-[#1a1f36] mb-4 flex items-center gap-2">
+                        <Calendar className="w-5 h-5 text-gray-500" />
+                        Upcoming Classes
+                    </h2>
+                    <div className="space-y-3">
+                        {upcomingClasses.map((cls) => (
+                            <div key={cls.id} className="p-2 hover:bg-gray-50 rounded-lg -mx-2 cursor-pointer">
+                                <p className="text-sm font-semibold text-[#1a1f36]">{cls.course} - {cls.className}</p>
+                                <p className="text-xs text-gray-500 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {cls.time} • {cls.room}
+                                </p>
                             </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[#0A1B3C]">8</p>
-                                <p className="text-xs text-gray-500">Classes</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[#0A1B3C]">247</p>
-                                <p className="text-xs text-gray-500">Students</p>
-                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Quick Stats Card */}
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <h2 className="text-xl font-bold text-[#1a1f36] mb-4">This Week</h2>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-[#F37022]">23</p>
+                            <p className="text-xs text-gray-500">To Grade</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-[#0A1B3C]">156</p>
+                            <p className="text-xs text-gray-500">Graded</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-[#0A1B3C]">8</p>
+                            <p className="text-xs text-gray-500">Classes</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-[#0A1B3C]">247</p>
+                            <p className="text-xs text-gray-500">Students</p>
                         </div>
                     </div>
                 </div>

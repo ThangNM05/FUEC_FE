@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 
 interface ScheduleItem {
   slot: number;
@@ -60,7 +60,7 @@ function StudentSchedule() {
     return schedule.find(item => item.slot === slot && item.day === day);
   };
 
-  // Calculate week display
+  // Calculate week display in "January 5-11, 2026" format
   const getWeekDisplay = () => {
     const baseDate = new Date('2026-01-05');
     const weekStart = new Date(baseDate);
@@ -69,14 +69,20 @@ function StudentSchedule() {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
 
-    const formatDate = (date: Date) => {
-      const day = date.getDate();
-      const month = date.getMonth() + 1;
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    };
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
 
-    return `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+    const startMonth = monthNames[weekStart.getMonth()];
+    const endMonth = monthNames[weekEnd.getMonth()];
+    const startDay = weekStart.getDate();
+    const endDay = weekEnd.getDate();
+    const year = weekEnd.getFullYear();
+
+    if (weekStart.getMonth() === weekEnd.getMonth()) {
+      return `${startMonth} ${startDay}-${endDay}, ${year}`;
+    } else {
+      return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+    }
   };
 
   const goToToday = () => {
@@ -122,7 +128,7 @@ function StudentSchedule() {
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Weekly Schedule</h1>
 
           {/* Week Navigation */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setCurrentWeek(currentWeek - 1)}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -130,13 +136,21 @@ function StudentSchedule() {
             >
               <ChevronLeft className="w-5 h-5 text-gray-600" />
             </button>
-            <button
-              onClick={goToToday}
-              className="text-sm font-medium text-gray-700 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Go to current week"
-            >
-              {getWeekDisplay()}
-            </button>
+
+            {/* Date Range with Calendar Icon */}
+            <div className="relative">
+              <input
+                type="date"
+                onChange={(e) => goToDate(e.target.value)}
+                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                title="Jump to specific date"
+              />
+              <button className="flex items-center gap-2 text-sm font-medium text-gray-700 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                {getWeekDisplay()}
+                <Calendar className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+
             <button
               onClick={() => setCurrentWeek(currentWeek + 1)}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -144,14 +158,6 @@ function StudentSchedule() {
             >
               <ChevronRight className="w-5 h-5 text-gray-600" />
             </button>
-
-            {/* Date Picker */}
-            <input
-              type="date"
-              onChange={(e) => goToDate(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 hover:border-gray-400 focus:border-[#F37022] focus:outline-none"
-              title="Jump to specific date"
-            />
           </div>
         </div>
         <p className="text-sm md:text-base text-gray-600">Your class timetable for this week.</p>
@@ -176,7 +182,6 @@ function StudentSchedule() {
               <tr key={timeSlot.slot}>
                 <td className="border border-gray-200 p-3 bg-gray-50 font-medium text-sm text-gray-700">
                   <div className="font-semibold">Slot {timeSlot.slot}</div>
-                  <div className="text-xs text-gray-500 mt-1 whitespace-nowrap">{timeSlot.time}</div>
                 </td>
                 {weekDays.map((day) => {
                   const classItem = getClassForSlot(timeSlot.slot, day);
