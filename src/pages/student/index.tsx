@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   ChevronRight, FileText, MessageSquare,
-  Bell, CheckCircle, Clock, Calendar, ArrowRight, ChevronLeft, X
+  Bell, CheckCircle, Clock, Calendar, ArrowRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 
@@ -10,7 +10,6 @@ function StudentDashboard() {
   const [viewMode, setViewMode] = useState<'card' | 'list' | 'activity'>('card');
   const [semester, setSemester] = useState('SPRING2025');
   const [checkedItems, setCheckedItems] = useState<{ [key: number]: boolean }>({});
-  const [activeSidebarPanel, setActiveSidebarPanel] = useState<'todo' | 'coming' | 'feedback' | null>(null);
 
   const toggleCheckbox = (id: number) => {
     setCheckedItems((prev) => ({
@@ -91,7 +90,7 @@ function StudentDashboard() {
         </div>
       </div>
 
-      <div className={`flex pr-0 ${activeSidebarPanel ? 'lg:pr-[380px]' : 'lg:pr-[60px]'}`}>
+      <div className="flex">
         {/* Main Content */}
         <div className="flex-1 p-6">
           {/* Card View - Simple Style */}
@@ -104,7 +103,7 @@ function StudentDashboard() {
                   onClick={() => navigate('/student/course-details')}
                 >
                   <div className="mb-3">
-                    <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2.5 py-1 rounded">
+                    <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2.5 py-1 rounded">
                       {course.code}
                     </span>
                   </div>
@@ -135,7 +134,7 @@ function StudentDashboard() {
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded">{course.code}</span>
+                        <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">{course.code}</span>
                         <h3 className="font-medium text-[#0A1B3C] group-hover:text-[#F37022] transition-colors">
                           {course.name}
                         </h3>
@@ -169,7 +168,7 @@ function StudentDashboard() {
                 ].map((activity, index) => (
                   <div key={index} className="flex items-start px-4 py-4 hover:bg-gray-50 cursor-pointer">
                     <div className="flex-1">
-                      <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{activity.course}</span>
+                      <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{activity.course}</span>
                       <p className="text-sm text-gray-600">{activity.title}</p>
                       <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
                     </div>
@@ -180,134 +179,71 @@ function StudentDashboard() {
           )}
         </div>
 
-
-        {/* Right Sidebar - Google Calendar Style */}
-        <div className="fixed right-0 top-16 bottom-0 hidden lg:block z-10">
-          {/* Icon Bar */}
-          <div className="w-[60px] h-full bg-white flex flex-col items-center py-4 gap-4 shadow-sm">
-            <button
-              onClick={() => setActiveSidebarPanel(activeSidebarPanel === 'todo' ? null : 'todo')}
-              className={`relative p-3 rounded-lg transition-colors ${activeSidebarPanel === 'todo' ? 'bg-orange-100 text-[#F37022]' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              title="To Do"
-            >
-              <CheckCircle className="w-5 h-5" />
-              {todoItems.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F37022] text-white text-xs font-bold rounded-full flex items-center justify-center">
-                  {todoItems.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveSidebarPanel(activeSidebarPanel === 'coming' ? null : 'coming')}
-              className={`relative p-3 rounded-lg transition-colors ${activeSidebarPanel === 'coming' ? 'bg-orange-100 text-[#F37022]' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              title="Coming Up"
-            >
-              <Clock className="w-5 h-5" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F37022] text-white text-xs font-bold rounded-full flex items-center justify-center">
-                2
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveSidebarPanel(activeSidebarPanel === 'feedback' ? null : 'feedback')}
-              className={`relative p-3 rounded-lg transition-colors ${activeSidebarPanel === 'feedback' ? 'bg-orange-100 text-[#F37022]' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              title="Recent Feedback"
-            >
-              <MessageSquare className="w-5 h-5" />
-              {recentFeedback.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#F37022] text-white text-xs font-bold rounded-full flex items-center justify-center">
-                  {recentFeedback.length}
-                </span>
-              )}
-            </button>
+        {/* Right Sidebar */}
+        <div className="w-[300px] border-l border-gray-200 bg-gray-50 p-4 hidden lg:block space-y-3">
+          {/* To Do Card */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h2 className="text-xl font-bold text-[#1a1f36] mb-4">To Do</h2>
+            <div className="space-y-4">
+              {todoItems.map((item) => {
+                const isChecked = checkedItems[item.id] || false;
+                return (
+                  <div key={item.id} className="flex items-start gap-3">
+                    <button
+                      onClick={() => toggleCheckbox(item.id)}
+                      className={`w-4 h-4 rounded flex-shrink-0 mt-1 flex items-center justify-center transition-colors ${isChecked
+                        ? 'bg-[#F37022] border-[#F37022]'
+                        : 'border border-gray-300 hover:border-gray-400'
+                        }`}
+                    >
+                      {isChecked && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
+                      <p className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
+                      <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Popup Panels */}
-          {activeSidebarPanel && (
-            <div className="absolute right-0 top-0 w-[320px] h-full bg-white border-l border-gray-200 shadow-lg">
-              <div className="p-4 h-full overflow-y-auto">
-                {/* Close Button */}
-                <button
-                  onClick={() => setActiveSidebarPanel(null)}
-                  className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded"
-                >
-                  <X className="w-4 h-4 text-gray-600" />
-                </button>
-
-                {/* To Do Panel */}
-                {activeSidebarPanel === 'todo' && (
-                  <div>
-                    <h2 className="text-xl font-bold text-[#1a1f36] mb-4 pr-8">To Do</h2>
-                    <div className="space-y-4">
-                      {todoItems.map((item) => {
-                        const isChecked = checkedItems[item.id] || false;
-                        return (
-                          <div key={item.id} className="flex items-start gap-3">
-                            <button
-                              onClick={() => toggleCheckbox(item.id)}
-                              className={`w-4 h-4 rounded flex-shrink-0 mt-1 flex items-center justify-center transition-colors ${isChecked
-                                ? 'bg-[#F37022] border-[#F37022]'
-                                : 'border border-gray-300 hover:border-gray-400'
-                                }`}
-                            >
-                              {isChecked && (
-                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </button>
-                            <div className="flex-1">
-                              <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
-                              <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
-                              <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+          {/* Coming Up Card */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h2 className="text-xl font-bold text-[#1a1f36] mb-4">Coming Up</h2>
+            <div className="space-y-4">
+              {todoItems.slice(0, 2).map((item) => (
+                <div key={item.id} className="flex items-start gap-0">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
+                    <p className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
+                    <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
                   </div>
-                )}
-
-                {/* Coming Up Panel */}
-                {activeSidebarPanel === 'coming' && (
-                  <div>
-                    <h2 className="text-xl font-bold text-[#1a1f36] mb-4 pr-8">Coming Up</h2>
-                    <div className="space-y-4">
-                      {todoItems.slice(0, 2).map((item) => (
-                        <div key={item.id} className="flex items-start gap-0">
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
-                            <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
-                            <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Recent Feedback Panel */}
-                {activeSidebarPanel === 'feedback' && (
-                  <div>
-                    <h2 className="text-xl font-bold text-[#1a1f36] mb-4 pr-8">Recent Feedback</h2>
-                    <div className="space-y-4">
-                      {recentFeedback.map((item) => (
-                        <div key={item.id} className="flex items-start gap-0">
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
-                            <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
-                            <p className="text-xs text-gray-400">{item.grade}    {item.date}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
+
+          {/* Recent Feedback Card */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h2 className="text-xl font-bold text-[#1a1f36] mb-4">Recent Feedback</h2>
+            <div className="space-y-4">
+              {recentFeedback.map((item) => (
+                <div key={item.id} className="flex items-start gap-0">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
+                    <p className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
+                    <p className="text-xs text-gray-400">{item.grade}    {item.date}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

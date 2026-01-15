@@ -38,6 +38,10 @@ import TeacherLayout from './components/layouts/teacher/TeacherLayout';
 // Teacher Pages
 import TeacherDashboard from './pages/teacher';
 import TeacherClassrooms from './pages/teacher/classrooms';
+import TeacherSchedule from './pages/teacher/schedule';
+import TeacherReports from './pages/teacher/reports';
+import TeacherMessages from './pages/teacher/messages';
+import StudentMessages from './pages/student/messages';
 
 function Router() {
   return (
@@ -76,12 +80,16 @@ function Router() {
         <Route path="/student/grades" element={<StudentGrades />} />
         <Route path="/student/schedule" element={<StudentSchedule />} />
         <Route path="/student/profile" element={<StudentProfile />} />
+        <Route path="/student/messages" element={<StudentMessages />} />
       </Route>
 
       {/* Teacher Routes with TeacherLayout */}
       <Route element={<TeacherLayout />}>
         <Route path="/teacher" element={<TeacherDashboard />} />
         <Route path="/teacher/classrooms" element={<TeacherClassrooms />} />
+        <Route path="/teacher/schedule" element={<TeacherSchedule />} />
+        <Route path="/teacher/messages" element={<TeacherMessages />} />
+        <Route path="/teacher/reports" element={<TeacherReports />} />
       </Route>
 
       <Route path="/sign-in" element={<SignInPage />} />
