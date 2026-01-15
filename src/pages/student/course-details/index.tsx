@@ -134,11 +134,11 @@ function CourseDetails() {
   };
 
   return (
-    <div className="flex gap-6 relative">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative p-4 md:p-6">
       {/* Main Content - Left Side */}
       <div className="flex-1 min-w-0">
         {/* Course Header */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="mb-6">
           <button
             onClick={() => navigate('/student/courses')}
             className="flex items-center gap-2 text-gray-600 hover:text-[#0A1B3C] mb-4"
@@ -147,7 +147,7 @@ function CourseDetails() {
             Back to Courses
           </button>
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C] mb-2">{course.name}</h1>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex flex-wrap items-center gap-2 text-xs md:text-sm text-gray-600">
             <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">
               {course.code}
             </span>
@@ -161,7 +161,7 @@ function CourseDetails() {
         </div>
 
         {/* Assignments Section */}
-        <div id="assignments" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-6">
+        <div id="assignments" className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 scroll-mt-6">
           <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Assignments</h2>
           <div className="space-y-3">
             {courseAssignments.map(assignment => (
