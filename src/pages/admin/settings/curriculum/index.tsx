@@ -73,8 +73,8 @@ function AdminCurriculum() {
             align: 'center' as const,
             render: (item: Curriculum) => (
                 <span className={`px-3 py-1 rounded-full text-xs font-semibold ${item.status === 'Active'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-red-100 text-red-700'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
                     }`}>
                     {item.status}
                 </span>
@@ -101,7 +101,7 @@ function AdminCurriculum() {
         <div className="p-4 md:p-6">
             <div className="mb-4 md:mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Curriculum Management</h1>
-                <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Manage curriculum and program requirements.</p>
+
             </div>
 
             <DataTable

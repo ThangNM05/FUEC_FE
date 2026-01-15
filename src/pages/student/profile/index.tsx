@@ -32,15 +32,14 @@ function StudentProfile() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 md:mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Profile</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Manage your personal information.</p>
+
         </div>
         <button
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold ${
-            isEditing 
-              ? 'bg-green-500 text-white hover:bg-green-600' 
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold ${isEditing
+              ? 'bg-green-500 text-white hover:bg-green-600'
               : 'bg-[#F37022] text-white hover:bg-[#D96419]'
-          }`}
+            }`}
         >
           {isEditing ? <><Save className="w-4 h-4" /> Save Changes</> : <><Edit2 className="w-4 h-4" /> Edit Profile</>}
         </button>
@@ -109,7 +108,7 @@ function StudentProfile() {
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="font-bold text-[#0A1B3C] mb-6">Personal Information</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -118,11 +117,10 @@ function StudentProfile() {
                 <input
                   type="text"
                   value={profile.name}
-                  onChange={e => setProfile({...profile, name: e.target.value})}
+                  onChange={e => setProfile({ ...profile, name: e.target.value })}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
-                    isEditing ? 'bg-white' : 'bg-gray-50'
-                  }`}
+                  className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${isEditing ? 'bg-white' : 'bg-gray-50'
+                    }`}
                 />
               </div>
               <div>
@@ -143,11 +141,10 @@ function StudentProfile() {
                 <input
                   type="tel"
                   value={profile.phone}
-                  onChange={e => setProfile({...profile, phone: e.target.value})}
+                  onChange={e => setProfile({ ...profile, phone: e.target.value })}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
-                    isEditing ? 'bg-white' : 'bg-gray-50'
-                  }`}
+                  className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${isEditing ? 'bg-white' : 'bg-gray-50'
+                    }`}
                 />
               </div>
               <div>
@@ -157,11 +154,10 @@ function StudentProfile() {
                 <input
                   type="date"
                   value={profile.dob}
-                  onChange={e => setProfile({...profile, dob: e.target.value})}
+                  onChange={e => setProfile({ ...profile, dob: e.target.value })}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
-                    isEditing ? 'bg-white' : 'bg-gray-50'
-                  }`}
+                  className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${isEditing ? 'bg-white' : 'bg-gray-50'
+                    }`}
                 />
               </div>
               <div className="md:col-span-2">
@@ -171,11 +167,10 @@ function StudentProfile() {
                 <input
                   type="text"
                   value={profile.address}
-                  onChange={e => setProfile({...profile, address: e.target.value})}
+                  onChange={e => setProfile({ ...profile, address: e.target.value })}
                   disabled={!isEditing}
-                  className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${
-                    isEditing ? 'bg-white' : 'bg-gray-50'
-                  }`}
+                  className={`w-full px-4 py-3 border border-gray-200 rounded-lg ${isEditing ? 'bg-white' : 'bg-gray-50'
+                    }`}
                 />
               </div>
             </div>
@@ -184,7 +179,7 @@ function StudentProfile() {
           {/* Academic Info */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
             <h3 className="font-bold text-[#0A1B3C] mb-6">Academic Information</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Student ID</label>

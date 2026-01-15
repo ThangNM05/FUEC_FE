@@ -7,12 +7,12 @@ function TeacherSchedule() {
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     const timeSlots = [
-        { id: 1, time: '7:00 - 8:30', period: 'Slot 1' },
-        { id: 2, time: '8:40 - 10:10', period: 'Slot 2' },
-        { id: 3, time: '10:20 - 11:50', period: 'Slot 3' },
-        { id: 4, time: '12:50 - 14:20', period: 'Slot 4' },
-        { id: 5, time: '14:30 - 16:00', period: 'Slot 5' },
-        { id: 6, time: '16:10 - 17:40', period: 'Slot 6' }
+        { id: 1, time: '7:00 - 9:15', period: 'Slot 1' },
+        { id: 2, time: '9:30 - 11:45', period: 'Slot 2' },
+        { id: 3, time: '12:30 - 14:45', period: 'Slot 3' },
+        { id: 4, time: '15:00 - 17:15', period: 'Slot 4' },
+        { id: 5, time: '17:30 - 19:45', period: 'Slot 5' },
+        { id: 6, time: '20:00 - 22:15', period: 'Slot 6' }
     ];
 
     const schedule: Record<string, Record<number, { course: string; code: string; room: string; class: string } | null>> = {
@@ -33,135 +33,145 @@ function TeacherSchedule() {
         }
     };
 
-    const getWeekDates = (weekOffset: number) => {
-        const baseDate = new Date('2026-01-05'); // Monday of first week
-        const startDate = new Date(baseDate.getTime() + (weekOffset * 7 * 24 * 60 * 60 * 1000));
-        return daysOfWeek.map((_, index) => {
-            const date = new Date(startDate.getTime() + (index * 24 * 60 * 60 * 1000));
-            return date;
-        });
+    // Calculate week display in "January 5-11, 2026" format
+    const getWeekDisplay = () => {
+        const baseDate = new Date('2026-01-05');
+        const weekStart = new Date(baseDate);
+        weekStart.setDate(baseDate.getDate() + currentWeek * 7);
+
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+
+        const startMonth = monthNames[weekStart.getMonth()];
+        const endMonth = monthNames[weekEnd.getMonth()];
+        const startDay = weekStart.getDate();
+        const endDay = weekEnd.getDate();
+        const year = weekEnd.getFullYear();
+
+        if (weekStart.getMonth() === weekEnd.getMonth()) {
+            return `${startMonth} ${startDay}-${endDay}, ${year}`;
+        } else {
+            return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
+        }
     };
 
-    const weekDates = getWeekDates(currentWeek);
+    const goToDate = (dateString: string) => {
+        if (!dateString) return;
 
-    const previousWeek = () => setCurrentWeek(curr => curr - 1);
-    const nextWeek = () => setCurrentWeek(curr => curr + 1);
-    const goToToday = () => {
-        const today = new Date();
-        const baseDate = new Date('2026-01-05');
-        const diffTime = today.getTime() - baseDate.getTime();
+        const selectedDate = new Date(dateString);
+        const baseDate = new Date('2026-01-05'); // Monday of first week
+
+        const diffTime = selectedDate.getTime() - baseDate.getTime();
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         const weekNumber = Math.floor(diffDays / 7);
+
         setCurrentWeek(weekNumber);
+    };
+
+    // Get date for each day column
+    const getDayDate = (dayIndex: number) => {
+        const baseDate = new Date('2026-01-05'); // Monday of first week
+        const weekStart = new Date(baseDate);
+        weekStart.setDate(baseDate.getDate() + currentWeek * 7 + dayIndex);
+
+        const day = weekStart.getDate();
+        const month = weekStart.getMonth() + 1;
+        const year = weekStart.getFullYear();
+        return `${day}/${month}/${year}`;
     };
 
     return (
         <div className="p-6">
             {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Schedule</h1>
+            <div className="mb-8">
+                <div className="flex items-center justify-between mb-2">
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Schedule</h1>
 
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={goToToday}
-                        className="px-4 py-2 bg-white border border-gray-300 text-[#0A1B3C] text-sm font-medium rounded-lg hover:bg-gray-50"
-                    >
-                        Today
-                    </button>
-                    <div className="flex items-center gap-2">
+                    {/* Week Navigation */}
+                    <div className="flex items-center gap-1">
                         <button
-                            onClick={previousWeek}
-                            className="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                            onClick={() => setCurrentWeek(currentWeek - 1)}
+                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Previous week"
                         >
-                            <ChevronLeft className="w-5 h-5 text-[#0A1B3C]" />
+                            <ChevronLeft className="w-5 h-5 text-gray-600" />
                         </button>
-                        <div className="px-4 py-2 bg-white border border-gray-200 rounded-lg min-w-[200px] text-center">
-                            <span className="text-sm font-medium text-[#0A1B3C]">
-                                {weekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {weekDates[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </span>
+
+                        {/* Date Range with Calendar Icon */}
+                        <div className="relative">
+                            <input
+                                type="date"
+                                onChange={(e) => goToDate(e.target.value)}
+                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                title="Jump to specific date"
+                            />
+                            <button className="flex items-center gap-2 text-sm font-medium text-gray-700 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                {getWeekDisplay()}
+                                <Calendar className="w-4 h-4 text-gray-500" />
+                            </button>
                         </div>
+
                         <button
-                            onClick={nextWeek}
-                            className="p-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                            onClick={() => setCurrentWeek(currentWeek + 1)}
+                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Next week"
                         >
-                            <ChevronRight className="w-5 h-5 text-[#0A1B3C]" />
+                            <ChevronRight className="w-5 h-5 text-gray-600" />
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <div className="text-sm text-gray-600 mb-4">
-                Your teaching schedule for this week.
             </div>
 
             {/* Schedule Table */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="bg-gray-50 border-b border-gray-200">
-                                <th className="p-4 text-left text-sm font-semibold text-gray-700 min-w-[120px]">
-                                    Time
+            <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="bg-gray-50">
+                            <th className="border border-gray-200 p-3 text-left text-sm font-semibold text-[#0A1B3C] min-w-[100px]">Time</th>
+                            {daysOfWeek.map((day, index) => (
+                                <th key={day} className="border border-gray-200 p-3 text-center text-sm font-semibold text-[#0A1B3C] min-w-[140px]">
+                                    <div>{day}</div>
+                                    <div className="text-xs font-normal text-gray-500 mt-1">{getDayDate(index)}</div>
                                 </th>
-                                {daysOfWeek.map((day, index) => {
-                                    const date = weekDates[index];
-                                    const isToday = date.toDateString() === new Date().toDateString();
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {timeSlots.map((timeSlot) => (
+                            <tr key={timeSlot.id}>
+                                <td className="border border-gray-200 p-3 bg-gray-50 font-medium text-sm text-gray-700">
+                                    <div className="font-semibold">{timeSlot.period}</div>
+                                </td>
+                                {daysOfWeek.map((day) => {
+                                    const classItem = schedule[day]?.[timeSlot.id];
                                     return (
-                                        <th
-                                            key={day}
-                                            className={`p-4 text-center text-sm font-semibold min-w-[150px] ${isToday ? 'text-[#F37022] bg-orange-50' : 'text-gray-700'
-                                                }`}
-                                        >
-                                            <div>{day}</div>
-                                            <div className={`text-xs font-normal ${isToday ? 'text-[#F37022]' : 'text-gray-500'}`}>
-                                                {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                            </div>
-                                        </th>
+                                        <td key={day} className="border border-gray-200 p-3 align-top">
+                                            {classItem ? (
+                                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                                    <div className="font-semibold text-[#0A1B3C] text-sm mb-1">{classItem.course}</div>
+                                                    <div className="text-xs font-semibold text-[#0066b3] bg-white px-2 py-0.5 rounded inline-block mb-2">
+                                                        {classItem.code}
+                                                    </div>
+                                                    <div className="text-xs text-gray-600 mb-2">{classItem.room}</div>
+                                                    <div className="text-xs font-medium text-gray-700 block mb-2">Class: {classItem.class}</div>
+                                                    <div className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block whitespace-nowrap">
+                                                        {timeSlot.time}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="text-center text-gray-300">-</div>
+                                            )}
+                                        </td>
                                     );
                                 })}
                             </tr>
-                        </thead>
-                        <tbody>
-                            {timeSlots.map((timeSlot) => (
-                                <tr key={timeSlot.id} className="border-b border-gray-100">
-                                    <td className="p-4 bg-gray-50 border-r border-gray-200">
-                                        <div className="text-sm font-medium text-[#0A1B3C]">{timeSlot.period}</div>
-                                        <div className="text-xs text-gray-500">{timeSlot.time}</div>
-                                    </td>
-                                    {daysOfWeek.map((day) => {
-                                        const classItem = schedule[day]?.[timeSlot.id];
-                                        return (
-                                            <td key={day} className="p-2 align-top">
-                                                {classItem ? (
-                                                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 h-full">
-                                                        <div className="font-semibold text-[#0A1B3C] text-sm mb-1">{classItem.course}</div>
-                                                        <div className="text-xs font-semibold text-[#0066b3] bg-white px-2 py-0.5 rounded inline-block mb-2">
-                                                            {classItem.code}
-                                                        </div>
-                                                        <div className="text-xs text-gray-600 mb-1">{classItem.room}</div>
-                                                        <div className="text-xs font-medium text-gray-700">Class: {classItem.class}</div>
-                                                    </div>
-                                                ) : null}
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Legend */}
-            <div className="mt-4 flex items-center gap-6 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-orange-50 border border-orange-200 rounded"></div>
-                    <span>Teaching Slot</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-orange-50 rounded"></div>
-                    <span>Today</span>
-                </div>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
