@@ -81,7 +81,7 @@ function AdminClasses() {
             <option value="SUMMER2024">Summer 2024</option>
           </select>
         </div>
-        <p className="text-sm md:text-base text-gray-600">Manage classes and schedules.</p>
+
       </div>
 
       <DataTable

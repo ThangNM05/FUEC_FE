@@ -160,7 +160,7 @@ function StudentSchedule() {
             </button>
           </div>
         </div>
-        <p className="text-sm md:text-base text-gray-600">Your class timetable for this week.</p>
+
       </div>
 
       {/* Schedule Grid - Desktop View */}

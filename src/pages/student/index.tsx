@@ -57,7 +57,7 @@ function StudentDashboard() {
               <option value="SUMMER2024">Summer 2024</option>
             </select>
           </div>
-          <p className="text-sm md:text-base text-gray-600">View and manage your courses.</p>
+
         </div>
 
         {/* Search Bar */}

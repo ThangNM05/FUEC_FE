@@ -146,7 +146,7 @@ function CourseDetails() {
             <ArrowLeft className="w-4 h-4" />
             Back to Courses
           </button>
-          <h1 className="text-2xl font-bold text-[#0A1B3C] mb-2">{course.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C] mb-2">{course.name}</h1>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">
               {course.code}
