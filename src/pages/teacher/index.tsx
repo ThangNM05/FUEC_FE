@@ -116,7 +116,7 @@ function TeacherDashboard() {
                                     {/* Course Header */}
                                     <div className="p-5 border-b border-gray-100">
                                         <div className="mb-3">
-                                            <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2.5 py-1 rounded">
+                                            <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2.5 py-1 rounded">
                                                 {course.code}
                                             </span>
                                         </div>
@@ -166,7 +166,7 @@ function TeacherDashboard() {
                                         >
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded">{course.code}</span>
+                                                    <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">{course.code}</span>
                                                     <h3 className="font-medium text-[#0A1B3C]">{course.name}</h3>
                                                 </div>
                                                 <p className="text-sm text-gray-500">

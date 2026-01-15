@@ -103,7 +103,7 @@ function StudentDashboard() {
                   onClick={() => navigate('/student/course-details')}
                 >
                   <div className="mb-3">
-                    <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2.5 py-1 rounded">
+                    <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2.5 py-1 rounded">
                       {course.code}
                     </span>
                   </div>
@@ -134,7 +134,7 @@ function StudentDashboard() {
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded">{course.code}</span>
+                        <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">{course.code}</span>
                         <h3 className="font-medium text-[#0A1B3C] group-hover:text-[#F37022] transition-colors">
                           {course.name}
                         </h3>
@@ -168,7 +168,7 @@ function StudentDashboard() {
                 ].map((activity, index) => (
                   <div key={index} className="flex items-start px-4 py-4 hover:bg-gray-50 cursor-pointer">
                     <div className="flex-1">
-                      <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{activity.course}</span>
+                      <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{activity.course}</span>
                       <p className="text-sm text-gray-600">{activity.title}</p>
                       <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
                     </div>
@@ -204,7 +204,7 @@ function StudentDashboard() {
                     </button>
                     <div className="flex-1">
                       <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
-                      <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
+                      <p className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
                       <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
                     </div>
                   </div>
@@ -221,7 +221,7 @@ function StudentDashboard() {
                 <div key={item.id} className="flex items-start gap-0">
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
-                    <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
+                    <p className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
                     <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
                   </div>
                 </div>
@@ -237,7 +237,7 @@ function StudentDashboard() {
                 <div key={item.id} className="flex items-start gap-0">
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
-                    <p className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
+                    <p className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
                     <p className="text-xs text-gray-400">{item.grade}    {item.date}</p>
                   </div>
                 </div>

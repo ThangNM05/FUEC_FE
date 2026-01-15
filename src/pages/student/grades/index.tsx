@@ -30,7 +30,7 @@ function StudentGrades() {
   ];
 
   const getGradeColor = (grade: string) => {
-    if (grade === 'A' || grade === 'A+') return 'text-[#F37022] bg-orange-50 font-bold';
+    if (grade === 'A' || grade === 'A+') return 'text-[#0066b3] bg-blue-50 font-bold';
     if (grade === 'B+' || grade === 'B') return 'text-orange-600 bg-orange-50';
     if (grade === 'In Progress') return 'text-orange-500 bg-orange-50';
     return 'text-gray-600 bg-gray-50';
@@ -137,7 +137,7 @@ function StudentGrades() {
                 <tr key={course.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="p-4 font-medium text-[#0A1B3C]">{course.name}</td>
                   <td className="p-4">
-                    <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded inline-block">
+                    <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block">
                       {course.code}
                     </span>
                   </td>

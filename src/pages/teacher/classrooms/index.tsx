@@ -108,7 +108,7 @@ function TeacherClassrooms() {
     };
 
     return (
-        <div className="h-[calc(100vh-4rem)] flex flex-col p-6">
+        <div className="flex flex-col p-6">
             {/* Top Toolbar */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
@@ -135,9 +135,9 @@ function TeacherClassrooms() {
                 </div>
             </div>
 
-            <div className="flex gap-6 flex-1 min-h-0">
+            <div className="flex gap-6">
                 {/* Left Panel - Course & Class List */}
-                <div className="w-[320px] flex flex-col border-r border-gray-200 pr-4 overflow-y-auto">
+                <div className="w-[320px] flex flex-col border-r border-gray-200 pr-4">
                     <div className="space-y-2 pb-4">
                         {courses.map((course) => (
                             <div key={course.id} className="border border-gray-200 rounded-lg overflow-hidden">
@@ -149,7 +149,7 @@ function TeacherClassrooms() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded">{course.code}</span>
+                                                <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">{course.code}</span>
                                                 <span className="text-sm font-bold text-[#0A1B3C]">{course.name}</span>
                                             </div>
                                             <div className="text-xs text-gray-500">{course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'}</div>
@@ -201,7 +201,7 @@ function TeacherClassrooms() {
                 </div>
 
                 {/* Right Panel - Class Details */}
-                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <div className="flex-1 flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm">
                     {selectedClass && selectedCourse ? (
                         <>
                             {/* Class Header */}
