@@ -35,7 +35,7 @@ function AdminDashboard() {
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <div className="mb-4 md:mb-6">
-          <div className="flex items-center gap-4 mb-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-2">
             <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">System Administration</h1>
             <select
               value={semester}
