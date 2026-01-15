@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router';
 import {
     LayoutDashboard, BookOpen, FileText, Users, Calendar, BarChart3,
-    User, LogOut, PanelLeftClose, Menu
+    User, LogOut, PanelLeftClose, Menu, MessageSquare
 } from 'lucide-react';
 import img_fpt from '../../../assets/img_fpt.svg';
 
@@ -25,9 +25,8 @@ function TeacherSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
     const menuItems: MenuItem[] = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/teacher' },
         { id: 'classes', label: 'My Classes', icon: BookOpen, path: '/teacher/classrooms' },
-        { id: 'assignments', label: 'Assignments', icon: FileText, path: '/teacher/assignments' },
-        { id: 'students', label: 'Students', icon: Users, path: '/teacher/students' },
         { id: 'schedule', label: 'Schedule', icon: Calendar, path: '/teacher/schedule' },
+        { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/teacher/messages' },
         { id: 'reports', label: 'Reports', icon: BarChart3, path: '/teacher/reports' }
     ];
 
@@ -101,6 +100,8 @@ function TeacherSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
                     {menuItems.map(item => {
                         const Icon = item.icon;
                         const isActive = location.pathname === item.path;
+                        // Show unread count for messages
+                        const unreadCount = item.id === 'messages' ? 8 : 0;
 
                         return (
                             <button
@@ -112,7 +113,14 @@ function TeacherSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
                                 onClick={() => handleMenuClick(item.path)}
                                 title={!isOpen && !isMobile ? item.label : ''}
                             >
-                                <Icon className="w-5 h-5 flex-shrink-0" />
+                                <div className="relative flex-shrink-0">
+                                    <Icon className="w-5 h-5" />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F37022] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                                            {unreadCount > 9 ? '9+' : unreadCount}
+                                        </span>
+                                    )}
+                                </div>
                                 {(isOpen || isMobile) && (
                                     <span className="flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                                         {item.label}

@@ -27,6 +27,7 @@ function StudentSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
     { id: 'courses', label: 'My Courses', icon: BookOpen, path: '/student/courses' },
     { id: 'schedule', label: 'Schedule', icon: Clock, path: '/student/schedule' },
     { id: 'forums', label: 'Forums', icon: MessageSquare, path: '/student/forums' },
+    { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/student/messages' },
     { id: 'exams', label: 'Exam Schedule', icon: Calendar, path: '/student/exams' },
     { id: 'grades', label: 'Grades', icon: BarChart3, path: '/student/grades' }
   ];
@@ -101,18 +102,27 @@ function StudentSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
           {menuItems.map(item => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
+            // Show unread count for messages
+            const unreadCount = item.id === 'messages' ? 4 : 0;
 
             return (
               <button
                 key={item.id}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all mb-1 ${isActive
-                    ? 'bg-orange-50 text-[#F37022]'
-                    : 'text-[#0A1B3C] hover:bg-gray-50'
+                  ? 'bg-orange-50 text-[#F37022]'
+                  : 'text-[#0A1B3C] hover:bg-gray-50'
                   } ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                 onClick={() => handleMenuClick(item.path)}
                 title={!isOpen && !isMobile ? item.label : ''}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
+                <div className="relative flex-shrink-0">
+                  <Icon className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F37022] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
                 {(isOpen || isMobile) && (
                   <span className="flex-1 text-left text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis">
                     {item.label}

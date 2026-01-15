@@ -185,7 +185,7 @@ function StudentSchedule() {
                       {classItem ? (
                         <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                           <div className="font-semibold text-[#0A1B3C] text-sm mb-1">{classItem.course}</div>
-                          <div className="text-xs font-semibold text-[#F37022] bg-white px-2 py-0.5 rounded inline-block mb-2">
+                          <div className="text-xs font-semibold text-[#0066b3] bg-white px-2 py-0.5 rounded inline-block mb-2">
                             {classItem.code}
                           </div>
                           <div className="text-xs text-gray-600 mb-2">{classItem.room}</div>
