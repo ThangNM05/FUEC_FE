@@ -63,10 +63,10 @@ function TeacherDashboard() {
     return (
         <div className="flex">
             {/* Main Content */}
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-4 md:p-6">
                 {/* Title and Semester */}
                 <div className="mb-4">
-                    <div className="flex items-center gap-4 mb-2">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-2">
                         <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Dashboard</h1>
                         <select
                             value={semester}

@@ -47,10 +47,10 @@ function StudentCourses() {
   );
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-4 md:p-6">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Courses</h1>
           <select
             value={semester}
