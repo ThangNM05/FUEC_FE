@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router';
 import { Menu } from 'lucide-react';
 import TeacherSidebar from './TeacherSidebar';
+import TeacherHeader from './TeacherHeader';
 
 function TeacherLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -46,9 +47,13 @@ function TeacherLayout() {
 
             {/* Main Content */}
             <div className={`transition-all duration-200 ${isMobile
-                    ? 'ml-0 pt-14'
-                    : isSidebarOpen ? 'ml-64' : 'ml-20'
+                ? 'ml-0 pt-14'
+                : isSidebarOpen ? 'ml-64' : 'ml-20'
                 }`}>
+                {/* Teacher Header - Only on desktop */}
+                {!isMobile && (
+                    <TeacherHeader />
+                )}
                 <Outlet />
             </div>
         </div>

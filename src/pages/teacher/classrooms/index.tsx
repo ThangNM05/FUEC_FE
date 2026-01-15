@@ -112,7 +112,7 @@ function TeacherClassrooms() {
             {/* Top Toolbar */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
-                    <h1 className="text-2xl font-bold text-[#0A1B3C]">My Classes</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Classes</h1>
                     <select
                         value={semester}
                         onChange={(e) => setSemester(e.target.value)}

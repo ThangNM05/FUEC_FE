@@ -47,7 +47,7 @@ function AdminDashboard() {
               <option value="SUMMER2024">Summer 2024</option>
             </select>
           </div>
-          <p className="text-sm md:text-base text-gray-600">Monitor and manage the FUEC platform.</p>
+
         </div>
         <div className="flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 bg-white rounded-lg border border-gray-200">
           <Search className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
