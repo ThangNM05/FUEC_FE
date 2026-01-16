@@ -130,12 +130,12 @@ function StudentMessages() {
     };
 
     return (
-        <div className="flex flex-col p-6 h-[calc(100vh-4rem)]">
+        <div className="flex flex-col p-4 md:p-6 h-[calc(100vh-4rem)] animate-fadeIn">
             <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C] mb-6">Messages</h1>
 
-            <div className="flex gap-4 flex-1 min-h-0">
+            <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
                 {/* Left Sidebar - Class Chats List */}
-                <div className="w-80 flex flex-col bg-white rounded-xl border border-gray-200">
+                <div className="w-full lg:w-80 flex flex-col bg-white rounded-xl border border-gray-200 animate-slideIn">
                     {/* Search */}
                     <div className="p-4 border-b border-gray-200">
                         <div className="relative">
@@ -156,7 +156,7 @@ function StudentMessages() {
                             <button
                                 key={chat.id}
                                 onClick={() => setSelectedChat(chat)}
-                                className={`w-full p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors text-left ${selectedChat?.id === chat.id ? 'bg-orange-50 border-l-4 border-l-[#F37022]' : ''
+                                className={`w-full p-4 border-b border-gray-100 hover:bg-gray-50 transition-all duration-200 text-left ${selectedChat?.id === chat.id ? 'bg-orange-50 border-l-4 border-l-[#F37022]' : ''
                                     }`}
                             >
                                 <div className="flex items-start justify-between mb-2">
@@ -212,7 +212,7 @@ function StudentMessages() {
                                 {messages.map(msg => (
                                     <div
                                         key={msg.id}
-                                        className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}
+                                        className={`flex animate-slideUp ${msg.isMe ? 'justify-end' : 'justify-start'}`}
                                     >
                                         <div className={`max-w-[70%] ${msg.isMe ? 'order-2' : 'order-1'}`}>
                                             <div className={`flex items-center gap-2 mb-1 ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
@@ -223,10 +223,10 @@ function StudentMessages() {
                                                 <span className="text-xs text-gray-400">{msg.time}</span>
                                             </div>
                                             <div className={`rounded-lg p-3 ${msg.isMe
-                                                    ? 'bg-[#F37022] text-white'
-                                                    : msg.senderRole === 'teacher'
-                                                        ? 'bg-orange-50 text-[#0A1B3C] border border-orange-200'
-                                                        : 'bg-gray-100 text-[#0A1B3C]'
+                                                ? 'bg-[#F37022] text-white'
+                                                : msg.senderRole === 'teacher'
+                                                    ? 'bg-orange-50 text-[#0A1B3C] border border-orange-200'
+                                                    : 'bg-gray-100 text-[#0A1B3C]'
                                                 }`}>
                                                 <p className="text-sm">{msg.message}</p>
                                             </div>

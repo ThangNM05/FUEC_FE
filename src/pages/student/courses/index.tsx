@@ -47,7 +47,7 @@ function StudentCourses() {
   );
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6 animate-fadeIn">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
@@ -105,7 +105,7 @@ function StudentCourses() {
           {filteredCourses.map((course) => (
             <div
               key={course.id}
-              className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group"
+              className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-lg hover:border-[#F37022] hover:-translate-y-1 transition-all duration-300 cursor-pointer group animate-slideUp"
               onClick={() => navigate('/student/course-details')}
             >
               <div className="mb-3">
