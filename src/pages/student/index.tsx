@@ -40,7 +40,7 @@ function StudentDashboard() {
   ];
 
   return (
-    <div className="flex">
+    <div className="flex animate-fadeIn">
       {/* Main Content */}
       <div className="flex-1 p-4 md:p-6">
         {/* Title and Semester */}
@@ -107,7 +107,7 @@ function StudentDashboard() {
             {courses.map((course) => (
               <div
                 key={course.id}
-                className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group"
+                className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-lg hover:border-[#F37022] hover:-translate-y-1 transition-all duration-300 cursor-pointer group animate-slideUp"
                 onClick={() => navigate('/student/course-details')}
               >
                 <div className="mb-3">
