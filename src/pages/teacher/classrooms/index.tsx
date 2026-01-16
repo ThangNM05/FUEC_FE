@@ -267,33 +267,23 @@ function TeacherClassrooms() {
 
                             {/* Tabs */}
                             <div className="border-b border-gray-100 px-6">
-                                <div className="flex gap-6">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex gap-6">
+                                        <button
+                                            onClick={() => setActiveTab('students')}
+                                            className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'students'
+                                                ? 'border-[#F37022] text-[#F37022]'
+                                                : 'border-transparent text-gray-500 hover:text-[#0A1B3C]'
+                                                }`}
+                                        >
+                                            Student List
+                                        </button>
+                                    </div>
                                     <button
-                                        onClick={() => setActiveTab('students')}
-                                        className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'students'
-                                            ? 'border-[#F37022] text-[#F37022]'
-                                            : 'border-transparent text-gray-500 hover:text-[#0A1B3C]'
-                                            }`}
+                                        onClick={() => window.location.href = `/teacher/course-details/${selectedClass.name}`}
+                                        className="px-4 py-2 bg-[#F37022] text-white text-sm font-medium rounded-lg hover:bg-[#D96419] transition-colors"
                                     >
-                                        Student List
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('assignments')}
-                                        className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'assignments'
-                                            ? 'border-[#F37022] text-[#F37022]'
-                                            : 'border-transparent text-gray-500 hover:text-[#0A1B3C]'
-                                            }`}
-                                    >
-                                        Assignments
-                                    </button>
-                                    <button
-                                        onClick={() => setActiveTab('create')}
-                                        className={`py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'create'
-                                            ? 'border-[#F37022] text-[#F37022]'
-                                            : 'border-transparent text-gray-500 hover:text-[#0A1B3C]'
-                                            }`}
-                                    >
-                                        Create Assignment
+                                        Course Management
                                     </button>
                                 </div>
                             </div>
@@ -307,119 +297,6 @@ function TeacherClassrooms() {
                                             columns={studentColumns}
                                             data={students}
                                         />
-                                    </div>
-                                )}
-
-                                {activeTab === 'assignments' && (
-                                    <div className="space-y-4">
-                                        {assignments.map((assignment) => (
-                                            <div key={assignment.id} className="border border-gray-100 rounded-xl p-4 hover:border-gray-200 hover:shadow-sm transition-all bg-white">
-                                                <div className="flex items-start justify-between">
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-3 mb-2">
-                                                            <div className="p-2 bg-orange-50 rounded-lg">
-                                                                <FileText className="w-5 h-5 text-[#F37022]" />
-                                                            </div>
-                                                            <div>
-                                                                <h3 className="font-bold text-[#0A1B3C] text-sm">{assignment.title}</h3>
-                                                                <span className={`inline-flex items-center px-2 py-0.5 mt-1 text-[10px] font-medium rounded-full ${assignment.status === 'Active'
-                                                                    ? 'bg-green-50 text-green-600'
-                                                                    : 'bg-gray-100 text-gray-600'
-                                                                    }`}>
-                                                                    {assignment.status}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-4 text-xs text-gray-500 mt-3 pl-11">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <Clock className="w-3.5 h-3.5" />
-                                                                <span>Due: {assignment.dueDate}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-1.5">
-                                                                <Users className="w-3.5 h-3.5" />
-                                                                <span>{assignment.submitted}/{assignment.total} submitted</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <button className="px-3 py-1.5 bg-gray-50 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-100 transition-colors">
-                                                        View Details
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {activeTab === 'create' && (
-                                    <div className="max-w-2xl">
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h3 className="text-lg font-bold text-[#0A1B3C]">New Assignment Details</h3>
-                                        </div>
-                                        <form className="space-y-6">
-                                            <div>
-                                                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Assignment Title</label>
-                                                <input
-                                                    type="text"
-                                                    placeholder="e.g., Lab 3: React Hooks"
-                                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F37022] focus:border-transparent transition-all"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Description</label>
-                                                <textarea
-                                                    rows={4}
-                                                    placeholder="Assignment description..."
-                                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F37022] focus:border-transparent transition-all"
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-6">
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Due Date</label>
-                                                    <input
-                                                        type="date"
-                                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F37022] focus:border-transparent transition-all"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Max Score</label>
-                                                    <input
-                                                        type="number"
-                                                        placeholder="100"
-                                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#F37022] focus:border-transparent transition-all"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold text-gray-700 mb-2 uppercase tracking-wide">Assign To</label>
-                                                <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                                    <label className="flex items-center gap-3 cursor-pointer">
-                                                        <input type="checkbox" checked disabled className="w-5 h-5 text-[#F37022] rounded focus:ring-[#F37022] border-gray-300" />
-                                                        <span className="text-sm font-medium text-gray-700">{selectedCourse.code} - {selectedClass.name}</span>
-                                                    </label>
-                                                    {selectedCourse.classes.filter((c: Class) => c.id !== selectedClass.id).map((cls: Class) => (
-                                                        <label key={cls.id} className="flex items-center gap-3 cursor-pointer group">
-                                                            <input type="checkbox" className="w-5 h-5 text-[#F37022] rounded focus:ring-[#F37022] border-gray-300" />
-                                                            <span className="text-sm font-medium text-gray-600 group-hover:text-[#0A1B3C] transition-colors">{cls.name}</span>
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-3 pt-6 border-t border-gray-100">
-                                                <button
-                                                    type="submit"
-                                                    className="flex items-center gap-2 px-6 py-3 bg-[#F37022] text-white font-bold text-sm rounded-xl hover:bg-[#D96419] transition-all shadow-sm hover:shadow"
-                                                >
-                                                    <Plus className="w-5 h-5" />
-                                                    Create Assignment
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-50 transition-all"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        </form>
                                     </div>
                                 )}
                             </div>
