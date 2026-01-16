@@ -42,6 +42,11 @@ import TeacherSchedule from './pages/teacher/schedule';
 import TeacherReports from './pages/teacher/reports';
 import TeacherMessages from './pages/teacher/messages';
 import StudentMessages from './pages/student/messages';
+import QuestionDetail from './pages/student/questions/detail';
+import AssignmentSubmission from './pages/student/assignment-submission';
+import TeacherAssignmentReview from './pages/teacher/assignment-review';
+import TeacherCourseDetails from './pages/teacher/course-details';
+import AssignmentSubmissionsList from './pages/teacher/assignment-submissions';
 
 function Router() {
   return (
@@ -81,6 +86,8 @@ function Router() {
         <Route path="/student/schedule" element={<StudentSchedule />} />
         <Route path="/student/profile" element={<StudentProfile />} />
         <Route path="/student/messages" element={<StudentMessages />} />
+        <Route path="/student/course-details/questions/:id" element={<QuestionDetail />} />
+        <Route path="/student/assignment-submission/:id" element={<AssignmentSubmission />} />
       </Route>
 
       {/* Teacher Routes with TeacherLayout */}
@@ -89,6 +96,9 @@ function Router() {
         <Route path="/teacher/classrooms" element={<TeacherClassrooms />} />
         <Route path="/teacher/schedule" element={<TeacherSchedule />} />
         <Route path="/teacher/messages" element={<TeacherMessages />} />
+        <Route path="/teacher/course-details/:courseId" element={<TeacherCourseDetails />} />
+        <Route path="/teacher/assignment/:assignmentId/submissions" element={<AssignmentSubmissionsList />} />
+        <Route path="/teacher/assignment-review/:submissionId" element={<TeacherAssignmentReview />} />
         <Route path="/teacher/reports" element={<TeacherReports />} />
       </Route>
 
