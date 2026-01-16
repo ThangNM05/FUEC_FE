@@ -113,7 +113,7 @@ function CourseDetails() {
       assignments: [
         { id: 1, title: 'Submit Demo Hello World!' }
       ],
-      expanded: i === 0,
+      expanded: false, // All slots collapsed by default
       status: getSlotStatus(i + 1),
       remaining: getRemaining(i + 1)
     }))
@@ -191,9 +191,9 @@ function CourseDetails() {
                     ? 'bg-green-100 text-green-700'
                     : 'bg-[#F37022] text-white hover:bg-[#D96419]'
                     }`}
-                  onClick={() => navigate('/student/assignment')}
+                  onClick={() => navigate(`/student/assignment-submission/${assignment.id}`)}
                 >
-                  {assignment.submitted ? 'Submitted' : 'Submit'}
+                  {assignment.submitted ? 'View Submission' : 'Submit'}
                 </button>
               </div>
             ))}
@@ -325,12 +325,16 @@ function CourseDetails() {
                         <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">QUESTION</h4>
                         <div className="space-y-2">
                           {slot.questions.map(question => (
-                            <div key={question.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                            <div
+                              key={question.id}
+                              onClick={() => navigate(`/student/course-details/questions/${slot.id}-${question.id}`)}
+                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-orange-50 hover:border-[#F37022] border border-transparent transition-all cursor-pointer group"
+                            >
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
                                   <FileText className="w-4 h-4 text-orange-600" />
                                 </div>
-                                <span className="text-sm text-[#0A1B3C]">{question.title}</span>
+                                <span className="text-sm text-[#0A1B3C] group-hover:text-[#F37022] font-medium transition-colors">{question.title}</span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className={`px-3 py-1 text-xs font-semibold rounded ${question.status === 'custom'
