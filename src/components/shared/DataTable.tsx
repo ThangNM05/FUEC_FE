@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   Search, Filter, ChevronLeft, ChevronRight, Download, Plus,
-  ArrowUp, ArrowDown
+  ArrowUp, ArrowDown, FileSpreadsheet
 } from 'lucide-react';
 
 interface Column<T> {
@@ -19,9 +19,11 @@ interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
   onImport?: () => void;
+  onDownloadTemplate?: () => void;
   onCreate?: () => void;
   createLabel?: string;
   importLabel?: string;
+  downloadTemplateLabel?: string;
   selectable?: boolean;
   onSelectionChange?: (selectedIds: (string | number)[]) => void;
 }
@@ -31,9 +33,11 @@ function DataTable<T extends { id: string | number }>({
   data,
   columns,
   onImport,
+  onDownloadTemplate,
   onCreate,
   createLabel = 'Create New',
   importLabel = 'Import Excel',
+  downloadTemplateLabel = 'Template',
   selectable = false,
   onSelectionChange
 }: DataTableProps<T>) {
@@ -134,6 +138,17 @@ function DataTable<T extends { id: string | number }>({
           </div>
         </div>
         <div className="flex gap-2 sm:gap-3">
+          {onDownloadTemplate && (
+            <button
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-green-600 text-green-600 rounded-lg text-xs sm:text-sm font-medium hover:bg-green-50 transition-colors"
+              onClick={onDownloadTemplate}
+              title="Download Import Template"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">{downloadTemplateLabel}</span>
+              <span className="sm:hidden">Template</span>
+            </button>
+          )}
           {onImport && (
             <button
               className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-[#F37022] text-[#F37022] rounded-lg text-xs sm:text-sm font-medium"
