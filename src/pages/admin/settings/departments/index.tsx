@@ -1,113 +1,160 @@
 import { useState } from 'react';
-import { Edit, Trash2 } from 'lucide-react';
-import DataTable from '@/components/shared/DataTable';
-import ImportExcelModal from '@/components/shared/ImportExcelModal';
-import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
-import toast from '@/lib/toast';
+import { Edit, Trash2, Users } from 'lucide-react';
+import { toast } from 'sonner';
 
-interface Department {
-    id: number;
-    name: string;
-    code: string;
-    head: string;
-    staff: number;
-    students: number;
-    status: string;
-}
+import DataTable from '@/components/shared/DataTable';
+import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
+import EditDepartmentModal from '@/features/department-management/components/EditDepartmentModal';
+
+import {
+    useGetDepartmentsQuery,
+    useDeleteDepartmentMutation,
+} from '@/features/department-management/services/departmentsApi';
+import type { Department } from '@/features/department-management/types/department.types';
 
 function AdminDepartments() {
-    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    // Pagination State
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [sortColumn, setSortColumn] = useState<string>('');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [searchTerm, setSearchTerm] = useState<string>('');
+
+    // Delete Modal State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
 
-    const departments: Department[] = [
-        {
-            id: 1,
-            name: 'Software Engineering',
-            code: 'SE',
-            head: 'Prof. Nguyen Van A',
-            staff: 25,
-            students: 450,
-            status: 'Active'
-        },
-        {
-            id: 2,
-            name: 'Information Systems',
-            code: 'IS',
-            head: 'Prof. Tran Thi B',
-            staff: 20,
-            students: 380,
-            status: 'Active'
-        },
-        {
-            id: 3,
-            name: 'Computer Science',
-            code: 'CS',
-            head: 'Prof. Le Van C',
-            staff: 30,
-            students: 520,
-            status: 'Active'
+    // Edit/Create Modal State
+    const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // RTK Query hooks
+
+    const { data: departmentsData, isLoading, error } = useGetDepartmentsQuery({
+        page,
+        pageSize,
+        sortColumn,
+        sortDirection,
+        searchTerm
+    });
+
+    const [deleteDepartment, { isLoading: isDeleting }] = useDeleteDepartmentMutation();
+
+    // Extract data from PaginatedResponse
+    const departments = departmentsData?.items || [];
+    const totalDepartments = departmentsData?.totalItemCount || 0;
+
+    // Handle Delete
+    const handleDelete = (department: Department) => {
+        setDepartmentToDelete(department);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!departmentToDelete) return;
+
+        try {
+            await deleteDepartment(departmentToDelete.id).unwrap();
+            toast.success(`Department "${departmentToDelete.name}" deleted successfully!`);
+            setDepartmentToDelete(null);
+            setIsDeleteModalOpen(false);
+        } catch (err) {
+
+            toast.error('Deletion failed! ' + ((err as any)?.data?.message || (err as any)?.message || 'Unknown error'));
         }
-    ];
+    };
+
+    // Handle Edit
+    const handleEdit = (department: Department) => {
+        setSelectedDepartment(department);
+        setIsEditModalOpen(true);
+    };
+
+    // Handle Create
+    const handleCreate = () => {
+        setSelectedDepartment(null); // Clear selection for create mode
+        setIsEditModalOpen(true);
+    };
+
+    // Handle Sort Change
+    const handleSortChange = (column: keyof Department, direction: 'asc' | 'desc') => {
+        setSortColumn(column as string);
+        setSortDirection(direction);
+    };
+
+    // Handle Search Change
+    const handleSearchChange = (term: string) => {
+        setSearchTerm(term);
+    };
+
+    // Placeholder for Import
+    const handleImportClick = () => {
+        // toast.info("Import feature coming soon!");
+        // User requested a button "like students/teachers". 
+        // Since we don't have the backend for it yet, we just show a toast or open a dummy modal if we had one.
+        // For now, simple toast as per request guidance "create placeholder".
+        toast.info("Import feature for Departments is under development.");
+    };
 
     const columns = [
-        { header: 'Department Name', accessor: 'name' as keyof Department, sortable: true, filterable: true },
         {
             header: 'Code',
             accessor: 'code' as keyof Department,
             sortable: true,
             filterable: true,
+            className: 'w-[15%]',
             render: (item: Department) => (
                 <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: '#cefafe', color: '#0e7490' }}>
                     {item.code}
                 </span>
             )
         },
-        { header: 'Department Head', accessor: 'head' as keyof Department, sortable: true, filterable: true },
         {
-            header: 'Staff',
-            accessor: 'staff' as keyof Department,
+            header: 'Department Name',
+            accessor: 'name' as keyof Department,
             sortable: true,
+            filterable: true,
+            className: 'w-[30%]',
+        },
+        {
+            header: 'Teachers',
+            accessor: 'teacherCount' as keyof Department,
             align: 'center' as const,
+            sortable: true,
+            className: 'w-[15%] text-center',
             render: (item: Department) => (
-                <span className="font-semibold" style={{ color: '#0A1B3C' }}>{item.staff}</span>
+                <div className="flex items-center justify-center gap-2">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium text-gray-700">{item.teacherCount || 0}</span>
+                </div>
             )
         },
         {
-            header: 'Students',
-            accessor: 'students' as keyof Department,
-            sortable: true,
-            align: 'center' as const,
-            render: (item: Department) => (
-                <span className="font-semibold" style={{ color: '#0A1B3C' }}>{item.students}</span>
-            )
-        },
-        {
-            header: 'Status',
-            accessor: 'status' as keyof Department,
-            sortable: true,
-            align: 'center' as const,
-            render: (item: Department) => (
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                    {item.status}
-                </span>
-            )
+            header: 'Description',
+            accessor: 'description' as keyof Department,
+            sortable: false,
+            filterable: false,
+            className: 'w-[25%]',
         },
         {
             header: 'Actions',
             accessor: 'id' as keyof Department,
             align: 'center' as const,
+            className: 'w-[15%] text-center',
             render: (item: Department) => (
                 <div className="flex gap-2 justify-center">
                     <button
                         className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
                         onClick={() => handleEdit(item)}
+                        title="Edit Department"
                     >
                         <Edit className="w-4 h-4 text-blue-600" />
                     </button>
                     <button
                         className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                         onClick={() => handleDelete(item)}
+                        disabled={isDeleting}
+                        title="Delete Department"
                     >
                         <Trash2 className="w-4 h-4 text-red-600" />
                     </button>
@@ -116,68 +163,66 @@ function AdminDepartments() {
         }
     ];
 
-    const handleEdit = (department: Department) => {
-        toast.warning(`Function edit ${department.name} is not implemented yet`);
-    };
-
-    const handleDelete = (department: Department) => {
-        setDepartmentToDelete(department);
-        setIsDeleteModalOpen(true);
-    };
-
-    const confirmDelete = () => {
-        if (departmentToDelete) {
-            // Simulate delete error - department has students
-            if (departmentToDelete.students > 0) {
-                toast.error(`Cannot delete ${departmentToDelete.name}! Still has ${departmentToDelete.students} students.`);
-            } else {
-                toast.success(`Successfully deleted ${departmentToDelete.name}!`);
-            }
-            setDepartmentToDelete(null);
-        }
-    };
-
-    const handleImport = () => {
-        setIsImportModalOpen(true);
-    };
-
-    const handleImportConfirm = (file: File) => {
-        // Simulate file upload
-        toast.success(`Đang tải lên file: ${file.name}`);
-        // In real implementation, you would upload the file to the server here
-    };
+    if (isLoading) {
+        return (
+            <div className="p-4 md:p-6">
+                <div className="mb-4 md:mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Department Management</h1>
+                </div>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F37022] mx-auto"></div>
+                        <p className="mt-4 text-gray-600">Loading departments...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 md:p-6">
             <div className="mb-4 md:mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Department Management</h1>
-
+                <p className="text-gray-600 mt-1">Manage academic departments</p>
             </div>
 
             <DataTable
-                title="All Departments"
+                title={`All Departments (${totalDepartments})`}
                 data={departments}
                 columns={columns}
-                onCreate={() => toast.success('Create department successfully!')}
-                createLabel="Create Department"
-                onImport={handleImport}
+
+                onCreate={handleCreate}
+                createLabel="Add Department"
+
+                onImport={handleImportClick}
+                importLabel="Import Excel"
+
                 selectable={true}
+
+                // Manual Pagination
+                manualPagination={true}
+                totalItems={totalDepartments}
+                page={page}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+                onSortChange={handleSortChange as any}
+                onSearchChange={handleSearchChange}
+                searchTerm={searchTerm}
             />
 
-            {/* Import Excel Modal */}
-            <ImportExcelModal
-                isOpen={isImportModalOpen}
-                onClose={() => setIsImportModalOpen(false)}
-                onConfirm={handleImportConfirm}
+            <EditDepartmentModal
+                department={selectedDepartment}
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
             />
 
-            {/* Confirm Delete Modal */}
             <ConfirmDeleteModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
-                title="Are you sure you want to delete this department?"
-                message="This action cannot be undone. This will permanently delete the department from the system."
+                title="Confirm Deletion"
+                message={`Are you sure you want to delete department "${departmentToDelete?.name}"? This action cannot be undone.`}
                 itemName={departmentToDelete?.name}
             />
         </div>
