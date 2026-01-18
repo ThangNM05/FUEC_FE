@@ -24,6 +24,13 @@ function AdminTeachers() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isImportExcelModalOpen, setIsImportExcelModalOpen] = useState(false);
 
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortColumn, setSortColumn] = useState<string>('');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+
   // Edit Teacher Modal State
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -34,13 +41,42 @@ function AdminTeachers() {
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
 
   // RTK Query hooks
-  const { data: teachers = [], isLoading, error } = useGetTeachersQuery();
+  const { data: teachersData, isLoading, error } = useGetTeachersQuery({
+    page,
+    pageSize,
+    sortColumn,
+    sortDirection,
+    searchTerm
+  });
+
   const [deleteTeacher, { isLoading: isDeleting }] = useDeleteTeacherMutation();
   const [importTeachers, { isLoading: isImporting }] = useImportTeachersMutation();
   const [updateTeacher, { isLoading: isUpdating }] = useUpdateTeacherMutation();
 
-  // Handle soft delete (Deactivate teacher)
+  // Extract data from PaginatedResponse
+  const teachers = teachersData?.items || [];
+  const totalTeachers = teachersData?.totalItemCount || 0;
 
+  // Debug log to verify data flow
+  console.log('AdminTeachers Render:', { teachersData, teachers, totalTeachers });
+
+  // Handle API Error with Toast
+  if (error) {
+    console.error('Teachers API Error:', error);
+  }
+
+  // Handle Sort Change
+  const handleSortChange = (column: keyof Teacher, direction: 'asc' | 'desc') => {
+    setSortColumn(column as string);
+    setSortDirection(direction);
+  };
+
+  // Handle Search Change
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term);
+  };
+
+  // Handle soft delete (Deactivate teacher)
   const handleDelete = (item: Teacher) => {
     setTeacherToDelete(item);
     setIsDeleteModalOpen(true);
@@ -51,17 +87,17 @@ function AdminTeachers() {
 
     try {
       await deleteTeacher(teacherToDelete.id).unwrap();
-      toast.success('Đã xóa/vô hiệu hóa thành công!');
+      toast.success('Successfully deleted/deactivated!');
       setTeacherToDelete(null);
       setIsDeleteModalOpen(false);
     } catch (err) {
       console.error('Delete error:', err);
-      toast.error('Vô hiệu hóa thất bại! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
+      toast.error('Failed to deactivate! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
     }
   };
 
   const handleActivate = async (item: Teacher) => {
-    if (!window.confirm(`Bạn có chắc muốn kích hoạt lại giảng viên "${item.teacherName}"?`)) return;
+    if (!window.confirm(`Are you sure you want to reactivate teacher "${item.teacherName}"?`)) return;
 
     try {
       await updateTeacher({
@@ -70,10 +106,10 @@ function AdminTeachers() {
         departmentId: item.departmentId,
         isActive: true
       }).unwrap();
-      toast.success('Đã kích hoạt lại thành công!');
+      toast.success('Successfully reactivated!');
     } catch (err) {
       console.error('Activate error:', err);
-      toast.error('Kích hoạt thất bại! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
+      toast.error('Activation failed! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
     }
   };
 
@@ -91,17 +127,17 @@ function AdminTeachers() {
       return;
     }
 
-    toast.info('Đang xử lý import...');
+    toast.info('Processing import...');
 
     try {
       const result = await importTeachers(file).unwrap();
       setImportResult(result);
       setIsImportExcelModalOpen(false); // Close the entry modal
       setIsImportModalOpen(true); // Open the result modal
-      toast.success('Import hoàn tất. Vui lòng kiểm tra kết quả.');
+      toast.success('Import completed. Please check the results.');
     } catch (err) {
       console.error('Import error:', err);
-      toast.error('Import thất bại! Vui lòng kiểm tra lại file hoặc thử lại sau.');
+      toast.error('Import failed! Please check the file or try again later.');
     }
   };
 
@@ -109,16 +145,7 @@ function AdminTeachers() {
     setIsImportExcelModalOpen(true);
   };
 
-  // Handle Download Template
-  const handleDownloadTemplate = () => {
-    const link = document.createElement('a');
-    link.href = '/templates/teacher_import_template.xlsx'; // Assuming this exists or will exist
-    link.download = 'Import_Teacher_Template.xlsx';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.info('Đang tải xuống template...');
-  };
+
 
   // Table columns configuration
   const columns = [
@@ -225,7 +252,7 @@ function AdminTeachers() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F37022] mx-auto"></div>
-            <p className="mt-4 text-gray-600">Đang tải danh sách giảng viên...</p>
+            <p className="mt-4 text-gray-600">Loading teachers...</p>
           </div>
         </div>
       </div>
@@ -236,20 +263,29 @@ function AdminTeachers() {
     <div className="p-4 md:p-6">
       <div className="mb-4 md:mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Teacher Management</h1>
-        <p className="text-gray-600 mt-1">Quản lý danh sách giảng viên</p>
+        <p className="text-gray-600 mt-1">Manage your teacher list</p>
       </div>
 
       <DataTable
-        title={`All Teachers (${teachers.length})`}
+        title={`All Teachers (${totalTeachers})`}
         data={teachers}
         columns={columns}
         onCreate={() => setIsCreateModalOpen(true)}
         createLabel="Add Teacher"
         onImport={handleImportClick}
         importLabel={isImporting ? 'Importing...' : 'Import Excel'}
-        onDownloadTemplate={handleDownloadTemplate}
-        downloadTemplateLabel="Template"
         selectable={true}
+
+        // Manual Pagination
+        manualPagination={true}
+        totalItems={totalTeachers}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        onSortChange={handleSortChange as any}
+        onSearchChange={handleSearchChange}
+        searchTerm={searchTerm}
       />
 
       <ImportExcelModal
@@ -257,7 +293,7 @@ function AdminTeachers() {
         onClose={() => setIsImportExcelModalOpen(false)}
         onConfirm={handleConfirmImport}
         title="Import Teachers"
-        description="Vui lòng sử dụng template chuẩn để import dữ liệu giảng viên"
+        description="Please use the standard template to import teacher data"
         templateUrl="/templates/teacher_import_template.xlsx"
       />
 
@@ -277,8 +313,8 @@ function AdminTeachers() {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
-        title="Xác nhận xóa giảng viên"
-        message={`Bạn có chắc muốn xóa giảng viên "${teacherToDelete?.teacherName}"? Hành động này không thể hoàn tác.`}
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete/deactivate teacher "${teacherToDelete?.teacherName}"? This action cannot be undone.`}
         itemName={teacherToDelete?.teacherName}
       />
 

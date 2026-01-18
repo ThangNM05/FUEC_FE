@@ -3,6 +3,7 @@ import { baseApi } from '@/redux/baseApi';
 import type {
     CreateStudentRequest,
     ImportStudentsResponse,
+    PaginatedResponse,
     Student,
     UpdateStudentRequest,
 } from '../types/student.types';
@@ -13,29 +14,67 @@ import type {
  */
 export const studentsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        // GET: Fetch all students
-        getStudents: builder.query<Student[], void>({
-            query: () => '/students',
-            transformResponse: (response: any) => {
-                // New response format: { status: 200, result: { items: [...] } }
-                if (response?.result?.items && Array.isArray(response.result.items)) {
-                    return response.result.items;
+        // GET: Fetch all students with pagination, sorting, and searching
+        getStudents: builder.query<PaginatedResponse<Student>, {
+            page: number;
+            pageSize: number;
+            sortColumn?: string;
+            sortDirection?: 'asc' | 'desc';
+            searchTerm?: string;
+        }>({
+            query: ({ page, pageSize, sortColumn, sortDirection, searchTerm }) => {
+                // Adjust for 0-based indexing if backend requires it (consistent with Departments/Teachers)
+                const pageIndex = page - 1;
+                let url = `/students?PageNumber=${pageIndex}&PageSize=${pageSize}`;
+                if (sortColumn) {
+                    // Capitalize first letter for backend (studentCode -> StudentCode)
+                    const pascalCaseColumn = sortColumn.charAt(0).toUpperCase() + sortColumn.slice(1);
+                    url += `&SortColumn=${pascalCaseColumn}&SortDirection=${sortDirection || 'asc'}`;
+                }
+                if (searchTerm) {
+                    url += `&SearchPhase=${encodeURIComponent(searchTerm)}`;
                 }
 
-                // Fallbacks for other formats
-                if (Array.isArray(response)) {
-                    return response;
+                console.log('Requesting URL:', url); // Debug
+                return url;
+            },
+            transformResponse: (response: any) => {
+                console.log('API Students Response:', response);
+
+                // Expected format: { result: { items: [], totalItemCount: ... } }
+                if (response?.result?.items && Array.isArray(response.result.items)) {
+                    return {
+                        items: response.result.items,
+                        totalItemCount: response.result.totalItemCount || 0,
+                        totalPages: response.result.totalPages || 0,
+                        itemFrom: response.result.itemFrom || 0,
+                        itemTo: response.result.itemTo || 0
+                    };
                 }
-                if (response?.data && Array.isArray(response.data)) {
-                    return response.data;
+
+                // Fallback for array response (no pagination metadata)
+                if (Array.isArray(response)) {
+                    return {
+                        items: response,
+                        totalItemCount: response.length,
+                        totalPages: 1,
+                        itemFrom: 1,
+                        itemTo: response.length
+                    };
                 }
 
                 console.warn('Unexpected response format:', response);
-                return [];
+                return {
+                    items: [],
+                    totalItemCount: 0,
+                    totalPages: 0,
+                    itemFrom: 0,
+                    itemTo: 0
+                };
             },
             providesTags: (result) =>
-                result && Array.isArray(result)
-                    ? [...result.map(({ id }) => ({ type: 'Students' as const, id })), 'Students']
+                result && result.items
+                    ? [...result.items.map(({ id }) => ({ type: 'Students' as const, id })), 'Students']
                     : ['Students'],
         }),
 

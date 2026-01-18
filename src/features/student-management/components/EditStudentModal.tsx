@@ -49,7 +49,7 @@ export default function EditStudentModal({ student, isOpen, onClose }: EditStude
         if (!student) return;
 
         if (!formData.studentName.trim()) {
-            toast.error('Tên sinh viên không được để trống');
+            toast.error('Student name cannot be empty');
             return;
         }
 
@@ -64,12 +64,12 @@ export default function EditStudentModal({ student, isOpen, onClose }: EditStude
 
             await updateStudent(updatePayload).unwrap();
 
-            toast.success(`Cập nhật sinh viên "${formData.studentName}" thành công!`);
+            toast.success(`Updated student "${formData.studentName}" successfully!`);
             onClose();
         } catch (err) {
             console.error('Update error:', err);
             // @ts-ignore
-            toast.error('Cập nhật thất bại: ' + (err?.data?.message || err?.message || 'Lỗi không xác định'));
+            toast.error('Update failed: ' + (err?.data?.message || err?.message || 'Unknown error'));
         }
     };
 
@@ -77,12 +77,12 @@ export default function EditStudentModal({ student, isOpen, onClose }: EditStude
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Chỉnh sửa sinh viên</DialogTitle>
+                    <DialogTitle>Edit Student</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="studentName" className="text-right">
-                            Tên
+                            Name
                         </Label>
                         <Input
                             id="studentName"
@@ -104,16 +104,16 @@ export default function EditStudentModal({ student, isOpen, onClose }: EditStude
                             onChange={handleChange}
                             className="col-span-3"
                             disabled={isLoading}
-                            placeholder="Nhập mã thẻ..."
+                            placeholder="Enter Card ID..."
                         />
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-                            Hủy
+                            Cancel
                         </Button>
                         <Button type="submit" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Lưu thay đổi
+                            Save Changes
                         </Button>
                     </DialogFooter>
                 </form>

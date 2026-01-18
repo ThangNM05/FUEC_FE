@@ -32,7 +32,7 @@ function ImportExcelModal({
             if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
                 setSelectedFile(file);
             } else {
-                toast.error('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+                toast.error('Please select an Excel file (.xlsx or .xls)');
             }
         }
     };
@@ -76,7 +76,13 @@ function ImportExcelModal({
 
     const handleDownloadTemplate = () => {
         if (templateUrl) {
-            window.open(templateUrl, '_blank');
+            // Create a temporary link to force download
+            const link = document.createElement('a');
+            link.href = templateUrl;
+            link.download = templateUrl.split('/').pop() || 'template.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         } else {
             toast.info('Template is being prepared');
         }

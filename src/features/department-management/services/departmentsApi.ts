@@ -1,26 +1,70 @@
 import { baseApi } from '@/redux/baseApi';
-import type { Department, CreateDepartmentRequest, UpdateDepartmentRequest } from '../types/department.types';
+import type { Department, CreateDepartmentRequest, UpdateDepartmentRequest, PaginatedResponse } from '../types/department.types';
 
 export const departmentsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         // GET: Fetch all departments
-        getDepartments: builder.query<Department[], void>({
-            query: () => '/departments',
+        // GET: Fetch all departments with pagination, sorting, and searching
+        getDepartments: builder.query<PaginatedResponse<Department>, {
+            page: number;
+            pageSize: number;
+            sortColumn?: string;
+            sortDirection?: 'asc' | 'desc';
+            searchTerm?: string;
+        }>({
+            query: ({ page, pageSize, sortColumn, sortDirection, searchTerm }) => {
+                console.log('API Departments Query Params:', { page, pageSize, sortColumn, sortDirection, searchTerm });
+
+                // FIX: Backend seems to use 0-based indexing for Departments (1 = Page 2).
+                // Sending page - 1 to get the correct page.
+                const pageIndex = page - 1;
+                let url = `/departments?PageNumber=${pageIndex}&PageSize=${pageSize}`;
+
+                if (sortColumn) {
+                    const pascalCaseColumn = sortColumn.charAt(0).toUpperCase() + sortColumn.slice(1);
+                    url += `&SortColumn=${pascalCaseColumn}&SortDirection=${sortDirection || 'asc'}`;
+                }
+                if (searchTerm) {
+                    url += `&SearchPhase=${encodeURIComponent(searchTerm)}`;
+                }
+                console.log('API Departments URL:', url);
+                return url;
+            },
             transformResponse: (response: any) => {
+                console.log('API Departments RAW:', JSON.stringify(response)); // Debug log
+
                 if (response?.result?.items && Array.isArray(response.result.items)) {
-                    return response.result.items;
+                    return {
+                        items: response.result.items,
+                        totalItemCount: response.result.totalItemCount || 0,
+                        totalPages: response.result.totalPages || 0,
+                        itemFrom: response.result.itemFrom || 0,
+                        itemTo: response.result.itemTo || 0
+                    };
                 }
+
+                // Fallback
                 if (Array.isArray(response)) {
-                    return response;
+                    return {
+                        items: response,
+                        totalItemCount: response.length,
+                        totalPages: 1,
+                        itemFrom: 1,
+                        itemTo: response.length
+                    };
                 }
-                if (response?.data && Array.isArray(response.data)) {
-                    return response.data;
-                }
-                return [];
+
+                return {
+                    items: [],
+                    totalItemCount: 0,
+                    totalPages: 0,
+                    itemFrom: 0,
+                    itemTo: 0
+                };
             },
             providesTags: (result) =>
-                result
-                    ? [...result.map(({ id }) => ({ type: 'Departments' as const, id })), 'Departments']
+                result && result.items
+                    ? [...result.items.map(({ id }) => ({ type: 'Departments' as const, id })), 'Departments']
                     : ['Departments'],
         }),
 

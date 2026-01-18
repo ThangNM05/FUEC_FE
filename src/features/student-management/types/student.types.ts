@@ -42,3 +42,11 @@ export interface ImportStudentsResponse {
     failureCount: number;
     errors?: string[];
 }
+
+export interface PaginatedResponse<T> {
+    items: T[];
+    totalItemCount: number;
+    totalPages: number;
+    itemFrom: number;
+    itemTo: number;
+}

@@ -60,12 +60,12 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
         if (!teacher) return;
 
         if (!formData.teacherName.trim()) {
-            toast.error('Tên giảng viên không được để trống');
+            toast.error('Teacher name cannot be empty');
             return;
         }
 
         if (!formData.departmentId) {
-            toast.error('Vui lòng chọn bộ môn');
+            toast.error('Please select a department');
             return;
         }
 
@@ -80,12 +80,12 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
 
             await updateTeacher(updatePayload).unwrap();
 
-            toast.success(`Cập nhật giảng viên "${formData.teacherName}" thành công!`);
+            toast.success(`Teacher "${formData.teacherName}" updated successfully!`);
             onClose();
         } catch (err) {
             console.error('Update error:', err);
             // @ts-ignore
-            toast.error('Cập nhật thất bại: ' + (err?.data?.message || err?.message || 'Lỗi không xác định'));
+            toast.error('Update failed: ' + (err?.data?.message || err?.message || 'Unknown error'));
         }
     };
 
@@ -93,12 +93,12 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Chỉnh sửa giảng viên</DialogTitle>
+                    <DialogTitle>Edit Teacher</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="teacherName" className="text-right">
-                            Tên
+                            Name
                         </Label>
                         <Input
                             id="teacherName"
@@ -111,7 +111,7 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="departmentId" className="text-right">
-                            Bộ môn
+                            Department
                         </Label>
                         <div className="col-span-3">
                             <select
@@ -122,7 +122,7 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
                                 disabled={isLoading || isLoadingDepartments}
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                <option value="" disabled>Chọn bộ môn</option>
+                                <option value="" disabled>Select Department</option>
                                 {departments.map((dept) => (
                                     <option key={dept.id} value={dept.id}>
                                         {dept.name}
@@ -142,16 +142,16 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
                             onChange={handleChange}
                             className="col-span-3"
                             disabled={isLoading}
-                            placeholder="Nhập mã thẻ..."
+                            placeholder="Enter Card ID..."
                         />
                     </div>
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-                            Hủy
+                            Cancel
                         </Button>
                         <Button type="submit" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Lưu thay đổi
+                            Save Changes
                         </Button>
                     </DialogFooter>
                 </form>

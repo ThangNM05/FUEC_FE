@@ -26,6 +26,17 @@ interface DataTableProps<T> {
   downloadTemplateLabel?: string;
   selectable?: boolean;
   onSelectionChange?: (selectedIds: (string | number)[]) => void;
+
+  // Manual Pagination Props
+  manualPagination?: boolean;
+  totalItems?: number;
+  page?: number;
+  pageSize?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
+  onSortChange?: (column: keyof T, direction: 'asc' | 'desc') => void;
+  onSearchChange?: (term: string) => void;
+  searchTerm?: string; // Controlled search term for manual pagination
 }
 
 function DataTable<T extends { id: string | number }>({
@@ -39,11 +50,30 @@ function DataTable<T extends { id: string | number }>({
   importLabel = 'Import Excel',
   downloadTemplateLabel = 'Template',
   selectable = false,
-  onSelectionChange
+  onSelectionChange,
+
+  // Pagination default props
+  manualPagination = false,
+  totalItems = 0,
+  page = 1,
+  pageSize = 10,
+  onPageChange,
+  onPageSizeChange,
+  onSortChange,
+  onSearchChange,
+  searchTerm: controlledSearchTerm
 }: DataTableProps<T>) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [internalSearchTerm, setInternalSearchTerm] = useState('');
+
+  // Internal state for client-side pagination
+  const [internalPage, setInternalPage] = useState(1);
+  const [internalPageSize, setInternalPageSize] = useState(10);
+
+  // Use either controlled or internal state
+  const currentPage = manualPagination ? page : internalPage;
+  const itemsPerPage = manualPagination ? pageSize : internalPageSize;
+  const searchTerm = manualPagination ? (controlledSearchTerm || '') : internalSearchTerm;
+
   const [sortConfig, setSortConfig] = useState<{ key: keyof T | null; direction: 'asc' | 'desc' }>({
     key: null,
     direction: 'asc'
@@ -52,15 +82,25 @@ function DataTable<T extends { id: string | number }>({
 
   // Filter and Search
   const filteredData = useMemo(() => {
+    // If manual pagination, filtering is usually done on server, so we just return data. 
+    // Or we filter the *current page* only if requested. 
+    // For now, assuming server-side filtering is separate, we apply client-side search only if NOT manual or if manual but we want to filter visible items
+    // But typically manual pagination implies server-side search. Here we keep it simple: 
+    // If manual, we display what we got.
+    if (manualPagination) return data;
+
     return data.filter(item =>
       Object.values(item as Record<string, any>).some(val =>
         String(val).toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
-  }, [data, searchTerm]);
+  }, [data, searchTerm, manualPagination]);
 
   // Sorting
   const sortedData = useMemo(() => {
+    // If manual pagination, sorting is typically server-side.
+    if (manualPagination) return filteredData;
+
     let sortableItems = [...filteredData];
     if (sortConfig.key !== null) {
       sortableItems.sort((a, b) => {
@@ -76,12 +116,37 @@ function DataTable<T extends { id: string | number }>({
       });
     }
     return sortableItems;
-  }, [filteredData, sortConfig]);
+  }, [filteredData, sortConfig, manualPagination]);
 
-  // Pagination
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+  // Pagination Logic
+  const totalCount = manualPagination ? totalItems : sortedData.length;
+  const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
+
+  // For manual, currentData is just sortedData (which acts as the page data)
+  const currentData = manualPagination
+    ? sortedData
+    : sortedData.slice((currentPage - 1) * itemsPerPage, (currentPage - 1) * itemsPerPage + itemsPerPage);
+
+  console.log('DataTable Render:', { title, manualPagination, dataLength: data?.length, currentDataLength: currentData?.length, data, currentData }); // Debug log
+
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentData = sortedData.slice(startIndex, startIndex + itemsPerPage);
+
+  const handlePageChange = (newPage: number) => {
+    if (manualPagination) {
+      onPageChange?.(newPage);
+    } else {
+      setInternalPage(newPage);
+    }
+  };
+
+  const handlePageSizeChange = (iframeSize: number) => {
+    if (manualPagination) {
+      onPageSizeChange?.(iframeSize);
+    } else {
+      setInternalPageSize(iframeSize);
+      setInternalPage(1); // Reset to page 1 on size change
+    }
+  };
 
   const requestSort = (key: keyof T) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -89,6 +154,23 @@ function DataTable<T extends { id: string | number }>({
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+
+    if (manualPagination) {
+      onSortChange?.(key, direction);
+      // Reset to page 1 optional? Usually good UX
+      if (onPageChange) onPageChange(1);
+    }
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (manualPagination) {
+      onSearchChange?.(value);
+      // Reset page to 1
+      if (onPageChange) onPageChange(1);
+    } else {
+      setInternalSearchTerm(value);
+    }
   };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +208,7 @@ function DataTable<T extends { id: string | number }>({
                 type="text"
                 placeholder="Search..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleSearch}
                 className="bg-transparent outline-none text-sm w-full sm:w-48 md:w-64"
               />
             </div>
@@ -254,7 +336,7 @@ function DataTable<T extends { id: string | number }>({
           <span className="sm:hidden">Per page:</span>
           <select
             value={itemsPerPage}
-            onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
             className="px-2 py-1 border border-gray-300 rounded text-xs sm:text-sm"
           >
             <option value={10}>10</option>
@@ -263,7 +345,7 @@ function DataTable<T extends { id: string | number }>({
             <option value={100}>100</option>
           </select>
           <span>
-            {startIndex + 1}-{Math.min(startIndex + itemsPerPage, sortedData.length)} of {sortedData.length}
+            {totalCount > 0 ? startIndex + 1 : 0}-{Math.min(startIndex + itemsPerPage, totalCount)} of {totalCount}
           </span>
         </div>
 
@@ -271,12 +353,20 @@ function DataTable<T extends { id: string | number }>({
           <button
             className="px-2 sm:px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={currentPage === 1}
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
-          {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => {
-            const page = i + 1;
+          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+            // Check if we have too many pages, do a sliding window or something simple
+            // For now, simpler logic: Show up to 5 pages around current
+            let startPage = Math.max(1, currentPage - 2);
+            if (startPage + 4 > totalPages) {
+              startPage = Math.max(1, totalPages - 4);
+            }
+            const page = startPage + i;
+            if (page > totalPages) return null;
+
             return (
               <button
                 key={page}
@@ -284,7 +374,7 @@ function DataTable<T extends { id: string | number }>({
                   ? 'bg-[#F37022] text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                onClick={() => setCurrentPage(page)}
+                onClick={() => handlePageChange(page)}
               >
                 {page}
               </button>
@@ -292,8 +382,8 @@ function DataTable<T extends { id: string | number }>({
           })}
           <button
             className="px-2 sm:px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={currentPage === totalPages}
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
           >
             <ChevronRight className="w-4 h-4" />
           </button>

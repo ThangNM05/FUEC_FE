@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit, Trash2, Users } from 'lucide-react';
+import { Edit, Trash2, Users, Download, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 import DataTable from '@/components/shared/DataTable';
@@ -13,6 +13,13 @@ import {
 import type { Department } from '@/features/department-management/types/department.types';
 
 function AdminDepartments() {
+    // Pagination State
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [sortColumn, setSortColumn] = useState<string>('');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [searchTerm, setSearchTerm] = useState<string>('');
+
     // Delete Modal State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
@@ -22,8 +29,20 @@ function AdminDepartments() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     // RTK Query hooks
-    const { data: departments = [], isLoading, error } = useGetDepartmentsQuery();
+    console.log('AdminDepartments State:', { page, pageSize, sortColumn, sortDirection, searchTerm });
+    const { data: departmentsData, isLoading, error } = useGetDepartmentsQuery({
+        page,
+        pageSize,
+        sortColumn,
+        sortDirection,
+        searchTerm
+    });
+
     const [deleteDepartment, { isLoading: isDeleting }] = useDeleteDepartmentMutation();
+
+    // Extract data from PaginatedResponse
+    const departments = departmentsData?.items || [];
+    const totalDepartments = departmentsData?.totalItemCount || 0;
 
     // Handle Delete
     const handleDelete = (department: Department) => {
@@ -36,12 +55,12 @@ function AdminDepartments() {
 
         try {
             await deleteDepartment(departmentToDelete.id).unwrap();
-            toast.success(`Đã xóa bộ môn "${departmentToDelete.name}" thành công!`);
+            toast.success(`Department "${departmentToDelete.name}" deleted successfully!`);
             setDepartmentToDelete(null);
             setIsDeleteModalOpen(false);
         } catch (err) {
             console.error('Delete error:', err);
-            toast.error('Xóa thất bại! ' + ((err as any)?.data?.message || (err as any)?.message || 'Lỗi không xác định'));
+            toast.error('Deletion failed! ' + ((err as any)?.data?.message || (err as any)?.message || 'Unknown error'));
         }
     };
 
@@ -55,6 +74,26 @@ function AdminDepartments() {
     const handleCreate = () => {
         setSelectedDepartment(null); // Clear selection for create mode
         setIsEditModalOpen(true);
+    };
+
+    // Handle Sort Change
+    const handleSortChange = (column: keyof Department, direction: 'asc' | 'desc') => {
+        setSortColumn(column as string);
+        setSortDirection(direction);
+    };
+
+    // Handle Search Change
+    const handleSearchChange = (term: string) => {
+        setSearchTerm(term);
+    };
+
+    // Placeholder for Import
+    const handleImportClick = () => {
+        // toast.info("Import feature coming soon!");
+        // User requested a button "like students/teachers". 
+        // Since we don't have the backend for it yet, we just show a toast or open a dummy modal if we had one.
+        // For now, simple toast as per request guidance "create placeholder".
+        toast.info("Import feature for Departments is under development.");
     };
 
     const columns = [
@@ -118,7 +157,7 @@ function AdminDepartments() {
                 <div className="flex items-center justify-center h-64">
                     <div className="text-center">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F37022] mx-auto"></div>
-                        <p className="mt-4 text-gray-600">Đang tải danh sách bộ môn...</p>
+                        <p className="mt-4 text-gray-600">Loading departments...</p>
                     </div>
                 </div>
             </div>
@@ -129,17 +168,32 @@ function AdminDepartments() {
         <div className="p-4 md:p-6">
             <div className="mb-4 md:mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Department Management</h1>
-                <p className="text-gray-600 mt-1">Quản lý danh sách bộ môn, khoa, viện</p>
+                <p className="text-gray-600 mt-1">Manage academic departments</p>
             </div>
 
             <DataTable
-                title={`All Departments (${departments.length})`}
+                title={`All Departments (${totalDepartments})`}
                 data={departments}
                 columns={columns}
+
                 onCreate={handleCreate}
-                createLabel="Create Department"
-                // Import skipped as per request
+                createLabel="Add Department"
+
+                onImport={handleImportClick}
+                importLabel="Import Excel"
+
                 selectable={true}
+
+                // Manual Pagination
+                manualPagination={true}
+                totalItems={totalDepartments}
+                page={page}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+                onSortChange={handleSortChange as any}
+                onSearchChange={handleSearchChange}
+                searchTerm={searchTerm}
             />
 
             <EditDepartmentModal
@@ -152,8 +206,8 @@ function AdminDepartments() {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
-                title="Xác nhận xóa bộ môn"
-                message={`Bạn có chắc muốn xóa bộ môn "${departmentToDelete?.name}"? Hành động này không thể hoàn tác.`}
+                title="Confirm Deletion"
+                message={`Are you sure you want to delete department "${departmentToDelete?.name}"? This action cannot be undone.`}
                 itemName={departmentToDelete?.name}
             />
         </div>

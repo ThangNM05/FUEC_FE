@@ -3,6 +3,7 @@ import { baseApi } from '@/redux/baseApi';
 import type {
     CreateTeacherRequest,
     ImportTeachersResponse,
+    PaginatedResponse,
     Teacher,
     UpdateTeacherRequest,
 } from '../types/teacher.types.ts';
@@ -13,24 +14,64 @@ import type {
  */
 export const teachersApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        // GET: Fetch all teachers
-        getTeachers: builder.query<Teacher[], void>({
-            query: () => '/teachers',
+        // GET: Fetch all teachers with pagination, sorting, and searching
+        getTeachers: builder.query<PaginatedResponse<Teacher>, {
+            page: number;
+            pageSize: number;
+            sortColumn?: string;
+            sortDirection?: 'asc' | 'desc';
+            searchTerm?: string;
+        }>({
+            query: ({ page, pageSize, sortColumn, sortDirection, searchTerm }) => {
+                // Adjust for 0-based indexing if backend requires it (consistent with Departments)
+                const pageIndex = page - 1;
+                let url = `/teachers?PageNumber=${pageIndex}&PageSize=${pageSize}`;
+                if (sortColumn) {
+                    // Capitalize first letter for backend (teacherCode -> TeacherCode)
+                    const pascalCaseColumn = sortColumn.charAt(0).toUpperCase() + sortColumn.slice(1);
+                    url += `&SortColumn=${pascalCaseColumn}&SortDirection=${sortDirection || 'asc'}`;
+                }
+                if (searchTerm) {
+                    url += `&SearchPhase=${encodeURIComponent(searchTerm)}`;
+                }
+                return url;
+            },
             transformResponse: (response: any) => {
+                console.log('API Teachers Response:', response); // Debug log
+
+                // Expected format: { result: { items: [], totalItemCount: ... } }
                 if (response?.result?.items && Array.isArray(response.result.items)) {
-                    return response.result.items;
+                    return {
+                        items: response.result.items,
+                        totalItemCount: response.result.totalItemCount || 0,
+                        totalPages: response.result.totalPages || 0,
+                        itemFrom: response.result.itemFrom || 0,
+                        itemTo: response.result.itemTo || 0
+                    };
                 }
+
+                // Fallback for array response (if backend returns flat array)
                 if (Array.isArray(response)) {
-                    return response;
+                    return {
+                        items: response,
+                        totalItemCount: response.length,
+                        totalPages: 1,
+                        itemFrom: 1,
+                        itemTo: response.length
+                    };
                 }
-                if (response?.data && Array.isArray(response.data)) {
-                    return response.data;
-                }
-                return [];
+
+                return {
+                    items: [],
+                    totalItemCount: 0,
+                    totalPages: 0,
+                    itemFrom: 0,
+                    itemTo: 0
+                };
             },
             providesTags: (result) =>
-                result && Array.isArray(result)
-                    ? [...result.map(({ id }) => ({ type: 'Teachers' as const, id })), 'Teachers']
+                result && result.items
+                    ? [...result.items.map(({ id }) => ({ type: 'Teachers' as const, id })), 'Teachers']
                     : ['Teachers'],
         }),
 

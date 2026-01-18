@@ -25,7 +25,7 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
                 {/* Header */}
                 <div className="px-6 py-4 border-b flex items-center justify-between bg-white">
                     <h3 className={`font-semibold text-lg ${hasFailures ? 'text-red-600' : 'text-green-600'}`}>
-                        {isCriticalError ? 'Lỗi Import' : (hasFailures ? 'Kết quả Import (Có lỗi)' : 'Import Thành công')}
+                        {isCriticalError ? 'Import Error' : (hasFailures ? 'Import Result (With Errors)' : 'Import Successful')}
                     </h3>
                     <button
                         onClick={onClose}
@@ -44,8 +44,8 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
                                 <CheckCircle className="w-10 h-10 text-green-600" />
                             </div>
                             <div>
-                                <h4 className="text-xl font-bold text-gray-900">Hoàn tất!</h4>
-                                <p className="text-gray-600 mt-1">Đã thêm thành công <strong className="text-green-600">{successCount}</strong> sinh viên.</p>
+                                <h4 className="text-xl font-bold text-gray-900">Completed!</h4>
+                                <p className="text-gray-600 mt-1">Successfully added <strong className="text-green-600">{successCount}</strong> students.</p>
                             </div>
                         </div>
                     ) : isCriticalError ? (
@@ -55,7 +55,7 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
                                 <X className="w-10 h-10 text-red-600" />
                             </div>
                             <div>
-                                <h4 className="text-xl font-bold text-gray-900 mb-2">Không thể Import</h4>
+                                <h4 className="text-xl font-bold text-gray-900 mb-2">Import Failed</h4>
                                 <div className="bg-red-50 p-4 rounded-lg border border-red-100 text-left">
                                     <ul className="text-sm text-red-600 space-y-1">
 
@@ -73,7 +73,7 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
                                         <CheckCircle className="w-5 h-5 text-green-600" />
                                     </div>
                                     <span className="text-2xl font-bold text-green-700">{successCount}</span>
-                                    <span className="text-xs font-medium text-green-600 uppercase tracking-wide">Thành công</span>
+                                    <span className="text-xs font-medium text-green-600 uppercase tracking-wide">Success</span>
                                 </div>
 
                                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex flex-col items-center text-center">
@@ -81,7 +81,7 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
                                         <AlertTriangle className="w-5 h-5 text-red-600" />
                                     </div>
                                     <span className="text-2xl font-bold text-red-700">{failureCount}</span>
-                                    <span className="text-xs font-medium text-red-600 uppercase tracking-wide">Thất bại</span>
+                                    <span className="text-xs font-medium text-red-600 uppercase tracking-wide">Failed</span>
                                 </div>
                             </div>
 
@@ -89,7 +89,7 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
                             <div className="border border-red-200 rounded-lg overflow-hidden">
                                 <div className="bg-red-50 px-4 py-2 border-b border-red-200 flex items-center gap-2">
                                     <AlertCircle className="w-4 h-4 text-red-600" />
-                                    <span className="font-semibold text-red-800 text-sm">Chi tiết lỗi ({errors.length})</span>
+                                    <span className="font-semibold text-red-800 text-sm">Error Details ({errors.length})</span>
                                 </div>
                                 <div className="max-h-[200px] overflow-y-auto bg-white scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
                                     {errors.length > 0 ? (
@@ -103,7 +103,7 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
                                         </ul>
                                     ) : (
                                         <div className="p-8 text-center text-gray-400 text-sm italic">
-                                            Không có thông báo lỗi cụ thể.
+                                            No specific error details.
                                         </div>
                                     )}
                                 </div>
@@ -121,7 +121,7 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
                             : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                             }`}
                     >
-                        {hasFailures ? 'Đóng' : 'Hoàn thành'}
+                        {hasFailures ? 'Close' : 'Finish'}
                     </button>
                 </div>
             </div>

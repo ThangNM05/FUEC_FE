@@ -56,19 +56,19 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
         e.preventDefault();
 
         if (!formData.teacherCode.trim()) {
-            toast.error('Mã giảng viên không được để trống');
+            toast.error('Teacher code cannot be empty');
             return;
         }
         if (!formData.teacherName.trim()) {
-            toast.error('Tên giảng viên không được để trống');
+            toast.error('Teacher name cannot be empty');
             return;
         }
         if (!formData.email.trim()) {
-            toast.error('Email không được để trống');
+            toast.error('Email cannot be empty');
             return;
         }
         if (!formData.departmentId) {
-            toast.error('Vui lòng chọn bộ môn');
+            toast.error('Please select a department');
             return;
         }
 
@@ -82,11 +82,11 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
 
             await createTeacher(createPayload).unwrap();
 
-            toast.success(`Đã thêm giảng viên "${formData.teacherName}" thành công!`);
+            toast.success(`Teacher "${formData.teacherName}" added successfully!`);
             handleClose();
         } catch (err) {
             console.error('Create teacher error:', err);
-            toast.error('Thêm mới thất bại: ' + ((err as any)?.data?.message || (err as any)?.message || 'Lỗi không xác định'));
+            toast.error('Creation failed: ' + ((err as any)?.data?.message || (err as any)?.message || 'Unknown error'));
         }
     };
 
@@ -94,12 +94,12 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Thêm giảng viên mới</DialogTitle>
+                    <DialogTitle>Add New Teacher</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="teacherCode" className="text-right">
-                            Mã GV <span className="text-red-500">*</span>
+                            Teacher Code <span className="text-red-500">*</span>
                         </Label>
                         <Input
                             id="teacherCode"
@@ -108,13 +108,13 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
                             onChange={handleChange}
                             className="col-span-3"
                             disabled={isLoading}
-                            placeholder="VD: GV001"
+                            placeholder="Ex: T001"
                         />
                     </div>
 
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="teacherName" className="text-right">
-                            Tên GV <span className="text-red-500">*</span>
+                            Teacher Name <span className="text-red-500">*</span>
                         </Label>
                         <Input
                             id="teacherName"
@@ -123,7 +123,7 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
                             onChange={handleChange}
                             className="col-span-3"
                             disabled={isLoading}
-                            placeholder="VD: Nguyễn Văn A"
+                            placeholder="Ex: John Doe"
                         />
                     </div>
 
@@ -139,13 +139,13 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
                             onChange={handleChange}
                             className="col-span-3"
                             disabled={isLoading}
-                            placeholder="VD: example@fe.edu.vn"
+                            placeholder="Ex: example@fe.edu.vn"
                         />
                     </div>
 
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="departmentId" className="text-right">
-                            Bộ môn <span className="text-red-500">*</span>
+                            Department <span className="text-red-500">*</span>
                         </Label>
                         <div className="col-span-3">
                             <select
@@ -156,7 +156,7 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
                                 disabled={isLoading || isLoadingDepartments}
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                <option value="" disabled>Chọn bộ môn</option>
+                                <option value="" disabled>Select Department</option>
                                 {departments.map((dept) => (
                                     <option key={dept.id} value={dept.id}>
                                         {dept.name}
@@ -168,11 +168,11 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
-                            Hủy
+                            Cancel
                         </Button>
                         <Button type="submit" disabled={isLoading}>
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Thêm mới
+                            Create
                         </Button>
                     </DialogFooter>
                 </form>
