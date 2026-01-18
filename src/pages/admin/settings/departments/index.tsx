@@ -1,57 +1,63 @@
 import { useState } from 'react';
-import { Edit, Trash2 } from 'lucide-react';
-import DataTable from '@/components/shared/DataTable';
-import ImportExcelModal from '@/components/shared/ImportExcelModal';
-import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
-import toast from '@/lib/toast';
+import { Edit, Trash2, Users } from 'lucide-react';
+import { toast } from 'sonner';
 
-interface Department {
-    id: number;
-    name: string;
-    code: string;
-    head: string;
-    staff: number;
-    students: number;
-    status: string;
-}
+import DataTable from '@/components/shared/DataTable';
+import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
+import EditDepartmentModal from '@/features/department-management/components/EditDepartmentModal';
+
+import {
+    useGetDepartmentsQuery,
+    useDeleteDepartmentMutation,
+} from '@/features/department-management/services/departmentsApi';
+import type { Department } from '@/features/department-management/types/department.types';
 
 function AdminDepartments() {
-    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    // Delete Modal State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [departmentToDelete, setDepartmentToDelete] = useState<Department | null>(null);
 
-    const departments: Department[] = [
-        {
-            id: 1,
-            name: 'Software Engineering',
-            code: 'SE',
-            head: 'Prof. Nguyen Van A',
-            staff: 25,
-            students: 450,
-            status: 'Active'
-        },
-        {
-            id: 2,
-            name: 'Information Systems',
-            code: 'IS',
-            head: 'Prof. Tran Thi B',
-            staff: 20,
-            students: 380,
-            status: 'Active'
-        },
-        {
-            id: 3,
-            name: 'Computer Science',
-            code: 'CS',
-            head: 'Prof. Le Van C',
-            staff: 30,
-            students: 520,
-            status: 'Active'
+    // Edit/Create Modal State
+    const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // RTK Query hooks
+    const { data: departments = [], isLoading, error } = useGetDepartmentsQuery();
+    const [deleteDepartment, { isLoading: isDeleting }] = useDeleteDepartmentMutation();
+
+    // Handle Delete
+    const handleDelete = (department: Department) => {
+        setDepartmentToDelete(department);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!departmentToDelete) return;
+
+        try {
+            await deleteDepartment(departmentToDelete.id).unwrap();
+            toast.success(`Đã xóa bộ môn "${departmentToDelete.name}" thành công!`);
+            setDepartmentToDelete(null);
+            setIsDeleteModalOpen(false);
+        } catch (err) {
+            console.error('Delete error:', err);
+            toast.error('Xóa thất bại! ' + ((err as any)?.data?.message || (err as any)?.message || 'Lỗi không xác định'));
         }
-    ];
+    };
+
+    // Handle Edit
+    const handleEdit = (department: Department) => {
+        setSelectedDepartment(department);
+        setIsEditModalOpen(true);
+    };
+
+    // Handle Create
+    const handleCreate = () => {
+        setSelectedDepartment(null); // Clear selection for create mode
+        setIsEditModalOpen(true);
+    };
 
     const columns = [
-        { header: 'Department Name', accessor: 'name' as keyof Department, sortable: true, filterable: true },
         {
             header: 'Code',
             accessor: 'code' as keyof Department,
@@ -63,36 +69,20 @@ function AdminDepartments() {
                 </span>
             )
         },
-        { header: 'Department Head', accessor: 'head' as keyof Department, sortable: true, filterable: true },
+        { header: 'Department Name', accessor: 'name' as keyof Department, sortable: true, filterable: true },
         {
-            header: 'Staff',
-            accessor: 'staff' as keyof Department,
-            sortable: true,
+            header: 'Teachers',
+            accessor: 'teacherCount' as keyof Department,
             align: 'center' as const,
+            sortable: true,
             render: (item: Department) => (
-                <span className="font-semibold" style={{ color: '#0A1B3C' }}>{item.staff}</span>
+                <div className="flex items-center justify-center gap-2">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium text-gray-700">{item.teacherCount || 0}</span>
+                </div>
             )
         },
-        {
-            header: 'Students',
-            accessor: 'students' as keyof Department,
-            sortable: true,
-            align: 'center' as const,
-            render: (item: Department) => (
-                <span className="font-semibold" style={{ color: '#0A1B3C' }}>{item.students}</span>
-            )
-        },
-        {
-            header: 'Status',
-            accessor: 'status' as keyof Department,
-            sortable: true,
-            align: 'center' as const,
-            render: (item: Department) => (
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold">
-                    {item.status}
-                </span>
-            )
-        },
+        { header: 'Description', accessor: 'description' as keyof Department, sortable: false, filterable: false },
         {
             header: 'Actions',
             accessor: 'id' as keyof Department,
@@ -102,12 +92,15 @@ function AdminDepartments() {
                     <button
                         className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
                         onClick={() => handleEdit(item)}
+                        title="Edit Department"
                     >
                         <Edit className="w-4 h-4 text-blue-600" />
                     </button>
                     <button
                         className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                         onClick={() => handleDelete(item)}
+                        disabled={isDeleting}
+                        title="Delete Department"
                     >
                         <Trash2 className="w-4 h-4 text-red-600" />
                     </button>
@@ -116,68 +109,51 @@ function AdminDepartments() {
         }
     ];
 
-    const handleEdit = (department: Department) => {
-        toast.warning(`Function edit ${department.name} is not implemented yet`);
-    };
-
-    const handleDelete = (department: Department) => {
-        setDepartmentToDelete(department);
-        setIsDeleteModalOpen(true);
-    };
-
-    const confirmDelete = () => {
-        if (departmentToDelete) {
-            // Simulate delete error - department has students
-            if (departmentToDelete.students > 0) {
-                toast.error(`Cannot delete ${departmentToDelete.name}! Still has ${departmentToDelete.students} students.`);
-            } else {
-                toast.success(`Successfully deleted ${departmentToDelete.name}!`);
-            }
-            setDepartmentToDelete(null);
-        }
-    };
-
-    const handleImport = () => {
-        setIsImportModalOpen(true);
-    };
-
-    const handleImportConfirm = (file: File) => {
-        // Simulate file upload
-        toast.success(`Đang tải lên file: ${file.name}`);
-        // In real implementation, you would upload the file to the server here
-    };
+    if (isLoading) {
+        return (
+            <div className="p-4 md:p-6">
+                <div className="mb-4 md:mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Department Management</h1>
+                </div>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F37022] mx-auto"></div>
+                        <p className="mt-4 text-gray-600">Đang tải danh sách bộ môn...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 md:p-6">
             <div className="mb-4 md:mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Department Management</h1>
-
+                <p className="text-gray-600 mt-1">Quản lý danh sách bộ môn, khoa, viện</p>
             </div>
 
             <DataTable
-                title="All Departments"
+                title={`All Departments (${departments.length})`}
                 data={departments}
                 columns={columns}
-                onCreate={() => toast.success('Create department successfully!')}
+                onCreate={handleCreate}
                 createLabel="Create Department"
-                onImport={handleImport}
+                // Import skipped as per request
                 selectable={true}
             />
 
-            {/* Import Excel Modal */}
-            <ImportExcelModal
-                isOpen={isImportModalOpen}
-                onClose={() => setIsImportModalOpen(false)}
-                onConfirm={handleImportConfirm}
+            <EditDepartmentModal
+                department={selectedDepartment}
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
             />
 
-            {/* Confirm Delete Modal */}
             <ConfirmDeleteModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}
-                title="Are you sure you want to delete this department?"
-                message="This action cannot be undone. This will permanently delete the department from the system."
+                title="Xác nhận xóa bộ môn"
+                message={`Bạn có chắc muốn xóa bộ môn "${departmentToDelete?.name}"? Hành động này không thể hoàn tác.`}
                 itemName={departmentToDelete?.name}
             />
         </div>

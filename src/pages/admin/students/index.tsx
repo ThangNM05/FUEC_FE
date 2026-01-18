@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit, Trash2, Mail, Download, FileSpreadsheet } from 'lucide-react';
+import { Edit, Trash2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 
 import DataTable from '@/components/shared/DataTable';
@@ -12,6 +12,8 @@ import {
 } from '@/features/student-management/services/studentsApi';
 import type { Student, ImportStudentsResponse } from '@/features/student-management/types/student.types';
 import EditStudentModal from '@/features/student-management/components/EditStudentModal';
+import ImportExcelModal from '@/components/shared/ImportExcelModal';
+import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 
 function AdminStudents() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -19,10 +21,15 @@ function AdminStudents() {
   // Import Result Modal State
   const [importResult, setImportResult] = useState<ImportStudentsResponse | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isImportExcelModalOpen, setIsImportExcelModalOpen] = useState(false);
 
   // Edit Student Modal State
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Delete Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
   // RTK Query hooks
   const { data: students = [], isLoading, error } = useGetStudentsQuery();
@@ -30,23 +37,22 @@ function AdminStudents() {
   const [importStudents, { isLoading: isImporting }] = useImportStudentsMutation();
 
   // Handle soft delete (Deactivate student)
-  const handleDelete = async (item: Student) => {
-    // Ideally use a custom confirmation modal, but confirm is ok for now if user just wanted to replace *result* alerts.
-    // However, toast usually implies non-blocking. 
-    // For now I'll keep window.confirm for safety, but replace the RESULT alerts.
-    if (!window.confirm(`Bạn có chắc muốn vô hiệu hóa sinh viên "${item.studentName}"?`)) return;
+  const handleDelete = (item: Student) => {
+    setStudentToDelete(item);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!studentToDelete) return;
 
     try {
-      console.log('Sending delete request for ID:', item.id);
-
-      // Call the standard DELETE endpoint. 
-      await deleteStudent(item.id).unwrap();
-
+      await deleteStudent(studentToDelete.id).unwrap();
       toast.success('Đã xóa/vô hiệu hóa thành công!');
+      setStudentToDelete(null);
+      setIsDeleteModalOpen(false);
     } catch (err) {
       console.error('Delete error:', err);
-      // @ts-ignore
-      toast.error('Vô hiệu hóa thất bại! ' + (err?.data?.message || err?.message || ''));
+      toast.error('Vô hiệu hóa thất bại! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
     }
   };
 
@@ -57,7 +63,6 @@ function AdminStudents() {
 
   // Handle Download Template
   const handleDownloadTemplate = () => {
-    // Assuming the template is in the public folder
     const link = document.createElement('a');
     link.href = '/templates/student_import_template.xlsx';
     link.download = 'Import_Student_Template.xlsx';
@@ -67,41 +72,31 @@ function AdminStudents() {
     toast.info('Đang tải xuống template...');
   };
 
-  // Handle Excel import
-  const handleImport = () => {
-    // Create file input element
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.xlsx,.xls';
+  // Handle Excel import confirm
+  const handleConfirmImport = async (file: File) => {
+    // Validate file
+    const validation = validateFileUpload(file);
+    if (!validation.isValid) {
+      toast.error(validation.errors.join('\n'));
+      return;
+    }
 
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
+    toast.info('Đang xử lý import...');
 
-      // Validate file
-      const validation = validateFileUpload(file);
-      if (!validation.isValid) {
-        toast.error(validation.errors.join('\n'));
-        return;
-      }
+    try {
+      const result = await importStudents(file).unwrap();
+      setImportResult(result);
+      setIsImportExcelModalOpen(false); // Close the entry modal
+      setIsImportModalOpen(true); // Open the result modal
+      toast.success('Import hoàn tất. Vui lòng kiểm tra kết quả.');
+    } catch (err) {
+      console.error('Import error:', err);
+      toast.error('Import thất bại! Vui lòng kiểm tra lại file hoặc thử lại sau.');
+    }
+  };
 
-      toast.info('Đang xử lý import...');
-
-      try {
-        const result = await importStudents(file).unwrap();
-        setImportResult(result);
-        setIsImportModalOpen(true);
-        toast.success('Import hoàn tất. Vui lòng kiểm tra kết quả.');
-
-        // Reset file input
-        input.value = '';
-      } catch (err) {
-        console.error('Import error:', err);
-        toast.error('Import thất bại! Vui lòng kiểm tra lại file hoặc thử lại sau.');
-      }
-    };
-
-    input.click();
+  const handleImportClick = () => {
+    setIsImportExcelModalOpen(true);
   };
 
   // Table columns configuration
@@ -221,8 +216,7 @@ function AdminStudents() {
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
           <p className="font-semibold">Lỗi khi tải dữ liệu sinh viên</p>
           <p className="text-sm mt-1">
-            {/* @ts-ignore */}
-            {error?.data?.message || error?.message || 'Vui lòng kiểm tra kết nối API'}
+            {(error as any)?.data?.message || (error as any)?.message || 'Vui lòng kiểm tra kết nối API'}
           </p>
           <details className="mt-4 text-xs bg-white p-2 rounded border border-red-100">
             <summary className="cursor-pointer font-medium mb-1">Chi tiết lỗi (Debug)</summary>
@@ -248,11 +242,21 @@ function AdminStudents() {
         columns={columns}
         onCreate={() => toast.info('Chức năng thêm sinh viên chưa được implement.')}
         createLabel="Add Student"
-        onImport={handleImport}
+        onImport={handleImportClick}
         importLabel={isImporting ? 'Importing...' : 'Import Excel'}
         onDownloadTemplate={handleDownloadTemplate}
         downloadTemplateLabel="Template"
         selectable={true}
+      />
+
+      {/* Modal Import Excel (Input) */}
+      <ImportExcelModal
+        isOpen={isImportExcelModalOpen}
+        onClose={() => setIsImportExcelModalOpen(false)}
+        onConfirm={handleConfirmImport}
+        title="Import Students"
+        description="Vui lòng sử dụng template chuẩn để import dữ liệu sinh viên"
+        templateUrl="/templates/student_import_template.xlsx"
       />
 
       <ImportResultModal
@@ -265,6 +269,15 @@ function AdminStudents() {
         student={selectedStudent}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
+      />
+
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Xác nhận vô hiệu hóa"
+        message={`Bạn có chắc muốn vô hiệu hóa sinh viên "${studentToDelete?.studentName}"? Hành động này sẽ ẩn sinh viên khỏi danh sách hoạt động.`}
+        itemName={studentToDelete?.studentName}
       />
     </div>
   );
