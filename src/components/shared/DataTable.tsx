@@ -12,6 +12,8 @@ interface Column<T> {
   align?: 'left' | 'center' | 'right';
   render?: (item: T) => React.ReactNode;
   hideOnMobile?: boolean;
+  width?: string;
+  className?: string;
 }
 
 interface DataTableProps<T> {
@@ -127,7 +129,7 @@ function DataTable<T extends { id: string | number }>({
     ? sortedData
     : sortedData.slice((currentPage - 1) * itemsPerPage, (currentPage - 1) * itemsPerPage + itemsPerPage);
 
-  console.log('DataTable Render:', { title, manualPagination, dataLength: data?.length, currentDataLength: currentData?.length, data, currentData }); // Debug log
+
 
   const startIndex = (currentPage - 1) * itemsPerPage;
 
@@ -255,10 +257,10 @@ function DataTable<T extends { id: string | number }>({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto border border-gray-200 rounded-lg -mx-4 md:mx-0">
+      <div className="overflow-x-auto max-h-[70vh] overflow-y-auto border border-gray-200 rounded-lg -mx-4 md:mx-0 relative">
         <table className="w-full min-w-[600px]">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
+            <tr className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10 shadow-sm">
               {selectable && (
                 <th className="p-2 md:p-3 w-10">
                   <div className="flex items-center justify-center">
@@ -274,7 +276,8 @@ function DataTable<T extends { id: string | number }>({
               {columns.map((col, index) => (
                 <th
                   key={index}
-                  className={`p-2 md:p-3 text-${col.align || 'left'} text-[10px] md:text-xs font-bold text-[#0A1B3C] ${col.sortable ? 'cursor-pointer select-none' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}
+                  style={{ width: col.width }}
+                  className={`p-2 md:p-3 text-${col.align || 'left'} text-[10px] md:text-xs font-bold text-[#0A1B3C] ${col.sortable ? 'cursor-pointer select-none' : ''} ${col.hideOnMobile ? 'hidden md:table-cell' : ''} ${col.className || ''}`}
                   onClick={() => col.sortable && requestSort(col.accessor)}
                 >
                   <div className={`flex items-center gap-1 ${col.align === 'center' ? 'justify-center' : 'justify-start'}`}>
@@ -312,7 +315,7 @@ function DataTable<T extends { id: string | number }>({
                     </td>
                   )}
                   {columns.map((col, colIndex) => (
-                    <td key={colIndex} className={`p-2 md:p-3 text-${col.align || 'left'} text-xs md:text-sm text-[#0A1B3C] ${col.hideOnMobile ? 'hidden md:table-cell' : ''}`}>
+                    <td key={colIndex} className={`p-2 md:p-3 text-${col.align || 'left'} text-xs md:text-sm text-[#0A1B3C] ${col.hideOnMobile ? 'hidden md:table-cell' : ''} ${col.className || ''}`}>
                       {col.render ? col.render(item) : String(item[col.accessor])}
                     </td>
                   ))}

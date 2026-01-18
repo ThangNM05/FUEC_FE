@@ -58,11 +58,11 @@ function AdminTeachers() {
   const totalTeachers = teachersData?.totalItemCount || 0;
 
   // Debug log to verify data flow
-  console.log('AdminTeachers Render:', { teachersData, teachers, totalTeachers });
+
 
   // Handle API Error with Toast
   if (error) {
-    console.error('Teachers API Error:', error);
+
   }
 
   // Handle Sort Change
@@ -91,7 +91,7 @@ function AdminTeachers() {
       setTeacherToDelete(null);
       setIsDeleteModalOpen(false);
     } catch (err) {
-      console.error('Delete error:', err);
+
       toast.error('Failed to deactivate! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
     }
   };
@@ -108,7 +108,7 @@ function AdminTeachers() {
       }).unwrap();
       toast.success('Successfully reactivated!');
     } catch (err) {
-      console.error('Activate error:', err);
+
       toast.error('Activation failed! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
     }
   };
@@ -136,7 +136,7 @@ function AdminTeachers() {
       setIsImportModalOpen(true); // Open the result modal
       toast.success('Import completed. Please check the results.');
     } catch (err) {
-      console.error('Import error:', err);
+
       toast.error('Import failed! Please check the file or try again later.');
     }
   };
@@ -154,25 +154,29 @@ function AdminTeachers() {
       accessor: 'teacherCode' as keyof Teacher,
       sortable: true,
       filterable: true,
+      className: 'w-[15%]',
     },
     {
       header: 'Name',
       accessor: 'teacherName' as keyof Teacher,
       sortable: true,
       filterable: true,
+      className: 'w-[25%]',
     },
     {
       header: 'Department',
       accessor: 'departmentName' as keyof Teacher,
-      sortable: true,
+      sortable: false,
       filterable: true,
       render: (item: Teacher) => item.departmentName || 'N/A',
+      className: 'w-[20%]',
     },
     {
       header: 'Email',
       accessor: 'accountEmail' as keyof Teacher,
       sortable: true,
       filterable: true,
+      className: 'w-[25%]',
       render: (item: Teacher) => (
         <div className="flex items-center gap-2">
           <Mail className="w-4 h-4 text-gray-500" />
@@ -185,12 +189,14 @@ function AdminTeachers() {
       accessor: 'cardId' as keyof Teacher,
       align: 'center' as const,
       hideOnMobile: true,
+      className: 'w-[150px]',
       render: (item: Teacher) => item.cardId || 'N/A',
     },
     {
       header: 'Status',
       accessor: 'isActive' as keyof Teacher,
       align: 'center' as const,
+      className: 'w-[100px]',
       render: (item: Teacher) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${item.isActive
@@ -206,6 +212,7 @@ function AdminTeachers() {
       header: 'Actions',
       accessor: 'id' as keyof Teacher,
       align: 'center' as const,
+      className: 'w-[100px]',
       render: (item: Teacher) => (
         <div className="flex gap-2 justify-center">
           <button

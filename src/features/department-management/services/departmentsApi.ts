@@ -13,7 +13,7 @@ export const departmentsApi = baseApi.injectEndpoints({
             searchTerm?: string;
         }>({
             query: ({ page, pageSize, sortColumn, sortDirection, searchTerm }) => {
-                console.log('API Departments Query Params:', { page, pageSize, sortColumn, sortDirection, searchTerm });
+
 
                 // FIX: Backend seems to use 0-based indexing for Departments (1 = Page 2).
                 // Sending page - 1 to get the correct page.
@@ -21,17 +21,19 @@ export const departmentsApi = baseApi.injectEndpoints({
                 let url = `/departments?PageNumber=${pageIndex}&PageSize=${pageSize}`;
 
                 if (sortColumn) {
-                    const pascalCaseColumn = sortColumn.charAt(0).toUpperCase() + sortColumn.slice(1);
-                    url += `&SortColumn=${pascalCaseColumn}&SortDirection=${sortDirection || 'asc'}`;
+                    // Backend expects camelCase property names
+                    // Backend expects SortOrder: 1 = Ascending, 2 = Descending
+                    const sortOrder = sortDirection === 'desc' ? 2 : 1;
+                    url += `&SortBy=${sortColumn}&SortOrder=${sortOrder}`;
                 }
                 if (searchTerm) {
                     url += `&SearchPhase=${encodeURIComponent(searchTerm)}`;
                 }
-                console.log('API Departments URL:', url);
+
                 return url;
             },
             transformResponse: (response: any) => {
-                console.log('API Departments RAW:', JSON.stringify(response)); // Debug log
+
 
                 if (response?.result?.items && Array.isArray(response.result.items)) {
                     return {

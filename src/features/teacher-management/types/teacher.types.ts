@@ -18,11 +18,13 @@ export interface Teacher {
 }
 
 export interface CreateTeacherRequest {
+    userId?: string; // Link to Account
     teacherCode: string;
     teacherName: string;
-    email: string; // Likely maps to accountEmail
+    email: string;
     departmentId: string;
     phoneNumber?: string;
+    cardId?: string;
 }
 
 export interface UpdateTeacherRequest {

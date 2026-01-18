@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit, Trash2, Users, Download, Upload } from 'lucide-react';
+import { Edit, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 import DataTable from '@/components/shared/DataTable';
@@ -29,7 +29,7 @@ function AdminDepartments() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     // RTK Query hooks
-    console.log('AdminDepartments State:', { page, pageSize, sortColumn, sortDirection, searchTerm });
+
     const { data: departmentsData, isLoading, error } = useGetDepartmentsQuery({
         page,
         pageSize,
@@ -59,7 +59,7 @@ function AdminDepartments() {
             setDepartmentToDelete(null);
             setIsDeleteModalOpen(false);
         } catch (err) {
-            console.error('Delete error:', err);
+
             toast.error('Deletion failed! ' + ((err as any)?.data?.message || (err as any)?.message || 'Unknown error'));
         }
     };
@@ -102,18 +102,26 @@ function AdminDepartments() {
             accessor: 'code' as keyof Department,
             sortable: true,
             filterable: true,
+            className: 'w-[15%]',
             render: (item: Department) => (
                 <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: '#cefafe', color: '#0e7490' }}>
                     {item.code}
                 </span>
             )
         },
-        { header: 'Department Name', accessor: 'name' as keyof Department, sortable: true, filterable: true },
+        {
+            header: 'Department Name',
+            accessor: 'name' as keyof Department,
+            sortable: true,
+            filterable: true,
+            className: 'w-[30%]',
+        },
         {
             header: 'Teachers',
             accessor: 'teacherCount' as keyof Department,
             align: 'center' as const,
             sortable: true,
+            className: 'w-[15%] text-center',
             render: (item: Department) => (
                 <div className="flex items-center justify-center gap-2">
                     <Users className="w-4 h-4 text-gray-400" />
@@ -121,11 +129,18 @@ function AdminDepartments() {
                 </div>
             )
         },
-        { header: 'Description', accessor: 'description' as keyof Department, sortable: false, filterable: false },
+        {
+            header: 'Description',
+            accessor: 'description' as keyof Department,
+            sortable: false,
+            filterable: false,
+            className: 'w-[25%]',
+        },
         {
             header: 'Actions',
             accessor: 'id' as keyof Department,
             align: 'center' as const,
+            className: 'w-[15%] text-center',
             render: (item: Department) => (
                 <div className="flex gap-2 justify-center">
                     <button

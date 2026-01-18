@@ -12,11 +12,12 @@ import {
 } from '@/features/student-management/services/studentsApi';
 import type { Student, ImportStudentsResponse } from '@/features/student-management/types/student.types';
 import EditStudentModal from '@/features/student-management/components/EditStudentModal';
+import CreateStudentModal from '@/features/student-management/components/CreateStudentModal';
 import ImportExcelModal from '@/components/shared/ImportExcelModal';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 
 function AdminStudents() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
 
   // Import Result Modal State
   const [importResult, setImportResult] = useState<ImportStudentsResponse | null>(null);
@@ -26,6 +27,9 @@ function AdminStudents() {
   // Edit Student Modal State
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  // Create Student Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Delete Modal State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -56,7 +60,7 @@ function AdminStudents() {
   // Handle API Error with Toast
   useEffect(() => {
     if (error) {
-      console.error('Students API Error:', error);
+
       toast.error('Failed to fetch students');
     }
   }, [error]);
@@ -76,7 +80,7 @@ function AdminStudents() {
       setStudentToDelete(null);
       setIsDeleteModalOpen(false);
     } catch (err) {
-      console.error('Delete error:', err);
+
       toast.error('Failed to deactivate! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
     }
   };
@@ -97,8 +101,6 @@ function AdminStudents() {
     setSearchTerm(term);
   };
 
-
-
   // Handle Excel import confirm
   const handleConfirmImport = async (file: File) => {
     // Validate file
@@ -117,7 +119,7 @@ function AdminStudents() {
       setIsImportModalOpen(true); // Open the result modal
       toast.success('Import completed. Please check the results.');
     } catch (err) {
-      console.error('Import error:', err);
+
       toast.error('Import failed! Please check the file or try again later.');
     }
   };
@@ -133,18 +135,21 @@ function AdminStudents() {
       accessor: 'studentCode' as keyof Student,
       sortable: true,
       filterable: true,
+      className: 'w-[15%]',
     },
     {
       header: 'Name',
       accessor: 'studentName' as keyof Student,
       sortable: true,
       filterable: true,
+      className: 'w-[25%]',
     },
     {
       header: 'Email',
       accessor: 'accountEmail' as keyof Student,
       sortable: true,
       filterable: true,
+      className: 'w-[25%]',
       render: (item: Student) => (
         <div className="flex items-center gap-2">
           <Mail className="w-4 h-4 text-gray-500" />
@@ -157,12 +162,14 @@ function AdminStudents() {
       accessor: 'cardId' as keyof Student,
       align: 'center' as const,
       hideOnMobile: true,
+      className: 'w-[150px]',
       render: (item: Student) => item.cardId || 'N/A',
     },
     {
       header: 'Status',
       accessor: 'isActive' as keyof Student,
       align: 'center' as const,
+      className: 'w-[100px]',
       render: (item: Student) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-semibold ${item.isActive
@@ -180,6 +187,7 @@ function AdminStudents() {
       sortable: true,
       align: 'center' as const,
       hideOnMobile: true,
+      className: 'w-[150px]',
       render: (item: Student) =>
         item.createdAt
           ? new Date(item.createdAt).toLocaleDateString('en-US', {
@@ -193,6 +201,7 @@ function AdminStudents() {
       header: 'Actions',
       accessor: 'id' as keyof Student,
       align: 'center' as const,
+      className: 'w-[100px]',
       render: (item: Student) => (
         <div className="flex gap-2 justify-center">
           <button
@@ -232,8 +241,6 @@ function AdminStudents() {
     );
   }
 
-  // Handle API Error with Toast - Moved to useEffect above
-
   return (
     <div className="p-4 md:p-6">
       <div className="mb-4 md:mb-6">
@@ -245,7 +252,7 @@ function AdminStudents() {
         title={`All Students (${totalStudents})`}
         data={students} // Only current page items
         columns={columns}
-        onCreate={() => toast.info('Add student feature not implemented.')}
+        onCreate={() => setIsCreateModalOpen(true)}
         createLabel="Add Student"
         onImport={handleImportClick}
         importLabel={isImporting ? 'Importing...' : 'Import Excel'}
@@ -277,6 +284,11 @@ function AdminStudents() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         result={importResult}
+      />
+
+      <CreateStudentModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
       />
 
       <EditStudentModal

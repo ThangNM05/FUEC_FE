@@ -27,19 +27,19 @@ export const studentsApi = baseApi.injectEndpoints({
                 const pageIndex = page - 1;
                 let url = `/students?PageNumber=${pageIndex}&PageSize=${pageSize}`;
                 if (sortColumn) {
-                    // Capitalize first letter for backend (studentCode -> StudentCode)
-                    const pascalCaseColumn = sortColumn.charAt(0).toUpperCase() + sortColumn.slice(1);
-                    url += `&SortColumn=${pascalCaseColumn}&SortDirection=${sortDirection || 'asc'}`;
+                    // Backend expects camelCase property names
+                    // Backend expects SortOrder: 1 = Ascending, 2 = Descending
+                    const sortOrder = sortDirection === 'desc' ? 2 : 1;
+                    url += `&SortBy=${sortColumn}&SortOrder=${sortOrder}`;
                 }
                 if (searchTerm) {
                     url += `&SearchPhase=${encodeURIComponent(searchTerm)}`;
                 }
 
-                console.log('Requesting URL:', url); // Debug
                 return url;
             },
             transformResponse: (response: any) => {
-                console.log('API Students Response:', response);
+
 
                 // Expected format: { result: { items: [], totalItemCount: ... } }
                 if (response?.result?.items && Array.isArray(response.result.items)) {
@@ -63,7 +63,7 @@ export const studentsApi = baseApi.injectEndpoints({
                     };
                 }
 
-                console.warn('Unexpected response format:', response);
+
                 return {
                     items: [],
                     totalItemCount: 0,
@@ -133,7 +133,7 @@ export const studentsApi = baseApi.injectEndpoints({
 
                 // Handle String Response (Backend returning text message)
                 if (typeof data === 'string') {
-                    console.log('String response detected, parsing...');
+
                     const successMatch = data.match(/Successfully imported (\d+) students/);
                     const errorMatch = data.match(/(\d+) errors skipped/);
 

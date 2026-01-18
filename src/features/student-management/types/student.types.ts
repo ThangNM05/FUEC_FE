@@ -18,11 +18,13 @@ export interface Student {
 }
 
 export interface CreateStudentRequest {
-    studentId: string;
-    fullName: string;
+    userId: string;
+    studentCode: string;
+    studentName: string;
     email: string;
     phoneNumber?: string;
     classId?: string;
+    cardId?: string;
 }
 
 export interface UpdateStudentRequest {

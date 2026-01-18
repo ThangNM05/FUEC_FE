@@ -32,7 +32,13 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
     });
 
     const [updateTeacher, { isLoading }] = useUpdateTeacherMutation();
-    const { data: departments = [], isLoading: isLoadingDepartments } = useGetDepartmentsQuery();
+    const { data: departmentsData, isLoading: isLoadingDepartments } = useGetDepartmentsQuery({
+        page: 1,
+        pageSize: 1000,
+        sortColumn: 'name',
+        sortDirection: 'asc'
+    });
+    const departments = departmentsData?.items || [];
 
     useEffect(() => {
         if (teacher) {
@@ -82,10 +88,12 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
 
             toast.success(`Teacher "${formData.teacherName}" updated successfully!`);
             onClose();
-        } catch (err) {
-            console.error('Update error:', err);
-            // @ts-ignore
-            toast.error('Update failed: ' + (err?.data?.message || err?.message || 'Unknown error'));
+        } catch (err: any) {
+            let errorMessage = err?.data?.message || err?.message;
+            if (errorMessage && errorMessage.includes("is already registered")) {
+                errorMessage = errorMessage.replace(/Email '.*?'/, 'Email');
+            }
+            toast.error(errorMessage ? `Update failed: ${errorMessage}` : 'An error occurred. Please try again later.');
         }
     };
 
@@ -149,9 +157,9 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
                         <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isLoading}>
+                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white font-medium">
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Changes
+                            Save
                         </Button>
                     </DialogFooter>
                 </form>

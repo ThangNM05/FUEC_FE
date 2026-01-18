@@ -66,10 +66,12 @@ export default function EditStudentModal({ student, isOpen, onClose }: EditStude
 
             toast.success(`Updated student "${formData.studentName}" successfully!`);
             onClose();
-        } catch (err) {
-            console.error('Update error:', err);
-            // @ts-ignore
-            toast.error('Update failed: ' + (err?.data?.message || err?.message || 'Unknown error'));
+        } catch (err: any) {
+            let errorMessage = err?.data?.message || err?.message;
+            if (errorMessage && errorMessage.includes("is already registered")) {
+                errorMessage = errorMessage.replace(/Email '.*?'/, 'Email');
+            }
+            toast.error(errorMessage ? `Update failed: ${errorMessage}` : 'An error occurred. Please try again later.');
         }
     };
 
@@ -111,9 +113,9 @@ export default function EditStudentModal({ student, isOpen, onClose }: EditStude
                         <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isLoading}>
+                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white font-medium">
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Changes
+                            Save
                         </Button>
                     </DialogFooter>
                 </form>

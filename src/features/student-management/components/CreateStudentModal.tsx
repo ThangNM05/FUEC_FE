@@ -14,47 +14,37 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-import { useCreateTeacherMutation } from '@/features/teacher-management/services/teachersApi';
-import { useGetDepartmentsQuery } from '@/features/department-management/services/departmentsApi';
+import { useCreateStudentMutation } from '@/features/student-management/services/studentsApi';
 import { useCreateAccountMutation } from '@/features/account-management/services/accountsApi';
-import type { CreateTeacherRequest } from '@/features/teacher-management/types/teacher.types';
+import type { CreateStudentRequest } from '@/features/student-management/types/student.types';
 import { Role, type CreateAccountRequest } from '@/features/account-management/types/account.types';
 
-interface CreateTeacherModalProps {
+interface CreateStudentModalProps {
     isOpen: boolean;
     onClose: () => void;
 }
 
-export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherModalProps) {
+export default function CreateStudentModal({ isOpen, onClose }: CreateStudentModalProps) {
     const [formData, setFormData] = useState({
-        teacherCode: '',
-        teacherName: '',
+        studentCode: '',
+        studentName: '',
         userName: '',
         cardId: '',
         email: '',
-        departmentId: '',
     });
 
-    const [createTeacher, { isLoading: isCreatingTeacher }] = useCreateTeacherMutation();
+    const [createStudent, { isLoading: isCreatingStudent }] = useCreateStudentMutation();
     const [createAccount, { isLoading: isCreatingAccount }] = useCreateAccountMutation();
-    const { data: departmentsData, isLoading: isLoadingDepartments } = useGetDepartmentsQuery({
-        page: 1,
-        pageSize: 1000,
-        sortColumn: 'name',
-        sortDirection: 'asc'
-    });
-    const departments = departmentsData?.items || [];
 
-    const isLoading = isCreatingTeacher || isCreatingAccount;
+    const isLoading = isCreatingStudent || isCreatingAccount;
 
     const resetForm = () => {
         setFormData({
-            teacherCode: '',
-            teacherName: '',
+            studentCode: '',
+            studentName: '',
             userName: '',
             cardId: '',
             email: '',
-            departmentId: '',
         });
     };
 
@@ -63,7 +53,7 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
         onClose();
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
@@ -71,12 +61,12 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.teacherCode.trim()) {
-            toast.error('Teacher code cannot be empty');
+        if (!formData.studentCode.trim()) {
+            toast.error('Student code cannot be empty');
             return;
         }
-        if (!formData.teacherName.trim()) {
-            toast.error('Teacher name cannot be empty');
+        if (!formData.studentName.trim()) {
+            toast.error('Student name cannot be empty');
             return;
         }
         if (!formData.userName.trim()) {
@@ -87,18 +77,14 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
             toast.error('Email cannot be empty');
             return;
         }
-        if (!formData.departmentId) {
-            toast.error('Please select a department');
-            return;
-        }
 
         try {
             // Step 1: Create Account
             const accountPayload: CreateAccountRequest = {
                 userName: formData.userName.trim(),
                 email: formData.email.trim(),
-                fullName: formData.teacherName.trim(),
-                role: Role.Teacher,
+                fullName: formData.studentName.trim(),
+                role: Role.Student, // Role 2
                 password: 'Password@123',
                 confirmPassword: 'Password@123',
                 emailConfirmed: false,
@@ -116,19 +102,18 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
                 throw new Error('Failed to retrieve Account ID after creation.');
             }
 
-            // Step 2: Create Teacher using Account ID
-            const teacherPayload: CreateTeacherRequest = {
+            // Step 2: Create Student using Account ID
+            const studentPayload: CreateStudentRequest = {
                 userId: accountId,
-                teacherCode: formData.teacherCode.trim(),
-                teacherName: formData.teacherName.trim(),
+                studentCode: formData.studentCode.trim(),
+                studentName: formData.studentName.trim(),
                 email: formData.email.trim(),
-                departmentId: formData.departmentId,
                 cardId: formData.cardId.trim() || undefined,
             };
 
-            await createTeacher(teacherPayload).unwrap();
+            await createStudent(studentPayload).unwrap();
 
-            toast.success(`Teacher "${formData.teacherName}" added successfully!`);
+            toast.success(`Student "${formData.studentName}" added successfully!`);
             handleClose();
         } catch (err: any) {
             let errorMessage = 'Creation failed';
@@ -174,24 +159,24 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                    <DialogTitle>Add New Teacher</DialogTitle>
+                    <DialogTitle>Add New Student</DialogTitle>
                     <DialogDescription>
-                        Enter teacher details to create a new account and profile.
+                        Enter student details to create a new account and profile.
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-6 py-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="teacherCode">
-                                Teacher Code <span className="text-red-500">*</span>
+                            <Label htmlFor="studentCode">
+                                Student Code <span className="text-red-500">*</span>
                             </Label>
                             <Input
-                                id="teacherCode"
-                                name="teacherCode"
-                                value={formData.teacherCode}
+                                id="studentCode"
+                                name="studentCode"
+                                value={formData.studentCode}
                                 onChange={handleChange}
                                 disabled={isLoading}
-                                placeholder="Ex: T001"
+                                placeholder="Ex: S001"
                             />
                         </div>
                         <div className="grid gap-2">
@@ -210,16 +195,16 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
                     </div>
 
                     <div className="grid gap-2">
-                        <Label htmlFor="teacherName">
-                            Teacher Name <span className="text-red-500">*</span>
+                        <Label htmlFor="studentName">
+                            Student Name <span className="text-red-500">*</span>
                         </Label>
                         <Input
-                            id="teacherName"
-                            name="teacherName"
-                            value={formData.teacherName}
+                            id="studentName"
+                            name="studentName"
+                            value={formData.studentName}
                             onChange={handleChange}
                             disabled={isLoading}
-                            placeholder="Ex: John Doe"
+                            placeholder="Ex: Jane Doe"
                         />
                     </div>
 
@@ -235,7 +220,7 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
                                 value={formData.email}
                                 onChange={handleChange}
                                 disabled={isLoading}
-                                placeholder="Ex: example@fe.edu.vn"
+                                placeholder="Ex: student@fe.edu.vn"
                             />
                         </div>
                         <div className="grid gap-2">
@@ -251,27 +236,6 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
                                 placeholder="Ex: 001099000001"
                             />
                         </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="departmentId">
-                            Department <span className="text-red-500">*</span>
-                        </Label>
-                        <select
-                            id="departmentId"
-                            name="departmentId"
-                            value={formData.departmentId}
-                            onChange={handleChange}
-                            disabled={isLoading || isLoadingDepartments}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            <option value="" disabled>Select Department</option>
-                            {departments.map((dept) => (
-                                <option key={dept.id} value={dept.id}>
-                                    {dept.name}
-                                </option>
-                            ))}
-                        </select>
                     </div>
 
                     <DialogFooter>

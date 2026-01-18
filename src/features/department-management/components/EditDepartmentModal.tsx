@@ -87,10 +87,9 @@ export default function EditDepartmentModal({ department, isOpen, onClose }: Edi
                 toast.success(`Department "${formData.name}" created successfully!`);
             }
             onClose();
-        } catch (err) {
-            console.error('Save error:', err);
-            // @ts-ignore
-            toast.error((isEditing ? 'Update' : 'Create') + ' failed: ' + (err?.data?.message || err?.message || 'Unknown error'));
+        } catch (err: any) {
+            const errorMessage = err?.data?.message || err?.message;
+            toast.error(errorMessage ? `${isEditing ? 'Update' : 'Create'} failed: ${errorMessage}` : 'An error occurred. Please try again later.');
         }
     };
 
@@ -147,9 +146,9 @@ export default function EditDepartmentModal({ department, isOpen, onClose }: Edi
                         <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white font-medium px-8">
+                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white font-medium">
                             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditing ? 'Save Changes' : 'Create Department'}
+                            {isEditing ? 'Save' : 'Create'}
                         </Button>
                     </DialogFooter>
                 </form>

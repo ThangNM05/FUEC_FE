@@ -27,9 +27,10 @@ export const teachersApi = baseApi.injectEndpoints({
                 const pageIndex = page - 1;
                 let url = `/teachers?PageNumber=${pageIndex}&PageSize=${pageSize}`;
                 if (sortColumn) {
-                    // Capitalize first letter for backend (teacherCode -> TeacherCode)
-                    const pascalCaseColumn = sortColumn.charAt(0).toUpperCase() + sortColumn.slice(1);
-                    url += `&SortColumn=${pascalCaseColumn}&SortDirection=${sortDirection || 'asc'}`;
+                    // Backend expects camelCase property names (e.g. teacherCode, not TeacherCode)
+                    // Backend expects SortOrder: 1 = Ascending, 2 = Descending
+                    const sortOrder = sortDirection === 'desc' ? 2 : 1;
+                    url += `&SortBy=${sortColumn}&SortOrder=${sortOrder}`;
                 }
                 if (searchTerm) {
                     url += `&SearchPhase=${encodeURIComponent(searchTerm)}`;
@@ -37,8 +38,6 @@ export const teachersApi = baseApi.injectEndpoints({
                 return url;
             },
             transformResponse: (response: any) => {
-                console.log('API Teachers Response:', response); // Debug log
-
                 // Expected format: { result: { items: [], totalItemCount: ... } }
                 if (response?.result?.items && Array.isArray(response.result.items)) {
                     return {
