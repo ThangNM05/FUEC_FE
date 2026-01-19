@@ -97,12 +97,12 @@ function AdminTeachers() {
   };
 
   const handleActivate = async (item: Teacher) => {
-    if (!window.confirm(`Are you sure you want to reactivate teacher "${item.teacherName}"?`)) return;
+    if (!window.confirm(`Are you sure you want to reactivate teacher "${item.accountFullName}"?`)) return;
 
     try {
       await updateTeacher({
         id: item.id,
-        teacherName: item.teacherName,
+        teacherName: item.accountFullName || item.teacherName,
         departmentId: item.departmentId,
         isActive: true
       }).unwrap();
@@ -158,7 +158,7 @@ function AdminTeachers() {
     },
     {
       header: 'Name',
-      accessor: 'teacherName' as keyof Teacher,
+      accessor: 'accountFullName' as keyof Teacher,
       sortable: true,
       filterable: true,
       className: 'w-[25%]',
@@ -321,8 +321,8 @@ function AdminTeachers() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
         title="Confirm Deletion"
-        message={`Are you sure you want to delete/deactivate teacher "${teacherToDelete?.teacherName}"? This action cannot be undone.`}
-        itemName={teacherToDelete?.teacherName}
+        message={`Are you sure you want to delete/deactivate teacher "${teacherToDelete?.accountFullName}"? This action cannot be undone.`}
+        itemName={teacherToDelete?.accountFullName}
       />
 
       <CreateTeacherModal

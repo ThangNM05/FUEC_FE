@@ -33,7 +33,7 @@ export default function EditStudentModal({ student, isOpen, onClose }: EditStude
     useEffect(() => {
         if (student) {
             setFormData({
-                studentName: student.studentName || '',
+                studentName: student.accountFullName || student.studentName || '',
                 cardId: student.cardId || '',
             });
         }

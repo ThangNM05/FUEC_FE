@@ -2,7 +2,8 @@
 export interface Student {
     id: string;
     studentCode: string;
-    studentName: string;
+    studentName: string; // legacy, keeping for compatibility if needed elsewhere
+    accountFullName: string; // New field from backend
     accountEmail: string;
     cardId?: string;
     isActive: boolean;

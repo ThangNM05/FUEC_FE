@@ -2,13 +2,13 @@ export interface Teacher {
     id: string;
     userId: string;
     teacherCode: string;
-    teacherName: string;
+    teacherName: string; // legacy
     cardId?: string;
     departmentId: string;
 
     // Navigation/Flattened properties (from API projection)
     accountEmail?: string;
-    accountFullName?: string;
+    accountFullName: string; // Validation: Present in API response
     departmentName?: string;
     departmentCode?: string;
 

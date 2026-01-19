@@ -43,7 +43,7 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
     useEffect(() => {
         if (teacher) {
             setFormData({
-                teacherName: teacher.teacherName || '',
+                teacherName: teacher.accountFullName || teacher.teacherName || '',
                 cardId: teacher.cardId || '',
                 departmentId: teacher.departmentId || '',
                 isActive: teacher.isActive ?? true,
