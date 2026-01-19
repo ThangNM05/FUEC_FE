@@ -139,7 +139,7 @@ function AdminStudents() {
     },
     {
       header: 'Name',
-      accessor: 'studentName' as keyof Student,
+      accessor: 'accountFullName' as keyof Student,
       sortable: true,
       filterable: true,
       className: 'w-[25%]',
@@ -302,8 +302,8 @@ function AdminStudents() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
         title="Confirm Deactivation"
-        message={`Are you sure you want to deactivate student "${studentToDelete?.studentName}"? This action will hide the student from the active list.`}
-        itemName={studentToDelete?.studentName}
+        message={`Are you sure you want to deactivate student "${studentToDelete?.accountFullName}"? This action will hide the student from the active list.`}
+        itemName={studentToDelete?.accountFullName}
       />
     </div>
   );
