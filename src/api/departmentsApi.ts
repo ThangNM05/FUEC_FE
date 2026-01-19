@@ -15,8 +15,9 @@ export const departmentsApi = baseApi.injectEndpoints({
             query: ({ page, pageSize, sortColumn, sortDirection, searchTerm }) => {
 
 
-                // Backend uses 1-based indexing
-                let url = `/departments?PageNumber=${page}&PageSize=${pageSize}`;
+                // Backend seems to use 0-based indexing for Departments
+                const pageIndex = page - 1;
+                let url = `/departments?PageNumber=${pageIndex}&PageSize=${pageSize}`;
 
                 if (sortColumn) {
                     // Backend expects camelCase property names
@@ -31,7 +32,6 @@ export const departmentsApi = baseApi.injectEndpoints({
                 return url;
             },
             transformResponse: (response: any) => {
-                console.log('Departments API Response:', response);
                 if (response?.result?.items && Array.isArray(response.result.items)) {
                     return {
                         items: response.result.items,

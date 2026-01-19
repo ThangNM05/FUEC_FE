@@ -17,8 +17,9 @@ export const roomsApi = baseApi.injectEndpoints({
             searchTerm?: string;
         }>({
             query: ({ page, pageSize, sortColumn, sortDirection, searchTerm }) => {
-                // Backend uses 1-based indexing
-                let url = `/Rooms?PageNumber=${page}&PageSize=${pageSize}`;
+                // Backend seems to use 0-based indexing for Rooms
+                const pageIndex = page - 1;
+                let url = `/Rooms?PageNumber=${pageIndex}&PageSize=${pageSize}`;
                 if (sortColumn) {
                     const sortOrder = sortDirection === 'desc' ? 2 : 1;
                     url += `&SortBy=${sortColumn}&SortOrder=${sortOrder}`;
@@ -29,7 +30,6 @@ export const roomsApi = baseApi.injectEndpoints({
                 return url;
             },
             transformResponse: (response: any) => {
-                console.log('Rooms API Response:', response);
                 if (response?.result?.items && Array.isArray(response.result.items)) {
                     return {
                         items: response.result.items,
