@@ -4,7 +4,7 @@ export interface Subject {
     name: string;
     credits: number;
     terms: number;
-    timeAllocation: string; // ISO Date or String
+    timeAllocation: string; 
     description: string;
     minAvgMarkToPass: number;
     isActive: boolean;

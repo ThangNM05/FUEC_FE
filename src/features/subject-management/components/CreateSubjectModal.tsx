@@ -183,20 +183,7 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
                         />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="isActive">Status</Label>
-                        <select
-                            id="isActive"
-                            name="isActive"
-                            value={formData.isActive.toString()}
-                            onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.value === 'true' }))}
-                            disabled={isLoading}
-                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            <option value="true">Active</option>
-                            <option value="false">Inactive</option>
-                        </select>
-                    </div>
+
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>

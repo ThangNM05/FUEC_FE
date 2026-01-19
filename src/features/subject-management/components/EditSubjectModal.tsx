@@ -37,25 +37,7 @@ export default function EditSubjectModal({ isOpen, onClose, subject }: EditSubje
 
     useEffect(() => {
         if (subject) {
-            let formattedTime = subject.timeAllocation || '';
-            // Check if it looks like an ISO date (e.g., 2026-01-19T10:13:19.071Z)
-            // and format it to be more readable (YYYY-MM-DD HH:mm)
-            if (formattedTime && /^\d{4}-\d{2}-\d{2}T/.test(formattedTime)) {
-                try {
-                    const date = new Date(formattedTime);
-                    if (!isNaN(date.getTime())) {
-                        // Format: YYYY-MM-DD HH:mm
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        const hours = String(date.getHours()).padStart(2, '0');
-                        const minutes = String(date.getMinutes()).padStart(2, '0');
-                        formattedTime = `${year}-${month}-${day} ${hours}:${minutes}`;
-                    }
-                } catch (e) {
-                    console.error('Error formatting date:', e);
-                }
-            }
+            const formattedTime = subject.timeAllocation || '';
 
             setFormData({
                 code: subject.code,
@@ -95,19 +77,7 @@ export default function EditSubjectModal({ isOpen, onClose, subject }: EditSubje
             return;
         }
 
-        let submitData = { ...formData };
-
-        // Convert display time format (YYYY-MM-DD HH:mm) back to ISO if needed
-        if (submitData.timeAllocation && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(submitData.timeAllocation)) {
-            try {
-                const date = new Date(submitData.timeAllocation);
-                if (!isNaN(date.getTime())) {
-                    submitData.timeAllocation = date.toISOString();
-                }
-            } catch (e) {
-                console.error('Error parsing date for submit:', e);
-            }
-        }
+        const submitData = { ...formData };
 
         try {
             await updateSubject({

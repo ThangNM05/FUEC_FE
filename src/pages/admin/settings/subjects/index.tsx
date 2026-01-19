@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit, Loader2, Trash2 } from 'lucide-react';
+import { Edit, Loader2, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 import DataTable from '@/components/shared/DataTable';
@@ -17,6 +17,7 @@ import type { ImportSubjectsResponse, Subject } from '@/features/subject-managem
 
 import CreateSubjectModal from '@/features/subject-management/components/CreateSubjectModal';
 import EditSubjectModal from '@/features/subject-management/components/EditSubjectModal';
+import ViewSubjectModal from '@/features/subject-management/components/ViewSubjectModal';
 
 function AdminSubjects() {
     // Modal States
@@ -25,6 +26,9 @@ function AdminSubjects() {
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [viewSubject, setViewSubject] = useState<Subject | null>(null);
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [subjectToDelete, setSubjectToDelete] = useState<Subject | null>(null);
@@ -69,6 +73,11 @@ function AdminSubjects() {
         setIsEditModalOpen(true);
     };
 
+    const handleView = (subject: Subject) => {
+        setViewSubject(subject);
+        setIsViewModalOpen(true);
+    };
+
     const handleDelete = (subject: Subject) => {
         setSubjectToDelete(subject);
         setIsDeleteModalOpen(true);
@@ -106,13 +115,13 @@ function AdminSubjects() {
             toast.success('Import completed. Please check the results.');
         } catch (err) {
             console.error('Import failed', err);
-            toast.error('Import failed! Please check the file.');
+            toast.error('Import failed! Please check the file or try again later.');
         }
     };
 
     const columns = [
-        { header: 'Code', accessor: 'code' as keyof Subject, sortable: true, filterable: true, width: '10%' },
-        { header: 'Name', accessor: 'name' as keyof Subject, sortable: true, filterable: true, width: '25%' },
+        { header: 'Code', accessor: 'code' as keyof Subject, sortable: true, filterable: true, width: '150px' },
+        { header: 'Name', accessor: 'name' as keyof Subject, sortable: true, filterable: true, render: (item: Subject) => <div className="max-w-[300px] truncate" title={item.name}>{item.name}</div> },
         {
             header: 'Credits',
             accessor: 'credits' as keyof Subject,
@@ -135,18 +144,21 @@ function AdminSubjects() {
             header: 'Time Allocation',
             accessor: 'timeAllocation' as keyof Subject,
             sortable: true,
-            render: (item: Subject) => {
-                if (!item.timeAllocation) return <span>-</span>;
-                // Check if it looks like an ISO date
-                if (/^\d{4}-\d{2}-\d{2}/.test(item.timeAllocation)) {
-                    try {
-                        return <span>{new Date(item.timeAllocation).toLocaleString('vi-VN')}</span>;
-                    } catch {
-                        return <span>{item.timeAllocation}</span>;
-                    }
-                }
-                return <span>{item.timeAllocation}</span>;
-            }
+            render: (item: Subject) => (
+                <div className="max-w-[150px] truncate" title={item.timeAllocation}>
+                    {item.timeAllocation || '-'}
+                </div>
+            )
+        },
+        {
+            header: 'Description',
+            accessor: 'description' as keyof Subject,
+            sortable: true,
+            render: (item: Subject) => (
+                <div className="max-w-[200px] truncate" title={item.description}>
+                    {item.description || '-'}
+                </div>
+            )
         },
         {
             header: 'Status',
@@ -165,6 +177,13 @@ function AdminSubjects() {
             align: 'center' as const,
             render: (item: Subject) => (
                 <div className="flex gap-2 justify-center">
+                    <button
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                        onClick={() => handleView(item)}
+                        title="View Details"
+                    >
+                        <Eye className="w-4 h-4 text-gray-600" />
+                    </button>
                     <button
                         className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
                         onClick={() => handleEdit(item)}
@@ -234,6 +253,12 @@ function AdminSubjects() {
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
                 subject={selectedSubject}
+            />
+
+            <ViewSubjectModal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                subject={viewSubject}
             />
 
             <ConfirmDeleteModal
