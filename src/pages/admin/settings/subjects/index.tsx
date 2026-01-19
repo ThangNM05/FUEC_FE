@@ -12,12 +12,12 @@ import {
     useGetSubjectsQuery,
     useImportSubjectsMutation,
     useDeleteSubjectMutation
-} from '@/features/subject-management/services/subjectsApi';
-import type { ImportSubjectsResponse, Subject } from '@/features/subject-management/types/subject.types';
+} from '@/api/subjectsApi';
+import type { ImportSubjectsResponse, Subject } from '@/types/subject.types';
 
-import CreateSubjectModal from '@/features/subject-management/components/CreateSubjectModal';
-import EditSubjectModal from '@/features/subject-management/components/EditSubjectModal';
-import ViewSubjectModal from '@/features/subject-management/components/ViewSubjectModal';
+import CreateSubjectModal from '@/components/modals/CreateSubjectModal';
+import EditSubjectModal from '@/components/modals/EditSubjectModal';
+import ViewSubjectModal from '@/components/modals/ViewSubjectModal';
 
 function AdminSubjects() {
     // Modal States

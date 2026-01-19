@@ -1,12 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 
-import bookingReducer from '../features/booking/slice';
-import { baseApi } from './baseApi';
+import authReducer from './authSlice';
+import { baseApi } from '../api/baseApi';
 
 export const store = configureStore({
   reducer: {
-    booking: bookingReducer,
-    // Add the base API reducer
+    auth: authReducer,
     [baseApi.reducerPath]: baseApi.reducer,
   },
   // Add the RTK Query middleware
@@ -15,6 +14,6 @@ export const store = configureStore({
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
-// Inferred type: {booking: BookingState, api: ApiState}
+// Inferred type: {auth: AuthState, api: ApiState}
 export type AppDispatch = typeof store.dispatch;
 

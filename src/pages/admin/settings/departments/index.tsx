@@ -4,13 +4,13 @@ import { toast } from 'sonner';
 
 import DataTable from '@/components/shared/DataTable';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
-import EditDepartmentModal from '@/features/department-management/components/EditDepartmentModal';
+import EditDepartmentModal from '@/components/modals/EditDepartmentModal';
 
 import {
     useGetDepartmentsQuery,
     useDeleteDepartmentMutation,
-} from '@/features/department-management/services/departmentsApi';
-import type { Department } from '@/features/department-management/types/department.types';
+} from '@/api/departmentsApi';
+import type { Department } from '@/types/department.types';
 
 function AdminDepartments() {
     // Pagination State

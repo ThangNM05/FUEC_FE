@@ -21,7 +21,6 @@ import AdminCurriculum from './pages/admin/settings/curriculum';
 import AdminSyllabus from './pages/admin/settings/syllabus';
 // Auth
 import SignInPage from './pages/sign-in';
-import SSOCallback from './pages/sso-callback';
 // Student Pages
 import StudentDashboard from './pages/student';
 import AssignmentDetails from './pages/student/assignment';
@@ -103,7 +102,6 @@ function Router() {
       </Route>
 
       <Route path="/sign-in" element={<SignInPage />} />
-      <Route path="/sso-callback" element={<SSOCallback />} />
     </Routes>
   );
 }

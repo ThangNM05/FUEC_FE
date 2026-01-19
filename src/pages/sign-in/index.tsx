@@ -1,88 +1,56 @@
 import './sign-in.css';
 
 import { useState } from 'react';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useGoogleLogin } from '@react-oauth/google';
+import { toast } from 'sonner';
 
-import { useAuth, useSignIn } from '@clerk/clerk-react';
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../../redux/authSlice';
+import { useGoogleLoginMutation } from '../../api/authApi';
+
 import img_fpt from '../../assets/img_fpt.svg';
 
 function SignInPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn, setActive } = useSignIn();
-  const { isSignedIn } = useAuth();
+  const dispatch = useDispatch();
 
-  // Redirect if already signed in
-  if (isSignedIn) {
-    navigate('/admin');
-  }
+  const [googleLoginApi, { isLoading: isApiLoading }] = useGoogleLoginMutation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const login = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsLoading(true);
+      try {
+        console.log('Google Auth Response:', tokenResponse);
+        // Using access_token as idToken for now, assuming backend handles it or we adjust backend later.
+        // If backend fails, we need to switch to <GoogleLogin/> component to get real ID Token.
+        const result = await googleLoginApi({ idToken: tokenResponse.access_token }).unwrap();
 
-    setIsLoading(true);
+        dispatch(setCredentials({ user: result.user, token: result.token }));
 
-    // Simple admin login for testing (bypass Clerk)
-    if (email === 'admin@gmail.com' && password === '123') {
-      localStorage.setItem('user', JSON.stringify({ email: 'admin@gmail.com', role: 'admin' }));
-      navigate('/admin');
-      return;
-    }
+        toast.success(`Welcome back, ${result.user.fullName}!`);
 
-    // Simple student login for testing (bypass Clerk)
-    if (email === 'student@gmail.com' && password === '123') {
-      localStorage.setItem('user', JSON.stringify({ email: 'student@gmail.com', role: 'student' }));
-      navigate('/student');
-      return;
-    }
-
-    // Simple teacher login for testing (bypass Clerk)
-    if (email === 'teacher@gmail.com' && password === '123') {
-      localStorage.setItem('user', JSON.stringify({ email: 'teacher@gmail.com', role: 'teacher' }));
-      navigate('/teacher');
-      return;
-    }
-
-    if (!signIn) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      // Create sign-in with email and password
-      const result = await signIn.create({
-        identifier: email,
-        password: password,
-      });
-
-      if (result.status === 'complete') {
-        // Set the active session
-        await setActive({ session: result.createdSessionId });
-        // Redirect to dashboard
-        navigate('/student-management');
+        // Redirect based on role
+        if (result.user.role === 'Admin') {
+          navigate('/admin');
+        } else if (result.user.role === 'Teacher') {
+          navigate('/teacher');
+        } else {
+          navigate('/student');
+        }
+      } catch (err: any) {
+        console.error('Login error:', err);
+        toast.error('Failed to login with Google.');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err: any) {
-      console.error('Error signing in:', err);
-      alert(err.errors?.[0]?.message || 'Failed to sign in. Please check your credentials.');
-    } finally {
+    },
+    onError: () => {
+      toast.error('Google Login Failed');
       setIsLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = () => {
-    if (!signIn) return;
-
-    // Redirect to Clerk's Google OAuth page (not modal)
-    signIn.authenticateWithRedirect({
-      strategy: 'oauth_google',
-      redirectUrl: '/sso-callback',
-      redirectUrlComplete: '/student-management',
-    });
-  };
+    },
+  });
 
   return (
     <div className="login-page">
@@ -104,73 +72,14 @@ function SignInPage() {
 
         {/* Login Card */}
         <div className="login-card">
-          <form onSubmit={handleSubmit} className="login-form-new">
-            {/* Email Field */}
-            <div className="form-field">
-              <label htmlFor="email">Email Address</label>
-              <input
-                id="email"
-                type="email"
-                placeholder="student@fpt.edu.vn"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            {/* Password Field */}
-            <div className="form-field">
-              <label htmlFor="password">Password</label>
-              <div className="password-input">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isLoading}
-                >
-                  {showPassword ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember & Forgot */}
-            <div className="form-remember">
-              <label className="checkbox-label">
-                <input type="checkbox" disabled={isLoading} />
-                <span>Remember me</span>
-              </label>
-              <Link to="/forgot-password" className="forgot-link">
-                Forgot password?
-              </Link>
-            </div>
-
-            {/* Login Button */}
-            <button type="submit" className="btn-signin" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </button>
-
-            {/* Divider */}
-            <div className="form-divider">
-              <span>Or continue with</span>
-            </div>
-
-            {/* Google Sign In Button - Redirect to Clerk OAuth */}
-            <div className="social-buttons">
+          <div className="login-form-new">
+            {/* Google Sign In Button */}
+            <div className="social-buttons" style={{ marginTop: 0 }}>
               <button
                 type="button"
                 className="btn-social btn-social-full"
-                onClick={handleGoogleSignIn}
-                disabled={isLoading}
+                onClick={() => login()}
+                disabled={isLoading || isApiLoading}
               >
                 <svg className="social-icon" viewBox="0 0 24 24" width="20" height="20">
                   <path
@@ -190,16 +99,16 @@ function SignInPage() {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Google
+                Sign in with Google
               </button>
             </div>
-          </form>
-        </div>
+          </div>
 
-        {/* Footer */}
-        <p className="login-footer-text">
-          © 2025 FUEC - FPT University. All rights reserved.
-        </p>
+          {/* Footer */}
+          <p className="login-footer-text" style={{ textAlign: 'center', marginTop: '20px' }}>
+            © 2025 FUEC - FPT University. All rights reserved.
+          </p>
+        </div>
       </div>
     </div>
   );
