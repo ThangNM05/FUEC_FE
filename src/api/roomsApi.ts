@@ -29,6 +29,7 @@ export const roomsApi = baseApi.injectEndpoints({
                 return url;
             },
             transformResponse: (response: any) => {
+                console.log('Rooms API Response:', response);
                 if (response?.result?.items && Array.isArray(response.result.items)) {
                     return {
                         items: response.result.items,

@@ -31,8 +31,7 @@ export const departmentsApi = baseApi.injectEndpoints({
                 return url;
             },
             transformResponse: (response: any) => {
-
-
+                console.log('Departments API Response:', response);
                 if (response?.result?.items && Array.isArray(response.result.items)) {
                     return {
                         items: response.result.items,
