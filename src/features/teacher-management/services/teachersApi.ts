@@ -133,9 +133,13 @@ export const teachersApi = baseApi.injectEndpoints({
                     const successCount = successMatch ? parseInt(successMatch[1]) : 0;
                     const failureCount = errorMatch ? parseInt(errorMatch[1]) : 0;
 
-                    const errors = [];
+                    const errors: string[] = [];
                     if (data.includes("No valid teachers found")) {
-                        errors.push("No valid teachers found in the file.");
+                        errors.push("No data imported. Please check if the file is empty or formatted correctly.");
+                    }
+
+                    if (failureCount > 0 && errors.length === 0) {
+                        errors.push(`Run into ${failureCount} errors during import. Please check your file format and try again.`);
                     }
 
                     return {

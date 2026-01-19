@@ -284,6 +284,7 @@ function AdminStudents() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         result={importResult}
+        entityName="students"
       />
 
       <CreateStudentModal

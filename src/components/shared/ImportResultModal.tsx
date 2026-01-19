@@ -4,9 +4,10 @@ interface ImportResultModalProps {
     isOpen: boolean;
     onClose: () => void;
     result: any; // Allow relaxed types to handle casing structure
+    entityName?: string;
 }
 
-export default function ImportResultModal({ isOpen, onClose, result }: ImportResultModalProps) {
+export default function ImportResultModal({ isOpen, onClose, result, entityName = 'items' }: ImportResultModalProps) {
     if (!isOpen || !result) return null;
 
     // Normalize data (handle potential PascalCase from .NET)
@@ -14,9 +15,11 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
     const failureCount = result.failureCount ?? result.FailureCount ?? 0;
     const errors = result.errors ?? result.Errors ?? [];
 
-    const hasFailures = failureCount > 0 || errors.length > 0;
-    // Critical error: No processing happened (0 success, 0 failed) but we have errors (e.g. invalid file format)
-    const isCriticalError = errors.length > 0 && successCount === 0 && failureCount === 0;
+    // Treat 0 success as a failure if there are no other stats (empty import) or just general failure
+    const hasFailures = failureCount > 0 || errors.length > 0 || successCount === 0;
+
+    // Critical error: No processing happened (0 success, 0 failed) but we have errors OR just 0 success 0 failed (nothing imported)
+    const isCriticalError = (errors.length > 0 && successCount === 0 && failureCount === 0) || (successCount === 0 && failureCount === 0);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -45,7 +48,7 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
                             </div>
                             <div>
                                 <h4 className="text-xl font-bold text-gray-900">Completed!</h4>
-                                <p className="text-gray-600 mt-1">Successfully added <strong className="text-green-600">{successCount}</strong> students.</p>
+                                <p className="text-gray-600 mt-1">Successfully added <strong className="text-green-600">{successCount}</strong> {entityName}.</p>
                             </div>
                         </div>
                     ) : isCriticalError ? (
@@ -58,7 +61,11 @@ export default function ImportResultModal({ isOpen, onClose, result }: ImportRes
                                 <h4 className="text-xl font-bold text-gray-900 mb-2">Import Failed</h4>
                                 <div className="bg-red-50 p-4 rounded-lg border border-red-100 text-left">
                                     <ul className="text-sm text-red-600 space-y-1">
-
+                                        {errors.length > 0 ? (
+                                            errors.map((err: string, idx: number) => <li key={idx}>{err}</li>)
+                                        ) : (
+                                            <li>No data imported. Please check if the file is empty or formatted correctly.</li>
+                                        )}
                                     </ul>
                                 </div>
                             </div>

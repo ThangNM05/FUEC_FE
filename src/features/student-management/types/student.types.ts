@@ -12,7 +12,6 @@ export interface Student {
     className?: string;
     createdAt?: string;
     updatedAt?: string;
-    // Legacy fields (optional compatibility if needed, otherwise remove)
     studentId?: string;
     fullName?: string;
     email?: string;

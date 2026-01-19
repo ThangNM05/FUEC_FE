@@ -141,9 +141,13 @@ export const studentsApi = baseApi.injectEndpoints({
                     const failureCount = errorMatch ? parseInt(errorMatch[1]) : 0;
 
                     // If message is "No valid students found", treated as 0 success, maybe generic error
-                    const errors = [];
+                    const errors: string[] = [];
                     if (data.includes("No valid students found")) {
-                        errors.push("No valid students found in the file.");
+                        errors.push("No data imported. Please check if the file is empty or formatted correctly.");
+                    }
+
+                    if (failureCount > 0 && errors.length === 0) {
+                        errors.push(`Run into ${failureCount} errors during import. Please check your file format and try again.`);
                     }
 
                     return {

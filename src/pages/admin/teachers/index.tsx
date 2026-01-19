@@ -165,10 +165,10 @@ function AdminTeachers() {
     },
     {
       header: 'Department',
-      accessor: 'departmentName' as keyof Teacher,
+      accessor: 'departmentCode' as keyof Teacher,
       sortable: false,
       filterable: true,
-      render: (item: Teacher) => item.departmentName || 'N/A',
+      render: (item: Teacher) => item.departmentCode || 'N/A',
       className: 'w-[20%]',
     },
     {
@@ -308,6 +308,7 @@ function AdminTeachers() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         result={importResult} // Use cast or ensures compatible structure
+        entityName="teachers"
       />
 
       <EditTeacherModal
