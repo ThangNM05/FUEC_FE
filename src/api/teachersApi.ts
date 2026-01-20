@@ -23,8 +23,9 @@ export const teachersApi = baseApi.injectEndpoints({
             searchTerm?: string;
         }>({
             query: ({ page, pageSize, sortColumn, sortDirection, searchTerm }) => {
-                // Backend uses 1-based indexing
-                let url = `/teachers?PageNumber=${page}&PageSize=${pageSize}`;
+                // Backend uses 0-based indexing
+                const pageIndex = page - 1;
+                let url = `/teachers?PageSize=${pageSize}&PageNumber=${pageIndex}`;
                 if (sortColumn) {
                     // Backend expects camelCase property names (e.g. teacherCode, not TeacherCode)
                     // Backend expects SortOrder: 1 = Ascending, 2 = Descending

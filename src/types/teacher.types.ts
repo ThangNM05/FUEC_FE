@@ -29,7 +29,7 @@ export interface CreateTeacherRequest {
 
 export interface UpdateTeacherRequest {
     id: string;
-    teacherName: string;
+    fullName: string;
     cardId?: string;
     departmentId: string;
     isActive?: boolean;

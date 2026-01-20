@@ -1,6 +1,7 @@
 // Student entity types matching backend
 export interface Student {
     id: string;
+    userId: string;
     studentCode: string;
     studentName: string; // legacy, keeping for compatibility if needed elsewhere
     accountFullName: string; // New field from backend
@@ -29,9 +30,8 @@ export interface CreateStudentRequest {
 
 export interface UpdateStudentRequest {
     id: string;
-    studentName: string;
+    fullName: string;
     cardId?: string;
-    // Optional fields if the API supports them, based on "Student" entity
     studentCode?: string;
     accountEmail?: string;
     isActive?: boolean | number;
