@@ -9,10 +9,10 @@ import {
   useGetStudentsQuery,
   useDeleteStudentMutation,
   useImportStudentsMutation,
-} from '@/features/student-management/services/studentsApi';
-import type { Student, ImportStudentsResponse } from '@/features/student-management/types/student.types';
-import EditStudentModal from '@/features/student-management/components/EditStudentModal';
-import CreateStudentModal from '@/features/student-management/components/CreateStudentModal';
+} from '@/api/studentsApi';
+import type { Student, ImportStudentsResponse } from '@/types/student.types';
+import EditStudentModal from '@/components/modals/EditStudentModal';
+import CreateStudentModal from '@/components/modals/CreateStudentModal';
 import ImportExcelModal from '@/components/shared/ImportExcelModal';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 

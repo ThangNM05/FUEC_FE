@@ -12,10 +12,10 @@ import {
     useGetRoomsQuery,
     useImportRoomsMutation,
     useDeleteRoomMutation
-} from '@/features/room-management/services/roomsApi';
-import type { ImportRoomsResponse, Room } from '@/features/room-management/types/room.types';
-import CreateRoomModal from '@/features/room-management/components/CreateRoomModal';
-import EditRoomModal from '@/features/room-management/components/EditRoomModal';
+} from '@/api/roomsApi';
+import type { ImportRoomsResponse, Room } from '@/types/room.types';
+import CreateRoomModal from '@/components/modals/CreateRoomModal';
+import EditRoomModal from '@/components/modals/EditRoomModal';
 
 // Helper maps for Enums
 const BUILDING_MAP: Record<number, string> = {

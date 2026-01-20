@@ -6,8 +6,8 @@ import DataTable from '@/components/shared/DataTable';
 import ImportResultModal from '@/components/shared/ImportResultModal';
 import ImportExcelModal from '@/components/shared/ImportExcelModal';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
-import EditTeacherModal from '@/features/teacher-management/components/EditTeacherModal';
-import CreateTeacherModal from '@/features/teacher-management/components/CreateTeacherModal';
+import EditTeacherModal from '@/components/modals/EditTeacherModal';
+import CreateTeacherModal from '@/components/modals/CreateTeacherModal';
 
 import { validateFileUpload } from '@/config/appConfig';
 import {
@@ -15,8 +15,8 @@ import {
   useDeleteTeacherMutation,
   useImportTeachersMutation,
   useUpdateTeacherMutation,
-} from '@/features/teacher-management/services/teachersApi';
-import type { Teacher, ImportTeachersResponse } from '@/features/teacher-management/types/teacher.types.ts';
+} from '@/api/teachersApi';
+import type { Teacher, ImportTeachersResponse } from '@/types/teacher.types.ts';
 
 function AdminTeachers() {
   // Import Result Modal State

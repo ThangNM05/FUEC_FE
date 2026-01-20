@@ -6,26 +6,26 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router';
 import { Toaster } from 'sonner';
 
-import { ClerkProvider } from '@clerk/clerk-react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 import { store } from './redux/store';
 import Router from './router';
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-if (!PUBLISHABLE_KEY) {
-  throw new Error('Missing Clerk Publishable Key');
+if (!GOOGLE_CLIENT_ID) {
+  throw new Error('Missing Google Client ID');
 }
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
-      <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/sign-in">
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
         <BrowserRouter>
           <Router />
         </BrowserRouter>
         <Toaster richColors position="top-right" />
-      </ClerkProvider>
+      </GoogleOAuthProvider>
     </Provider>
   </StrictMode>,
 );
