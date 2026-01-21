@@ -86,6 +86,7 @@
   width: 100%;
   max-width: 500px;
   animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: -100px;
 }
 
 @keyframes fadeInUp {
@@ -161,31 +162,37 @@
 .login-welcome {
   font-size: 28px;
   font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 12px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  color: var(--fpt-orange);
+  margin-bottom: 2px;
+  /* Reduced bottom margin since it's inside card now */
   letter-spacing: -0.3px;
 }
 
 .login-subtitle {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.9);
+  color: #0A1B3C;
+  opacity: 0.8;
   font-weight: 400;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  margin-bottom: 24px;
+  /* Add some spacing before the buttons */
 }
 
 /* Login Card */
-/* Login Card - Transparent */
+/* Login Card - Restored with User Style */
 .login-card {
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: none;
-  box-shadow: none;
-  padding: 48px 0;
-  /* Removing horizontal padding as it's transparent */
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  /* Moderate shadow */
   position: relative;
-  overflow: visible;
+  overflow: hidden;
+  max-width: 400px;
+  /* Keep it compact like the reference */
+  margin: 0 auto;
+  /* Center it */
+  text-align: center;
 }
 
 .login-card::before {
@@ -444,9 +451,10 @@
   margin-top: 32px;
   text-align: center;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
+  color: #0A1B3C;
   font-weight: 500;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  opacity: 0.6;
+  /* Slight opacity for footer text */
 }
 
 /* Responsive */
@@ -581,5 +589,87 @@
   .login-bg-circle-1,
   .login-bg-circle-2 {
     display: none;
+  }
+}
+
+/* Error View */
+.error-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.error-icon-container {
+  margin-bottom: 20px;
+  width: 150px;
+  height: auto;
+}
+
+.error-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.error-message {
+  font-size: 15px;
+  color: #DC2626;
+  /* Red color for error msg */
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+
+.error-email {
+  color: var(--fpt-orange);
+  font-weight: 700;
+}
+
+.error-support-text {
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 24px;
+}
+
+.support-link {
+  color: var(--fpt-orange);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.support-link:hover {
+  text-decoration: underline;
+}
+
+.btn-retry {
+  padding: 12px 32px;
+  background: var(--fpt-orange);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(243, 112, 34, 0.2);
+}
+
+.btn-retry:hover {
+  background: var(--fpt-orange-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(243, 112, 34, 0.3);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
