@@ -86,6 +86,7 @@
   width: 100%;
   max-width: 500px;
   animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: -100px;
 }
 
 @keyframes fadeInUp {
@@ -162,7 +163,7 @@
   font-size: 28px;
   font-weight: 700;
   color: var(--fpt-orange);
-  margin-bottom: 8px;
+  margin-bottom: 2px;
   /* Reduced bottom margin since it's inside card now */
   letter-spacing: -0.3px;
 }
