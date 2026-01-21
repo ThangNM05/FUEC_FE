@@ -65,23 +65,24 @@ function AdminStudents() {
     }
   }, [error]);
 
-  // Handle soft delete (Deactivate student)
-  const handleDelete = (item: Student) => {
+  // Handle soft delete / toggle status
+  const handleStatusChange = (item: Student) => {
     setStudentToDelete(item);
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmStatusChange = async () => {
     if (!studentToDelete) return;
 
     try {
       await deleteStudent(studentToDelete.id).unwrap();
-      toast.success('Successfully deleted/deactivated!');
+      const action = studentToDelete.isActive ? 'deactivated' : 'activated';
+      toast.success(`Successfully ${action}!`);
       setStudentToDelete(null);
       setIsDeleteModalOpen(false);
     } catch (err) {
-
-      toast.error('Failed to deactivate! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
+      const action = studentToDelete.isActive ? 'deactivate' : 'activate';
+      toast.error(`Failed to ${action}! ` + ((err as any)?.data?.message || (err as any)?.message || ''));
     }
   };
 
@@ -211,14 +212,28 @@ function AdminStudents() {
           >
             <Edit className="w-4 h-4 text-[#F37022]" />
           </button>
-          <button
-            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-            onClick={() => handleDelete(item)}
-            disabled={isDeleting}
-            title="Deactivate Student"
-          >
-            <Trash2 className="w-4 h-4 text-red-600" />
-          </button>
+
+          {item.isActive ? (
+            <button
+              className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+              onClick={() => handleStatusChange(item)}
+              disabled={isDeleting}
+              title="Deactivate Student"
+            >
+              <Trash2 className="w-4 h-4 text-red-600" />
+            </button>
+          ) : (
+            <button
+              className="p-2 hover:bg-green-50 rounded-lg transition-colors"
+              onClick={() => handleStatusChange(item)}
+              disabled={isDeleting}
+              title="Activate Student"
+            >
+              <div className="w-4 h-4 text-green-600 font-bold flex items-center justify-center">
+                ↺
+              </div>
+            </button>
+          )}
         </div>
       ),
     },
@@ -301,10 +316,12 @@ function AdminStudents() {
       <ConfirmDeleteModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={confirmDelete}
-        title="Confirm Deactivation"
-        message={`Are you sure you want to deactivate student "${studentToDelete?.accountFullName}"? This action will hide the student from the active list.`}
+        onConfirm={confirmStatusChange}
+        title={studentToDelete?.isActive ? "Confirm Deactivation" : "Confirm Activation"}
+        message={`Are you sure you want to ${studentToDelete?.isActive ? 'deactivate' : 'activate'} student "${studentToDelete?.accountFullName}"?`}
         itemName={studentToDelete?.accountFullName}
+        confirmButtonLabel={studentToDelete?.isActive ? "Deactivate" : "Activate"}
+        confirmButtonVariant={studentToDelete?.isActive ? "danger" : "success"}
       />
     </div>
   );

@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useUpdateTeacherMutation } from '@/api/teachersApi';
+import { useUpdateAccountMutation } from '@/api/accountsApi';
 import { useGetDepartmentsQuery } from '@/api/departmentsApi';
 import type { Teacher, UpdateTeacherRequest } from '@/types/teacher.types.ts';
 
@@ -25,13 +26,17 @@ interface EditTeacherModalProps {
 
 export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeacherModalProps) {
     const [formData, setFormData] = useState({
-        teacherName: '',
+        fullName: '',
         cardId: '',
         departmentId: '',
         isActive: true,
     });
 
-    const [updateTeacher, { isLoading }] = useUpdateTeacherMutation();
+    const [updateTeacher, { isLoading: isUpdatingTeacher }] = useUpdateTeacherMutation();
+    const [updateAccount, { isLoading: isUpdatingAccount }] = useUpdateAccountMutation();
+
+    const isLoading = isUpdatingTeacher || isUpdatingAccount || false; // default false for initial render
+
     const { data: departmentsData, isLoading: isLoadingDepartments } = useGetDepartmentsQuery({
         page: 1,
         pageSize: 1000,
@@ -43,7 +48,7 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
     useEffect(() => {
         if (teacher) {
             setFormData({
-                teacherName: teacher.accountFullName || teacher.teacherName || '',
+                fullName: teacher.accountFullName || teacher.teacherName || '',
                 cardId: teacher.cardId || '',
                 departmentId: teacher.departmentId || '',
                 isActive: teacher.isActive ?? true,
@@ -65,7 +70,7 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
         e.preventDefault();
         if (!teacher) return;
 
-        if (!formData.teacherName.trim()) {
+        if (!formData.fullName.trim()) {
             toast.error('Teacher name cannot be empty');
             return;
         }
@@ -76,9 +81,18 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
         }
 
         try {
+            // Update Account Name
+            if (teacher.userId) {
+                await updateAccount({
+                    id: teacher.userId,
+                    fullName: formData.fullName,
+                    role: 1 // Teacher Role
+                }).unwrap();
+            }
+
             const updatePayload: UpdateTeacherRequest = {
                 id: teacher.id,
-                teacherName: formData.teacherName,
+                fullName: formData.fullName, // Keeping for consistency
                 cardId: formData.cardId,
                 departmentId: formData.departmentId,
                 isActive: formData.isActive,
@@ -86,7 +100,7 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
 
             await updateTeacher(updatePayload).unwrap();
 
-            toast.success(`Teacher "${formData.teacherName}" updated successfully!`);
+            toast.success(`Teacher "${formData.fullName}" updated successfully!`);
             onClose();
         } catch (err: any) {
             let errorMessage = err?.data?.message || err?.message;
@@ -105,13 +119,13 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="teacherName" className="text-right">
+                        <Label htmlFor="fullName" className="text-right">
                             Name
                         </Label>
                         <Input
-                            id="teacherName"
-                            name="teacherName"
-                            value={formData.teacherName}
+                            id="fullName"
+                            name="fullName"
+                            value={formData.fullName}
                             onChange={handleChange}
                             className="col-span-3"
                             disabled={isLoading}
