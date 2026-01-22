@@ -6,6 +6,8 @@ import {
   Building2, DoorOpen, GraduationCap, ClipboardList, Calendar, FileText, BookMarked
 } from 'lucide-react';
 import img_fpt from '../../../assets/img_fpt.svg';
+import { useDispatch } from 'react-redux';
+import { logout } from '../../../redux/authSlice';
 
 interface MenuItem {
   id: string;
@@ -31,6 +33,7 @@ interface SidebarProps {
 function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
 
   const toggleSubMenu = (menuId: string) => {
@@ -213,18 +216,12 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
 
         {/* Sidebar Footer */}
         <div className="border-t border-gray-100 p-3 bg-white">
-          <button
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-all mb-1 ${!isOpen && !isMobile ? 'justify-center' : ''}`}
-            title={!isOpen && !isMobile ? 'Profile' : ''}
-          >
-            <User className="w-5 h-5 flex-shrink-0" />
-            {(isOpen || isMobile) && <span className="text-sm font-medium">Profile</span>}
-          </button>
+
           <button
             className={`w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-all ${!isOpen && !isMobile ? 'justify-center' : ''}`}
             title={!isOpen && !isMobile ? 'Logout' : ''}
             onClick={() => {
-              localStorage.removeItem('user');
+              dispatch(logout());
               navigate('/sign-in');
             }}
           >

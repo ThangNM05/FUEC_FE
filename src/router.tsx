@@ -46,6 +46,7 @@ import AssignmentSubmission from './pages/student/assignment-submission';
 import TeacherAssignmentReview from './pages/teacher/assignment-review';
 import TeacherCourseDetails from './pages/teacher/course-details';
 import AssignmentSubmissionsList from './pages/teacher/assignment-submissions';
+import ProfilePage from './pages/common/ProfilePage';
 
 function Router() {
   return (
@@ -83,7 +84,7 @@ function Router() {
         <Route path="/student/exams" element={<StudentExamsPage />} />
         <Route path="/student/grades" element={<StudentGrades />} />
         <Route path="/student/schedule" element={<StudentSchedule />} />
-        <Route path="/student/profile" element={<StudentProfile />} />
+        <Route path="/student/profile" element={<ProfilePage />} />
         <Route path="/student/messages" element={<StudentMessages />} />
         <Route path="/student/course-details/questions/:id" element={<QuestionDetail />} />
         <Route path="/student/assignment-submission/:id" element={<AssignmentSubmission />} />
@@ -99,6 +100,7 @@ function Router() {
         <Route path="/teacher/assignment/:assignmentId/submissions" element={<AssignmentSubmissionsList />} />
         <Route path="/teacher/assignment-review/:submissionId" element={<TeacherAssignmentReview />} />
         <Route path="/teacher/reports" element={<TeacherReports />} />
+        <Route path="/teacher/profile" element={<ProfilePage />} />
       </Route>
 
       <Route path="/sign-in" element={<SignInPage />} />

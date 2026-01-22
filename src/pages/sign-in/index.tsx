@@ -2,7 +2,7 @@ import './sign-in.css';
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google'; // Import GoogleLogin component
 import { toast } from 'sonner';
 
 import { useDispatch } from 'react-redux';
@@ -22,67 +22,61 @@ function SignInPage() {
 
   const [googleLoginApi, { isLoading: isApiLoading }] = useGoogleLoginMutation();
 
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setIsLoading(true);
-      try {
-        console.log('Google Auth Response:', tokenResponse);
-        // Using access_token as idToken for now
-        const result = await googleLoginApi({ idToken: tokenResponse.access_token }).unwrap();
-
-        dispatch(setCredentials({ user: result.user, token: result.token }));
-
-        toast.success(`Welcome back, ${result.user.fullName}!`);
-
-        // Redirect based on role
-        if (result.user.role === 'Admin') {
-          navigate('/admin', { replace: true });
-        } else if (result.user.role === 'Teacher') {
-          navigate('/teacher', { replace: true });
-        } else {
-          // Default to student or other roles
-          navigate('/student', { replace: true });
-        }
-      } catch (err: any) {
-        console.error('Login error:', err);
-
-        // Try to get user email from Google if backend login fails
-        try {
-          const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-          });
-
-          if (userInfoResponse.ok) {
-            const userInfo = await userInfoResponse.json();
-            if (userInfo.email) {
-              setFailedEmail(userInfo.email);
-            } else {
-              setFailedEmail('your account');
-            }
-          } else {
-            setFailedEmail('your account');
-          }
-        } catch (fetchErr) {
-          console.error('Failed to fetch user info from Google:', fetchErr);
-          setFailedEmail('your account');
-        }
-
-        setLoginError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    onError: (errorResponse) => {
-      console.error('Google Login Failed:', errorResponse);
-      setFailedEmail('your account');
-      setLoginError(true);
-      setIsLoading(false);
-    },
-  });
-
   const handleRetry = () => {
     setLoginError(false);
     setFailedEmail('');
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setIsLoading(true);
+    try {
+      if (!credentialResponse.credential) throw new Error("No credential received");
+
+      // Send ID Token to backend
+      const result = await googleLoginApi({ idToken: credentialResponse.credential }).unwrap();
+
+      dispatch(setCredentials({ user: result.user, token: result.accessToken }));
+
+      toast.success(`Welcome back, ${result.user.fullName}!`);
+
+      toast.success(`Welcome back, ${result.user.fullName}!`);
+
+      // Redirect based on role
+
+      // Redirect based on role
+      if (result.user.role === 'Admin') {
+        navigate('/admin', { replace: true });
+      } else if (result.user.role === 'Teacher') {
+        navigate('/teacher', { replace: true });
+      } else {
+        // Default to student or other roles
+        navigate('/student', { replace: true });
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+
+      // Decode token to get email for error message if possible
+      try {
+        if (credentialResponse.credential) {
+          const payload = JSON.parse(atob(credentialResponse.credential.split('.')[1]));
+          if (payload.email) setFailedEmail(payload.email);
+          else setFailedEmail('your account');
+        }
+      } catch (e) {
+        setFailedEmail('your account');
+      }
+
+      setLoginError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    console.error('Google Login Failed');
+    setFailedEmail('your account');
+    setLoginError(true);
+    setIsLoading(false);
   };
 
   return (
@@ -124,13 +118,28 @@ function SignInPage() {
               <p className="login-subtitle">Sign in to access your learning portal</p>
 
               <div className="login-form-new">
-                {/* Google Sign In Button */}
-                <div className="social-buttons" style={{ marginTop: 0 }}>
+                {/* Google Sign In Wrapper */}
+                <div className="social-buttons" style={{ marginTop: 0, position: 'relative' }}>
+                  {/* The actual working Google Button (Invisible overlay) */}
+                  <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.01, overflow: 'hidden', zIndex: 10 }}>
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      type="standard"
+                      theme="filled_blue"
+                      size="large"
+                      text="signin_with"
+                      shape="rectangular"
+                      width="350" // ensure it covers the underlying button
+                    />
+                  </div>
+
+                  {/* The Custom UI Button (Visual only) */}
                   <button
                     type="button"
                     className="btn-social btn-social-full"
-                    onClick={() => login()}
                     disabled={isLoading || isApiLoading}
+                    style={{ pointerEvents: 'none' }} // Let clicks pass through to the overlay? No, overlay is on top.
                   >
                     <svg className="social-icon" viewBox="0 0 24 24" width="20" height="20">
                       <path
@@ -157,7 +166,7 @@ function SignInPage() {
 
               {/* Footer */}
               <p className="login-footer-text">
-                © 2025 FUEC - FPT University. All rights reserved.
+                © 2026 FUEC - FPT University. All rights reserved.
               </p>
             </>
           )}

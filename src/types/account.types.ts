@@ -19,6 +19,7 @@ export interface Account {
     email: string;
     phoneNumber?: string;
     fullName: string;
+    studentCode?: string;
     gender?: Gender;
     role: Role;
     isActive: boolean;
