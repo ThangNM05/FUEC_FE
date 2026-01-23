@@ -61,7 +61,7 @@ function AdminStudents() {
   useEffect(() => {
     if (error) {
 
-      toast.error('Failed to fetch students');
+      toast.error('Failed to load students data');
     }
   }, [error]);
 

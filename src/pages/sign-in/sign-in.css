@@ -615,8 +615,8 @@
 
 .error-message {
   font-size: 15px;
-  color: #DC2626;
-  /* Red color for error msg */
+  color: #0A1B3C;
+  /* Dark blue color for error msg */
   font-weight: 600;
   margin-bottom: 8px;
   line-height: 1.5;
