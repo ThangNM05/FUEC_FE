@@ -121,7 +121,7 @@ function StudentSchedule() {
   };
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 animate-fadeIn">
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <div className="flex items-center justify-between mb-2">

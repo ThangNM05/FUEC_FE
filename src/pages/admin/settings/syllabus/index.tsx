@@ -52,7 +52,7 @@ function AdminSyllabuses() {
     // Handle API Error with Toast
     if (error) {
         console.error('Error fetching syllabuses:', error);
-        toast.error('Failed to fetch syllabuses. Please check connection.');
+        toast.error('Failed to load syllabuses data. Please check connection.');
     }
 
     // Handle Sort Change

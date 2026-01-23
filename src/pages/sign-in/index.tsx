@@ -37,8 +37,8 @@ function SignInPage() {
         // Redirect based on role
         if (result.user.role === 'Admin') {
           navigate('/admin', { replace: true });
-        } else if (result.user.role === 'Teacher') {
-          navigate('/teacher', { replace: true });
+        } else if (result.user.role === 'Instructor') {
+          navigate('/instructor', { replace: true });
         } else {
           // Default to student or other roles
           navigate('/student', { replace: true });
@@ -63,7 +63,7 @@ function SignInPage() {
             setFailedEmail('your account');
           }
         } catch (fetchErr) {
-          console.error('Failed to fetch user info from Google:', fetchErr);
+          console.error('Failed to load user info from Google:', fetchErr);
           setFailedEmail('your account');
         }
 
@@ -157,7 +157,7 @@ function SignInPage() {
 
               {/* Footer */}
               <p className="login-footer-text">
-                © 2025 FUEC - FPT University. All rights reserved.
+                © 2026 FUEC - FPT University. All rights reserved.
               </p>
             </>
           )}
