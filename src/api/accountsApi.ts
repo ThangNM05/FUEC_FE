@@ -66,6 +66,7 @@ export const accountsApi = baseApi.injectEndpoints({
         // GET: Fetch account by ID
         getAccountById: builder.query<Account, string>({
             query: (id) => `/accounts/${id}`,
+            transformResponse: (response: any) => response.result || response,
             providesTags: (_result, _error, id) => [{ type: 'Accounts', id }],
         }),
 

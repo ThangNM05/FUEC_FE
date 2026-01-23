@@ -18,8 +18,8 @@ export const subjectsApi = baseApi.injectEndpoints({
             searchTerm?: string;
         }>({
             query: ({ page, pageSize, sortColumn, sortDirection, searchTerm }) => {
-                // Backend uses 1-based indexing
-                let url = `/Subjects?PageNumber=${page}&PageSize=${pageSize}`;
+                // Backend uses 0-based indexing for Subjects
+                let url = `/Subjects?PageNumber=${page - 1}&PageSize=${pageSize}`;
                 if (sortColumn) {
                     const sortOrder = sortDirection === 'desc' ? 2 : 1;
                     url += `&SortBy=${sortColumn}&SortOrder=${sortOrder}`;
@@ -30,6 +30,7 @@ export const subjectsApi = baseApi.injectEndpoints({
                 return url;
             },
             transformResponse: (response: any) => {
+                console.log('Subjects API Response:', response);
                 if (response?.result?.items && Array.isArray(response.result.items)) {
                     return {
                         items: response.result.items,

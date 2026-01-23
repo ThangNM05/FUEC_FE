@@ -5,7 +5,7 @@ export interface GoogleLoginRequest {
 }
 
 export interface GoogleLoginResponse {
-    token: string;
+    accessToken: string;
     user: {
         id: string;
         email: string;
