@@ -134,7 +134,7 @@ function CourseDetails() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative p-4 md:p-6">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative p-4 md:p-6 animate-fadeIn">
       {/* Main Content - Left Side */}
       <div className="flex-1 min-w-0">
         {/* Course Header */}

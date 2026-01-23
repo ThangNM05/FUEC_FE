@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'; // Assuming this exists or I'll u
 import { Label } from '@/components/ui/label';   // Assuming this exists
 
 import { useUpdateStudentMutation } from '@/api/studentsApi';
+import { useUpdateAccountMutation } from '@/api/accountsApi';
 import type { Student, UpdateStudentRequest } from '@/types/student.types';
 
 interface EditStudentModalProps {
@@ -24,16 +25,19 @@ interface EditStudentModalProps {
 
 export default function EditStudentModal({ student, isOpen, onClose }: EditStudentModalProps) {
     const [formData, setFormData] = useState({
-        studentName: '',
+        fullName: '',
         cardId: '',
     });
 
-    const [updateStudent, { isLoading }] = useUpdateStudentMutation();
+    const [updateStudent, { isLoading: isUpdatingStudent }] = useUpdateStudentMutation();
+    const [updateAccount, { isLoading: isUpdatingAccount }] = useUpdateAccountMutation();
+
+    const isLoading = isUpdatingStudent || isUpdatingAccount;
 
     useEffect(() => {
         if (student) {
             setFormData({
-                studentName: student.accountFullName || student.studentName || '',
+                fullName: student.accountFullName || student.studentName || '',
                 cardId: student.cardId || '',
             });
         }
@@ -48,15 +52,25 @@ export default function EditStudentModal({ student, isOpen, onClose }: EditStude
         e.preventDefault();
         if (!student) return;
 
-        if (!formData.studentName.trim()) {
+        if (!formData.fullName.trim()) {
             toast.error('Student name cannot be empty');
             return;
         }
 
         try {
+            // Update Account Name
+            if (student.userId) {
+                await updateAccount({
+                    id: student.userId,
+                    fullName: formData.fullName,
+                    role: 2 // Student Role
+                }).unwrap();
+            }
+
+            // Update Student Details
             const updatePayload: UpdateStudentRequest = {
                 id: student.id,
-                studentName: formData.studentName,
+                fullName: formData.fullName, // Still sending to student in case backend needs it or for consistency
                 cardId: formData.cardId,
                 // Preserve other fields if needed, or API handles partial updates
                 // For now, only sending what's editable as per user request
@@ -64,7 +78,7 @@ export default function EditStudentModal({ student, isOpen, onClose }: EditStude
 
             await updateStudent(updatePayload).unwrap();
 
-            toast.success(`Updated student "${formData.studentName}" successfully!`);
+            toast.success(`Updated student "${formData.fullName}" successfully!`);
             onClose();
         } catch (err: any) {
             let errorMessage = err?.data?.message || err?.message;
@@ -83,13 +97,13 @@ export default function EditStudentModal({ student, isOpen, onClose }: EditStude
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="studentName" className="text-right">
+                        <Label htmlFor="fullName" className="text-right">
                             Name
                         </Label>
                         <Input
-                            id="studentName"
-                            name="studentName"
-                            value={formData.studentName}
+                            id="fullName"
+                            name="fullName"
+                            value={formData.fullName}
                             onChange={handleChange}
                             className="col-span-3"
                             disabled={isLoading}

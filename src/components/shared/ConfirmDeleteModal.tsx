@@ -9,6 +9,8 @@ interface ConfirmDeleteModalProps {
     title?: string;
     message?: string;
     itemName?: string;
+    confirmButtonLabel?: string;
+    confirmButtonVariant?: 'danger' | 'success';
 }
 
 function ConfirmDeleteModal({
@@ -17,7 +19,9 @@ function ConfirmDeleteModal({
     onConfirm,
     title = 'Are you sure you want to delete this item?',
     message = 'This action cannot be undone. This will permanently delete the item from the system.',
-    itemName
+    itemName,
+    confirmButtonLabel = 'Delete',
+    confirmButtonVariant = 'danger'
 }: ConfirmDeleteModalProps) {
     if (!isOpen) return null;
 
@@ -75,9 +79,12 @@ function ConfirmDeleteModal({
                     </button>
                     <button
                         onClick={handleConfirm}
-                        className="flex-1 px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors text-sm font-medium"
+                        className={`flex-1 px-4 py-2 text-white rounded-lg transition-colors text-sm font-medium ${confirmButtonVariant === 'danger'
+                            ? 'bg-red-400 hover:bg-red-500'
+                            : 'bg-green-500 hover:bg-green-600'
+                            }`}
                     >
-                        Delete
+                        {confirmButtonLabel}
                     </button>
                 </div>
             </div>

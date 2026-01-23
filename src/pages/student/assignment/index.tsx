@@ -33,11 +33,11 @@ function AssignmentDetails() {
   };
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 animate-fadeIn">
       {/* Header */}
       <div className="mb-6">
-        <button 
-          onClick={() => navigate('/student/course-details')} 
+        <button
+          onClick={() => navigate('/student/course-details')}
           className="flex items-center gap-2 text-gray-600 hover:text-[#0A1B3C] mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -82,7 +82,7 @@ function AssignmentDetails() {
           {/* Submission */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
             <h2 className="text-lg font-bold text-[#0A1B3C] mb-4">Your Submission</h2>
-            
+
             {!assignment.submitted ? (
               <>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4">
@@ -93,7 +93,7 @@ function AssignmentDetails() {
                         <p className="font-medium text-[#0A1B3C]">{selectedFile.name}</p>
                         <p className="text-sm text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => setSelectedFile(null)}
                         className="p-1 hover:bg-gray-200 rounded"
                       >
@@ -112,12 +112,11 @@ function AssignmentDetails() {
                     </>
                   )}
                 </div>
-                <button 
-                  className={`w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${
-                    selectedFile 
-                      ? 'bg-[#F37022] text-white hover:bg-[#D96419]' 
+                <button
+                  className={`w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${selectedFile
+                      ? 'bg-[#F37022] text-white hover:bg-[#D96419]'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
+                    }`}
                   onClick={handleSubmit}
                   disabled={!selectedFile}
                 >

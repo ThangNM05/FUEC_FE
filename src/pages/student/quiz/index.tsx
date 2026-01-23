@@ -125,9 +125,8 @@ function QuizTest() {
     return (
       <div className="p-4 md:p-6 max-w-2xl mx-auto">
         <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-          <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 ${
-            score >= 70 ? 'bg-green-100' : 'bg-red-100'
-          }`}>
+          <div className={`w-24 h-24 mx-auto rounded-full flex items-center justify-center mb-6 ${score >= 70 ? 'bg-green-100' : 'bg-red-100'
+            }`}>
             <CheckCircle className={`w-12 h-12 ${score >= 70 ? 'text-green-600' : 'text-red-600'}`} />
           </div>
           <h1 className="text-2xl font-bold text-[#0A1B3C] mb-2">Quiz Completed!</h1>
@@ -139,13 +138,13 @@ function QuizTest() {
             You answered {Object.keys(answers).filter(k => answers[parseInt(k)] === questions.find(q => q.id === parseInt(k))?.correct).length} out of {questions.length} questions correctly
           </p>
           <div className="flex gap-3 justify-center">
-            <button 
+            <button
               onClick={() => navigate('/student/course-details')}
               className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200"
             >
               Back to Course
             </button>
-            <button 
+            <button
               onClick={() => navigate('/student/courses')}
               className="px-6 py-3 bg-[#F37022] text-white rounded-lg font-semibold hover:bg-[#D96419]"
             >
@@ -160,16 +159,15 @@ function QuizTest() {
   const currentQ = questions[currentQuestion];
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 animate-fadeIn">
       {/* Timer Header */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-[#0A1B3C]">{quiz.title}</h1>
           <p className="text-sm text-gray-600">{quiz.course}</p>
         </div>
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold ${
-          timeLeft <= 300 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
-        }`}>
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold ${timeLeft <= 300 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'
+          }`}>
           <Clock className="w-5 h-5" />
           {formatTime(timeLeft)}
         </div>
@@ -189,17 +187,15 @@ function QuizTest() {
                 <button
                   key={index}
                   onClick={() => handleAnswer(currentQ.id, index)}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-all ${
-                    answers[currentQ.id] === index
+                  className={`w-full p-4 text-left rounded-lg border-2 transition-all ${answers[currentQ.id] === index
                       ? 'border-orange-500 bg-orange-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
-                  <span className={`inline-block w-8 h-8 rounded-full mr-3 text-center leading-8 ${
-                    answers[currentQ.id] === index
+                  <span className={`inline-block w-8 h-8 rounded-full mr-3 text-center leading-8 ${answers[currentQ.id] === index
                       ? 'bg-[#F37022] text-white'
                       : 'bg-gray-100 text-gray-600'
-                  }`}>
+                    }`}>
                     {String.fromCharCode(65 + index)}
                   </span>
                   {option}
@@ -243,13 +239,12 @@ function QuizTest() {
                 <button
                   key={q.id}
                   onClick={() => setCurrentQuestion(index)}
-                  className={`w-10 h-10 rounded-lg font-medium text-sm ${
-                    currentQuestion === index
+                  className={`w-10 h-10 rounded-lg font-medium text-sm ${currentQuestion === index
                       ? 'bg-[#F37022] text-white'
                       : answers[q.id] !== undefined
-                      ? 'bg-green-100 text-green-700 border border-green-300'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                        ? 'bg-green-100 text-green-700 border border-green-300'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
                 >
                   {index + 1}
                 </button>

@@ -76,40 +76,24 @@ function AdminTeachers() {
     setSearchTerm(term);
   };
 
-  // Handle soft delete (Deactivate teacher)
-  const handleDelete = (item: Teacher) => {
+  // Handle soft delete / toggle status
+  const handleStatusChange = (item: Teacher) => {
     setTeacherToDelete(item);
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmStatusChange = async () => {
     if (!teacherToDelete) return;
 
     try {
       await deleteTeacher(teacherToDelete.id).unwrap();
-      toast.success('Successfully deleted/deactivated!');
+      const action = teacherToDelete.isActive ? 'deactivated' : 'activated';
+      toast.success(`Successfully ${action}!`);
       setTeacherToDelete(null);
       setIsDeleteModalOpen(false);
     } catch (err) {
-
-      toast.error('Failed to deactivate! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
-    }
-  };
-
-  const handleActivate = async (item: Teacher) => {
-    if (!window.confirm(`Are you sure you want to reactivate teacher "${item.accountFullName}"?`)) return;
-
-    try {
-      await updateTeacher({
-        id: item.id,
-        teacherName: item.accountFullName || item.teacherName,
-        departmentId: item.departmentId,
-        isActive: true
-      }).unwrap();
-      toast.success('Successfully reactivated!');
-    } catch (err) {
-
-      toast.error('Activation failed! ' + ((err as any)?.data?.message || (err as any)?.message || ''));
+      const action = teacherToDelete.isActive ? 'deactivate' : 'activate';
+      toast.error(`Failed to ${action}! ` + ((err as any)?.data?.message || (err as any)?.message || ''));
     }
   };
 
@@ -226,7 +210,7 @@ function AdminTeachers() {
           {item.isActive ? (
             <button
               className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-              onClick={() => handleDelete(item)}
+              onClick={() => handleStatusChange(item)}
               disabled={isDeleting}
               title="Deactivate Teacher"
             >
@@ -235,8 +219,8 @@ function AdminTeachers() {
           ) : (
             <button
               className="p-2 hover:bg-green-50 rounded-lg transition-colors"
-              onClick={() => handleActivate(item)}
-              disabled={isUpdating}
+              onClick={() => handleStatusChange(item)}
+              disabled={isDeleting}
               title="Activate Teacher"
             >
               <div className="w-4 h-4 text-green-600 font-bold flex items-center justify-center">
@@ -320,10 +304,12 @@ function AdminTeachers() {
       <ConfirmDeleteModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={confirmDelete}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete/deactivate teacher "${teacherToDelete?.accountFullName}"? This action cannot be undone.`}
+        onConfirm={confirmStatusChange}
+        title={teacherToDelete?.isActive ? "Confirm Deactivation" : "Confirm Activation"}
+        message={`Are you sure you want to ${teacherToDelete?.isActive ? 'deactivate' : 'activate'} teacher "${teacherToDelete?.accountFullName}"?`}
         itemName={teacherToDelete?.accountFullName}
+        confirmButtonLabel={teacherToDelete?.isActive ? "Deactivate" : "Activate"}
+        confirmButtonVariant={teacherToDelete?.isActive ? "danger" : "success"}
       />
 
       <CreateTeacherModal

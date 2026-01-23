@@ -27,7 +27,7 @@ function StudentProfile() {
   };
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 md:mb-8">
         <div>
@@ -37,8 +37,8 @@ function StudentProfile() {
         <button
           onClick={() => isEditing ? handleSave() : setIsEditing(true)}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-semibold ${isEditing
-              ? 'bg-green-500 text-white hover:bg-green-600'
-              : 'bg-[#F37022] text-white hover:bg-[#D96419]'
+            ? 'bg-green-500 text-white hover:bg-green-600'
+            : 'bg-[#F37022] text-white hover:bg-[#D96419]'
             }`}
         >
           {isEditing ? <><Save className="w-4 h-4" /> Save Changes</> : <><Edit2 className="w-4 h-4" /> Edit Profile</>}
