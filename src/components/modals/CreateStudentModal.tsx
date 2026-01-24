@@ -1,17 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Modal, Input, Button } from 'antd';
 
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useCreateStudentMutation } from '@/api/studentsApi';
@@ -58,9 +48,7 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handleSubmit = async () => {
         if (!formData.studentCode.trim()) {
             toast.error('Student code cannot be empty');
             return;
@@ -156,99 +144,104 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                    <DialogTitle>Add New Student</DialogTitle>
-                    <DialogDescription>
-                        Enter student details to create a new account and profile.
-                    </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-6 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="studentCode">
-                                Student Code <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                id="studentCode"
-                                name="studentCode"
-                                value={formData.studentCode}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                                placeholder="Ex: S001"
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="userName">
-                                UserName <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                id="userName"
-                                name="userName"
-                                value={formData.userName}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                                placeholder="Ex: johndoe (No spaces)"
-                            />
-                        </div>
-                    </div>
-
+        <Modal
+            open={isOpen}
+            onCancel={handleClose}
+            title="Add New Student"
+            width={600}
+            footer={[
+                <Button key="cancel" onClick={handleClose} disabled={isLoading}>
+                    Cancel
+                </Button>,
+                <Button
+                    key="submit"
+                    type="primary"
+                    loading={isLoading}
+                    onClick={handleSubmit}
+                >
+                    Create
+                </Button>
+            ]}
+        >
+            <div className="grid gap-6 py-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="studentName">
-                            Student Name <span className="text-red-500">*</span>
+                        <Label htmlFor="studentCode" className="mb-2 block">
+                            Student Code <span className="text-red-500">*</span>
                         </Label>
                         <Input
-                            id="studentName"
-                            name="studentName"
-                            value={formData.studentName}
+                            id="studentCode"
+                            name="studentCode"
+                            value={formData.studentCode}
                             onChange={handleChange}
                             disabled={isLoading}
-                            placeholder="Ex: Jane Doe"
+                            placeholder="Ex: S001"
+                            size="large"
                         />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="email">
-                                Email <span className="text-red-500">*</span>
-                            </Label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                                placeholder="Ex: student@fe.edu.vn"
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="cardId">
-                                Card ID
-                            </Label>
-                            <Input
-                                id="cardId"
-                                name="cardId"
-                                value={formData.cardId}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                                placeholder="Ex: 001099000001"
-                            />
-                        </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="userName" className="mb-2 block">
+                            UserName <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                            id="userName"
+                            name="userName"
+                            value={formData.userName}
+                            onChange={handleChange}
+                            disabled={isLoading}
+                            placeholder="Ex: johndoe (No spaces)"
+                            size="large"
+                        />
                     </div>
+                </div>
 
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white font-medium">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                <div className="grid gap-2">
+                    <Label htmlFor="studentName" className="mb-2 block">
+                        Student Name <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                        id="studentName"
+                        name="studentName"
+                        value={formData.studentName}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        placeholder="Ex: Jane Doe"
+                        size="large"
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="email" className="mb-2 block">
+                            Email <span className="text-red-500">*</span>
+                        </Label>
+                        <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            disabled={isLoading}
+                            placeholder="Ex: student@fe.edu.vn"
+                            size="large"
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="cardId" className="mb-2 block">
+                            Card ID
+                        </Label>
+                        <Input
+                            id="cardId"
+                            name="cardId"
+                            value={formData.cardId}
+                            onChange={handleChange}
+                            disabled={isLoading}
+                            placeholder="Ex: 001099000001"
+                            size="large"
+                        />
+                    </div>
+                </div>
+            </div>
+        </Modal>
     );
 }
