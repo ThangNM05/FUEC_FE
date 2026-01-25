@@ -1,16 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Modal, Input, Button } from 'antd';
 
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useCreateDepartmentMutation, useUpdateDepartmentMutation } from '@/api/departmentsApi';
@@ -55,9 +46,7 @@ export default function EditDepartmentModal({ department, isOpen, onClose }: Edi
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handleSubmit = async () => {
         if (!formData.code.trim()) {
             toast.error('Department code is required');
             return;
@@ -94,65 +83,72 @@ export default function EditDepartmentModal({ department, isOpen, onClose }: Edi
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                    <DialogTitle>{isEditing ? 'Edit Department' : 'Add New Department'}</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-6 py-6">
-                    <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-                        <Label htmlFor="code" className="text-right font-semibold text-gray-700">
-                            Department Code
-                        </Label>
-                        <Input
-                            id="code"
-                            name="code"
-                            value={formData.code}
-                            onChange={handleChange}
-                            className="col-span-1"
-                            disabled={isLoading}
-                            placeholder="e.g. SE, AI, IB..."
-                        />
-                    </div>
-                    <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-                        <Label htmlFor="name" className="text-right font-semibold text-gray-700">
-                            Department Name
-                        </Label>
-                        <Input
-                            id="name"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            className="col-span-1"
-                            disabled={isLoading}
-                            placeholder="e.g. Software Engineering"
-                        />
-                    </div>
-                    <div className="grid grid-cols-[180px_1fr] items-center gap-4">
-                        <Label htmlFor="description" className="text-right font-semibold text-gray-700">
-                            Description
-                        </Label>
-                        <Input
-                            id="description"
-                            name="description"
-                            value={formData.description}
-                            onChange={handleChange}
-                            className="col-span-1"
-                            disabled={isLoading}
-                            placeholder="Brief description of the department"
-                        />
-                    </div>
-                    <DialogFooter className="pt-2">
-                        <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white font-medium">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {isEditing ? 'Save' : 'Create'}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+        <Modal
+            open={isOpen}
+            onCancel={onClose}
+            title={isEditing ? 'Edit Department' : 'Add New Department'}
+            width={600}
+            footer={[
+                <Button key="cancel" onClick={onClose} disabled={isLoading}>
+                    Cancel
+                </Button>,
+                <Button
+                    key="submit"
+                    type="primary"
+                    loading={isLoading}
+                    onClick={handleSubmit}
+                >
+                    {isEditing ? 'Save' : 'Create'}
+                </Button>
+            ]}
+        >
+            <div className="grid gap-6 py-6">
+                <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+                    <Label htmlFor="code" className="text-right font-semibold text-gray-700">
+                        Department Code
+                    </Label>
+                    <Input
+                        id="code"
+                        name="code"
+                        value={formData.code}
+                        onChange={handleChange}
+                        className="col-span-1"
+                        disabled={isLoading}
+                        placeholder="e.g. SE, AI, IB..."
+                        size="large"
+                    />
+                </div>
+                <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+                    <Label htmlFor="name" className="text-right font-semibold text-gray-700">
+                        Department Name
+                    </Label>
+                    <Input
+                        id="name"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="col-span-1"
+                        disabled={isLoading}
+                        placeholder="e.g. Software Engineering"
+                        size="large"
+                    />
+                </div>
+                <div className="grid grid-cols-[180px_1fr] items-center gap-4">
+                    <Label htmlFor="description" className="text-right font-semibold text-gray-700">
+                        Description
+                    </Label>
+                    <Input
+                        id="description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        className="col-span-1"
+                        disabled={isLoading}
+                        placeholder="Brief description of the department"
+                        size="large"
+                    />
+                </div>
+            </div>
+        </Modal>
     );
 }

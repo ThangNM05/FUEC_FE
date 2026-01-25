@@ -1,16 +1,9 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Modal, Input, InputNumber, Button } from 'antd';
+
+const { TextArea } = Input;
+
 import { Label } from '@/components/ui/label';
 
 import { useCreateSubjectMutation } from '@/api/subjectsApi';
@@ -56,19 +49,34 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: name === 'credits' || name === 'terms' || name === 'minAvgMarkToPass'
-                ? parseInt(value) || 0
-                : value
+            [name]: value
         }));
     };
 
+    const handleNumberChange = (name: string, value: number | null) => {
+        setFormData(prev => ({
+            ...prev,
+            [name]: value || 0
+        }));
+    };
 
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handleSubmit = async () => {
         if (!formData.code || !formData.name) {
             toast.error('Code and Name are required');
+            return;
+        }
+
+        // Validate ranges
+        if (formData.credits < 0 || formData.credits > 10) {
+            toast.error('Credits must be between 0 and 10');
+            return;
+        }
+        if (formData.terms < 1 || formData.terms > 9) {
+            toast.error('Terms must be between 1 and 9');
+            return;
+        }
+        if (formData.minAvgMarkToPass < 0 || formData.minAvgMarkToPass > 10) {
+            toast.error('Pass Mark must be between 0 and 10');
             return;
         }
 
@@ -83,119 +91,123 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Create New Subject</DialogTitle>
-                    <DialogDescription>
-                        Add a new subject to the curriculum.
-                    </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="code">Code <span className="text-red-500">*</span></Label>
-                            <Input
-                                id="code"
-                                name="code"
-                                placeholder="e.g. SWE201"
-                                value={formData.code}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
-                            <Input
-                                id="name"
-                                name="name"
-                                placeholder="e.g. Software Engineering"
-                                value={formData.name}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="credits">Credits</Label>
-                            <Input
-                                id="credits"
-                                name="credits"
-                                type="number"
-                                min="0"
-                                value={formData.credits}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="terms">Terms</Label>
-                            <Input
-                                id="terms"
-                                name="terms"
-                                type="number"
-                                min="1"
-                                value={formData.terms}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="minAvgMarkToPass">Pass Mark</Label>
-                            <Input
-                                id="minAvgMarkToPass"
-                                name="minAvgMarkToPass"
-                                type="number"
-                                min="0"
-                                max="10"
-                                step="0.1"
-                                value={formData.minAvgMarkToPass}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                            />
-                        </div>
-                    </div>
-
+        <Modal
+            open={isOpen}
+            onCancel={handleClose}
+            title="Create New Subject"
+            width={600}
+            footer={[
+                <Button key="cancel" onClick={handleClose} disabled={isLoading}>
+                    Cancel
+                </Button>,
+                <Button
+                    key="submit"
+                    type="primary"
+                    loading={isLoading}
+                    onClick={handleSubmit}
+                >
+                    Create Subject
+                </Button>
+            ]}
+        >
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="timeAllocation">Time Allocation</Label>
+                        <Label htmlFor="code">Code <span className="text-red-500">*</span></Label>
                         <Input
-                            id="timeAllocation"
-                            name="timeAllocation"
-                            placeholder="e.g. 45h Theory, 30h Lab"
-                            value={formData.timeAllocation}
+                            id="code"
+                            name="code"
+                            placeholder="e.g. SWE201"
+                            value={formData.code}
                             onChange={handleChange}
                             disabled={isLoading}
+                            size="large"
                         />
                     </div>
-
                     <div className="grid gap-2">
-                        <Label htmlFor="description">Description</Label>
-                        <textarea
-                            id="description"
-                            name="description"
-                            placeholder="Subject description..."
-                            value={formData.description}
+                        <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
+                        <Input
+                            id="name"
+                            name="name"
+                            placeholder="e.g. Software Engineering"
+                            value={formData.name}
                             onChange={handleChange}
                             disabled={isLoading}
-                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            size="large"
                         />
                     </div>
+                </div>
 
+                <div className="grid grid-cols-3 gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="credits">Credits (0-10)</Label>
+                        <InputNumber
+                            id="credits"
+                            value={formData.credits}
+                            onChange={(value) => handleNumberChange('credits', value)}
+                            min={0}
+                            max={10}
+                            disabled={isLoading}
+                            size="large"
+                            className="w-full"
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="terms">Terms (1-9)</Label>
+                        <InputNumber
+                            id="terms"
+                            value={formData.terms}
+                            onChange={(value) => handleNumberChange('terms', value)}
+                            min={1}
+                            max={9}
+                            disabled={isLoading}
+                            size="large"
+                            className="w-full"
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="minAvgMarkToPass">Pass Mark (0-10)</Label>
+                        <InputNumber
+                            id="minAvgMarkToPass"
+                            value={formData.minAvgMarkToPass}
+                            onChange={(value) => handleNumberChange('minAvgMarkToPass', value)}
+                            min={0}
+                            max={10}
+                            step={0.1}
+                            disabled={isLoading}
+                            size="large"
+                            className="w-full"
+                        />
+                    </div>
+                </div>
 
+                <div className="grid gap-2">
+                    <Label htmlFor="timeAllocation">Time Allocation</Label>
+                    <Input
+                        id="timeAllocation"
+                        name="timeAllocation"
+                        placeholder="e.g. 45h Theory, 30h Lab"
+                        value={formData.timeAllocation}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        size="large"
+                    />
+                </div>
 
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Subject
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                <div className="grid gap-2">
+                    <Label htmlFor="description">Description</Label>
+                    <TextArea
+                        id="description"
+                        name="description"
+                        placeholder="Subject description..."
+                        value={formData.description}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        rows={4}
+                        size="large"
+                    />
+                </div>
+            </div>
+        </Modal>
     );
 }

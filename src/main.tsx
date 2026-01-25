@@ -7,6 +7,7 @@ import { BrowserRouter } from 'react-router';
 import { Toaster } from 'sonner';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { ConfigProvider } from 'antd';
 
 import { store } from './redux/store';
 import Router from './router';
@@ -20,12 +21,23 @@ if (!GOOGLE_CLIENT_ID) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <BrowserRouter>
-          <Router />
-        </BrowserRouter>
-        <Toaster richColors position="top-right" />
-      </GoogleOAuthProvider>
+      <ConfigProvider
+        theme={{
+          token: {
+            colorPrimary: '#F37022',
+            colorLink: '#F37022',
+            colorLinkHover: '#d95f19',
+            borderRadius: 8,
+          },
+        }}
+      >
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+          <BrowserRouter>
+            <Router />
+          </BrowserRouter>
+          <Toaster richColors position="top-right" />
+        </GoogleOAuthProvider>
+      </ConfigProvider>
     </Provider>
   </StrictMode>,
 );

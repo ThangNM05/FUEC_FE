@@ -1,17 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Modal, Input, Select, Button } from 'antd';
 
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { useCreateRoomMutation } from '@/api/roomsApi';
@@ -23,11 +13,16 @@ interface CreateRoomModalProps {
 }
 
 export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProps) {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        roomName: string;
+        building?: string;
+        type?: string;
+        status?: string;
+    }>({
         roomName: '',
-        building: Building.Alpha.toString(),
-        type: RoomType.Classroom.toString(),
-        status: RoomStatus.Available.toString()
+        building: undefined,
+        type: undefined,
+        status: undefined
     });
 
     const [createRoom, { isLoading }] = useCreateRoomMutation();
@@ -35,9 +30,9 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
     const resetForm = () => {
         setFormData({
             roomName: '',
-            building: Building.Alpha.toString(),
-            type: RoomType.Classroom.toString(),
-            status: RoomStatus.Available.toString()
+            building: undefined,
+            type: undefined,
+            status: undefined
         });
     };
 
@@ -46,14 +41,16 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
         onClose();
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSelectChange = (name: string, value: string) => {
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
 
+    const handleSubmit = async () => {
         if (!formData.roomName.trim()) {
             toast.error('Room name cannot be empty');
             return;
@@ -62,9 +59,9 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
         try {
             await createRoom({
                 roomName: formData.roomName.trim(),
-                building: parseInt(formData.building),
-                type: parseInt(formData.type),
-                status: parseInt(formData.status)
+                building: parseInt(formData.building || Building.Alpha.toString()),
+                type: parseInt(formData.type || RoomType.Classroom.toString()),
+                status: parseInt(formData.status || RoomStatus.Available.toString())
             }).unwrap();
 
             toast.success(`Room "${formData.roomName}" created successfully!`);
@@ -84,95 +81,84 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                    <DialogTitle>Create New Room</DialogTitle>
-                    <DialogDescription>
-                        Enter room details to create a new classroom.
-                    </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-6 py-4">
+        <Modal
+            open={isOpen}
+            onCancel={handleClose}
+            title="Create New Room"
+            width={500}
+            footer={[
+                <Button key="cancel" onClick={handleClose} disabled={isLoading}>
+                    Cancel
+                </Button>,
+                <Button
+                    key="submit"
+                    type="primary"
+                    loading={isLoading}
+                    onClick={handleSubmit}
+                >
+                    Create
+                </Button>
+            ]}
+        >
+            <div className="grid gap-6 py-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="roomName">
+                        Room Name <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                        id="roomName"
+                        name="roomName"
+                        value={formData.roomName}
+                        onChange={handleChange}
+                        disabled={isLoading}
+                        placeholder="Ex: A-101"
+                        size="large"
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="roomName">
-                            Room Name <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                            id="roomName"
-                            name="roomName"
-                            value={formData.roomName}
-                            onChange={handleChange}
+                        <Label htmlFor="building">Building</Label>
+                        <Select
+                            id="building"
+                            value={formData.building}
+                            onChange={(value) => handleSelectChange('building', value)}
                             disabled={isLoading}
-                            placeholder="Ex: A-101"
+                            size="large"
+                            placeholder="Select building"
+                            options={getOptions(Building)}
                         />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="building">Building</Label>
-                            <select
-                                id="building"
-                                name="building"
-                                value={formData.building}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {getOptions(Building).map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="type">Type</Label>
-                            <select
-                                id="type"
-                                name="type"
-                                value={formData.type}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {getOptions(RoomType).map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label.replace(/([A-Z])/g, ' $1').trim()}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
                     <div className="grid gap-2">
-                        <Label htmlFor="status">Status</Label>
-                        <select
-                            id="status"
-                            name="status"
-                            value={formData.status}
-                            onChange={handleChange}
+                        <Label htmlFor="type">Type</Label>
+                        <Select
+                            id="type"
+                            value={formData.type}
+                            onChange={(value) => handleSelectChange('type', value)}
                             disabled={isLoading}
-                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            {getOptions(RoomStatus).map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </option>
-                            ))}
-                        </select>
+                            size="large"
+                            placeholder="Select room type"
+                            options={getOptions(RoomType).map(opt => ({
+                                ...opt,
+                                label: opt.label.replace(/([A-Z])/g, ' $1').trim()
+                            }))}
+                        />
                     </div>
+                </div>
 
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white font-medium">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                <div className="grid gap-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                        id="status"
+                        value={formData.status}
+                        onChange={(value) => handleSelectChange('status', value)}
+                        disabled={isLoading}
+                        size="large"
+                        placeholder="Select status"
+                        options={getOptions(RoomStatus)}
+                    />
+                </div>
+            </div>
+        </Modal>
     );
 }
