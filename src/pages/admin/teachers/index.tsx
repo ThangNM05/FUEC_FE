@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Edit, Trash2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 
 import DataTable from '@/components/shared/DataTable';
 import ImportResultModal from '@/components/shared/ImportResultModal';
@@ -235,16 +237,14 @@ function AdminTeachers() {
 
   // Loading state
   if (isLoading) {
+    const antIcon = <LoadingOutlined style={{ fontSize: 48, color: '#F37022' }} spin />;
     return (
       <div className="p-4 md:p-6">
         <div className="mb-4 md:mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Teacher Management</h1>
         </div>
         <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F37022] mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading teachers...</p>
-          </div>
+          <Spin indicator={antIcon} tip="Loading teachers..." />
         </div>
       </div>
     );

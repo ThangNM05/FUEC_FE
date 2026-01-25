@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Modal, Input, Select, Button } from 'antd';
 
-import { Label } from '@/components/ui/label';
-
 import { useCreateRoomMutation } from '@/api/roomsApi';
 import { Building, RoomStatus, RoomType } from '@/types/room.types';
 
@@ -73,11 +71,13 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
     };
 
     // Helper to generate options from Enum/Const Objects
-    const getOptions = (obj: any) => {
-        return Object.entries(obj).map(([key, value]) => ({
-            label: key,
-            value: value as string | number
-        }));
+    const getOptions = (obj: any, snakeCase?: boolean) => {
+        return Object.entries(obj)
+            .filter(([key]) => isNaN(Number(key))) // Filter out numeric keys from TS enums
+            .map(([key, value]) => ({
+                label: snakeCase ? key.replace(/([A-Z])/g, ' $1').trim() : key,
+                value: value as string | number
+            }));
     };
 
     return (
@@ -85,7 +85,7 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
             open={isOpen}
             onCancel={handleClose}
             title="Create New Room"
-            width={500}
+            width={800}
             footer={[
                 <Button key="cancel" onClick={handleClose} disabled={isLoading}>
                     Cancel
@@ -95,6 +95,7 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
                     type="primary"
                     loading={isLoading}
                     onClick={handleSubmit}
+                    className="bg-[#F37022] hover:bg-[#d95f19] border-none"
                 >
                     Create
                 </Button>
@@ -102,9 +103,9 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
         >
             <div className="grid gap-6 py-4">
                 <div className="grid gap-2">
-                    <Label htmlFor="roomName">
+                    <span className="block text-sm font-semibold text-gray-700 mb-1">
                         Room Name <span className="text-red-500">*</span>
-                    </Label>
+                    </span>
                     <Input
                         id="roomName"
                         name="roomName"
@@ -117,8 +118,8 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="building">Building</Label>
+                    <div className="grid gap-1">
+                        <span className="block text-sm font-semibold text-gray-700 mb-1">Building</span>
                         <Select
                             id="building"
                             value={formData.building}
@@ -127,10 +128,11 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
                             size="large"
                             placeholder="Select building"
                             options={getOptions(Building)}
+                            className="w-full"
                         />
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="type">Type</Label>
+                    <div className="grid gap-1">
+                        <span className="block text-sm font-semibold text-gray-700 mb-1">Type</span>
                         <Select
                             id="type"
                             value={formData.type}
@@ -138,16 +140,14 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
                             disabled={isLoading}
                             size="large"
                             placeholder="Select room type"
-                            options={getOptions(RoomType).map(opt => ({
-                                ...opt,
-                                label: opt.label.replace(/([A-Z])/g, ' $1').trim()
-                            }))}
+                            options={getOptions(RoomType, true)}
+                            className="w-full"
                         />
                     </div>
                 </div>
 
-                <div className="grid gap-2">
-                    <Label htmlFor="status">Status</Label>
+                <div className="grid gap-1">
+                    <span className="block text-sm font-semibold text-gray-700 mb-1">Status</span>
                     <Select
                         id="status"
                         value={formData.status}
@@ -156,6 +156,7 @@ export default function CreateRoomModal({ isOpen, onClose }: CreateRoomModalProp
                         size="large"
                         placeholder="Select status"
                         options={getOptions(RoomStatus)}
+                        className="w-full"
                     />
                 </div>
             </div>

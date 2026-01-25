@@ -55,6 +55,7 @@ export interface CreateAccountRequest {
 export interface UpdateAccountRequest {
     id: string;
     fullName?: string;
+    email?: string;
     phoneNumber?: string;
     gender?: Gender;
     role?: Role;

@@ -31,6 +31,7 @@ export interface UpdateTeacherRequest {
     id: string;
     fullName: string;
     cardId?: string;
+    email?: string;
     departmentId: string;
     isActive?: boolean;
 }

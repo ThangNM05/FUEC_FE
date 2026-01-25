@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { ChevronRight, Calendar, Clock, Send, CheckCircle, History, FileText } from 'lucide-react';
+import { Button as AntButton } from 'antd';
 import FileUploader from '@/components/FileUploader';
 import FileTreeView from '@/components/FileTreeView';
 
@@ -231,23 +232,16 @@ File Requirements:
                             </div>
                         )}
                         <div className="flex-1"></div>
-                        <button
+                        <AntButton
+                            type="primary"
                             onClick={handleSubmit}
-                            disabled={isSubmitting || uploadedFiles.length === 0}
-                            className="flex items-center gap-2 px-6 py-3 bg-[#F37022] text-white font-semibold rounded-lg hover:bg-[#D96419] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover-lift"
+                            loading={isSubmitting}
+                            disabled={uploadedFiles.length === 0}
+                            className="flex items-center gap-2 h-12 px-6 bg-[#F37022] hover:bg-[#D96419] border-none text-white font-semibold rounded-lg transition-all hover-lift"
+                            icon={!isSubmitting && <Send className="w-5 h-5" />}
                         >
-                            {isSubmitting ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Submitting...
-                                </>
-                            ) : (
-                                <>
-                                    <Send className="w-5 h-5" />
-                                    Submit Assignment
-                                </>
-                            )}
-                        </button>
+                            {isSubmitting ? 'Submitting...' : 'Submit Assignment'}
+                        </AntButton>
                     </div>
                 </div>
 

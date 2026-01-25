@@ -15,6 +15,7 @@ import {
     FileText,
     Lock
 } from 'lucide-react';
+import { Button as AntButton } from 'antd';
 
 interface AIFeedback {
     analysis: string;
@@ -308,25 +309,17 @@ function QuestionDetail() {
                             className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:border-[#F37022] focus:ring-2 focus:ring-orange-100 outline-none resize-none transition-all"
                             rows={6}
                         />
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-500">{answer.length} characters</span>
-                            <button
+                        <div className="flex items-center justify-end">
+                            <AntButton
+                                type="primary"
                                 onClick={handleSubmitAnswer}
-                                disabled={!answer.trim() || isSubmitting}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-[#F37022] text-white font-semibold rounded-lg hover:bg-[#D96419] disabled:opacity-50 disabled:cursor-not-allowed transition-all hover-lift"
+                                loading={isSubmitting}
+                                disabled={!answer.trim()}
+                                className="flex items-center gap-2 h-10 px-6 bg-[#F37022] hover:bg-[#D96419] border-none text-white font-semibold rounded-lg transition-all hover-lift"
+                                icon={!isSubmitting && <Send className="w-4 h-4" />}
                             >
-                                {isSubmitting ? (
-                                    <>
-                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Processing...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Send className="w-4 h-4" />
-                                        Submit Answer
-                                    </>
-                                )}
-                            </button>
+                                {isSubmitting ? 'Processing...' : 'Submit Answer'}
+                            </AntButton>
                         </div>
                     </div>
 

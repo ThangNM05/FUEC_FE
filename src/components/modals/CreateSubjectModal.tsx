@@ -4,7 +4,6 @@ import { Modal, Input, InputNumber, Button } from 'antd';
 
 const { TextArea } = Input;
 
-import { Label } from '@/components/ui/label';
 
 import { useCreateSubjectMutation } from '@/api/subjectsApi';
 
@@ -95,7 +94,7 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
             open={isOpen}
             onCancel={handleClose}
             title="Create New Subject"
-            width={600}
+            width={800}
             footer={[
                 <Button key="cancel" onClick={handleClose} disabled={isLoading}>
                     Cancel
@@ -105,6 +104,7 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
                     type="primary"
                     loading={isLoading}
                     onClick={handleSubmit}
+                    className="bg-[#F37022] hover:bg-[#d95f19] border-none"
                 >
                     Create Subject
                 </Button>
@@ -113,7 +113,7 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
             <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="code">Code <span className="text-red-500">*</span></Label>
+                        <span className="block text-sm font-semibold text-gray-700">Code <span className="text-red-500">*</span></span>
                         <Input
                             id="code"
                             name="code"
@@ -125,7 +125,7 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
+                        <span className="block text-sm font-semibold text-gray-700">Name <span className="text-red-500">*</span></span>
                         <Input
                             id="name"
                             name="name"
@@ -139,8 +139,8 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="credits">Credits (0-10)</Label>
+                    <div className="grid gap-1">
+                        <span className="block text-sm font-semibold text-gray-700">Credits (0-10)</span>
                         <InputNumber
                             id="credits"
                             value={formData.credits}
@@ -152,8 +152,8 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
                             className="w-full"
                         />
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="terms">Terms (1-9)</Label>
+                    <div className="grid gap-1">
+                        <span className="block text-sm font-semibold text-gray-700">Terms (1-9)</span>
                         <InputNumber
                             id="terms"
                             value={formData.terms}
@@ -165,8 +165,8 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
                             className="w-full"
                         />
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="minAvgMarkToPass">Pass Mark (0-10)</Label>
+                    <div className="grid gap-1">
+                        <span className="block text-sm font-semibold text-gray-700">Pass Mark (0-10)</span>
                         <InputNumber
                             id="minAvgMarkToPass"
                             value={formData.minAvgMarkToPass}
@@ -181,8 +181,8 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
                     </div>
                 </div>
 
-                <div className="grid gap-2">
-                    <Label htmlFor="timeAllocation">Time Allocation</Label>
+                <div className="grid gap-1">
+                    <span className="block text-sm font-semibold text-gray-700">Time Allocation</span>
                     <Input
                         id="timeAllocation"
                         name="timeAllocation"
@@ -194,8 +194,8 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
                     />
                 </div>
 
-                <div className="grid gap-2">
-                    <Label htmlFor="description">Description</Label>
+                <div className="grid gap-1">
+                    <span className="block text-sm font-semibold text-gray-700">Description</span>
                     <TextArea
                         id="description"
                         name="description"

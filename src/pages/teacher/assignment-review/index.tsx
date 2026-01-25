@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { ChevronRight, ChevronLeft, Save, CheckCircle, XCircle, User, Calendar, Download } from 'lucide-react';
+import { Button as AntButton } from 'antd';
 import FileTreeView from '@/components/FileTreeView';
 import FilePreview from '@/components/FilePreview';
 
@@ -236,23 +237,16 @@ function TeacherAssignmentReview() {
                         </div>
 
                         {/* Save Button */}
-                        <button
+                        <AntButton
+                            type="primary"
                             onClick={handleSaveGrade}
-                            disabled={isSaving || score === undefined}
-                            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#F37022] text-white font-semibold rounded-lg hover:bg-[#D96419] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            loading={isSaving}
+                            disabled={score === undefined}
+                            className="w-full h-12 flex items-center justify-center gap-2 bg-[#F37022] hover:bg-[#D96419] border-none text-white font-semibold rounded-lg transition-all"
+                            icon={!isSaving && <Save className="w-5 h-5" />}
                         >
-                            {isSaving ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                    Saving...
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="w-5 h-5" />
-                                    Save Grade
-                                </>
-                            )}
-                        </button>
+                            {isSaving ? 'Saving...' : 'Save Grade'}
+                        </AntButton>
                     </div>
                 </div>
             </div>

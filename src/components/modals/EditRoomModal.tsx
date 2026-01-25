@@ -1,21 +1,17 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Modal, Input, Button, Select } from 'antd';
 
 import { useUpdateRoomMutation } from '@/api/roomsApi';
-import { Building, RoomStatus, RoomType, type Room } from '@/types/room.types';
+import {
+    Building,
+    RoomStatus,
+    RoomType,
+    type Room,
+    type BuildingType,
+    type RoomStatusType,
+    type RoomTypeType
+} from '@/types/room.types';
 
 interface EditRoomModalProps {
     isOpen: boolean;
@@ -24,11 +20,16 @@ interface EditRoomModalProps {
 }
 
 export default function EditRoomModal({ isOpen, onClose, room }: EditRoomModalProps) {
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        roomName: string;
+        building: BuildingType;
+        type: RoomTypeType;
+        status: RoomStatusType;
+    }>({
         roomName: '',
-        building: Building.Alpha.toString(),
-        type: RoomType.Classroom.toString(),
-        status: RoomStatus.Available.toString()
+        building: Building.Alpha,
+        type: RoomType.Classroom,
+        status: RoomStatus.Available
     });
 
     const [updateRoom, { isLoading }] = useUpdateRoomMutation();
@@ -37,27 +38,27 @@ export default function EditRoomModal({ isOpen, onClose, room }: EditRoomModalPr
         if (room) {
             setFormData({
                 roomName: room.roomName,
-                building: room.building.toString(),
-                type: room.type.toString(),
-                status: room.status.toString()
+                building: room.building as BuildingType,
+                type: room.type as RoomTypeType,
+                status: room.status as RoomStatusType
             });
         }
-    }, [room]);
+    }, [room, isOpen]);
 
     const handleClose = () => {
         onClose();
-        // Optional: Reset form to room values or keep as is until next open?
-        // Usually better to sync with room on open or useEffect change
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = e.target;
+        setFormData((prev) => ({ ...prev, roomName: value }));
+    };
+
+    const handleSelectChange = (name: string, value: any) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
+    const handleSubmit = async () => {
         if (!room) return;
 
         if (!formData.roomName.trim()) {
@@ -69,9 +70,9 @@ export default function EditRoomModal({ isOpen, onClose, room }: EditRoomModalPr
             await updateRoom({
                 id: room.id,
                 roomName: formData.roomName.trim(),
-                building: parseInt(formData.building),
-                type: parseInt(formData.type),
-                status: parseInt(formData.status)
+                building: formData.building,
+                type: formData.type,
+                status: formData.status
             }).unwrap();
 
             toast.success(`Room updated successfully!`);
@@ -83,102 +84,90 @@ export default function EditRoomModal({ isOpen, onClose, room }: EditRoomModalPr
     };
 
     // Helper to generate options from Enum/Const Objects
-    const getOptions = (obj: any) => {
-        return Object.entries(obj).map(([key, value]) => ({
-            label: key,
-            value: value as string | number
-        }));
+    const getOptions = (obj: any, snakeCase?: boolean) => {
+        return Object.entries(obj)
+            .filter(([key]) => isNaN(Number(key))) // Filter out numeric keys from TS enums
+            .map(([key, value]) => ({
+                label: snakeCase ? key.replace(/([A-Z])/g, ' $1').trim() : key,
+                value: value as string | number
+            }));
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                    <DialogTitle>Edit Room</DialogTitle>
-                    <DialogDescription>
-                        Update details for {room?.roomName}.
-                    </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-6 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="edit-roomName">
-                            Room Name <span className="text-red-500">*</span>
-                        </Label>
-                        <Input
-                            id="edit-roomName"
-                            name="roomName"
-                            value={formData.roomName}
-                            onChange={handleChange}
+        <Modal
+            title="Edit Room"
+            open={isOpen}
+            onCancel={handleClose}
+            width={800}
+            footer={[
+                <Button key="cancel" onClick={handleClose} disabled={isLoading}>
+                    Cancel
+                </Button>,
+                <Button
+                    key="submit"
+                    type="primary"
+                    loading={isLoading}
+                    onClick={handleSubmit}
+                    className="bg-[#F37022] hover:bg-[#d95f19] border-none"
+                >
+                    Save Changes
+                </Button>
+            ]}
+        >
+            <div className="grid gap-6 py-6">
+                <div className="grid gap-2">
+                    <span className="block text-sm font-semibold text-gray-700 mb-1">
+                        Room Name <span className="text-red-500">*</span>
+                    </span>
+                    <Input
+                        id="edit-roomName"
+                        value={formData.roomName}
+                        onChange={handleInputChange}
+                        disabled={isLoading}
+                        size="large"
+                    />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-1">
+                        <span className="block text-sm font-semibold text-gray-700 mb-1">Building</span>
+                        <Select
+                            id="edit-building"
+                            value={formData.building}
+                            onChange={(val) => handleSelectChange('building', val)}
                             disabled={isLoading}
+                            size="large"
+                            className="w-full"
+                            options={getOptions(Building)}
                         />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-building">Building</Label>
-                            <select
-                                id="edit-building"
-                                name="building"
-                                value={formData.building}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {getOptions(Building).map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-type">Type</Label>
-                            <select
-                                id="edit-type"
-                                name="type"
-                                value={formData.type}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                {getOptions(RoomType).map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label.replace(/([A-Z])/g, ' $1').trim()}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="grid gap-2">
-                        <Label htmlFor="edit-status">Status</Label>
-                        <select
-                            id="edit-status"
-                            name="status"
-                            value={formData.status}
-                            onChange={handleChange}
+                    <div className="grid gap-1">
+                        <span className="block text-sm font-semibold text-gray-700 mb-1">Type</span>
+                        <Select
+                            id="edit-type"
+                            value={formData.type}
+                            onChange={(val) => handleSelectChange('type', val)}
                             disabled={isLoading}
-                            className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                            {getOptions(RoomStatus).map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </option>
-                            ))}
-                        </select>
+                            size="large"
+                            className="w-full"
+                            options={getOptions(RoomType, true)}
+                        />
                     </div>
+                </div>
 
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white font-medium">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Changes
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                <div className="grid gap-1">
+                    <span className="block text-sm font-semibold text-gray-700 mb-1">Status</span>
+                    <Select
+                        id="edit-status"
+                        value={formData.status}
+                        onChange={(val) => handleSelectChange('status', val)}
+                        disabled={isLoading}
+                        size="large"
+                        className="w-full"
+                        options={getOptions(RoomStatus)}
+                    />
+                </div>
+            </div>
+        </Modal>
     );
 }

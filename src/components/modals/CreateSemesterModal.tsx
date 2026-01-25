@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 import { Modal, Input, Checkbox, DatePicker, Button } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 
-import { Label } from '@/components/ui/label';
 import { useCreateSemesterMutation } from '@/api/semestersApi';
 import type { CreateSemesterRequest } from '@/types/semester.types';
 
@@ -51,6 +50,14 @@ export default function CreateSemesterModal({ isOpen, onClose }: CreateSemesterM
             return;
         }
 
+        const start = dayjs(formData.startDate);
+        const end = dayjs(formData.endDate);
+
+        if (start.isAfter(end)) {
+            toast.error('Start Date cannot be after End Date');
+            return;
+        }
+
         try {
             await createSemester(formData).unwrap();
             toast.success('Semester created successfully');
@@ -72,7 +79,7 @@ export default function CreateSemesterModal({ isOpen, onClose }: CreateSemesterM
             open={isOpen}
             onCancel={handleCancel}
             title="Create New Semester"
-            width={500}
+            width={800}
             footer={[
                 <Button key="cancel" onClick={handleCancel} disabled={isLoading}>
                     Cancel
@@ -82,78 +89,77 @@ export default function CreateSemesterModal({ isOpen, onClose }: CreateSemesterM
                     type="primary"
                     loading={isLoading}
                     onClick={handleSubmit}
+                    className="bg-[#F37022] hover:bg-[#d95f19] border-none"
                 >
                     Create
                 </Button>
             ]}
         >
-            <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="semesterCode" className="text-right">
+            <div className="grid gap-6 py-6">
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
                         Code
-                    </Label>
+                    </span>
                     <Input
                         id="semesterCode"
                         name="semesterCode"
                         value={formData.semesterCode}
                         onChange={handleChange}
-                        className="col-span-3"
                         placeholder="e.g. FALL26"
                         disabled={isLoading}
                         size="large"
                     />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="startDate" className="text-right">
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
                         Start Date
-                    </Label>
+                    </span>
                     <DatePicker
                         id="startDate"
                         value={formData.startDate ? dayjs(formData.startDate) : null}
                         onChange={(date) => handleDateChange('startDate', date)}
-                        className="col-span-3"
                         disabled={isLoading}
                         size="large"
                         format="YYYY-MM-DD"
                         placeholder="Select start date"
-                        style={{ width: '100%' }}
+                        className="w-full"
+                        disabledDate={(current) => {
+                            if (!formData.endDate) return false;
+                            return current && current.isAfter(dayjs(formData.endDate), 'day');
+                        }}
                     />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="endDate" className="text-right">
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
                         End Date
-                    </Label>
+                    </span>
                     <DatePicker
                         id="endDate"
                         value={formData.endDate ? dayjs(formData.endDate) : null}
                         onChange={(date) => handleDateChange('endDate', date)}
-                        className="col-span-3"
                         disabled={isLoading}
                         size="large"
                         format="YYYY-MM-DD"
                         placeholder="Select end date"
-                        style={{ width: '100%' }}
+                        className="w-full"
                         disabledDate={(current) => {
-                            // Disable dates before start date
                             if (!formData.startDate) return false;
                             return current && current.isBefore(dayjs(formData.startDate), 'day');
                         }}
                     />
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="isDefault" className="text-right">
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
                         Default
-                    </Label>
-                    <div className="col-span-3">
-                        <Checkbox
-                            id="isDefault"
-                            checked={formData.isDefault}
-                            onChange={(e) => handleCheckboxChange(e.target.checked)}
-                            disabled={isLoading}
-                        >
-                            Set as default semester
-                        </Checkbox>
-                    </div>
+                    </span>
+                    <Checkbox
+                        id="isDefault"
+                        checked={formData.isDefault}
+                        onChange={(e) => handleCheckboxChange(e.target.checked)}
+                        disabled={isLoading}
+                    >
+                        Set as default semester
+                    </Checkbox>
                 </div>
             </div>
         </Modal>

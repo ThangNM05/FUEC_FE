@@ -1,16 +1,8 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Modal, Input, Button, Switch, DatePicker } from 'antd';
+import dayjs from 'dayjs';
+
 import { useUpdateSemesterMutation } from '@/api/semestersApi';
 import type { Semester, UpdateSemesterRequest } from '@/types/semester.types';
 
@@ -43,29 +35,34 @@ export default function EditSemesterModal({ semester, isOpen, onClose }: EditSem
                 isActive: semester.isActive,
             });
         }
-    }, [semester]);
+    }, [semester, isOpen]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { checked } = e.target;
-        setFormData((prev) => ({ ...prev, isDefault: checked }));
+    const handleDateChange = (name: 'startDate' | 'endDate', date: dayjs.Dayjs | null) => {
+        setFormData((prev) => ({ ...prev, [name]: date ? date.toISOString() : '' }));
     };
 
-    const handleActiveChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { checked } = e.target;
-        setFormData((prev) => ({ ...prev, isActive: checked }));
+    const handleSwitchChange = (name: 'isDefault' | 'isActive', checked: boolean) => {
+        setFormData((prev) => ({ ...prev, [name]: checked }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async () => {
         if (!semester) return;
 
         if (!formData.semesterCode || !formData.startDate || !formData.endDate) {
             toast.error('Please fill in all required fields');
+            return;
+        }
+
+        const start = dayjs(formData.startDate);
+        const end = dayjs(formData.endDate);
+
+        if (start.isAfter(end)) {
+            toast.error('Start Date cannot be after End Date');
             return;
         }
 
@@ -80,108 +77,90 @@ export default function EditSemesterModal({ semester, isOpen, onClose }: EditSem
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Edit Semester</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="edit-semesterCode" className="text-right">
-                            Code
-                        </Label>
-                        <Input
-                            id="edit-semesterCode"
-                            name="semesterCode"
-                            value={formData.semesterCode}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            placeholder="e.g. FALL26"
+        <Modal
+            title="Edit Semester"
+            open={isOpen}
+            onCancel={onClose}
+            width={800}
+            footer={[
+                <Button key="cancel" onClick={onClose} disabled={isLoading}>
+                    Cancel
+                </Button>,
+                <Button
+                    key="submit"
+                    type="primary"
+                    loading={isLoading}
+                    onClick={handleSubmit}
+                    className="bg-[#F37022] hover:bg-[#d95f19] border-none"
+                >
+                    Save Changes
+                </Button>
+            ]}
+        >
+            <div className="grid gap-6 py-6">
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
+                        Code
+                    </span>
+                    <Input
+                        id="semesterCode"
+                        name="semesterCode"
+                        value={formData.semesterCode}
+                        onChange={handleInputChange}
+                        disabled={isLoading}
+                        placeholder="e.g. FALL26"
+                        size="large"
+                    />
+                </div>
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
+                        Start Date
+                    </span>
+                    <DatePicker
+                        value={formData.startDate ? dayjs(formData.startDate) : null}
+                        onChange={(date) => handleDateChange('startDate', date)}
+                        disabled={isLoading}
+                        size="large"
+                        className="w-full"
+                        format="YYYY-MM-DD"
+                        disabledDate={(current) => {
+                            if (!formData.endDate) return false;
+                            return current && current.isAfter(dayjs(formData.endDate), 'day');
+                        }}
+                    />
+                </div>
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
+                        End Date
+                    </span>
+                    <DatePicker
+                        value={formData.endDate ? dayjs(formData.endDate) : null}
+                        onChange={(date) => handleDateChange('endDate', date)}
+                        disabled={isLoading}
+                        size="large"
+                        className="w-full"
+                        format="YYYY-MM-DD"
+                        disabledDate={(current) => {
+                            if (!formData.startDate) return false;
+                            return current && current.isBefore(dayjs(formData.startDate), 'day');
+                        }}
+                    />
+                </div>
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
+                        Default
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <Switch
+                            id="isDefault"
+                            checked={formData.isDefault}
+                            onChange={(checked) => handleSwitchChange('isDefault', checked)}
                             disabled={isLoading}
                         />
+                        <span className="text-sm text-gray-500">Set as default semester</span>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="edit-startDate" className="text-right">
-                            Start Date
-                        </Label>
-                        <Input
-                            id="edit-startDate"
-                            name="startDate"
-                            type="date"
-                            value={formData.startDate ? formData.startDate.split('T')[0] : ''}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            disabled={isLoading}
-                        />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="edit-endDate" className="text-right">
-                            End Date
-                        </Label>
-                        <Input
-                            id="edit-endDate"
-                            name="endDate"
-                            type="date"
-                            value={formData.endDate ? formData.endDate.split('T')[0] : ''}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            disabled={isLoading}
-                        />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="edit-isDefault" className="text-right">
-                            Default
-                        </Label>
-                        <div className="col-span-3 flex items-center space-x-2">
-                            <input
-                                type="checkbox"
-                                id="edit-isDefault"
-                                checked={formData.isDefault}
-                                onChange={handleCheckboxChange}
-                                disabled={isLoading}
-                                className="h-4 w-4 rounded border-gray-300 text-[#F37022] focus:ring-[#F37022]"
-                            />
-                            <label
-                                htmlFor="edit-isDefault"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                Set as default semester
-                            </label>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="edit-isActive" className="text-right">
-                            Active
-                        </Label>
-                        <div className="col-span-3 flex items-center space-x-2">
-                            <input
-                                type="checkbox"
-                                id="edit-isActive"
-                                checked={formData.isActive}
-                                onChange={handleActiveChange}
-                                disabled={isLoading}
-                                className="h-4 w-4 rounded border-gray-300 text-[#F37022] focus:ring-[#F37022]"
-                            />
-                            <label
-                                htmlFor="edit-isActive"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            >
-                                Is Active
-                            </label>
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Changes
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                </div>
+            </div>
+        </Modal>
     );
 }
