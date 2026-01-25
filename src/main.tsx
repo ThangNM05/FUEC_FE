@@ -14,6 +14,10 @@ import Router from './router';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
+console.log('🔑 Google Client ID:', GOOGLE_CLIENT_ID);
+console.log('🔑 Client ID Length:', GOOGLE_CLIENT_ID?.length);
+console.log('🔑 Client ID First 20 chars:', GOOGLE_CLIENT_ID?.substring(0, 20));
+
 if (!GOOGLE_CLIENT_ID) {
   throw new Error('Missing Google Client ID');
 }
