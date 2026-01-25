@@ -39,10 +39,6 @@ function SignInPage() {
 
       toast.success(`Welcome back, ${result.user.fullName}!`);
 
-      toast.success(`Welcome back, ${result.user.fullName}!`);
-
-      // Redirect based on role
-
       // Redirect based on role
       if (result.user.role === 'Admin') {
         navigate('/admin', { replace: true });
