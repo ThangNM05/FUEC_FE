@@ -4,6 +4,8 @@ import {
     User, LogOut, PanelLeftClose, Menu, MessageSquare
 } from 'lucide-react';
 import img_fpt from '../../../assets/img_fpt.svg';
+import { useDispatch } from 'react-redux';
+import { logout } from '../../../redux/authSlice';
 
 interface MenuItem {
     id: string;
@@ -21,6 +23,7 @@ interface SidebarProps {
 function TeacherSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps) {
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch();
 
     const menuItems: MenuItem[] = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/teacher' },
@@ -147,7 +150,7 @@ function TeacherSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProp
                             }`}
                         title={!isOpen && !isMobile ? 'Logout' : ''}
                         onClick={() => {
-                            localStorage.removeItem('user');
+                            dispatch(logout());
                             navigate('/sign-in');
                         }}
                     >

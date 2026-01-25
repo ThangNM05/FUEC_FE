@@ -1,95 +1,204 @@
+import { useState } from 'react';
 import { Edit, Trash2 } from 'lucide-react';
-import DataTable from '@/components/shared/DataTable';
+import { toast } from 'sonner';
 
-interface Classroom {
-    id: number;
-    name: string;
-    code: string;
-    building: string;
-    capacity: number;
-    type: string;
-    status: string;
-}
+import DataTable from '@/components/shared/DataTable';
+import ImportResultModal from '@/components/shared/ImportResultModal';
+import ImportExcelModal from '@/components/shared/ImportExcelModal';
+import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
+import { validateFileUpload } from '@/config/appConfig';
+
+import {
+    useGetRoomsQuery,
+    useImportRoomsMutation,
+    useDeleteRoomMutation
+} from '@/api/roomsApi';
+import type { ImportRoomsResponse, Room } from '@/types/room.types';
+import CreateRoomModal from '@/components/modals/CreateRoomModal';
+import EditRoomModal from '@/components/modals/EditRoomModal';
+
+// Helper maps for Enums
+const BUILDING_MAP: Record<number, string> = {
+    0: 'Alpha',
+    1: 'Beta',
+    2: 'Gamma'
+};
+
+const ROOM_TYPE_MAP: Record<number, string> = {
+    0: 'Classroom',
+    1: 'Lecture Hall',
+    2: 'Computer Lab',
+    3: 'Laboratory',
+    4: 'Meeting Room'
+};
+
+const ROOM_STATUS_MAP: Record<number, string> = {
+    0: 'Available',
+    1: 'In Use',
+    2: 'Maintenance',
+    3: 'Closed'
+};
 
 function AdminClassrooms() {
-    const classrooms: Classroom[] = [
-        {
-            id: 1,
-            name: 'Room A101',
-            code: 'A101',
-            building: 'Building A',
-            capacity: 50,
-            type: 'Lecture Hall',
-            status: 'Available'
-        },
-        {
-            id: 2,
-            name: 'Lab B203',
-            code: 'B203',
-            building: 'Building B',
-            capacity: 30,
-            type: 'Computer Lab',
-            status: 'In Use'
-        },
-        {
-            id: 3,
-            name: 'Room C305',
-            code: 'C305',
-            building: 'Building C',
-            capacity: 40,
-            type: 'Classroom',
-            status: 'Available'
+    // Modal States
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isImportExcelModalOpen, setIsImportExcelModalOpen] = useState(false);
+
+    // Edit Modal State
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+
+    // Delete Modal State
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+
+    // Import Result State
+    const [importResult, setImportResult] = useState<ImportRoomsResponse | null>(null);
+    const [isImportResultModalOpen, setIsImportResultModalOpen] = useState(false);
+
+    // Pagination State
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [sortColumn, setSortColumn] = useState<string>('');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [searchTerm, setSearchTerm] = useState<string>('');
+
+    // API Query & Mutations
+    const { data: roomsData, isLoading } = useGetRoomsQuery({
+        page,
+        pageSize,
+        sortColumn,
+        sortDirection,
+        searchTerm
+    });
+
+    const [importRooms, { isLoading: isImporting }] = useImportRoomsMutation();
+    const [deleteRoom, { isLoading: isDeleting }] = useDeleteRoomMutation();
+
+    const rooms = roomsData?.items || [];
+    const totalRooms = roomsData?.totalItemCount || 0;
+
+    const handleSortChange = (column: keyof Room, direction: 'asc' | 'desc') => {
+        setSortColumn(column as string);
+        setSortDirection(direction);
+    };
+
+    const handleSearchChange = (term: string) => {
+        setSearchTerm(term);
+    };
+
+    // Edit/Delete Handlers
+    const handleEdit = (room: Room) => {
+        setSelectedRoom(room);
+        setIsEditModalOpen(true);
+    };
+
+    const handleDelete = (room: Room) => {
+        setRoomToDelete(room);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!roomToDelete) return;
+
+        try {
+            await deleteRoom(roomToDelete.id).unwrap();
+            toast.success(`Room "${roomToDelete.roomName}" deleted successfully!`);
+            setRoomToDelete(null);
+            setIsDeleteModalOpen(false);
+        } catch (err: any) {
+            console.error('Delete failed', err);
+            toast.error(err?.data?.message || 'Failed to delete room.');
         }
-    ];
+    };
+
+    // Import Handlers
+    const handleImportClick = () => {
+        setIsImportExcelModalOpen(true);
+    };
+
+    const handleConfirmImport = async (file: File) => {
+        const validation = validateFileUpload(file);
+        if (!validation.isValid) {
+            toast.error(validation.errors.join('\n'));
+            return;
+        }
+
+        toast.info('Processing import...');
+
+        try {
+            const result = await importRooms(file).unwrap();
+            setImportResult(result);
+            setIsImportExcelModalOpen(false);
+            setIsImportResultModalOpen(true);
+            toast.success('Import completed. Please check the results.');
+        } catch (err) {
+            console.error('Import failed', err);
+            toast.error('Import failed! Please check the file or try again later.');
+        }
+    };
 
     const columns = [
-        { header: 'Classroom Name', accessor: 'name' as keyof Classroom, sortable: true, filterable: true },
         {
-            header: 'Code',
-            accessor: 'code' as keyof Classroom,
+            header: 'Room Name',
+            accessor: 'roomName' as keyof Room, // Changed from 'name' to 'roomName'
             sortable: true,
-            filterable: true,
-            render: (item: Classroom) => (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: '#cefafe', color: '#0e7490' }}>
-                    {item.code}
-                </span>
+            filterable: true
+        },
+        {
+            header: 'Building',
+            accessor: 'building' as keyof Room,
+            sortable: true,
+            render: (item: Room) => (
+                <span>{BUILDING_MAP[item.building] || `Building ${item.building}`}</span>
             )
         },
-        { header: 'Building', accessor: 'building' as keyof Classroom, sortable: true, filterable: true },
         {
-            header: 'Capacity',
-            accessor: 'capacity' as keyof Classroom,
+            header: 'Type',
+            accessor: 'type' as keyof Room,
             sortable: true,
             align: 'center' as const,
-            render: (item: Classroom) => (
-                <span className="font-semibold" style={{ color: '#0A1B3C' }}>{item.capacity}</span>
+            render: (item: Room) => (
+                <span>{ROOM_TYPE_MAP[item.type] || `Type ${item.type}`}</span>
             )
         },
-        { header: 'Type', accessor: 'type' as keyof Classroom, sortable: true, align: 'center' as const },
         {
             header: 'Status',
-            accessor: 'status' as keyof Classroom,
+            accessor: 'status' as keyof Room,
             sortable: true,
             align: 'center' as const,
-            render: (item: Classroom) => (
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${item.status === 'Available'
+            render: (item: Room) => {
+                const statusText = ROOM_STATUS_MAP[item.status] || 'Unknown';
+                const colorClass = item.status === 0
                     ? 'bg-green-100 text-green-700'
-                    : 'bg-yellow-100 text-yellow-700'
-                    }`}>
-                    {item.status}
-                </span>
-            )
+                    : item.status === 1 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700';
+
+                return (
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colorClass}`}>
+                        {statusText}
+                    </span>
+                );
+            }
         },
         {
             header: 'Actions',
-            accessor: 'id' as keyof Classroom,
+            accessor: 'id' as keyof Room,
             align: 'center' as const,
-            render: () => (
+            render: (item: Room) => (
                 <div className="flex gap-2 justify-center">
-                    <button className="p-2 hover:bg-blue-50 rounded-lg transition-colors">
+                    <button
+                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                        onClick={() => handleEdit(item)}
+                        title="Edit Room"
+                    >
                         <Edit className="w-4 h-4 text-blue-600" />
                     </button>
-                    <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                    <button
+                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                        onClick={() => handleDelete(item)}
+                        disabled={isDeleting}
+                        title="Delete Room"
+                    >
                         <Trash2 className="w-4 h-4 text-red-600" />
                     </button>
                 </div>
@@ -97,21 +206,84 @@ function AdminClassrooms() {
         }
     ];
 
+    if (isLoading) {
+        return (
+            <div className="p-4 md:p-6">
+                <div className="mb-4 md:mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Classroom Management</h1>
+                </div>
+                <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F37022] mx-auto"></div>
+                        <p className="mt-4 text-gray-600">Loading classrooms...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-4 md:p-6">
             <div className="mb-4 md:mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Classroom Management</h1>
-
+                <p className="text-gray-600 mt-1">Manage all classrooms</p>
             </div>
 
             <DataTable
-                title="All Classrooms"
-                data={classrooms}
+                title={`All Classrooms (${totalRooms})`}
+                data={rooms}
                 columns={columns}
-                onCreate={() => alert('Create Classroom clicked')}
+                onCreate={() => setIsCreateModalOpen(true)}
                 createLabel="Create Classroom"
-                onImport={() => alert('Import Excel clicked')}
+                onImport={handleImportClick}
+                importLabel={isImporting ? 'Importing...' : 'Import Excel'}
                 selectable={true}
+                manualPagination={true}
+                totalItems={totalRooms}
+                page={page}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                onPageSizeChange={setPageSize}
+                onSortChange={handleSortChange as any}
+                onSearchChange={handleSearchChange}
+                searchTerm={searchTerm}
+            />
+
+            {/* Modals */}
+            <CreateRoomModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+            />
+
+            <EditRoomModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                room={selectedRoom}
+            />
+
+            <ConfirmDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Delete Room"
+                message={`Are you sure you want to delete room "${roomToDelete?.roomName}"? This action cannot be undone.`}
+                itemName={roomToDelete?.roomName}
+            />
+
+            <ImportExcelModal
+                isOpen={isImportExcelModalOpen}
+                onClose={() => setIsImportExcelModalOpen(false)}
+                onConfirm={handleConfirmImport}
+                title="Import Rooms"
+                description="Please use the standard template to import room data"
+                templateUrl="/templates/room_import_template.xlsx"
+            />
+
+            <ImportResultModal
+                isOpen={isImportResultModalOpen}
+                onClose={() => setIsImportResultModalOpen(false)}
+                result={importResult}
+                entityName="rooms"
             />
         </div>
     );

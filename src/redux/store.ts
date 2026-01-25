@@ -1,17 +1,19 @@
 import { configureStore } from '@reduxjs/toolkit';
 
-import { pokemonApi } from '../features/booking/service';
-import bookingReducer from '../features/booking/slice';
+import authReducer from './authSlice';
+import { baseApi } from '../api/baseApi';
 
 export const store = configureStore({
   reducer: {
-    booking: bookingReducer,
-    [pokemonApi.reducerPath]: pokemonApi.reducer,
+    auth: authReducer,
+    [baseApi.reducerPath]: baseApi.reducer,
   },
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(pokemonApi.middleware),
+  // Add the RTK Query middleware
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(baseApi.middleware),
 });
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
-// Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
+// Inferred type: {auth: AuthState, api: ApiState}
 export type AppDispatch = typeof store.dispatch;
+
