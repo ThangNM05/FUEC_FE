@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Modal, Input, Button } from 'antd';
 
-import { Label } from '@/components/ui/label';
-
 import { useCreateStudentMutation } from '@/api/studentsApi';
 import { useCreateAccountMutation } from '@/api/accountsApi';
 import type { CreateStudentRequest } from '@/types/student.types';
@@ -148,7 +146,7 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
             open={isOpen}
             onCancel={handleClose}
             title="Add New Student"
-            width={600}
+            width={800}
             footer={[
                 <Button key="cancel" onClick={handleClose} disabled={isLoading}>
                     Cancel
@@ -158,6 +156,7 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
                     type="primary"
                     loading={isLoading}
                     onClick={handleSubmit}
+                    className="bg-[#F37022] hover:bg-[#d95f19] border-none"
                 >
                     Create
                 </Button>
@@ -166,9 +165,9 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
             <div className="grid gap-6 py-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="studentCode" className="mb-2 block">
+                        <span className="mb-2 block text-sm font-semibold text-gray-700">
                             Student Code <span className="text-red-500">*</span>
-                        </Label>
+                        </span>
                         <Input
                             id="studentCode"
                             name="studentCode"
@@ -180,9 +179,9 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="userName" className="mb-2 block">
+                        <span className="mb-2 block text-sm font-semibold text-gray-700">
                             UserName <span className="text-red-500">*</span>
-                        </Label>
+                        </span>
                         <Input
                             id="userName"
                             name="userName"
@@ -196,9 +195,9 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
                 </div>
 
                 <div className="grid gap-2">
-                    <Label htmlFor="studentName" className="mb-2 block">
+                    <span className="mb-2 block text-sm font-semibold text-gray-700">
                         Student Name <span className="text-red-500">*</span>
-                    </Label>
+                    </span>
                     <Input
                         id="studentName"
                         name="studentName"
@@ -212,9 +211,9 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="email" className="mb-2 block">
+                        <span className="mb-2 block text-sm font-semibold text-gray-700">
                             Email <span className="text-red-500">*</span>
-                        </Label>
+                        </span>
                         <Input
                             id="email"
                             name="email"
@@ -227,9 +226,9 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="cardId" className="mb-2 block">
+                        <span className="mb-2 block text-sm font-semibold text-gray-700">
                             Card ID
-                        </Label>
+                        </span>
                         <Input
                             id="cardId"
                             name="cardId"

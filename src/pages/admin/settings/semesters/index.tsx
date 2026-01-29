@@ -1,22 +1,15 @@
 import { useState, useMemo } from 'react';
 import { Edit, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Modal, Button, Spin } from 'antd';
+import { LoadingOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
 import DataTable from '@/components/shared/DataTable';
-import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-
 import { useGetSemestersQuery, useDeleteSemesterMutation } from '@/api/semestersApi';
 import type { Semester } from '@/types/semester.types';
 import CreateSemesterModal from '@/components/modals/CreateSemesterModal';
 import EditSemesterModal from '@/components/modals/EditSemesterModal';
+import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 
 export default function AdminSemesters() {
     // State
@@ -129,27 +122,39 @@ export default function AdminSemesters() {
             accessor: 'id' as keyof Semester,
             align: 'center' as const,
             render: (item: Semester) => (
-                <div className="flex gap-2 justify-center">
+                <div className="flex gap-2 justify-center text-[#F37022]">
                     <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:bg-blue-50 text-blue-600"
+                        type="text"
+                        size="small"
+                        icon={<Edit className="w-4 h-4" />}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                         onClick={() => setEditingSemester(item)}
-                    >
-                        <Edit className="w-4 h-4" />
-                    </Button>
+                    />
                     <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 hover:bg-red-50 text-red-600"
+                        type="text"
+                        size="small"
+                        icon={<Trash2 className="w-4 h-4" />}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         onClick={() => setDeletingId(item.id)}
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
+                    />
                 </div>
             )
         }
     ];
+
+    if (isLoading) {
+        const antIcon = <LoadingOutlined style={{ fontSize: 48, color: '#F37022' }} spin />;
+        return (
+            <div className="p-4 md:p-6">
+                <div className="mb-4 md:mb-6">
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Semester Management</h1>
+                </div>
+                <div className="flex items-center justify-center h-64">
+                    <Spin indicator={antIcon} tip="Loading semesters..." />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 md:p-6 space-y-6">
@@ -201,26 +206,14 @@ export default function AdminSemesters() {
                 />
             )}
 
-            {/* Delete Confirmation */}
-            <Dialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Are you sure?</DialogTitle>
-                        <DialogDescription>
-                            This action cannot be undone. This will permanently delete the semester.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setDeletingId(null)}>Cancel</Button>
-                        <Button
-                            onClick={handleDelete}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                            Delete
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmDeleteModal
+                isOpen={!!deletingId}
+                onClose={() => setDeletingId(null)}
+                onConfirm={handleDelete}
+                title="Delete Semester"
+                message="Are you sure you want to delete this semester? This action cannot be undone."
+                itemName={prioritizedSemesters.find(s => s.id === deletingId)?.semesterCode}
+            />
         </div>
     );
 }

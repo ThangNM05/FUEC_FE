@@ -92,8 +92,8 @@ export const teachersApi = baseApi.injectEndpoints({
 
         // PUT: Update existing teacher
         updateTeacher: builder.mutation<Teacher, UpdateTeacherRequest>({
-            query: ({ id, ...teacher }) => ({
-                url: `/teachers/${id}`,
+            query: (teacher) => ({
+                url: `/teachers/${teacher.id}`,
                 method: 'PUT',
                 body: teacher,
             }),

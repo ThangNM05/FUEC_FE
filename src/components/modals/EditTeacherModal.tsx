@@ -1,21 +1,10 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Modal, Input, Button, Select, Switch } from 'antd';
 
 import { useUpdateTeacherMutation } from '@/api/teachersApi';
 import { useUpdateAccountMutation } from '@/api/accountsApi';
-import { useGetDepartmentsQuery } from '@/api/departmentsApi';
+import { useGetSubMajorsQuery } from '@/api/subMajorsApi';
 import type { Teacher, UpdateTeacherRequest } from '@/types/teacher.types.ts';
 
 interface EditTeacherModalProps {
@@ -27,47 +16,52 @@ interface EditTeacherModalProps {
 export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeacherModalProps) {
     const [formData, setFormData] = useState({
         fullName: '',
+        email: '',
         cardId: '',
-        departmentId: '',
+        subMajorId: '',
         isActive: true,
     });
 
     const [updateTeacher, { isLoading: isUpdatingTeacher }] = useUpdateTeacherMutation();
     const [updateAccount, { isLoading: isUpdatingAccount }] = useUpdateAccountMutation();
 
-    const isLoading = isUpdatingTeacher || isUpdatingAccount || false; // default false for initial render
 
-    const { data: departmentsData, isLoading: isLoadingDepartments } = useGetDepartmentsQuery({
+    const isLoading = isUpdatingTeacher || isUpdatingAccount;
+
+    const { data: subMajorsData, isLoading: isLoadingSubMajors } = useGetSubMajorsQuery({
         page: 1,
         pageSize: 1000,
         sortColumn: 'name',
         sortDirection: 'asc'
     });
-    const departments = departmentsData?.items || [];
+    const subMajors = subMajorsData?.items || [];
 
     useEffect(() => {
         if (teacher) {
             setFormData({
                 fullName: teacher.accountFullName || teacher.teacherName || '',
+                email: teacher.accountEmail || '',
                 cardId: teacher.cardId || '',
-                departmentId: teacher.departmentId || '',
+                subMajorId: teacher.subMajorId || '',
                 isActive: teacher.isActive ?? true,
             });
         }
-    }, [teacher]);
+    }, [teacher, isOpen]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, checked } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: checked }));
+    const handleSelectChange = (value: string) => {
+        setFormData((prev) => ({ ...prev, subMajorId: value }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSwitchChange = (checked: boolean) => {
+        setFormData((prev) => ({ ...prev, isActive: checked }));
+    };
+
+    const handleSubmit = async () => {
         if (!teacher) return;
 
         if (!formData.fullName.trim()) {
@@ -75,26 +69,32 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
             return;
         }
 
-        if (!formData.departmentId) {
-            toast.error('Please select a department');
+        if (!formData.email.trim()) {
+            toast.error('Email cannot be empty');
+            return;
+        }
+
+        if (!formData.subMajorId) {
+            toast.error('Please select a sub-major');
             return;
         }
 
         try {
-            // Update Account Name
+            // Update Account Name and Email
             if (teacher.userId) {
                 await updateAccount({
                     id: teacher.userId,
                     fullName: formData.fullName,
+                    email: formData.email,
                     role: 1 // Teacher Role
                 }).unwrap();
             }
 
             const updatePayload: UpdateTeacherRequest = {
                 id: teacher.id,
-                fullName: formData.fullName, // Keeping for consistency
-                cardId: formData.cardId,
-                departmentId: formData.departmentId,
+                fullName: formData.fullName,
+                email: formData.email,
+                subMajorId: formData.subMajorId,
                 isActive: formData.isActive,
             };
 
@@ -112,72 +112,71 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Edit Teacher</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="fullName" className="text-right">
-                            Name
-                        </Label>
-                        <Input
-                            id="fullName"
-                            name="fullName"
-                            value={formData.fullName}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            disabled={isLoading}
-                        />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="departmentId" className="text-right">
-                            Department
-                        </Label>
-                        <div className="col-span-3">
-                            <select
-                                id="departmentId"
-                                name="departmentId"
-                                value={formData.departmentId}
-                                onChange={handleChange}
-                                disabled={isLoading || isLoadingDepartments}
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <option value="" disabled>Select Department</option>
-                                {departments.map((dept) => (
-                                    <option key={dept.id} value={dept.id}>
-                                        {dept.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="cardId" className="text-right">
-                            Card ID
-                        </Label>
-                        <Input
-                            id="cardId"
-                            name="cardId"
-                            value={formData.cardId}
-                            onChange={handleChange}
-                            className="col-span-3"
-                            disabled={isLoading}
-                            placeholder="Enter Card ID..."
-                        />
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white font-medium">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+        <Modal
+            title="Edit Teacher"
+            open={isOpen}
+            onCancel={onClose}
+            width={800}
+            footer={[
+                <Button key="cancel" onClick={onClose} disabled={isLoading}>
+                    Cancel
+                </Button>,
+                <Button
+                    key="submit"
+                    type="primary"
+                    loading={isLoading}
+                    onClick={handleSubmit}
+                    className="bg-[#F37022] hover:bg-[#d95f19] border-none"
+                >
+                    Save
+                </Button>
+            ]}
+        >
+            <div className="grid gap-6 py-6">
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
+                        Name
+                    </span>
+                    <Input
+                        id="fullName"
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        disabled={isLoading}
+                        size="large"
+                    />
+                </div>
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
+                        Email
+                    </span>
+                    <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        disabled={isLoading}
+                        placeholder="example@fpt.edu.vn"
+                        size="large"
+                    />
+                </div>
+                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
+                    <span className="text-right font-semibold text-gray-700">
+                        Sub-Major
+                    </span>
+                    <Select
+                        id="subMajorId"
+                        value={formData.subMajorId}
+                        onChange={handleSelectChange}
+                        disabled={isLoading || isLoadingSubMajors}
+                        size="large"
+                        placeholder="Select Sub-Major"
+                        className="w-full"
+                        options={subMajors.map(sm => ({ label: `${sm.code} - ${sm.name}`, value: sm.id }))}
+                    />
+                </div>
+            </div>
+        </Modal>
     );
 }

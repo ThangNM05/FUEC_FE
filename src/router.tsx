@@ -12,7 +12,7 @@ import AdminSchedule from './pages/admin/schedule';
 import AdminStudents from './pages/admin/students';
 import AdminTeachers from './pages/admin/teachers';
 // Admin Settings Pages
-import AdminDepartments from './pages/admin/settings/departments';
+
 import AdminClassrooms from './pages/admin/settings/classrooms';
 import AdminSubjects from './pages/admin/settings/subjects';
 import AdminExamTypes from './pages/admin/settings/exam-types';
@@ -47,6 +47,7 @@ import TeacherAssignmentReview from './pages/teacher/assignment-review';
 import TeacherCourseDetails from './pages/teacher/course-details';
 import AssignmentSubmissionsList from './pages/teacher/assignment-submissions';
 import ProfilePage from './pages/common/ProfilePage';
+import AdminMajors from './pages/admin/settings/majors';
 
 function Router() {
   return (
@@ -64,7 +65,8 @@ function Router() {
         <Route path="/admin/database" element={<AdminDatabase />} />
         <Route path="/admin/settings/courses" element={<AdminCourses />} />
         <Route path="/admin/settings/exams" element={<AdminExams />} />
-        <Route path="/admin/settings/departments" element={<AdminDepartments />} />
+        <Route path="/admin/settings/majors" element={<AdminMajors />} />
+
         <Route path="/admin/settings/classrooms" element={<AdminClassrooms />} />
         <Route path="/admin/settings/subjects" element={<AdminSubjects />} />
         <Route path="/admin/settings/exam-types" element={<AdminExamTypes />} />

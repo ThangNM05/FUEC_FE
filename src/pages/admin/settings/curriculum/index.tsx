@@ -5,7 +5,7 @@ interface Curriculum {
     id: number;
     name: string;
     code: string;
-    department: string;
+    major: string;
     version: string;
     totalCredits: number;
     status: string;
@@ -17,7 +17,7 @@ function AdminCurriculum() {
             id: 1,
             name: 'Software Engineering 2024',
             code: 'SE2024',
-            department: 'Software Engineering',
+            major: 'Software Engineering',
             version: 'v2.0',
             totalCredits: 140,
             status: 'Active'
@@ -26,7 +26,7 @@ function AdminCurriculum() {
             id: 2,
             name: 'Computer Science 2024',
             code: 'CS2024',
-            department: 'Computer Science',
+            major: 'Computer Science',
             version: 'v1.5',
             totalCredits: 145,
             status: 'Active'
@@ -35,7 +35,7 @@ function AdminCurriculum() {
             id: 3,
             name: 'Information Systems 2023',
             code: 'IS2023',
-            department: 'Information Systems',
+            major: 'Information Systems',
             version: 'v1.0',
             totalCredits: 135,
             status: 'Archived'
@@ -55,7 +55,7 @@ function AdminCurriculum() {
                 </span>
             )
         },
-        { header: 'Department', accessor: 'department' as keyof Curriculum, sortable: true, filterable: true },
+        { header: 'Major', accessor: 'major' as keyof Curriculum, sortable: true, filterable: true },
         { header: 'Version', accessor: 'version' as keyof Curriculum, sortable: true, align: 'center' as const },
         {
             header: 'Total Credits',

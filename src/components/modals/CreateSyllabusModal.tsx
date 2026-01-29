@@ -7,7 +7,6 @@ const { TextArea } = Input;
 import { useCreateSyllabusMutation } from '@/api/syllabusApi';
 import { useGetSubjectsQuery } from '@/api/subjectsApi';
 import type { Subject } from '@/types/subject.types';
-import { Label } from '@/components/ui/label';
 
 interface CreateSyllabusModalProps {
     isOpen: boolean;
@@ -85,6 +84,11 @@ export default function CreateSyllabusModal({ isOpen, onClose }: CreateSyllabusM
             return;
         }
 
+        if (formData.scoringScale > 10) {
+            toast.error('Scoring Scale cannot exceed 10');
+            return;
+        }
+
         try {
             await createSyllabus({ ...formData, isApproved: false } as any).unwrap();
             toast.success('Syllabus created successfully');
@@ -126,7 +130,7 @@ export default function CreateSyllabusModal({ isOpen, onClose }: CreateSyllabusM
             open={isOpen}
             onCancel={onClose}
             title="Add New Syllabus"
-            width={700}
+            width={1000}
             footer={[
                 <Button key="cancel" onClick={onClose} disabled={isLoading}>
                     Cancel
@@ -136,6 +140,7 @@ export default function CreateSyllabusModal({ isOpen, onClose }: CreateSyllabusM
                     type="primary"
                     loading={isLoading}
                     onClick={handleSubmit}
+                    className="bg-[#F37022] hover:bg-[#d95f19] border-none"
                 >
                     Create Syllabus
                 </Button>
@@ -144,7 +149,7 @@ export default function CreateSyllabusModal({ isOpen, onClose }: CreateSyllabusM
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
                 {/* Subject Search Autocomplete */}
                 <div className="col-span-1 md:col-span-2">
-                    <Label className="mb-2 block">Subject <span className="text-red-500">*</span></Label>
+                    <span className="mb-2 block text-sm font-semibold text-gray-700">Subject <span className="text-red-500">*</span></span>
                     <AutoComplete
                         value={subjectSearch}
                         onChange={handleSearchChange}
@@ -168,7 +173,7 @@ export default function CreateSyllabusModal({ isOpen, onClose }: CreateSyllabusM
 
                 {/* Names */}
                 <div>
-                    <Label className="mb-2 block">Syllabus Name <span className="text-red-500">*</span></Label>
+                    <span className="mb-2 block text-sm font-semibold text-gray-700">Syllabus Name *</span>
                     <Input
                         name="syllabusName"
                         value={formData.syllabusName}
@@ -179,7 +184,7 @@ export default function CreateSyllabusModal({ isOpen, onClose }: CreateSyllabusM
                     />
                 </div>
                 <div>
-                    <Label className="mb-2 block">English Name <span className="text-red-500">*</span></Label>
+                    <span className="mb-2 block text-sm font-semibold text-gray-700">English Name *</span>
                     <Input
                         name="syllabusEnglish"
                         value={formData.syllabusEnglish}
@@ -192,7 +197,7 @@ export default function CreateSyllabusModal({ isOpen, onClose }: CreateSyllabusM
 
                 {/* Student Tasks */}
                 <div className="col-span-1 md:col-span-2">
-                    <Label className="mb-2 block">Student Tasks <span className="text-red-500">*</span></Label>
+                    <span className="mb-2 block text-sm font-semibold text-gray-700">Student Tasks *</span>
                     <TextArea
                         name="studentTasks"
                         value={formData.studentTasks}
@@ -206,7 +211,7 @@ export default function CreateSyllabusModal({ isOpen, onClose }: CreateSyllabusM
 
                 {/* Tools */}
                 <div className="col-span-1 md:col-span-2">
-                    <Label className="mb-2 block">Tools <span className="text-red-500">*</span></Label>
+                    <span className="mb-2 block text-sm font-semibold text-gray-700">Tools *</span>
                     <TextArea
                         name="tools"
                         value={formData.tools}
@@ -220,12 +225,12 @@ export default function CreateSyllabusModal({ isOpen, onClose }: CreateSyllabusM
 
                 {/* Scoring Scale */}
                 <div>
-                    <Label className="mb-2 block">Scoring Scale (1-100)</Label>
+                    <span className="mb-2 block text-sm font-semibold text-gray-700">Scoring Scale (1-10)</span>
                     <InputNumber
                         value={formData.scoringScale}
                         onChange={handleNumberChange}
                         min={1}
-                        max={100}
+                        max={10}
                         size="large"
                         className="w-full"
                     />

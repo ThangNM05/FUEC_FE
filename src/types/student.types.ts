@@ -33,7 +33,7 @@ export interface UpdateStudentRequest {
     fullName: string;
     cardId?: string;
     studentCode?: string;
-    accountEmail?: string;
+    email?: string;
     isActive?: boolean | number;
     phoneNumber?: string;
     classId?: string;

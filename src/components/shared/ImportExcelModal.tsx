@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import type { DragEvent } from 'react';
-import { X, Upload, Download } from 'lucide-react';
+import { Upload, Download } from 'lucide-react';
 import toast from '@/lib/toast';
+import { Modal, Button } from 'antd';
 
 interface ImportExcelModalProps {
     isOpen: boolean;
@@ -94,35 +95,48 @@ function ImportExcelModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0"
-                style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
-                onClick={handleClose}
-            />
-
-            {/* Modal */}
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6">
-                {/* Close button */}
-                <button
-                    onClick={handleClose}
-                    className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                    <X className="w-5 h-5 text-gray-500" />
-                </button>
-
-                {/* Title */}
-                <h2 className="text-xl font-bold text-[#0A1B3C] mb-1">{title}</h2>
-                <p className="text-sm text-gray-600 mb-4">{description}</p>
+        <Modal
+            title={title}
+            open={isOpen}
+            onCancel={handleClose}
+            width={800}
+            footer={[
+                <div key="footer-container" className="flex items-center justify-between w-full">
+                    <Button
+                        key="template"
+                        icon={<Download className="w-4 h-4" />}
+                        onClick={handleDownloadTemplate}
+                        type="link"
+                        className="text-gray-600 hover:text-[#F37022]"
+                    >
+                        Download Template
+                    </Button>
+                    <div className="flex gap-2">
+                        <Button key="cancel" onClick={handleClose}>
+                            Cancel
+                        </Button>
+                        <Button
+                            key="submit"
+                            type="primary"
+                            onClick={handleConfirm}
+                            className="bg-[#F37022] hover:bg-[#D96419] border-none"
+                        >
+                            Confirm Import
+                        </Button>
+                    </div>
+                </div>
+            ]}
+        >
+            <div className="py-4">
+                <p className="text-sm text-gray-500 mb-6">{description}</p>
 
                 {/* Upload Area */}
                 <div
-                    className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${isDragging
-                        ? 'border-[#F37022] bg-orange-50'
+                    className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all duration-200 ${isDragging
+                        ? 'border-[#F37022] bg-orange-50 scale-[1.01]'
                         : selectedFile
                             ? 'border-green-400 bg-green-50'
-                            : 'border-gray-300 hover:border-[#F37022] hover:bg-gray-50'
+                            : 'border-gray-200 hover:border-[#F37022] hover:bg-gray-50'
                         }`}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
@@ -130,31 +144,31 @@ function ImportExcelModal({
                     onClick={handleClick}
                 >
                     {/* Upload Icon */}
-                    <div className="flex justify-center mb-4">
-                        <div className="w-16 h-16 bg-[#F37022] rounded-full flex items-center justify-center">
-                            <Upload className="w-8 h-8 text-white" />
+                    <div className="flex justify-center mb-6">
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center transition-colors ${selectedFile ? 'bg-green-500' : 'bg-[#F37022]'}`}>
+                            <Upload className="w-10 h-10 text-white" />
                         </div>
                     </div>
 
                     {/* Text */}
                     {selectedFile ? (
-                        <>
-                            <p className="text-base font-semibold text-green-700 mb-1">
+                        <div className="space-y-2">
+                            <p className="text-lg font-bold text-green-700">
                                 {selectedFile.name}
                             </p>
                             <p className="text-sm text-gray-500">
-                                Click to select another file
+                                File selected! Click to change.
                             </p>
-                        </>
+                        </div>
                     ) : (
-                        <>
-                            <p className="text-base font-semibold text-[#0A1B3C] mb-1">
-                                Drag & drop or click
+                        <div className="space-y-2">
+                            <p className="text-lg font-bold text-[#0A1B3C]">
+                                Drag & drop or click to upload
                             </p>
                             <p className="text-sm text-gray-500">
-                                to upload data file
+                                Supports .xlsx and .xls files
                             </p>
-                        </>
+                        </div>
                     )}
 
                     {/* Hidden file input */}
@@ -166,36 +180,8 @@ function ImportExcelModal({
                         className="hidden"
                     />
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center mt-6">
-                    {/* Download Template */}
-                    <button
-                        onClick={handleDownloadTemplate}
-                        className="flex items-center gap-2 px-4 py-2 text-gray-700 rounded-lg transition-colors text-sm font-medium -ml-4"
-                    >
-                        <Download className="w-4 h-4" />
-                        Download Template
-                    </button>
-
-                    {/* Cancel & Confirm */}
-                    <div className="flex gap-3 ml-auto">
-                        <button
-                            onClick={handleClose}
-                            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm font-medium"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleConfirm}
-                            className="px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#D96419] transition-colors text-sm font-medium"
-                        >
-                            Confirm
-                        </button>
-                    </div>
-                </div>
             </div>
-        </div>
+        </Modal>
     );
 }
 

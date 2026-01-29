@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FileText, Download, ZoomIn, ZoomOut } from 'lucide-react';
+import { Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 import CodeViewer from './CodeViewer';
 import mammoth from 'mammoth';
 
@@ -65,12 +67,10 @@ function FilePreview({ file, filename }: FilePreviewProps) {
     const fileType = getFileType(filename);
 
     if (loading) {
+        const antIcon = <LoadingOutlined style={{ fontSize: 48, color: '#F37022' }} spin />;
         return (
             <div className="h-full flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                    <div className="w-12 h-12 border-4 border-[#F37022] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading file...</p>
-                </div>
+                <Spin indicator={antIcon} tip="Loading file..." />
             </div>
         );
     }
