@@ -8,7 +8,7 @@ interface ConfirmDeleteModalProps {
     onConfirm: () => void;
     title?: string;
     message?: string;
-    itemName?: string;
+    itemName?: string; // Keep for now to avoid breaking existing callers, but remove from UI
     confirmButtonLabel?: string;
     confirmButtonVariant?: 'danger' | 'success';
 }
@@ -57,17 +57,10 @@ function ConfirmDeleteModal({
                 </h2>
 
                 {/* Message */}
-                <div className="text-center mb-8 px-4">
+                <div className="text-center mb-8">
                     <p className="text-gray-500 text-lg leading-relaxed">
                         {message}
                     </p>
-                    {itemName && (
-                        <div className="mt-4 p-3 bg-red-50 rounded-xl border border-red-100 inline-block mx-auto">
-                            <span className="text-red-600 font-bold text-base">
-                                "{itemName}"
-                            </span>
-                        </div>
-                    )}
                 </div>
 
                 {/* Actions */}

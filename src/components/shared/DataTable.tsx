@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import type { ChangeEvent, MouseEvent, ReactNode } from 'react';
+import { useState, useMemo, Fragment } from 'react';
 import {
   Search, Filter, ChevronLeft, ChevronRight, Download, Plus,
-  ArrowUp, ArrowDown, FileSpreadsheet
+  ArrowUp, ArrowDown, FileSpreadsheet, ChevronDown, ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 
 interface Column<T> {
@@ -10,7 +11,7 @@ interface Column<T> {
   sortable?: boolean;
   filterable?: boolean;
   align?: 'left' | 'center' | 'right';
-  render?: (item: T) => React.ReactNode;
+  render?: (item: T) => ReactNode;
   hideOnMobile?: boolean;
   width?: string;
   className?: string;
@@ -22,10 +23,13 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   onImport?: () => void;
   onDownloadTemplate?: () => void;
-  onCreate?: () => void;
-  createLabel?: string;
   importLabel?: string;
   downloadTemplateLabel?: string;
+  onSecondaryAction?: () => void;
+  secondaryActionLabel?: string;
+  secondaryActionIcon?: ReactNode;
+  onCreate?: () => void;
+  createLabel?: string;
   selectable?: boolean;
   onSelectionChange?: (selectedIds: (string | number)[]) => void;
 
@@ -39,6 +43,8 @@ interface DataTableProps<T> {
   onSortChange?: (column: keyof T, direction: 'asc' | 'desc') => void;
   onSearchChange?: (term: string) => void;
   searchTerm?: string; // Controlled search term for manual pagination
+  onRowClick?: (item: T) => void;
+  renderExpandedRow?: (item: T) => ReactNode;
 }
 
 function DataTable<T extends { id: string | number }>({
@@ -47,10 +53,13 @@ function DataTable<T extends { id: string | number }>({
   columns,
   onImport,
   onDownloadTemplate,
-  onCreate,
-  createLabel = 'Create New',
   importLabel = 'Import Excel',
   downloadTemplateLabel = 'Template',
+  onSecondaryAction,
+  secondaryActionLabel,
+  secondaryActionIcon,
+  onCreate,
+  createLabel = 'Create New',
   selectable = false,
   onSelectionChange,
 
@@ -63,7 +72,9 @@ function DataTable<T extends { id: string | number }>({
   onPageSizeChange,
   onSortChange,
   onSearchChange,
-  searchTerm: controlledSearchTerm
+  searchTerm: controlledSearchTerm,
+  onRowClick,
+  renderExpandedRow
 }: DataTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
 
@@ -81,6 +92,7 @@ function DataTable<T extends { id: string | number }>({
     direction: 'asc'
   });
   const [selectedItems, setSelectedItems] = useState<(string | number)[]>([]);
+  const [expandedRows, setExpandedRows] = useState<Set<string | number>>(new Set());
 
   // Filter and Search
   const filteredData = useMemo(() => {
@@ -164,7 +176,7 @@ function DataTable<T extends { id: string | number }>({
     }
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (manualPagination) {
       onSearchChange?.(value);
@@ -175,7 +187,7 @@ function DataTable<T extends { id: string | number }>({
     }
   };
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSelectAll = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       const allIds = currentData.map(item => item.id);
       setSelectedItems(allIds);
@@ -186,7 +198,8 @@ function DataTable<T extends { id: string | number }>({
     }
   };
 
-  const handleSelect = (id: string | number) => {
+  const handleSelect = (e: MouseEvent | ChangeEvent, id: string | number) => {
+    e.stopPropagation();
     let newSelected: (string | number)[];
     if (selectedItems.includes(id)) {
       newSelected = selectedItems.filter(item => item !== id);
@@ -197,8 +210,19 @@ function DataTable<T extends { id: string | number }>({
     onSelectionChange?.(newSelected);
   };
 
+  const toggleRowExpansion = (e: MouseEvent | null, id: string | number) => {
+    e?.stopPropagation();
+    const newExpandedRows = new Set(expandedRows);
+    if (newExpandedRows.has(id)) {
+      newExpandedRows.delete(id);
+    } else {
+      newExpandedRows.add(id);
+    }
+    setExpandedRows(newExpandedRows);
+  };
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
+    <div className="bg-white rounded-lg border border-gray-200 p-4">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4 md:mb-6">
         <div className="flex-1">
@@ -235,7 +259,7 @@ function DataTable<T extends { id: string | number }>({
           )}
           {onImport && (
             <button
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-[#F37022] text-[#F37022] rounded-lg text-xs sm:text-sm font-medium"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-[#F37022] text-[#F37022] rounded-lg text-xs sm:text-sm font-medium hover:bg-orange-50 transition-colors"
               onClick={onImport}
             >
               <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -243,9 +267,18 @@ function DataTable<T extends { id: string | number }>({
               <span className="sm:hidden">Import</span>
             </button>
           )}
+          {onSecondaryAction && (
+            <button
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-white border-2 border-[#F37022] text-[#F37022] rounded-lg text-xs sm:text-sm font-medium hover:bg-orange-50 transition-all active:scale-95 shadow-sm"
+              onClick={onSecondaryAction}
+            >
+              {secondaryActionIcon || <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+              <span>{secondaryActionLabel || 'Action'}</span>
+            </button>
+          )}
           {onCreate && (
             <button
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#F37022] text-white rounded-lg text-xs sm:text-sm font-medium"
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#F37022] text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-[#d95f19] transition-all active:scale-95 shadow-md shadow-orange-200"
               onClick={onCreate}
             >
               <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -272,6 +305,9 @@ function DataTable<T extends { id: string | number }>({
                     />
                   </div>
                 </th>
+              )}
+              {renderExpandedRow && (
+                <th className="p-2 md:p-3 w-10"></th>
               )}
               {columns.map((col, index) => (
                 <th
@@ -301,25 +337,58 @@ function DataTable<T extends { id: string | number }>({
           <tbody>
             {currentData.length > 0 ? (
               currentData.map((item, rowIndex) => (
-                <tr key={item.id || rowIndex} className="border-b border-gray-100 hover:bg-gray-50">
-                  {selectable && (
-                    <td className="p-2 md:p-3">
-                      <div className="flex items-center justify-center">
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.includes(item.id)}
-                          onChange={() => handleSelect(item.id)}
-                          className="custom-checkbox"
-                        />
-                      </div>
-                    </td>
+                <Fragment key={item.id || rowIndex}>
+                  <tr
+                    className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${renderExpandedRow && expandedRows.has(item.id) ? 'bg-orange-50/30' : ''} ${renderExpandedRow || onRowClick ? 'cursor-pointer' : ''}`}
+                    onClick={(e) => {
+                      if (renderExpandedRow) {
+                        toggleRowExpansion(e, item.id);
+                      } else if (onRowClick) {
+                        onRowClick(item);
+                      }
+                    }}
+                  >
+                    {selectable && (
+                      <td className="p-2 md:p-3">
+                        <div className="flex items-center justify-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.includes(item.id)}
+                            onChange={(e) => handleSelect(e, item.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="custom-checkbox"
+                          />
+                        </div>
+                      </td>
+                    )}
+                    {renderExpandedRow && (
+                      <td className="p-2 md:p-3">
+                        <div className="flex items-center justify-center">
+                          <button
+                            onClick={(e) => toggleRowExpansion(e, item.id)}
+                            className={`p-1 hover:bg-orange-100 rounded-md transition-all duration-200 ${expandedRows.has(item.id) ? 'rotate-180' : ''}`}
+                          >
+                            <ChevronDown className={`w-4 h-4 ${expandedRows.has(item.id) ? 'text-[#F37022]' : 'text-gray-400'}`} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                    {columns.map((col, colIndex) => (
+                      <td key={colIndex} className={`p-2 md:p-3 text-${col.align || 'left'} text-xs md:text-sm text-[#0A1B3C] ${col.hideOnMobile ? 'hidden md:table-cell' : ''} ${col.className || ''}`}>
+                        {col.render ? col.render(item) : String(item[col.accessor])}
+                      </td>
+                    ))}
+                  </tr>
+                  {renderExpandedRow && expandedRows.has(item.id) && (
+                    <tr className="bg-gray-50/50" onClick={(e) => e.stopPropagation()}>
+                      <td colSpan={columns.length + (selectable ? 1 : 0) + 1} className="p-0 border-b border-gray-100">
+                        <div className="p-4 bg-gray-50/30 animate-in slide-in-from-top-2 duration-200">
+                          {renderExpandedRow(item)}
+                        </div>
+                      </td>
+                    </tr>
                   )}
-                  {columns.map((col, colIndex) => (
-                    <td key={colIndex} className={`p-2 md:p-3 text-${col.align || 'left'} text-xs md:text-sm text-[#0A1B3C] ${col.hideOnMobile ? 'hidden md:table-cell' : ''} ${col.className || ''}`}>
-                      {col.render ? col.render(item) : String(item[col.accessor])}
-                    </td>
-                  ))}
-                </tr>
+                </Fragment>
               ))
             ) : (
               <tr>

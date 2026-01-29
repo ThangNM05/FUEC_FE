@@ -3,14 +3,14 @@ export interface Teacher {
     userId: string;
     teacherCode: string;
     teacherName: string; // legacy
-    cardId?: string;
-    departmentId: string;
+    subMajorId: string;
+    subMajorName?: string;
+    subMajorCode?: string;
 
-    // Navigation/Flattened properties (from API projection)
+    // Navigation/Flattened properties
     accountEmail?: string;
-    accountFullName: string; // Validation: Present in API response
-    departmentName?: string;
-    departmentCode?: string;
+    accountFullName: string;
+    cardId?: string;
 
     isActive: boolean;
     createdAt?: string;
@@ -22,17 +22,15 @@ export interface CreateTeacherRequest {
     teacherCode: string;
     teacherName: string;
     email: string;
-    departmentId: string;
+    subMajorId: string;
     phoneNumber?: string;
-    cardId?: string;
 }
 
 export interface UpdateTeacherRequest {
     id: string;
     fullName: string;
-    cardId?: string;
     email?: string;
-    departmentId: string;
+    subMajorId: string;
     isActive?: boolean;
 }
 

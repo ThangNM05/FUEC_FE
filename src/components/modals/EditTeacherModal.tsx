@@ -4,7 +4,7 @@ import { Modal, Input, Button, Select, Switch } from 'antd';
 
 import { useUpdateTeacherMutation } from '@/api/teachersApi';
 import { useUpdateAccountMutation } from '@/api/accountsApi';
-import { useGetDepartmentsQuery } from '@/api/departmentsApi';
+import { useGetSubMajorsQuery } from '@/api/subMajorsApi';
 import type { Teacher, UpdateTeacherRequest } from '@/types/teacher.types.ts';
 
 interface EditTeacherModalProps {
@@ -18,22 +18,23 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
         fullName: '',
         email: '',
         cardId: '',
-        departmentId: '',
+        subMajorId: '',
         isActive: true,
     });
 
     const [updateTeacher, { isLoading: isUpdatingTeacher }] = useUpdateTeacherMutation();
     const [updateAccount, { isLoading: isUpdatingAccount }] = useUpdateAccountMutation();
 
+
     const isLoading = isUpdatingTeacher || isUpdatingAccount;
 
-    const { data: departmentsData, isLoading: isLoadingDepartments } = useGetDepartmentsQuery({
+    const { data: subMajorsData, isLoading: isLoadingSubMajors } = useGetSubMajorsQuery({
         page: 1,
         pageSize: 1000,
         sortColumn: 'name',
         sortDirection: 'asc'
     });
-    const departments = departmentsData?.items || [];
+    const subMajors = subMajorsData?.items || [];
 
     useEffect(() => {
         if (teacher) {
@@ -41,7 +42,7 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
                 fullName: teacher.accountFullName || teacher.teacherName || '',
                 email: teacher.accountEmail || '',
                 cardId: teacher.cardId || '',
-                departmentId: teacher.departmentId || '',
+                subMajorId: teacher.subMajorId || '',
                 isActive: teacher.isActive ?? true,
             });
         }
@@ -53,7 +54,7 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
     };
 
     const handleSelectChange = (value: string) => {
-        setFormData((prev) => ({ ...prev, departmentId: value }));
+        setFormData((prev) => ({ ...prev, subMajorId: value }));
     };
 
     const handleSwitchChange = (checked: boolean) => {
@@ -73,8 +74,8 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
             return;
         }
 
-        if (!formData.departmentId) {
-            toast.error('Please select a department');
+        if (!formData.subMajorId) {
+            toast.error('Please select a sub-major');
             return;
         }
 
@@ -93,8 +94,7 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
                 id: teacher.id,
                 fullName: formData.fullName,
                 email: formData.email,
-                cardId: formData.cardId,
-                departmentId: formData.departmentId,
+                subMajorId: formData.subMajorId,
                 isActive: formData.isActive,
             };
 
@@ -163,31 +163,17 @@ export default function EditTeacherModal({ teacher, isOpen, onClose }: EditTeach
                 </div>
                 <div className="grid grid-cols-[120px_1fr] items-center gap-4">
                     <span className="text-right font-semibold text-gray-700">
-                        Department
+                        Sub-Major
                     </span>
                     <Select
-                        id="departmentId"
-                        value={formData.departmentId}
+                        id="subMajorId"
+                        value={formData.subMajorId}
                         onChange={handleSelectChange}
-                        disabled={isLoading || isLoadingDepartments}
+                        disabled={isLoading || isLoadingSubMajors}
                         size="large"
-                        placeholder="Select Department"
+                        placeholder="Select Sub-Major"
                         className="w-full"
-                        options={departments.map(dept => ({ label: dept.code, value: dept.id }))}
-                    />
-                </div>
-                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-                    <span className="text-right font-semibold text-gray-700">
-                        Card ID
-                    </span>
-                    <Input
-                        id="cardId"
-                        name="cardId"
-                        value={formData.cardId}
-                        onChange={handleInputChange}
-                        disabled={isLoading}
-                        placeholder="Enter Card ID..."
-                        size="large"
+                        options={subMajors.map(sm => ({ label: `${sm.code} - ${sm.name}`, value: sm.id }))}
                     />
                 </div>
             </div>

@@ -64,7 +64,7 @@ function AdminTeachers() {
 
   // Handle API Error with Toast
   if (error) {
-
+    toast.error('Failed to load teachers data. Please check your connection or try again.');
   }
 
   // Handle Sort Change
@@ -140,43 +140,35 @@ function AdminTeachers() {
       accessor: 'teacherCode' as keyof Teacher,
       sortable: true,
       filterable: true,
-      className: 'w-[15%]',
+      className: 'w-[120px]',
     },
     {
       header: 'Name',
       accessor: 'accountFullName' as keyof Teacher,
       sortable: true,
       filterable: true,
-      className: 'w-[25%]',
+      className: 'w-[200px]',
     },
     {
-      header: 'Department',
-      accessor: 'departmentCode' as keyof Teacher,
+      header: 'Sub-Major',
+      accessor: 'subMajorCode' as keyof Teacher,
       sortable: false,
       filterable: true,
-      render: (item: Teacher) => item.departmentCode || 'N/A',
-      className: 'w-[20%]',
+      render: (item: Teacher) => item.subMajorCode ? `${item.subMajorCode} - ${item.subMajorName}` : item.subMajorName || 'N/A',
+      className: 'w-[120px]',
     },
     {
       header: 'Email',
       accessor: 'accountEmail' as keyof Teacher,
       sortable: true,
       filterable: true,
-      className: 'w-[25%]',
+      className: 'w-[250px]',
       render: (item: Teacher) => (
-        <div className="flex items-center gap-2">
-          <Mail className="w-4 h-4 text-gray-500" />
-          {item.accountEmail}
+        <div className="flex items-center gap-2 overflow-hidden">
+          <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
+          <span className="truncate">{item.accountEmail}</span>
         </div>
       ),
-    },
-    {
-      header: 'Card ID',
-      accessor: 'cardId' as keyof Teacher,
-      align: 'center' as const,
-      hideOnMobile: true,
-      className: 'w-[150px]',
-      render: (item: Teacher) => item.cardId || 'N/A',
     },
     {
       header: 'Status',

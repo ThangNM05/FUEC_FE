@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router';
 import {
   LayoutDashboard, Users, BookOpen, Database, Settings,
   ChevronDown, ChevronRight, User, LogOut, PanelLeftClose, Menu, Layers,
-  Building2, DoorOpen, GraduationCap, ClipboardList, Calendar, FileText, BookMarked
+  Building2, DoorOpen, GraduationCap, ClipboardList, Calendar, FileText, BookMarked, LayoutGrid
 } from 'lucide-react';
 import img_fpt from '../../../assets/img_fpt.svg';
 import { useDispatch } from 'react-redux';
@@ -45,6 +45,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+
     {
       id: 'student_mgmt',
       label: 'Student Management',
@@ -62,7 +63,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
       label: 'Settings',
       icon: Settings,
       subItems: [
-        { id: 'departments', label: 'Departments', icon: Building2, path: '/admin/settings/departments' },
+        { id: 'majors', label: 'Majors', icon: Building2, path: '/admin/settings/majors' },
         { id: 'classrooms', label: 'Classrooms', icon: DoorOpen, path: '/admin/settings/classrooms' },
         { id: 'subjects', label: 'Subjects', icon: GraduationCap, path: '/admin/settings/subjects' },
         { id: 'exam-types', label: 'Exam Types', icon: ClipboardList, path: '/admin/settings/exam-types' },

@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { Modal, Input, Button, Select } from 'antd';
 
 import { useCreateTeacherMutation } from '@/api/teachersApi';
-import { useGetDepartmentsQuery } from '@/api/departmentsApi';
+import { useGetSubMajorsQuery } from '@/api/subMajorsApi';
 import { useCreateAccountMutation } from '@/api/accountsApi';
 import type { CreateTeacherRequest } from '@/types/teacher.types';
 import { Role, type CreateAccountRequest } from '@/types/account.types';
@@ -18,20 +18,19 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
         teacherCode: '',
         teacherName: '',
         userName: '',
-        cardId: '',
         email: '',
-        departmentId: '',
+        subMajorId: '',
     });
 
     const [createTeacher, { isLoading: isCreatingTeacher }] = useCreateTeacherMutation();
     const [createAccount, { isLoading: isCreatingAccount }] = useCreateAccountMutation();
-    const { data: departmentsData, isLoading: isLoadingDepartments } = useGetDepartmentsQuery({
+    const { data: subMajorsData, isLoading: isLoadingSubMajors } = useGetSubMajorsQuery({
         page: 1,
         pageSize: 1000,
         sortColumn: 'name',
         sortDirection: 'asc'
     });
-    const departments = departmentsData?.items || [];
+    const subMajors = subMajorsData?.items || [];
 
     const isLoading = isCreatingTeacher || isCreatingAccount;
 
@@ -40,9 +39,8 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
             teacherCode: '',
             teacherName: '',
             userName: '',
-            cardId: '',
             email: '',
-            departmentId: '',
+            subMajorId: '',
         });
     };
 
@@ -57,7 +55,7 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
     };
 
     const handleSelectChange = (value: string) => {
-        setFormData((prev) => ({ ...prev, departmentId: value }));
+        setFormData((prev) => ({ ...prev, subMajorId: value }));
     };
 
     const handleSubmit = async () => {
@@ -77,8 +75,8 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
             toast.error('Email cannot be empty');
             return;
         }
-        if (!formData.departmentId) {
-            toast.error('Please select a department');
+        if (!formData.subMajorId) {
+            toast.error('Please select a sub-major');
             return;
         }
 
@@ -110,8 +108,7 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
                 teacherCode: formData.teacherCode.trim(),
                 teacherName: formData.teacherName.trim(),
                 email: formData.email.trim(),
-                departmentId: formData.departmentId,
-                cardId: formData.cardId.trim() || undefined,
+                subMajorId: formData.subMajorId,
             };
 
             await createTeacher(teacherPayload).unwrap();
@@ -225,51 +222,35 @@ export default function CreateTeacherModal({ isOpen, onClose }: CreateTeacherMod
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-1">
-                        <span className="block text-sm font-semibold text-gray-700 mb-1">
-                            Email <span className="text-red-500">*</span>
-                        </span>
-                        <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            disabled={isLoading}
-                            placeholder="Ex: example@fe.edu.vn"
-                            size="large"
-                        />
-                    </div>
-                    <div className="grid gap-1">
-                        <span className="block text-sm font-semibold text-gray-700 mb-1">
-                            Card ID
-                        </span>
-                        <Input
-                            id="cardId"
-                            name="cardId"
-                            value={formData.cardId}
-                            onChange={handleInputChange}
-                            disabled={isLoading}
-                            placeholder="Ex: 001099000001"
-                            size="large"
-                        />
-                    </div>
+                <div className="grid gap-2">
+                    <span className="block text-sm font-semibold text-gray-700 mb-1">
+                        Email <span className="text-red-500">*</span>
+                    </span>
+                    <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        disabled={isLoading}
+                        placeholder="Ex: example@fe.edu.vn"
+                        size="large"
+                    />
                 </div>
 
                 <div className="grid gap-1">
                     <span className="block text-sm font-semibold text-gray-700 mb-1">
-                        Department <span className="text-red-500">*</span>
+                        Sub-Major <span className="text-red-500">*</span>
                     </span>
                     <Select
-                        id="departmentId"
-                        value={formData.departmentId}
+                        id="subMajorId"
+                        value={formData.subMajorId}
                         onChange={handleSelectChange}
-                        disabled={isLoading || isLoadingDepartments}
+                        disabled={isLoading || isLoadingSubMajors}
                         size="large"
-                        placeholder="Select Department"
+                        placeholder="Select Sub-Major"
                         className="w-full"
-                        options={departments.map(dept => ({ label: dept.code, value: dept.id }))}
+                        options={subMajors.map(sm => ({ label: `${sm.code} - ${sm.name}`, value: sm.id }))}
                     />
                 </div>
             </div>

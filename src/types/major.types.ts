@@ -1,26 +1,25 @@
-export interface Department {
+export interface Major {
     id: string; // GUID
     code: string;
     name: string;
     description?: string;
-    teacherCount?: number;
 }
 
-export interface CreateDepartmentRequest {
+export interface CreateMajorRequest {
     code: string;
     name: string;
     description?: string;
 }
 
-export interface UpdateDepartmentRequest {
+export interface UpdateMajorRequest {
     id: string;
     code: string;
     name: string;
     description?: string;
 }
 
-export interface GetDepartmentsResponse {
-    items: Department[];
+export interface GetMajorsResponse {
+    items: Major[];
 }
 
 export interface PaginatedResponse<T> {
@@ -29,4 +28,9 @@ export interface PaginatedResponse<T> {
     totalPages: number;
     itemFrom: number;
     itemTo: number;
+}
+export interface ImportMajorsResponse {
+    successCount: number;
+    failureCount: number;
+    errors: string[];
 }

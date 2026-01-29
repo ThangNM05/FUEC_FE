@@ -2,33 +2,33 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Modal, Input, Button } from 'antd';
 
-import { useCreateDepartmentMutation, useUpdateDepartmentMutation } from '@/api/departmentsApi';
-import type { Department, CreateDepartmentRequest, UpdateDepartmentRequest } from '@/types/department.types';
+import { useCreateMajorMutation, useUpdateMajorMutation } from '@/api/majorsApi';
+import type { Major, CreateMajorRequest, UpdateMajorRequest } from '@/types/major.types';
 
-interface EditDepartmentModalProps {
-    department: Department | null; // If null, we are adding new
+interface EditMajorModalProps {
+    major: Major | null; // If null, we are adding new
     isOpen: boolean;
     onClose: () => void;
 }
 
-export default function EditDepartmentModal({ department, isOpen, onClose }: EditDepartmentModalProps) {
-    const isEditing = !!department;
+export default function EditMajorModal({ major, isOpen, onClose }: EditMajorModalProps) {
+    const isEditing = !!major;
     const [formData, setFormData] = useState({
         code: '',
         name: '',
         description: '',
     });
 
-    const [createDepartment, { isLoading: isCreating }] = useCreateDepartmentMutation();
-    const [updateDepartment, { isLoading: isUpdating }] = useUpdateDepartmentMutation();
+    const [createMajor, { isLoading: isCreating }] = useCreateMajorMutation();
+    const [updateMajor, { isLoading: isUpdating }] = useUpdateMajorMutation();
     const isLoading = isCreating || isUpdating;
 
     useEffect(() => {
-        if (department) {
+        if (major) {
             setFormData({
-                code: department.code || '',
-                name: department.name || '',
-                description: department.description || '',
+                code: major.code || '',
+                name: major.name || '',
+                description: major.description || '',
             });
         } else {
             setFormData({
@@ -37,7 +37,7 @@ export default function EditDepartmentModal({ department, isOpen, onClose }: Edi
                 description: '',
             });
         }
-    }, [department, isOpen]);
+    }, [major, isOpen]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -46,32 +46,32 @@ export default function EditDepartmentModal({ department, isOpen, onClose }: Edi
 
     const handleSubmit = async () => {
         if (!formData.code.trim()) {
-            toast.error('Department code is required');
+            toast.error('Major code is required');
             return;
         }
         if (!formData.name.trim()) {
-            toast.error('Department name is required');
+            toast.error('Major name is required');
             return;
         }
 
         try {
-            if (isEditing && department) {
-                const updatePayload: UpdateDepartmentRequest = {
-                    id: department.id,
+            if (isEditing && major) {
+                const updatePayload: UpdateMajorRequest = {
+                    id: major.id,
                     code: formData.code,
                     name: formData.name,
                     description: formData.description,
                 };
-                await updateDepartment(updatePayload).unwrap();
-                toast.success(`Department "${formData.name}" updated successfully!`);
+                await updateMajor(updatePayload).unwrap();
+                toast.success(`Major "${formData.name}" updated successfully!`);
             } else {
-                const createPayload: CreateDepartmentRequest = {
+                const createPayload: CreateMajorRequest = {
                     code: formData.code,
                     name: formData.name,
                     description: formData.description,
                 };
-                await createDepartment(createPayload).unwrap();
-                toast.success(`Department "${formData.name}" created successfully!`);
+                await createMajor(createPayload).unwrap();
+                toast.success(`Major "${formData.name}" created successfully!`);
             }
             onClose();
         } catch (err: any) {
@@ -84,7 +84,7 @@ export default function EditDepartmentModal({ department, isOpen, onClose }: Edi
         <Modal
             open={isOpen}
             onCancel={onClose}
-            title={isEditing ? 'Edit Department' : 'Add New Department'}
+            title={isEditing ? 'Edit Major' : 'Add New Major'}
             width={800}
             footer={[
                 <Button key="cancel" onClick={onClose} disabled={isLoading}>
@@ -104,7 +104,7 @@ export default function EditDepartmentModal({ department, isOpen, onClose }: Edi
             <div className="grid gap-6 py-6">
                 <div className="grid grid-cols-[150px_1fr] items-center gap-4">
                     <span className="text-right font-semibold text-gray-700">
-                        Department Code
+                        Major Code
                     </span>
                     <Input
                         id="code"
@@ -118,7 +118,7 @@ export default function EditDepartmentModal({ department, isOpen, onClose }: Edi
                 </div>
                 <div className="grid grid-cols-[150px_1fr] items-center gap-4">
                     <span className="text-right font-semibold text-gray-700">
-                        Department Name
+                        Major Name
                     </span>
                     <Input
                         id="name"
@@ -140,7 +140,7 @@ export default function EditDepartmentModal({ department, isOpen, onClose }: Edi
                         value={formData.description}
                         onChange={handleChange}
                         disabled={isLoading}
-                        placeholder="Brief description of the department"
+                        placeholder="Brief description of the major"
                         size="large"
                     />
                 </div>
