@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { toast } from 'sonner';
-import { Modal, Input, Button, Select } from 'antd';
+import { Modal, Input, Button, Select, Tag } from 'antd';
+import { CalendarOutlined } from '@ant-design/icons';
 
 import { useCreateClassMutation, useUpdateClassMutation } from '@/api/classesApi';
 import { useGetTeachersQuery } from '@/api/teachersApi';
@@ -18,82 +19,93 @@ export default function EditClassModal({ classData, isOpen, onClose }: EditClass
     const isEditing = !!classData;
     const [formData, setFormData] = useState({
         classCode: '',
-        subjectId: undefined as string | undefined,
+        subjectIds: [] as string[],  // Changed to array for multiple subjects
         semesterId: undefined as string | undefined,
-        teacherId: '',
     });
+    const [subjectSearch, setSubjectSearch] = useState('');  // Search term for subjects
 
-    // Fetch dropdown data
-    const { data: teachersData } = useGetTeachersQuery({ page: 1, pageSize: 100 });
-    const { data: subjectsData } = useGetSubjectsQuery({ page: 1, pageSize: 100 });
+    // Fetch dropdown data - use large pageSize to get all items
+    // Fetch dropdown data - use large pageSize to get all items
+    const { data: subjectsData, isLoading: isLoadingSubjects } = useGetSubjectsQuery({ page: 1, pageSize: 500 });
     const { data: semestersData } = useGetSemestersQuery({ page: 1, pageSize: 100 });
 
-    const [createClass, { isLoading: isCreating }] = useCreateClassMutation();
-    const [updateClass, { isLoading: isUpdating }] = useUpdateClassMutation();
-    const isLoading = isCreating || isUpdating;
+
+
+    // Get current/default semester
+    const currentSemester = useMemo(() => {
+        return semestersData?.items?.find(s => s.isDefault) || semestersData?.items?.[0];
+    }, [semestersData]);
+
+    // Get text representation of selected subjects
+    const selectedSubjectsText = useMemo(() => {
+        if (!subjectsData?.items || formData.subjectIds.length === 0) return '';
+        return subjectsData.items
+            .filter(s => formData.subjectIds.includes(s.id))
+            .map(s => s.code)
+            .join(', ');
+    }, [subjectsData, formData.subjectIds]);
+
+    const [createClassMutation, { isLoading: isCreating }] = useCreateClassMutation();
+    const [updateClassMutation, { isLoading: isUpdating }] = useUpdateClassMutation();
+    const [isLoading, setIsLoading] = useState(false); // Local loading state for form submission
+    const toastShownRef = useRef(false); // Ref to prevent multiple toasts
 
     useEffect(() => {
-        if (classData) {
+        if (isEditing && classData) {
             setFormData({
                 classCode: classData.classCode || '',
-                subjectId: classData.subjectId,
+                subjectIds: classData.subjects?.map(s => s.id) || [],  // Map subjects to IDs
                 semesterId: classData.semesterId,
-                teacherId: classData.teacherId || '',
             });
-        } else {
+        } else if (!isEditing && currentSemester) {
             setFormData({
                 classCode: '',
-                subjectId: undefined,
-                semesterId: undefined,
-                teacherId: '',
+                subjectIds: [],
+                semesterId: currentSemester.id,
             });
         }
-    }, [classData, isOpen]);
+    }, [classData, isEditing, currentSemester]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSelectChange = (field: string, value: string | undefined) => {
+    const handleSelectChange = (field: string, value: string | string[] | undefined) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     const handleSubmit = async () => {
-        if (!formData.classCode.trim()) {
-            toast.error('Class code is required');
-            return;
-        }
-        if (!formData.teacherId) {
-            toast.error('Teacher is required');
+        if (!formData.classCode || formData.subjectIds.length === 0) {
+            toast.error('Please fill in all required fields and select at least one subject');
             return;
         }
 
+        setIsLoading(true);
+        toastShownRef.current = false; // Reset toast ref for new submission attempt
         try {
+            const payload = {
+                classCode: formData.classCode,
+                subjectIds: formData.subjectIds,  // Send array of subject IDs
+                semesterId: formData.semesterId || currentSemester?.id,
+            };
+
             if (isEditing && classData) {
-                const updatePayload: UpdateClassRequest = {
-                    id: classData.id,
-                    classCode: formData.classCode,
-                    subjectId: formData.subjectId,
-                    semesterId: formData.semesterId,
-                    teacherId: formData.teacherId,
-                };
-                await updateClass(updatePayload).unwrap();
-                toast.success(`Class "${formData.classCode}" updated successfully!`);
+                await updateClassMutation({ id: classData.id, ...payload }).unwrap();
+                toast.success('Class updated successfully');
             } else {
-                const createPayload: CreateClassRequest = {
-                    classCode: formData.classCode,
-                    subjectId: formData.subjectId,
-                    semesterId: formData.semesterId,
-                    teacherId: formData.teacherId,
-                };
-                await createClass(createPayload).unwrap();
-                toast.success(`Class "${formData.classCode}" created successfully!`);
+                await createClassMutation(payload).unwrap();
+                toast.success('Class created successfully');
             }
             onClose();
-        } catch (err: any) {
-            const errorMessage = err?.data?.message || err?.message;
-            toast.error(errorMessage ? `${isEditing ? 'Update' : 'Create'} failed: ${errorMessage}` : 'An error occurred. Please try again later.');
+        } catch (error: any) {
+            const errorMessage = error?.data?.message || error?.message || 'Failed to save class';
+            if (!toastShownRef.current) {
+                toast.error(errorMessage);
+                toastShownRef.current = true;
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -101,8 +113,21 @@ export default function EditClassModal({ classData, isOpen, onClose }: EditClass
         <Modal
             open={isOpen}
             onCancel={onClose}
-            title={isEditing ? 'Edit Class' : 'Add New Class'}
-            width={800}
+            title={
+                <div className="flex items-center gap-3">
+                    <span>{isEditing ? 'Edit Class' : 'Add New Class'}</span>
+                    {currentSemester && (
+                        <Tag 
+                            icon={<CalendarOutlined />} 
+                            color="orange"
+                            className="text-sm font-normal"
+                        >
+                            {currentSemester.semesterCode}
+                        </Tag>
+                    )}
+                </div>
+            }
+            width={700}
             footer={[
                 <Button key="cancel" onClick={onClose} disabled={isLoading}>
                     Cancel
@@ -114,15 +139,29 @@ export default function EditClassModal({ classData, isOpen, onClose }: EditClass
                     onClick={handleSubmit}
                     className="bg-[#F37022] hover:bg-[#d95f19] border-none"
                 >
-                    {isEditing ? 'Save' : 'Create'}
+                    {isEditing ? 'Save Changes' : 'Create Class'}
                 </Button>
             ]}
         >
-            <div className="grid gap-6 py-6">
-                <div className="grid grid-cols-[150px_1fr] items-center gap-4">
-                    <span className="text-right font-semibold text-gray-700">
+            <div className="space-y-5 py-4">
+                {/* Current Semester Banner */}
+                {!isEditing && currentSemester && (
+                    <div className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-4 flex items-center gap-3">
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <CalendarOutlined className="text-orange-600 text-lg" />
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Current Semester</p>
+                            <p className="font-semibold text-orange-700 text-lg">{currentSemester.semesterCode}</p>
+                        </div>
+                    </div>
+                )}
+
+                {/* Class Code */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
                         Class Code <span className="text-red-500">*</span>
-                    </span>
+                    </label>
                     <Input
                         id="classCode"
                         name="classCode"
@@ -131,72 +170,86 @@ export default function EditClassModal({ classData, isOpen, onClose }: EditClass
                         disabled={isLoading}
                         placeholder="e.g. SE18B04, AI19A01..."
                         size="large"
+                        className="rounded-lg"
                     />
                 </div>
-                <div className="grid grid-cols-[150px_1fr] items-center gap-4">
-                    <span className="text-right font-semibold text-gray-700">
-                        Subject
-                    </span>
-                    <Select
-                        value={formData.subjectId}
-                        onChange={(value) => handleSelectChange('subjectId', value)}
-                        disabled={isLoading}
-                        placeholder="Select subject"
-                        size="large"
-                        className="w-full"
-                        allowClear
-                        showSearch
-                        optionFilterProp="children"
-                    >
-                        {subjectsData?.items?.map((subject) => (
-                            <Select.Option key={subject.id} value={subject.id}>
-                                {subject.code} - {subject.name}
-                            </Select.Option>
-                        ))}
-                    </Select>
-                </div>
-                <div className="grid grid-cols-[150px_1fr] items-center gap-4">
-                    <span className="text-right font-semibold text-gray-700">
-                        Semester
-                    </span>
-                    <Select
-                        value={formData.semesterId}
-                        onChange={(value) => handleSelectChange('semesterId', value)}
-                        disabled={isLoading}
-                        placeholder="Select semester"
-                        size="large"
-                        className="w-full"
-                        allowClear
-                        showSearch
-                        optionFilterProp="children"
-                    >
-                        {semestersData?.items?.map((semester) => (
-                            <Select.Option key={semester.id} value={semester.id}>
-                                {semester.semesterCode}
-                            </Select.Option>
-                        ))}
-                    </Select>
-                </div>
-                <div className="grid grid-cols-[150px_1fr] items-center gap-4">
-                    <span className="text-right font-semibold text-gray-700">
-                        Teacher <span className="text-red-500">*</span>
-                    </span>
-                    <Select
-                        value={formData.teacherId || undefined}
-                        onChange={(value) => handleSelectChange('teacherId', value)}
-                        disabled={isLoading}
-                        placeholder="Select teacher"
-                        size="large"
-                        className="w-full"
-                        showSearch
-                        optionFilterProp="children"
-                    >
-                        {teachersData?.items?.map((teacher) => (
-                            <Select.Option key={teacher.id} value={teacher.id}>
-                                {teacher.teacherCode} - {teacher.accountFullName}
-                            </Select.Option>
-                        ))}
-                    </Select>
+
+                {/* Subjects - Checkbox List with Search */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                        Subjects <span className="text-red-500">*</span>
+                    </label>
+                    
+                    {/* Selected subjects preview */}
+                    <div className="relative">
+                         <input
+                            type="text"
+                            readOnly
+                            value={selectedSubjectsText}
+                            placeholder="No subjects selected"
+                            className="w-full px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-800 font-medium focus:outline-none mb-2"
+                        />
+                    </div>
+
+                    {/* Search input */}
+                    <input
+                        type="text"
+                        placeholder="Search subjects..."
+                        value={subjectSearch}
+                        onChange={(e) => setSubjectSearch(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:outline-none"
+                    />
+                    {/* Checkbox list */}
+                    <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto bg-white">
+                        {isLoadingSubjects ? (
+                            <p className="text-sm text-gray-500">Loading subjects...</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {subjectsData?.items
+                                    ?.filter(subject => 
+                                        subject.code.toLowerCase().includes(subjectSearch.toLowerCase()) ||
+                                        subject.name.toLowerCase().includes(subjectSearch.toLowerCase())
+                                    )
+                                    .map((subject) => (
+                                        <label
+                                            key={subject.id}
+                                            className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                value={subject.id}
+                                                checked={formData.subjectIds.includes(subject.id)}
+                                                onChange={(e) => {
+                                                    const checked = e.target.checked;
+                                                    const newSubjectIds = checked
+                                                        ? [...formData.subjectIds, subject.id]
+                                                        : formData.subjectIds.filter(id => id !== subject.id);
+                                                    handleSelectChange('subjectIds', newSubjectIds);
+                                                }}
+                                                disabled={isLoading}
+                                                className="w-5 h-5 cursor-pointer appearance-none border-2 border-gray-300 rounded checked:bg-orange-600 checked:border-orange-600 focus:ring-2 focus:ring-orange-500 focus:outline-none relative
+                                                before:content-['✓'] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:text-white before:text-sm before:font-bold before:opacity-0 checked:before:opacity-100"
+                                            />
+                                            <span className="text-sm font-medium text-gray-700">
+                                                {subject.code}
+                                            </span>
+                                            <span className="text-sm text-gray-500">
+                                                - {subject.name}
+                                            </span>
+                                        </label>
+                                    ))}
+                                {subjectsData?.items?.filter(subject => 
+                                    subject.code.toLowerCase().includes(subjectSearch.toLowerCase()) ||
+                                    subject.name.toLowerCase().includes(subjectSearch.toLowerCase())
+                                ).length === 0 && (
+                                    <p className="text-sm text-gray-500">No subjects found</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                        {formData.subjectIds.length} subject(s) selected
+                    </p>
                 </div>
             </div>
         </Modal>

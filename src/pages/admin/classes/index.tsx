@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Edit, Trash2, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -7,6 +7,9 @@ import { LoadingOutlined } from '@ant-design/icons';
 import DataTable from '@/components/shared/DataTable';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 import EditClassModal from '@/components/modals/EditClassModal';
+import ClassSubjectDetailModal from '@/components/modals/ClassSubjectDetailModal';
+import AutoAssignClassModal from '@/components/modals/AutoAssignClassModal';
+import type { Subject } from '@/types/class.types';
 
 import {
     useGetClassesQuery,
@@ -29,6 +32,13 @@ function AdminClasses() {
     // Edit/Create Modal State
     const [selectedClass, setSelectedClass] = useState<Class | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Detail Modal State
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+
+    // Auto Assign Modal State
+    const [isAutoAssignModalOpen, setIsAutoAssignModalOpen] = useState(false);
 
     // RTK Query hooks
     const { data: classesData, isLoading, error } = useGetClassesQuery({
@@ -76,6 +86,20 @@ function AdminClasses() {
         setIsEditModalOpen(true);
     };
 
+    const handleSubjectClick = (classItem: Class, subject: Subject) => {
+        setSelectedClass(classItem);
+        setSelectedSubject(subject);
+        setIsDetailModalOpen(true);
+    };
+
+    const handleImportClasses = () => {
+        toast.info("Import feature coming soon!");
+    }
+
+     const handleAutoAssign = () => {
+        setIsAutoAssignModalOpen(true);
+    };
+
     // Handle Sort Change
     const handleSortChange = (column: keyof Class, direction: 'asc' | 'desc') => {
         setSortColumn(column as string);
@@ -102,16 +126,29 @@ function AdminClasses() {
             )
         },
         {
-            header: 'Subject',
-            accessor: 'subjectName' as keyof Class,
-            sortable: true,
-            filterable: true,
-            className: 'w-[25%] px-4',
+            header: 'Subjects',
+            accessor: 'subjects' as keyof Class,
+            sortable: false,
+            filterable: false,
+            className: 'w-[45%] px-4',
             render: (item: Class) => (
-                <div>
-                    <div className="font-medium">{item.subjectName || '-'}</div>
-                    {item.subjectCode && (
-                        <div className="text-xs text-gray-500">{item.subjectCode}</div>
+                <div className="flex flex-wrap gap-1">
+                    {item.subjects && item.subjects.length > 0 ? (
+                        item.subjects.map((subject, idx) => (
+                            <span 
+                                key={idx}
+                                className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium cursor-pointer hover:bg-blue-200 hover:ring-1 hover:ring-blue-300 transition-all select-none"
+                                title={`Manage ${subject.name}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSubjectClick(item, subject);
+                                }}
+                            >
+                                {subject.code}
+                            </span>
+                        ))
+                    ) : (
+                        <span className="text-gray-400 text-xs">No subjects</span>
                     )}
                 </div>
             )
@@ -122,16 +159,10 @@ function AdminClasses() {
             sortable: true,
             className: 'w-[15%] px-4',
             render: (item: Class) => (
-                <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">
                     {item.semesterName || '-'}
                 </span>
             )
-        },
-        {
-            header: 'Teacher',
-            accessor: 'teacherName' as keyof Class,
-            sortable: true,
-            className: 'w-[20%] px-4',
         },
         {
             header: 'Status',
@@ -176,21 +207,38 @@ function AdminClasses() {
         }
     ];
 
-    if (error) {
-        toast.error('Failed to load classes.');
-    }
+    // Show error toast only once
+    const hasShownError = useRef(false);
+    useEffect(() => {
+        if (error && !hasShownError.current) {
+            toast.error('Failed to load classes.');
+            hasShownError.current = true;
+        }
+        if (!error) {
+            hasShownError.current = false;
+        }
+    }, [error]);
 
     if (isLoading) {
-        const antIcon = <LoadingOutlined style={{ fontSize: 48, color: '#F37022' }} spin />;
         return (
             <div className="p-4 md:p-6">
                 <div className="mb-4 md:mb-6">
                     <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Class Management</h1>
                     <p className="text-gray-600 mt-1">Manage all classes in the system</p>
                 </div>
-                <div className="flex items-center justify-center h-64">
-                    <Spin indicator={antIcon} tip="Loading classes..." />
+                <div className="flex flex-col items-center justify-center h-64 gap-4">
+                    <div 
+                        className="w-12 h-12 border-4 border-[#F37022] border-t-transparent rounded-full"
+                        style={{ animation: 'spin 1s linear infinite' }}
+                    />
+                    <p className="text-gray-500">Loading classes...</p>
                 </div>
+                <style>{`
+                    @keyframes spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
+                `}</style>
             </div>
         );
     }
@@ -218,12 +266,34 @@ function AdminClasses() {
                 onSortChange={handleSortChange as any}
                 onSearchChange={handleSearchChange}
                 searchTerm={searchTerm}
+                onImport={undefined}
+                importLabel={undefined}
+                onSecondaryAction={handleAutoAssign}
+                secondaryActionLabel="Auto Generate"
+                secondaryActionIcon={<Wand2 className="w-4 h-4" />}
             />
 
             <EditClassModal
                 classData={selectedClass}
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}
+            />
+
+            <ClassSubjectDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                classData={selectedClass}
+                subject={selectedSubject}
+            />
+
+            <AutoAssignClassModal
+                isOpen={isAutoAssignModalOpen}
+                onClose={() => setIsAutoAssignModalOpen(false)}
+                onSuccess={() => {
+                    // Refetch data handles it automatically via tags invalidation? 
+                    // RTK Query handles it if invalidatesTags is set correctly.
+                    setIsAutoAssignModalOpen(false);
+                }}
             />
 
             <ConfirmDeleteModal
