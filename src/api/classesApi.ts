@@ -12,8 +12,9 @@ export const classesApi = baseApi.injectEndpoints({
             searchTerm?: string;
         }>({
             query: ({ page, pageSize, sortColumn, sortDirection, searchTerm }) => {
-                const pageIndex = page - 1;
-                let url = `/classes?PageNumber=${pageIndex}&PageSize=${pageSize}`;
+                // Send 1-based page number to backend
+                const pageNumber = Math.max(1, page);
+                let url = `/classes?PageNumber=${pageNumber}&PageSize=${pageSize}`;
 
                 if (sortColumn) {
                     const sortOrder = sortDirection === 'desc' ? 2 : 1;
