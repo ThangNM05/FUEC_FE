@@ -65,6 +65,7 @@ export interface AutoAssignClassResult {
     totalClassesCreated: number;
     totalStudentsAssigned: number;
     classSummaries: ClassAssignmentSummary[];
+    errors?: string[];
 }
 
 export interface PaginatedResponse<T> {

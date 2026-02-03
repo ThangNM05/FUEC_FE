@@ -57,9 +57,10 @@ const AutoAssignClassModal = ({ isOpen, onClose, onSuccess }: AutoAssignClassMod
             setResultData(result);
             setStep('result');
             toast.success('Auto-assignment completed successfully!');
-            onSuccess(); // Refresh parent table
         } catch (error: any) {
-            toast.error('Failed to auto-assign: ' + (error?.data?.message || error.message));
+            console.error("Auto Assign Error:", error);
+            const errorMsg = error?.data?.result || error?.data?.message || error?.message || "Unknown error occurred";
+            toast.error('Failed to auto-assign: ' + errorMsg);
         }
     };
 
@@ -245,6 +246,24 @@ const AutoAssignClassModal = ({ isOpen, onClose, onSuccess }: AutoAssignClassMod
                                     )}
                                 />
                             </div>
+                        </div>
+                    )}
+
+                    {resultData.errors && resultData.errors.length > 0 && (
+                        <div className="text-left mt-4">
+                            <Alert
+                                message="Warnings / Skipped Groups"
+                                description={
+                                    <ul className="list-disc pl-4 mt-2">
+                                        {resultData.errors.map((err: string, index: number) => (
+                                            <li key={index} className="text-xs">{err}</li>
+                                        ))}
+                                    </ul>
+                                }
+                                type="warning"
+                                showIcon
+                                className="border-yellow-200 bg-yellow-50"
+                            />
                         </div>
                     )}
 

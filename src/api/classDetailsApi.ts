@@ -59,19 +59,26 @@ export const classDetailsApi = baseApi.injectEndpoints({
         // Add student to class
         addStudentClass: builder.mutation<void, { classId: string; studentId: string }>({
             query: (body) => ({
-                url: '/StudentClasses',
+                url: '/StudentClasses/add',
                 method: 'POST',
                 body
             }),
             invalidatesTags: ['StudentClasses']
         }),
         // Remove student from class
-        deleteStudentClass: builder.mutation<void, string>({
-            query: (id) => ({
-                url: `/StudentClasses/${id}`,
-                method: 'DELETE'
+        removeStudentClass: builder.mutation<void, { classId: string; studentId: string }>({
+            query: (body) => ({
+                url: '/StudentClasses/remove',
+                method: 'POST',
+                body
             }),
             invalidatesTags: ['StudentClasses']
+        }),
+        // Get ineligible student IDs for a class (already enrolled or subject conflict)
+        getIneligibleStudentIds: builder.query<string[], string>({
+            query: (classId) => `/StudentClasses/ineligible/${classId}`,
+            transformResponse: (response: any) => response?.result || [],
+            providesTags: ['StudentClasses']
         }),
     }),
 });
@@ -83,5 +90,6 @@ export const {
     useDeleteClassSubjectTeacherMutation,
     useGetStudentClassesQuery,
     useAddStudentClassMutation,
-    useDeleteStudentClassMutation
+    useRemoveStudentClassMutation,
+    useGetIneligibleStudentIdsQuery
 } = classDetailsApi;

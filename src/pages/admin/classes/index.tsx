@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Edit, Trash2, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spin } from 'antd';
@@ -51,13 +51,50 @@ function AdminClasses() {
 
     const [deleteClass, { isLoading: isDeleting }] = useDeleteClassMutation();
 
-    // Extract data from PaginatedResponse
-    const classes = classesData?.items || [];
+    // Group classes by Subject for "Grouped View"
+    const groupedSubjects = useMemo(() => {
+        if (!classesData?.items) return [];
+        
+        const groups: Record<string, { id: string, displaySubject: Subject | null, classes: Class[] }> = {};
+        const noSubjectKey = 'no-subject';
+
+        classesData.items.forEach(cls => {
+            if (cls.subjects && cls.subjects.length > 0) {
+                cls.subjects.forEach(sub => {
+                    if (!groups[sub.id]) {
+                        groups[sub.id] = {
+                            id: sub.id,
+                            displaySubject: sub,
+                            classes: []
+                        };
+                    }
+                    groups[sub.id].classes.push(cls);
+                });
+            } else {
+                if (!groups[noSubjectKey]) {
+                    groups[noSubjectKey] = {
+                        id: noSubjectKey,
+                        displaySubject: null,
+                        classes: []
+                    };
+                }
+                groups[noSubjectKey].classes.push(cls);
+            }
+        });
+
+        // Convert to array and sort by Subject Code
+        return Object.values(groups).sort((a, b) => {
+            const codeA = a.displaySubject?.code || 'ZZZ'; // 'ZZZ' puts no-subject last
+            const codeB = b.displaySubject?.code || 'ZZZ';
+            return codeA.localeCompare(codeB);
+        });
+    }, [classesData]);
+
     const totalClasses = classesData?.totalItemCount || 0;
 
     // Handle Delete
-    const handleDelete = (classItem: Class) => {
-        setClassToDelete(classItem);
+    const handleDelete = (item: any) => {
+        setClassToDelete(item.originalClass);
         setIsDeleteModalOpen(true);
     };
 
@@ -75,8 +112,8 @@ function AdminClasses() {
     };
 
     // Handle Edit
-    const handleEdit = (classItem: Class) => {
-        setSelectedClass(classItem);
+    const handleEdit = (item: any) => {
+        setSelectedClass(item.originalClass);
         setIsEditModalOpen(true);
     };
 
@@ -92,120 +129,96 @@ function AdminClasses() {
         setIsDetailModalOpen(true);
     };
 
-    const handleImportClasses = () => {
-        toast.info("Import feature coming soon!");
-    }
-
-     const handleAutoAssign = () => {
+    const handleAutoAssign = () => {
         setIsAutoAssignModalOpen(true);
     };
 
-    // Handle Sort Change
     const handleSortChange = (column: keyof Class, direction: 'asc' | 'desc') => {
         setSortColumn(column as string);
         setSortDirection(direction);
     };
 
-    // Handle Search Change
     const handleSearchChange = (term: string) => {
         setSearchTerm(term);
-        setPage(1); // Reset to first page on search
+        setPage(1);
     };
 
     const columns = [
         {
-            header: 'Class Code',
-            accessor: 'classCode' as keyof Class,
-            sortable: true,
-            filterable: true,
-            className: 'w-[15%] px-4',
-            render: (item: Class) => (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                    {item.classCode}
-                </span>
-            )
-        },
-        {
-            header: 'Subjects',
-            accessor: 'subjects' as keyof Class,
-            sortable: false,
+            header: 'Subject Code',
+            accessor: 'displaySubject' as any, 
+            sortable: false, 
             filterable: false,
-            className: 'w-[45%] px-4',
-            render: (item: Class) => (
-                <div className="flex flex-wrap gap-1">
-                    {item.subjects && item.subjects.length > 0 ? (
-                        item.subjects.map((subject, idx) => (
-                            <span 
-                                key={idx}
-                                className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium cursor-pointer hover:bg-blue-200 hover:ring-1 hover:ring-blue-300 transition-all select-none"
-                                title={`Manage ${subject.name}`}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSubjectClick(item, subject);
-                                }}
-                            >
-                                {subject.code}
-                            </span>
-                        ))
+            className: 'w-[10%] px-4',
+            render: (item: any) => (
+                <div className="flex items-center">
+                    {item.displaySubject ? (
+                         <span 
+                            className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium border border-blue-200 select-none"
+                            title={item.displaySubject.name}
+                         >
+                            {item.displaySubject.code}
+                        </span>
                     ) : (
-                        <span className="text-gray-400 text-xs">No subjects</span>
+                        <span className="text-gray-400 text-xs italic">-</span>
                     )}
                 </div>
             )
         },
         {
-            header: 'Semester',
-            accessor: 'semesterName' as keyof Class,
-            sortable: true,
-            className: 'w-[15%] px-4',
-            render: (item: Class) => (
-                <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">
-                    {item.semesterName || '-'}
-                </span>
+            header: 'Subject Name',
+            accessor: 'displaySubject' as any, 
+            sortable: false,
+            filterable: false,
+            className: 'w-[25%] px-4',
+            render: (item: any) => (
+                <div className="flex items-center">
+                    {item.displaySubject ? (
+                        <span className="text-sm text-[#0A1B3C] font-medium truncate" title={item.displaySubject.name}>
+                            {item.displaySubject.name}
+                        </span>
+                    ) : (
+                        <span className="text-gray-400 text-xs italic">Classes with no subject</span>
+                    )}
+                </div>
             )
         },
         {
-            header: 'Status',
-            accessor: 'isActive' as keyof Class,
-            sortable: true,
-            align: 'center' as const,
-            className: 'w-[10%] px-4',
-            render: (item: Class) => (
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    item.isActive 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-gray-100 text-gray-500'
-                }`}>
-                    {item.isActive ? 'Active' : 'Inactive'}
-                </span>
+            header: 'Classes',
+            accessor: 'classes' as any,
+            sortable: false, 
+            filterable: false,
+            className: 'w-[45%] px-4',
+            render: (item: any) => (
+                <div className="flex flex-wrap gap-2">
+                    {item.classes.map((cls: Class) => (
+                        <span 
+                            key={cls.id}
+                            className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 cursor-pointer transition-colors select-none"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (item.displaySubject) {
+                                    handleSubjectClick(cls, item.displaySubject);
+                                }
+                            }}
+                            title={`Manage ${cls.classCode} Details`}
+                        >
+                            {cls.classCode}
+                        </span>
+                    ))}
+                </div>
             )
         },
         {
             header: 'Actions',
-            accessor: 'id' as keyof Class,
-            align: 'center' as const,
-            className: 'w-[15%] text-center px-4',
-            render: (item: Class) => (
-                <div className="flex gap-2 justify-center">
-                    <button
-                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                        onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
-                        title="Edit Class"
-                    >
-                        <Edit className="w-4 h-4 text-blue-600" />
-                    </button>
-                    <button
-                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(item); }}
-                        disabled={isDeleting}
-                        title="Delete Class"
-                    >
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                    </button>
-                </div>
-            )
+             accessor: 'id' as any,
+             className: 'w-[20%] px-4 text-center',
+             render: (_: any) => (
+                 <span className="text-xs text-gray-400">Select a class to manage</span>
+             )
         }
     ];
+
 
     // Show error toast only once
     const hasShownError = useRef(false);
@@ -252,7 +265,7 @@ function AdminClasses() {
 
             <DataTable
                 title={`All Classes (${totalClasses})`}
-                data={classes}
+                data={groupedSubjects}
                 columns={columns}
                 onCreate={handleCreate}
                 createLabel="Add Class"
