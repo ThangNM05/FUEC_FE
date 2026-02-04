@@ -33,7 +33,7 @@ export interface UpdateStudentRequest {
     fullName: string;
     cardId?: string;
     studentCode?: string;
-    accountEmail?: string;
+    email?: string;
     isActive?: boolean | number;
     phoneNumber?: string;
     classId?: string;
@@ -45,6 +45,29 @@ export interface ImportStudentsResponse {
     errors?: string[];
 }
 
+export interface AutoAssignClassRequest {
+    subMajorId?: string;
+    cohort?: string;
+    maxStudentsPerClass?: number;
+}
+
+export interface ClassAssignmentSummary {
+    classCode: string;
+    subMajorCode: string;
+    cohort: string;
+    studentCount: number;
+    isNewClass: boolean;
+}
+
+export interface AutoAssignClassResult {
+    success: boolean;
+    message: string;
+    totalClassesCreated: number;
+    totalStudentsAssigned: number;
+    classSummaries: ClassAssignmentSummary[];
+    errors?: string[];
+}
+
 export interface PaginatedResponse<T> {
     items: T[];
     totalItemCount: number;
@@ -52,3 +75,4 @@ export interface PaginatedResponse<T> {
     itemFrom: number;
     itemTo: number;
 }
+

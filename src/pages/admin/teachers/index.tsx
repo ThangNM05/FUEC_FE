@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Edit, Trash2, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 
 import DataTable from '@/components/shared/DataTable';
 import ImportResultModal from '@/components/shared/ImportResultModal';
@@ -62,7 +64,7 @@ function AdminTeachers() {
 
   // Handle API Error with Toast
   if (error) {
-
+    toast.error('Failed to load teachers data. Please check your connection or try again.');
   }
 
   // Handle Sort Change
@@ -138,43 +140,35 @@ function AdminTeachers() {
       accessor: 'teacherCode' as keyof Teacher,
       sortable: true,
       filterable: true,
-      className: 'w-[15%]',
+      className: 'w-[120px]',
     },
     {
       header: 'Name',
       accessor: 'accountFullName' as keyof Teacher,
       sortable: true,
       filterable: true,
-      className: 'w-[25%]',
+      className: 'w-[200px]',
     },
     {
-      header: 'Department',
-      accessor: 'departmentCode' as keyof Teacher,
+      header: 'Sub-Major',
+      accessor: 'subMajorCode' as keyof Teacher,
       sortable: false,
       filterable: true,
-      render: (item: Teacher) => item.departmentCode || 'N/A',
-      className: 'w-[20%]',
+      render: (item: Teacher) => item.subMajorCode ? `${item.subMajorCode} - ${item.subMajorName}` : item.subMajorName || 'N/A',
+      className: 'w-[120px]',
     },
     {
       header: 'Email',
       accessor: 'accountEmail' as keyof Teacher,
       sortable: true,
       filterable: true,
-      className: 'w-[25%]',
+      className: 'w-[250px]',
       render: (item: Teacher) => (
-        <div className="flex items-center gap-2">
-          <Mail className="w-4 h-4 text-gray-500" />
-          {item.accountEmail}
+        <div className="flex items-center gap-2 overflow-hidden">
+          <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
+          <span className="truncate">{item.accountEmail}</span>
         </div>
       ),
-    },
-    {
-      header: 'Card ID',
-      accessor: 'cardId' as keyof Teacher,
-      align: 'center' as const,
-      hideOnMobile: true,
-      className: 'w-[150px]',
-      render: (item: Teacher) => item.cardId || 'N/A',
     },
     {
       header: 'Status',
@@ -235,16 +229,14 @@ function AdminTeachers() {
 
   // Loading state
   if (isLoading) {
+    const antIcon = <LoadingOutlined style={{ fontSize: 48, color: '#F37022' }} spin />;
     return (
       <div className="p-4 md:p-6">
         <div className="mb-4 md:mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Teacher Management</h1>
         </div>
         <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F37022] mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading teachers...</p>
-          </div>
+          <Spin indicator={antIcon} tip="Loading teachers..." />
         </div>
       </div>
     );

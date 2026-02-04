@@ -83,8 +83,8 @@ export const accountsApi = baseApi.injectEndpoints({
 
         // PUT: Update existing account (e.g. Profile, Lock)
         updateAccount: builder.mutation<Account, UpdateAccountRequest>({
-            query: ({ id, ...account }) => ({
-                url: `/accounts/${id}`,
+            query: (account) => ({
+                url: `/accounts/${account.id}`,
                 method: 'PUT',
                 body: account,
             }),

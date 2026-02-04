@@ -6,6 +6,8 @@ import type {
     PaginatedResponse,
     Student,
     UpdateStudentRequest,
+    AutoAssignClassRequest,
+    AutoAssignClassResult,
 } from '../types/student.types';
 
 /**
@@ -96,8 +98,8 @@ export const studentsApi = baseApi.injectEndpoints({
 
         // PUT: Update existing student
         updateStudent: builder.mutation<Student, UpdateStudentRequest>({
-            query: ({ id, ...student }) => ({
-                url: `/students/${id}`,
+            query: (student) => ({
+                url: `/students/${student.id}`,
                 method: 'PUT',
                 body: student,
             }),
@@ -161,6 +163,15 @@ export const studentsApi = baseApi.injectEndpoints({
             },
             invalidatesTags: ['Students'],
         }),
+        // POST: Auto-assign students to classes
+        autoAssignClass: builder.mutation<AutoAssignClassResult, AutoAssignClassRequest>({
+             query: (data) => ({
+                 url: '/students/auto-assign-class',
+                 method: 'POST',
+                 body: data
+             }),
+             invalidatesTags: ['Classes', 'Students', 'ClassSubjectTeachers', 'StudentClasses'] 
+        }),
     }),
 });
 
@@ -172,4 +183,6 @@ export const {
     useUpdateStudentMutation,
     useDeleteStudentMutation,
     useImportStudentsMutation,
+    useAutoAssignClassMutation,
 } = studentsApi;
+

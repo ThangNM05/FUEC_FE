@@ -18,6 +18,7 @@ if (!GOOGLE_CLIENT_ID) {
   throw new Error('Missing Google Client ID');
 }
 
+  //test deploy
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>

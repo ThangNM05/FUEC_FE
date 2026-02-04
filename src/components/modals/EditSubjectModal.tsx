@@ -1,19 +1,11 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Modal, Input, Button, InputNumber } from 'antd';
+
 import { useUpdateSubjectMutation } from '@/api/subjectsApi';
 import type { Subject } from '@/types/subject.types';
+
+const { TextArea } = Input;
 
 interface EditSubjectModalProps {
     isOpen: boolean;
@@ -37,39 +29,33 @@ export default function EditSubjectModal({ isOpen, onClose, subject }: EditSubje
 
     useEffect(() => {
         if (subject) {
-            const formattedTime = subject.timeAllocation || '';
-
             setFormData({
                 code: subject.code,
                 name: subject.name,
                 credits: subject.credits,
                 terms: subject.terms,
-                timeAllocation: formattedTime,
+                timeAllocation: subject.timeAllocation || '',
                 description: subject.description || '',
                 minAvgMarkToPass: subject.minAvgMarkToPass,
                 isActive: subject.isActive
             });
         }
-    }, [subject]);
+    }, [subject, isOpen]);
 
     const handleClose = () => {
         onClose();
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: name === 'credits' || name === 'terms' || name === 'minAvgMarkToPass'
-                ? parseInt(value) || 0
-                : value
-        }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleNumberChange = (name: string, value: number | null) => {
+        setFormData(prev => ({ ...prev, [name]: value || 0 }));
+    };
 
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async () => {
         if (!subject) return;
 
         if (!formData.code || !formData.name) {
@@ -77,12 +63,20 @@ export default function EditSubjectModal({ isOpen, onClose, subject }: EditSubje
             return;
         }
 
-        const submitData = { ...formData };
+        if (formData.credits > 10) {
+            toast.error('Credits cannot exceed 10');
+            return;
+        }
+
+        if (formData.terms > 9) {
+            toast.error('Terms cannot exceed 9');
+            return;
+        }
 
         try {
             await updateSubject({
                 id: subject.id,
-                ...submitData
+                ...formData
             }).unwrap();
 
             toast.success(`Subject "${formData.name}" updated successfully!`);
@@ -94,113 +88,118 @@ export default function EditSubjectModal({ isOpen, onClose, subject }: EditSubje
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Edit Subject</DialogTitle>
-                    <DialogDescription>
-                        Update details for {subject?.name}.
-                    </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-code">Code <span className="text-red-500">*</span></Label>
-                            <Input
-                                id="edit-code"
-                                name="code"
-                                value={formData.code}
-                                onChange={handleChange}
-                                disabled={true}
-                                className="bg-gray-100"
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-name">Name <span className="text-red-500">*</span></Label>
-                            <Input
-                                id="edit-name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-credits">Credits</Label>
-                            <Input
-                                id="edit-credits"
-                                name="credits"
-                                type="number"
-                                min="0"
-                                value={formData.credits}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-terms">Terms</Label>
-                            <Input
-                                id="edit-terms"
-                                name="terms"
-                                type="number"
-                                min="1"
-                                value={formData.terms}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="edit-minAvgMarkToPass">Pass Mark</Label>
-                            <Input
-                                id="edit-minAvgMarkToPass"
-                                name="minAvgMarkToPass"
-                                type="number"
-                                min="0"
-                                max="10"
-                                step="0.1"
-                                value={formData.minAvgMarkToPass}
-                                onChange={handleChange}
-                                disabled={isLoading}
-                            />
-                        </div>
-                    </div>
-
+        <Modal
+            title="Edit Subject"
+            open={isOpen}
+            onCancel={handleClose}
+            width={800}
+            footer={[
+                <Button key="cancel" onClick={handleClose} disabled={isLoading}>
+                    Cancel
+                </Button>,
+                <Button
+                    key="submit"
+                    type="primary"
+                    loading={isLoading}
+                    onClick={handleSubmit}
+                    className="bg-[#F37022] hover:bg-[#d95f19] border-none"
+                >
+                    Save Changes
+                </Button>
+            ]}
+        >
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                        <Label htmlFor="edit-timeAllocation">Time Allocation</Label>
+                        <span className="block text-sm font-semibold text-gray-700">Code <span className="text-red-500">*</span></span>
                         <Input
-                            id="edit-timeAllocation"
-                            name="timeAllocation"
-                            value={formData.timeAllocation}
-                            onChange={handleChange}
-                            disabled={isLoading}
+                            id="edit-code"
+                            value={formData.code}
+                            disabled={true}
+                            size="large"
+                            className="bg-gray-50"
                         />
                     </div>
-
                     <div className="grid gap-2">
-                        <Label htmlFor="edit-description">Description</Label>
-                        <textarea
-                            id="edit-description"
-                            name="description"
-                            value={formData.description}
-                            onChange={handleChange}
+                        <span className="block text-sm font-semibold text-gray-700">Name <span className="text-red-500">*</span></span>
+                        <Input
+                            id="edit-name"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
                             disabled={isLoading}
-                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            size="large"
                         />
                     </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={isLoading} className="bg-[#F37022] hover:bg-[#d95f19] text-white">
-                            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Changes
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                    <div className="grid gap-2">
+                        <span className="block text-sm font-semibold text-gray-700">Credits</span>
+                        <InputNumber
+                            id="edit-credits"
+                            min={0}
+                            max={10}
+                            value={formData.credits}
+                            onChange={(val) => handleNumberChange('credits', val)}
+                            disabled={isLoading}
+                            size="large"
+                            className="w-full"
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <span className="block text-sm font-semibold text-gray-700">Terms</span>
+                        <InputNumber
+                            id="edit-terms"
+                            min={1}
+                            max={9}
+                            value={formData.terms}
+                            onChange={(val) => handleNumberChange('terms', val)}
+                            disabled={isLoading}
+                            size="large"
+                            className="w-full"
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <span className="block text-sm font-semibold text-gray-700">Pass Mark</span>
+                        <InputNumber
+                            id="edit-minAvgMarkToPass"
+                            min={0}
+                            max={10}
+                            step={0.1}
+                            value={formData.minAvgMarkToPass}
+                            onChange={(val) => handleNumberChange('minAvgMarkToPass', val)}
+                            disabled={isLoading}
+                            size="large"
+                            className="w-full"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid gap-2">
+                    <span className="block text-sm font-semibold text-gray-700">Time Allocation</span>
+                    <Input
+                        id="edit-timeAllocation"
+                        name="timeAllocation"
+                        value={formData.timeAllocation}
+                        onChange={handleInputChange}
+                        disabled={isLoading}
+                        size="large"
+                    />
+                </div>
+
+                <div className="grid gap-2">
+                    <span className="block text-sm font-semibold text-gray-700">Description</span>
+                    <TextArea
+                        id="edit-description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        disabled={isLoading}
+                        rows={4}
+                    />
+                </div>
+            </div>
+        </Modal>
     );
 }
