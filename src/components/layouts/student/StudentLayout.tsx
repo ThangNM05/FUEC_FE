@@ -17,14 +17,20 @@ function StudentLayout() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <StudentSidebar />
+    <div className="min-h-screen bg-slate-50/50 pb-24 relative overflow-x-hidden">
+      {/* Glassmorphism Background Blobs */}
+      <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] bg-[#F37022]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none"></div>
+      <div className="fixed bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] bg-[#0A1B3C]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none"></div>
 
-      {/* Main Content */}
-      <div className="transition-all duration-200">
-        <StudentHeader />
-        <div className="pt-4">
-          <Outlet />
+      <div className="relative z-10">
+        <StudentSidebar />
+
+        {/* Main Content */}
+        <div className="transition-all duration-200">
+          <StudentHeader />
+          <div className="pt-4">
+            <Outlet />
+          </div>
         </div>
       </div>
     </div>

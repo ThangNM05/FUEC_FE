@@ -46,8 +46,8 @@ const Dock = React.forwardRef<HTMLDivElement, DockProps>(
           onMouseMove={(e) => mouseX.set(e.pageX)}
           onMouseLeave={() => mouseX.set(Infinity)}
           className={cn(
-            "dock mx-auto flex h-16 items-end gap-2 rounded-2xl border bg-background/80 px-3 pb-2 backdrop-blur-md",
-            "shadow-foreground/5 shadow-lg",
+            "dock mx-auto flex h-16 items-end gap-2 rounded-2xl border border-white/40 bg-white/40 px-3 pb-2 backdrop-blur-xl",
+            "shadow-[0_8px_32px_0_rgba(10,27,60,0.15)]",
             className,
           )}
         >
@@ -102,7 +102,7 @@ const DockItem = React.forwardRef<HTMLDivElement, DockItemProps>(
         style={{ width, height: width }}
         onClick={onClick}
         className={cn(
-          "dock-item group relative flex aspect-square cursor-pointer items-center justify-center rounded-xl bg-muted transition-colors hover:bg-muted/80",
+          "dock-item group relative flex aspect-square cursor-pointer items-center justify-center rounded-xl bg-white/50 transition-all hover:bg-white/80 hover:shadow-sm border border-white/20 hover:border-white/50",
           className,
         )}
       >
@@ -147,13 +147,13 @@ const DockLabel = React.forwardRef<HTMLDivElement, DockLabelProps>(
       <div
         ref={ref}
         className={cn(
-          "dock-label pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-background text-xs opacity-0 transition-opacity group-hover:opacity-100",
+          "dock-label pointer-events-none absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-white/80 border border-white/40 px-2 py-1 text-[#0A1B3C] font-medium text-xs opacity-0 transition-opacity group-hover:opacity-100 backdrop-blur-md shadow-md",
           className,
         )}
       >
         {children}
         {/* Tooltip arrow */}
-        <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-foreground" />
+        <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-white border-b border-r border-white/40 shadow-sm" />
       </div>
     );
   },
