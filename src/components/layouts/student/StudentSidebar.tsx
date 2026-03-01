@@ -6,7 +6,6 @@ import {
 import { useDispatch } from 'react-redux';
 import { logout } from '../../../redux/authSlice';
 import { Dock, DockIcon, DockItem, DockLabel, DockSeparator } from "../../ui/dock";
-import { useIsMobile } from '../../../hooks/use-mobile';
 
 interface MenuItem {
   id: string;
@@ -19,7 +18,6 @@ function StudentSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const isMobile = useIsMobile();
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/student' },
@@ -36,8 +34,8 @@ function StudentSidebar() {
   };
 
   return (
-    <div className="fixed bottom-4 left-1/2 max-w-full -translate-x-1/2 z-50 pointer-events-none px-2 sm:px-4">
-      <Dock className="pointer-events-auto" iconSize={isMobile ? 32 : 48}>
+    <div className="fixed bottom-4 left-1/2 max-w-full -translate-x-1/2 z-50 pointer-events-none px-4">
+      <Dock className="pointer-events-auto">
         {menuItems.map(item => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;

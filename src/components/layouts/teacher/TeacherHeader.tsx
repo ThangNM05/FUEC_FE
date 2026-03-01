@@ -15,7 +15,7 @@ function TeacherHeader({ className = '' }: TeacherHeaderProps) {
     const avatarInitial = displayName.charAt(0).toUpperCase();
 
     return (
-        <div className={`h-14 bg-white border-b border-gray-200 flex items-center justify-end px-4 md:px-6 gap-4 ${className}`}>
+        <div className={`h-14 bg-white/40 backdrop-blur-xl border-b border-white/40 flex items-center justify-end px-4 md:px-6 gap-4 shadow-sm z-40 relative ${className}`}>
             {/* Notification Bell */}
             <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <Bell className="w-5 h-5 text-gray-600" />

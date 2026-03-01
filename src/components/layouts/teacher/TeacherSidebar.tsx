@@ -1,12 +1,11 @@
 import { useNavigate, useLocation } from 'react-router';
 import {
     LayoutDashboard, BookOpen, Calendar, BarChart3,
-    User, LogOut, MessageSquare
+    User, LogOut, MessageSquare, Database
 } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../../redux/authSlice';
 import { Dock, DockIcon, DockItem, DockLabel, DockSeparator } from "../../ui/dock";
-import { useIsMobile } from '../../../hooks/use-mobile';
 
 interface MenuItem {
     id: string;
@@ -19,11 +18,11 @@ function TeacherSidebar() {
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
-    const isMobile = useIsMobile();
 
     const menuItems: MenuItem[] = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/teacher' },
         { id: 'classes', label: 'My Classes', icon: BookOpen, path: '/teacher/classrooms' },
+        { id: 'question-banks', label: 'Question Banks', icon: Database, path: '/teacher/question-banks' },
         { id: 'schedule', label: 'Schedule', icon: Calendar, path: '/teacher/schedule' },
         { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/teacher/messages' },
         { id: 'reports', label: 'Reports', icon: BarChart3, path: '/teacher/reports' }
@@ -34,8 +33,8 @@ function TeacherSidebar() {
     };
 
     return (
-        <div className="fixed bottom-4 left-1/2 max-w-full -translate-x-1/2 z-50 pointer-events-none px-2 sm:px-4">
-            <Dock className="pointer-events-auto" iconSize={isMobile ? 36 : 48}>
+        <div className="fixed bottom-4 left-1/2 max-w-full -translate-x-1/2 z-50 pointer-events-none px-4">
+            <Dock className="pointer-events-auto">
                 {menuItems.map(item => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.path;

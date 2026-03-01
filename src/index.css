@@ -337,3 +337,31 @@ html {
     transition-duration: 0.01ms !important;
   }
 }
+/* Liquid Glass Override */
+.bg-liquid-gradient {
+  background: linear-gradient(120deg, #F37022, #FFB347, #FFE8D6, #FF9B42);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+}
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.glass-panel {
+  background-color: rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(8px);
+}
+
+.glass-header {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
+  backdrop-filter: blur(12px);
+}
+
+.glass-app .bg-white {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
