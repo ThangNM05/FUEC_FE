@@ -143,7 +143,7 @@ function TeacherDashboard() {
                                         <div
                                             key={cls.id}
                                             className="px-5 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
-                                            onClick={() => navigate('/teacher/classrooms')}
+                                            onClick={() => navigate(`/teacher/course-details/${cls.name}`)}
                                         >
                                             <div>
                                                 <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
@@ -198,7 +198,7 @@ function TeacherDashboard() {
                                                 <div
                                                     key={cls.id}
                                                     className="flex items-center px-4 py-3 pl-8 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                                    onClick={() => navigate('/teacher/classrooms')}
+                                                    onClick={() => navigate(`/teacher/course-details/${cls.name}`)}
                                                 >
                                                     <div className="flex-1">
                                                         <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>

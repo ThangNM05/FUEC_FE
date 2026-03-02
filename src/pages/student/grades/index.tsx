@@ -163,7 +163,7 @@ function StudentGrades() {
       {/* Grade Distribution */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="text-lg font-bold text-[#0A1B3C] mb-5">Grade Distribution</h2>
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
           {gradeDistribution.map(item => (
             <div key={item.grade} className="text-center">
               <div className="text-3xl font-bold text-orange-600 mb-2">{item.count}</div>

@@ -46,6 +46,9 @@ import AssignmentSubmission from './pages/student/assignment-submission';
 import TeacherAssignmentReview from './pages/teacher/assignment-review';
 import TeacherCourseDetails from './pages/teacher/course-details';
 import AssignmentSubmissionsList from './pages/teacher/assignment-submissions';
+import TeacherQuestionBanks from './pages/teacher/question-banks';
+import TeacherQuestionBankDetail from './pages/teacher/question-banks/detail';
+import CreateExam from './pages/teacher/create-exam';
 import ProfilePage from './pages/common/ProfilePage';
 import AdminMajors from './pages/admin/settings/majors';
 
@@ -98,6 +101,9 @@ function Router() {
         <Route path="/teacher/classrooms" element={<TeacherClassrooms />} />
         <Route path="/teacher/schedule" element={<TeacherSchedule />} />
         <Route path="/teacher/messages" element={<TeacherMessages />} />
+        <Route path="/teacher/question-banks" element={<TeacherQuestionBanks />} />
+        <Route path="/teacher/question-banks/:subjectId" element={<TeacherQuestionBankDetail />} />
+        <Route path="/teacher/create-exam" element={<CreateExam />} />
         <Route path="/teacher/course-details/:courseId" element={<TeacherCourseDetails />} />
         <Route path="/teacher/assignment/:assignmentId/submissions" element={<AssignmentSubmissionsList />} />
         <Route path="/teacher/assignment-review/:submissionId" element={<TeacherAssignmentReview />} />

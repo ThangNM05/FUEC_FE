@@ -124,7 +124,7 @@ function StudentSchedule() {
     <div className="p-4 md:p-6 animate-fadeIn">
       {/* Header */}
       <div className="mb-6 md:mb-8">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-2">
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Weekly Schedule</h1>
 
           {/* Week Navigation */}

@@ -30,32 +30,40 @@ function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} isMobile={isMobile} />
+    <div className="min-h-screen bg-slate-50/50 relative overflow-x-hidden">
+      {/* Glassmorphism Background Blobs */}
+      <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] bg-[#F37022]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none z-0"></div>
+      <div className="fixed bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] bg-[#0A1B3C]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none z-0"></div>
 
-      {/* Mobile Header */}
-      {isMobile && !isSidebarOpen && (
-        <div className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 z-30 flex items-center px-4">
-          <button
-            onClick={toggleSidebar}
-            className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <Menu className="w-5 h-5 text-gray-700" />
-          </button>
-          <span className="ml-3 font-semibold text-[#0A1B3C]">EduConnect</span>
-        </div>
-      )}
+      <div className="relative z-10 w-full min-h-screen flex flex-col">
+        <AdminSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} isMobile={isMobile} />
 
-      {/* Main Content */}
-      <div className={`transition-all duration-200 ${isMobile
+        {/* Mobile Header */}
+        {isMobile && !isSidebarOpen && (
+          <div className="fixed top-0 left-0 right-0 h-14 bg-white/40 backdrop-blur-xl border-b border-white/40 z-30 flex items-center px-4 shadow-sm">
+            <button
+              onClick={toggleSidebar}
+              className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/60 transition-colors"
+            >
+              <Menu className="w-5 h-5 text-gray-700" />
+            </button>
+            <span className="ml-3 font-semibold text-[#0A1B3C]">EduConnect</span>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className={`transition-all duration-200 relative flex-1 ${isMobile
           ? 'ml-0 pt-14'
           : isSidebarOpen ? 'ml-64' : 'ml-20'
-        }`}>
-        {/* Admin Header - Only on desktop */}
-        {!isMobile && (
-          <AdminHeader />
-        )}
-        <Outlet />
+          }`}>
+          {/* Admin Header - Only on desktop */}
+          {!isMobile && (
+            <AdminHeader />
+          )}
+          <div className="pt-4 px-4 pb-24">
+            <Outlet />
+          </div>
+        </div>
       </div>
     </div>
   );
