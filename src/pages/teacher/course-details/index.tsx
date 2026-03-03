@@ -188,6 +188,15 @@ function TeacherCourseDetails() {
                             </span>
                         </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => navigate(`/teacher/create-exam?course=${courseId}`)}
+                            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#F37022] text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-[#d95f19] transition-all active:scale-95 shadow-md shadow-orange-200"
+                        >
+                            <ClipboardCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <span>Create Exam</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
