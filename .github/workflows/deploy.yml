@@ -1,17 +1,37 @@
-name: Deploy Frontend to ECR and ECS
+name: Deploy Frontend to S3 + CloudFront
 
 on:
   push:
     branches:
       - develop
 
+env:
+  VERSION: v1.0.${{ github.run_number }}
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build React app
+        env:
+          VITE_API_URL: https://fuec.site/api/v1
+          VITE_GOOGLE_CLIENT_ID: 843091633958-ehu83jknrt3paisrelcpp2v95aj3a4ae.apps.googleusercontent.com
+        run: |
+          echo "Building Frontend ${{ env.VERSION }}"
+          npm run build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -20,27 +40,30 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: fuec/dev-fe
-          IMAGE_TAG: latest
-          VITE_API_URL: https://fuec.site/api/v1
-          VITE_GOOGLE_CLIENT_ID: 843091633958-ehu83jknrt3paisrelcpp2v95aj3a4ae.apps.googleusercontent.com
+      - name: Deploy to S3
         run: |
-          docker build \
-            --build-arg VITE_API_URL=$VITE_API_URL \
-            --build-arg VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "Deploying ${{ env.VERSION }} to S3..."
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
 
-      - name: Notify Jenkins to Deploy
+      - name: Invalidate CloudFront cache
         run: |
-          # Gọi webhook để báo cho Jenkins biết đã build xong
-          # Bạn cần cài đặt JENKINS_USER và JENKINS_TOKEN trong GitHub Secrets
-          # Đảm bảo server Jenkins của bạn đang ONLINE (Running)
-          curl -I -u ${{ secrets.JENKINS_USER }}:${{ secrets.JENKINS_TOKEN }} "https://jenkins.fuec.site/job/FUEC-FE-Deploy/build"
+          echo "Invalidating CloudFront cache..."
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      - name: Create GitHub Release Tag
+        run: |
+          echo "Tagging release fe-${{ env.VERSION }}"
+          git tag fe-${{ env.VERSION }}
+          git push origin fe-${{ env.VERSION }}
+
+      - name: Summary
+        run: |
+          echo "## Frontend Deploy Complete" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ env.VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| S3 Bucket | \`${{ secrets.S3_BUCKET_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| CloudFront | \`${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| URL | [https://fuec.site](https://fuec.site) |" >> $GITHUB_STEP_SUMMARY
