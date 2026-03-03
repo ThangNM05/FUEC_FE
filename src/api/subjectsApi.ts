@@ -51,6 +51,13 @@ export const subjectsApi = baseApi.injectEndpoints({
             providesTags: (_result, _error, id) => [{ type: 'Subjects', id }],
         }),
 
+        // GET: Fetch by Code (exact match)
+        getSubjectByCode: builder.query<Subject, string>({
+            query: (code) => `/Subjects/code/${encodeURIComponent(code)}`,
+            transformResponse: (response: any) => response?.result || response,
+            providesTags: (_result, _error, code) => [{ type: 'Subjects', id: `code-${code}` }],
+        }),
+
         // POST: Create
         createSubject: builder.mutation<Subject, CreateSubjectRequest>({
             query: (subject) => ({
@@ -125,6 +132,7 @@ export const subjectsApi = baseApi.injectEndpoints({
 export const {
     useGetSubjectsQuery,
     useGetSubjectByIdQuery,
+    useGetSubjectByCodeQuery,
     useCreateSubjectMutation,
     useUpdateSubjectMutation,
     useDeleteSubjectMutation,

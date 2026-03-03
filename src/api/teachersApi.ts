@@ -6,7 +6,8 @@ import type {
     PaginatedResponse,
     Teacher,
     UpdateTeacherRequest,
-} from '../types/teacher.types.ts';
+    TeachingSubjectsResponse
+} from '../types/teacher.types';
 
 /**
  * Teachers API - RTK Query service
@@ -153,6 +154,25 @@ export const teachersApi = baseApi.injectEndpoints({
             },
             invalidatesTags: ['Teachers'],
         }),
+
+        // GET: Fetch teaching subjects for the authenticated teacher
+        getTeachingSubjects: builder.query<TeachingSubjectsResponse, { semesterId?: string }>({
+            query: ({ semesterId } = {}) => {
+                let url = `/teachers/teaching-subjects`;
+                if (semesterId) {
+                    url += `?semesterId=${semesterId}`;
+                }
+                return url;
+            },
+            transformResponse: (response: any) => {
+                let data = response?.result || response;
+                if (data && data.subjects) {
+                    data.subjects = data.subjects.map((s: any) => ({ ...s, id: s.subjectId }));
+                }
+                return data;
+            },
+            providesTags: ['TeachingSubjects'],
+        }),
     }),
 });
 
@@ -163,4 +183,5 @@ export const {
     useUpdateTeacherMutation,
     useDeleteTeacherMutation,
     useImportTeachersMutation,
+    useGetTeachingSubjectsQuery,
 } = teachersApi;
