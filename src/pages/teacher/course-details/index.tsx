@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
     ChevronRight, Users, FileText, Calendar, ClipboardCheck, Plus,
-    ChevronDown, ChevronUp, Lock, CheckCircle, Clock
+    ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery } from '@/api/classDetailsApi';
 
@@ -37,8 +37,6 @@ interface Slot {
     questions: Question[];
     assignments: SlotAssignment[];
     expanded: boolean;
-    status: 'locked' | 'completed' | 'pending' | 'urgent' | 'overdue';
-    remaining?: string;
 }
 
 function TeacherCourseDetails() {
@@ -109,23 +107,7 @@ function TeacherCourseDetails() {
         return 'text-red-600';
     };
 
-    // Generate 20 slots with realistic data and status
-    const getSlotStatus = (slotId: number): 'locked' | 'completed' | 'pending' | 'urgent' | 'overdue' => {
-        if (slotId <= 5) return 'completed';
-        if (slotId === 6) return 'overdue';
-        if (slotId <= 8) return 'urgent';
-        if (slotId <= 10) return 'pending';
-        return 'locked';
-    };
-
-    const getRemaining = (slotId: number): string | undefined => {
-        if (slotId === 6) return 'Overdue 2 days';
-        if (slotId === 7) return '23 hours';
-        if (slotId === 8) return '4 hours 30 min';
-        if (slotId === 9) return '2 days';
-        if (slotId === 10) return '5 days';
-        return undefined;
-    };
+    // Removed mock slot status generation since teacher slots do not need time-based color coding
 
     const { data: slotData, isLoading: isLoadingSlots } = useGetClassSubjectSlotsQuery(courseId || '', {
         skip: !courseId,
@@ -138,14 +120,24 @@ function TeacherCourseDetails() {
             setSlots(slotData.slots.map((s: any, i: number) => ({
                 id: s.id,
                 title: `Slot ${s.slotIndex}`,
-                startTime: new Date(s.date).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
-                endTime: new Date(s.endDate).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+                startTime: new Date(s.date).toLocaleString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }),
+                endTime: new Date(s.endDate).toLocaleString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }),
                 topics: s.sessions?.map((session: any) => session.topic) || [],
                 questions: [], // mock for now
                 assignments: [], // mock for now
-                expanded: i === 0,
-                status: getSlotStatus(i + 1),
-                remaining: getRemaining(i + 1)
+                expanded: i === 0
             })));
         }
     }, [slotData]);
@@ -181,16 +173,16 @@ function TeacherCourseDetails() {
                     <div>
                         <div className="flex items-center gap-3 mb-2">
                             <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">{course.code}</h1>
-                            <span className="px-3 py-1 bg-orange-100 text-[#F37022] text-sm font-semibold rounded-full">
+                            {/* <span className="px-3 py-1 bg-orange-100 text-[#F37022] text-sm font-semibold rounded-full">
                                 {course.room}
-                            </span>
+                            </span> */}
                         </div>
                         <p className="text-lg text-gray-700 mb-2">{course.name}</p>
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                            <span className="flex items-center gap-1">
+                            {/* <span className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
                                 {course.schedule}
-                            </span>
+                            </span> */}
                             <span className="flex items-center gap-1">
                                 <Users className="w-4 h-4" />
                                 {course.enrolledStudents} students
@@ -248,63 +240,23 @@ function TeacherCourseDetails() {
                                 {slots
                                     .slice((currentPage - 1) * SLOTS_PER_PAGE, currentPage * SLOTS_PER_PAGE)
                                     .map(slot => (
-                                        <div key={slot.id} className={`border rounded-lg overflow-hidden ${slot.status === 'locked' ? 'border-gray-300 opacity-60' :
-                                            slot.status === 'overdue' ? 'border-red-400' :
-                                                slot.status === 'urgent' ? 'border-orange-300' :
-                                                    slot.status === 'completed' ? 'border-green-300' :
-                                                        'border-gray-200'
-                                            }`}>
+                                        <div key={slot.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
                                             {/* Slot Header */}
-                                            <div className={`p-4 ${slot.status === 'locked' ? 'bg-gray-100' :
-                                                slot.status === 'overdue' ? 'bg-red-50' :
-                                                    slot.status === 'urgent' ? 'bg-orange-50' :
-                                                        slot.status === 'completed' ? 'bg-green-50' :
-                                                            'bg-gray-50'
-                                                }`}>
+                                            <div className="p-4 bg-gray-50 border-b border-gray-100">
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`px-3 py-1 text-sm font-semibold rounded-full ${slot.status === 'locked' ? 'bg-gray-200 text-gray-500' :
-                                                            slot.status === 'overdue' ? 'bg-red-100 text-red-700' :
-                                                                slot.status === 'urgent' ? 'bg-orange-100 text-orange-700' :
-                                                                    slot.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                                        'bg-blue-100 text-blue-700'
-                                                            }`}>
+                                                        <span className="px-3 py-1 text-sm font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                                                             {slot.title}
                                                         </span>
-                                                        {slot.status === 'locked' && (
-                                                            <Lock className="w-4 h-4 text-gray-400" />
-                                                        )}
-                                                        {slot.status === 'completed' && (
-                                                            <CheckCircle className="w-4 h-4 text-green-500" />
-                                                        )}
-                                                        {slot.status === 'urgent' && (
-                                                            <>
-                                                                <Clock className="w-4 h-4 text-orange-500" />
-                                                                {slot.remaining && (
-                                                                    <span className="text-xs text-orange-600 font-medium">{slot.remaining} left</span>
-                                                                )}
-                                                            </>
-                                                        )}
-                                                        {slot.status === 'pending' && slot.remaining && (
-                                                            <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-                                                                {slot.remaining} left
-                                                            </span>
-                                                        )}
-                                                        {slot.status === 'overdue' && (
-                                                            <span className="text-xs text-red-600 font-bold uppercase border border-red-200 bg-red-50 px-2 py-0.5 rounded">
-                                                                OVERDUE
-                                                            </span>
-                                                        )}
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         {/* Edit button for teachers */}
-                                                        <button className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs font-medium">
+                                                        <button className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors text-xs font-medium">
                                                             Edit Slot
                                                         </button>
                                                         <button
                                                             onClick={() => toggleSlot(slot.id)}
                                                             className="p-1 hover:bg-gray-200 rounded transition-colors"
-                                                            disabled={slot.status === 'locked'}
                                                         >
                                                             {slot.expanded ? (
                                                                 <ChevronUp className="w-5 h-5 text-gray-600" />

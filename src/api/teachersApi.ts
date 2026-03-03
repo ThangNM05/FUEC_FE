@@ -168,7 +168,7 @@ export const teachersApi = baseApi.injectEndpoints({
         }),
 
         // GET: Fetch teaching subjects for the authenticated teacher
-        getTeachingSubjects: builder.query<TeachingSubjectsResponse, { semesterId?: string }>({
+        getAuthTeacherTeachingSubjects: builder.query<TeachingSubjectsResponse, { semesterId?: string }>({
             query: ({ semesterId } = {}) => {
                 let url = `/teachers/teaching-subjects`;
                 if (semesterId) {
@@ -196,5 +196,5 @@ export const {
     useDeleteTeacherMutation,
     useGetTeachingSubjectsQuery,
     useImportTeachersMutation,
-    useGetTeachingSubjectsQuery,
+    useGetAuthTeacherTeachingSubjectsQuery,
 } = teachersApi;
