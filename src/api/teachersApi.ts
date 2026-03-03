@@ -110,6 +110,18 @@ export const teachersApi = baseApi.injectEndpoints({
             invalidatesTags: (_result, _error, id) => [{ type: 'Teachers', id }, 'Teachers'],
         }),
 
+        // GET: Fetch teaching subjects
+        getTeachingSubjects: builder.query<any, { id: string; semesterId: string }>({
+            query: ({ id, semesterId }) => `/Teachers/teaching-subjects?teacherId=${id}&semesterId=${semesterId}`,
+            providesTags: ['Teachers'],
+            transformResponse: (response: any) => {
+                if (response?.result) {
+                    return response.result;
+                }
+                return response;
+            },
+        }),
+
         // POST: Import teachers from Excel file
         importTeachers: builder.mutation<ImportTeachersResponse, File>({
             query: (file) => {
@@ -182,6 +194,7 @@ export const {
     useCreateTeacherMutation,
     useUpdateTeacherMutation,
     useDeleteTeacherMutation,
+    useGetTeachingSubjectsQuery,
     useImportTeachersMutation,
     useGetTeachingSubjectsQuery,
 } = teachersApi;

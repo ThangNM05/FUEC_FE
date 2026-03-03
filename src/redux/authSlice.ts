@@ -3,9 +3,11 @@ import type { RootState } from './store';
 
 interface User {
     id: string;
+    entityId?: string;
     email: string;
     fullName: string;
     picture?: string;
+    avatarUrl?: string;
     role?: string;
 }
 

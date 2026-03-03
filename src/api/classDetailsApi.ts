@@ -1,9 +1,9 @@
 import { baseApi } from '@/api/baseApi';
-import type { 
-    ClassSubjectTeacher, 
-    StudentClass, 
+import type {
+    ClassSubjectTeacher,
+    StudentClass,
     PaginatedResponse,
-    CreateClassSubjectTeacherRequest 
+    CreateClassSubjectTeacherRequest
 } from '../types/class.types';
 
 export interface ClassSubject {
@@ -26,6 +26,15 @@ export const classDetailsApi = baseApi.injectEndpoints({
                 return url;
             },
             transformResponse: (response: any) => response?.result || response,
+        }),
+        getClassSubjectById: builder.query<any, string>({
+            query: (id) => `/ClassSubjects/${id}`,
+            transformResponse: (response: any) => response?.result || response,
+        }),
+        getClassSubjectSlots: builder.query<any, string>({
+            query: (id) => `/Slots/class-subject/${id}`,
+            transformResponse: (response: any) => response?.result || response,
+            providesTags: ['Slots' as any],
         }),
 
         // Class Subject Teachers
@@ -85,6 +94,8 @@ export const classDetailsApi = baseApi.injectEndpoints({
 
 export const {
     useGetClassSubjectsQuery,
+    useGetClassSubjectByIdQuery,
+    useGetClassSubjectSlotsQuery,
     useGetClassSubjectTeachersQuery,
     useAddClassSubjectTeacherMutation,
     useDeleteClassSubjectTeacherMutation,

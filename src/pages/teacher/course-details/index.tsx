@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
     ChevronRight, Users, FileText, Calendar, ClipboardCheck, Plus,
     ChevronDown, ChevronUp, Lock, CheckCircle, Clock
 } from 'lucide-react';
+import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery } from '@/api/classDetailsApi';
 
 interface Assignment {
     id: string;
@@ -28,7 +29,7 @@ interface SlotAssignment {
 }
 
 interface Slot {
-    id: number;
+    id: string;
     title: string;
     startTime: string;
     endTime: string;
@@ -49,13 +50,17 @@ function TeacherCourseDetails() {
     const [currentPage, setCurrentPage] = useState(1);
     const SLOTS_PER_PAGE = 10;
 
-    // Mock course data
+    const { data: classSubject, isLoading } = useGetClassSubjectByIdQuery(courseId || '', {
+        skip: !courseId,
+    });
+
+    // Mock course data combined with real DB data if available
     const course = {
         id: courseId || 'SE1801',
-        name: 'Software Engineering',
-        code: 'SE1801',
-        room: 'Room 301',
-        schedule: 'Mon, Wed 8:00 - 10:00',
+        name: classSubject?.subjectName || 'Loading...',
+        code: classSubject ? `${classSubject.subjectCode} - ${classSubject.classCode}` : 'SE1801',
+        room: 'TBA',
+        schedule: 'TBA',
         totalStudents: 45,
         enrolledStudents: 45,
     };
@@ -122,34 +127,38 @@ function TeacherCourseDetails() {
         return undefined;
     };
 
-    const [slots, setSlots] = useState<Slot[]>(
-        Array.from({ length: 20 }, (_, i) => ({
-            id: i + 1,
-            title: `Slot ${i + 1}`,
-            startTime: '12:30 10/09/2025',
-            endTime: '14:45 10/09/2025',
-            topics: i === 0
-                ? ['Mobile Development Overview', 'Android Introduction', 'Android Studio', 'Android Application Structure']
-                : [`Topic ${i * 3 + 1}`, `Topic ${i * 3 + 2}`, `Topic ${i * 3 + 3}`],
-            questions: [
-                { id: 1, title: 'What is android?', status: 'finished' as const },
-                { id: 2, title: 'What is Android Structure?', status: 'finished' as const },
-                { id: 3, title: 'Explain android activity life cycle?', status: 'custom' as const }
-            ],
-            assignments: [
-                { id: 1, title: 'Submit Demo Hello World!' }
-            ],
-            expanded: false,
-            status: getSlotStatus(i + 1),
-            remaining: getRemaining(i + 1)
-        }))
-    );
+    const { data: slotData, isLoading: isLoadingSlots } = useGetClassSubjectSlotsQuery(courseId || '', {
+        skip: !courseId,
+    });
 
-    const toggleSlot = (slotId: number) => {
+    const [slots, setSlots] = useState<Slot[]>([]);
+
+    useEffect(() => {
+        if (slotData && slotData.slots) {
+            setSlots(slotData.slots.map((s: any, i: number) => ({
+                id: s.id,
+                title: `Slot ${s.slotIndex}`,
+                startTime: new Date(s.date).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+                endTime: new Date(s.endDate).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+                topics: s.sessions?.map((session: any) => session.topic) || [],
+                questions: [], // mock for now
+                assignments: [], // mock for now
+                expanded: i === 0,
+                status: getSlotStatus(i + 1),
+                remaining: getRemaining(i + 1)
+            })));
+        }
+    }, [slotData]);
+
+    const toggleSlot = (slotId: string) => {
         setSlots(slots.map(slot =>
             slot.id === slotId ? { ...slot, expanded: !slot.expanded } : slot
         ));
     };
+
+    if (isLoading || isLoadingSlots) {
+        return <div className="p-6 text-center animate-pulse">Loading course data...</div>;
+    }
 
     return (
         <div className="p-4 md:p-6 animate-fadeIn">
