@@ -74,6 +74,16 @@ export const semestersApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['Semesters'],
         }),
+        getDefaultSemester: builder.query<Semester, void>({
+            query: () => '/Semesters/default',
+            providesTags: ['Semesters'],
+            transformResponse: (response: any) => {
+                if (response?.result) {
+                    return response.result;
+                }
+                return response;
+            }
+        }),
     }),
 });
 
@@ -83,4 +93,5 @@ export const {
     useCreateSemesterMutation,
     useUpdateSemesterMutation,
     useDeleteSemesterMutation,
+    useGetDefaultSemesterQuery,
 } = semestersApi;

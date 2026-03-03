@@ -1,52 +1,68 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronRight, ChevronDown, Users, Search, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { useSelector } from 'react-redux';
+import type { RootState } from '@/redux/store';
+import { useGetDefaultSemesterQuery, useGetSemestersQuery } from '@/api/semestersApi';
+import { useGetTeachingSubjectsQuery } from '@/api/teachersApi';
+
+interface ClassItem {
+    id: string;
+    name: string;
+    students: number;
+    room: string;
+    schedule: string;
+}
+
+interface CourseItem {
+    id: string;
+    code: string;
+    name: string;
+    term: string;
+    totalStudents: number;
+    pendingGrading: number;
+    classes: ClassItem[];
+}
 
 function TeacherClassrooms() {
     const navigate = useNavigate();
+    const user = useSelector((state: RootState) => state.auth.user);
     const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
     const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
-    const [semester, setSemester] = useState('SPRING2025');
+    const [semester, setSemester] = useState('');
 
-    // Courses with multiple classes
-    const courses = [
-        {
-            id: 1,
-            code: 'SWE101',
-            name: 'Software Engineering',
-            term: 'Spring 2025',
-            totalStudents: 125,
-            pendingGrading: 15,
-            classes: [
-                { id: 'a', name: 'SE1801', students: 42, room: 'Room 301', schedule: 'Mon, Wed 9:00 AM' },
-                { id: 'b', name: 'SE1802', students: 45, room: 'Room 302', schedule: 'Mon, Wed 2:00 PM' },
-                { id: 'c', name: 'SE1803', students: 38, room: 'Room 303', schedule: 'Tue, Thu 9:00 AM' },
-            ]
-        },
-        {
-            id: 2,
-            code: 'DBS202',
-            name: 'Database Systems',
-            term: 'Spring 2025',
-            totalStudents: 80,
-            pendingGrading: 8,
-            classes: [
-                { id: 'a', name: 'DB1801', students: 40, room: 'Room 205', schedule: 'Tue, Thu 2:00 PM' },
-                { id: 'b', name: 'DB1802', students: 40, room: 'Room 206', schedule: 'Wed, Fri 9:00 AM' },
-            ]
-        },
-        {
-            id: 3,
-            code: 'WEB301',
-            name: 'Web Development',
-            term: 'Spring 2025',
-            totalStudents: 42,
-            pendingGrading: 0,
-            classes: [
-                { id: 'a', name: 'WE1801', students: 42, room: 'Room 402', schedule: 'Thu, Sat 9:00 AM' },
-            ]
-        },
-    ];
+    const { data: defaultSemester } = useGetDefaultSemesterQuery();
+    const { data: semestersData } = useGetSemestersQuery({ page: 1, pageSize: 100 });
+    const semestersList = semestersData?.items || [];
+
+    useEffect(() => {
+        if (defaultSemester?.id && !semester) {
+            setSemester(defaultSemester.id);
+        }
+    }, [defaultSemester, semester]);
+
+    const { data: teachingData, isLoading: isTeachingLoading } = useGetTeachingSubjectsQuery(
+        { id: user?.entityId || '', semesterId: semester },
+        { skip: !user?.entityId || !semester }
+    );
+
+    // Courses with multiple classes fetched from API
+    const courses: CourseItem[] = teachingData?.subjects?.map((sub: any) => ({
+        id: sub.subjectId,
+        code: sub.subjectCode,
+        name: sub.subjectName,
+        term: teachingData.semesterCode,
+        totalStudents: sub.totalStudents,
+        pendingGrading: 0,
+        classes: sub.classes?.map((cls: any) => ({
+            id: cls.classSubjectId || cls.classId,
+            name: cls.classCode,
+            students: cls.studentCount,
+            room: 'TBA', // or maybe from API if available
+            schedule: 'TBA',
+        })) || []
+    })) || [];
+
 
     return (
         <div className="flex">
@@ -61,9 +77,12 @@ function TeacherClassrooms() {
                             onChange={(e) => setSemester(e.target.value)}
                             className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-[#0A1B3C] focus:border-[#F37022] outline-none"
                         >
-                            <option value="SPRING2025">Spring 2025</option>
-                            <option value="FALL2024">Fall 2024</option>
-                            <option value="SUMMER2024">Summer 2024</option>
+                            {semestersList.map((sem) => (
+                                <option key={sem.id} value={sem.id}>{sem.semesterCode}</option>
+                            ))}
+                            {semestersList.length === 0 && defaultSemester && (
+                                <option value={defaultSemester.id}>{defaultSemester.semesterCode}</option>
+                            )}
                         </select>
                     </div>
                 </div>
@@ -130,7 +149,7 @@ function TeacherClassrooms() {
                                         <div
                                             key={cls.id}
                                             className="px-5 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
-                                            onClick={() => navigate(`/teacher/course-details/${cls.name}`)}
+                                            onClick={() => navigate(`/teacher/course-details/${cls.id}`)}
                                         >
                                             <div>
                                                 <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
@@ -185,7 +204,7 @@ function TeacherClassrooms() {
                                                 <div
                                                     key={cls.id}
                                                     className="flex items-center px-4 py-3 pl-8 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
-                                                    onClick={() => navigate(`/teacher/course-details/${cls.name}`)}
+                                                    onClick={() => navigate(`/teacher/course-details/${cls.id}`)}
                                                 >
                                                     <div className="flex-1">
                                                         <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>

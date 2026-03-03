@@ -11,6 +11,8 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
@@ -29,6 +31,7 @@ jobs:
         env:
           VITE_API_URL: https://fuec.site/api/v1
           VITE_GOOGLE_CLIENT_ID: 843091633958-ehu83jknrt3paisrelcpp2v95aj3a4ae.apps.googleusercontent.com
+          NODE_ENV: production
         run: |
           echo "Building Frontend ${{ env.VERSION }}"
           npm run build
@@ -40,17 +43,27 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Deploy to S3
+      - name: Deploy to S3 (with smart caching headers)
         run: |
           echo "Deploying ${{ env.VERSION }} to S3..."
-          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
 
-      - name: Invalidate CloudFront cache
+          # Assets có hash trong tên → cache lâu (1 năm)
+          aws s3 sync dist/assets/ s3://${{ secrets.S3_BUCKET_NAME }}/assets/ \
+            --cache-control "public, max-age=31536000, immutable" \
+            --delete
+
+          # index.html + các file gốc → không cache (luôn lấy bản mới)
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --exclude "assets/*" \
+            --delete
+
+      - name: Invalidate CloudFront cache (chỉ index.html)
         run: |
           echo "Invalidating CloudFront cache..."
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*"
+            --paths "/index.html" "/"
 
       - name: Create GitHub Release Tag
         run: |

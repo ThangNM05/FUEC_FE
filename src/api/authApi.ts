@@ -8,9 +8,11 @@ export interface GoogleLoginResponse {
     accessToken: string;
     user: {
         id: string;
+        entityId?: string;
         email: string;
         fullName: string;
         picture?: string;
+        avatarUrl?: string;
         role?: string;
     };
 }
