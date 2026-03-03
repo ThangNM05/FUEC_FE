@@ -6,7 +6,8 @@ import StudentLayout from './components/layouts/student/StudentLayout';
 import AdminDashboard from './pages/admin';
 import AdminClasses from './pages/admin/classes';
 import AdminCourses from './pages/admin/courses';
-import AdminDatabase from './pages/admin/database';
+import AdminQuestionBanks from './pages/admin/question-banks';
+import AdminQuestionBankDetail from './pages/admin/question-banks/detail';
 import AdminExams from './pages/admin/exams';
 import AdminSchedule from './pages/admin/schedule';
 import AdminStudents from './pages/admin/students';
@@ -65,7 +66,8 @@ function Router() {
         <Route path="/admin/classes" element={<AdminClasses />} />
         <Route path="/admin/teachers" element={<AdminTeachers />} />
         <Route path="/admin/schedule" element={<AdminSchedule />} />
-        <Route path="/admin/database" element={<AdminDatabase />} />
+        <Route path="/admin/question-banks" element={<AdminQuestionBanks />} />
+        <Route path="/admin/question-banks/:subjectId" element={<AdminQuestionBankDetail />} />
         <Route path="/admin/settings/courses" element={<AdminCourses />} />
         <Route path="/admin/settings/exams" element={<AdminExams />} />
         <Route path="/admin/settings/majors" element={<AdminMajors />} />

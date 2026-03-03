@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Plus, Trash2, GripVertical } from 'lucide-react';
 
 export interface QuestionData {
@@ -105,7 +106,7 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
 
     if (!isOpen) return null;
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
@@ -136,107 +137,54 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
                         {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content}</p>}
                     </div>
 
-                    {/* Type + Difficulty */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Type</label>
-                            <select
-                                value={form.type}
-                                onChange={e => setForm(f => ({
-                                    ...f,
-                                    type: e.target.value as QuestionData['type'],
-                                    options: e.target.value === 'multiple_choice' ? ['', ''] : e.target.value === 'true_false' ? ['True', 'False'] : [],
-                                    correctAnswer: 0,
-                                }))}
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37022]"
-                            >
-                                <option value="multiple_choice">Multiple Choice</option>
-                                <option value="true_false">True / False</option>
-                                <option value="essay">Essay</option>
-                            </select>
+
+
+                    {/* Answer Options */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Answer Options *</label>
+                        <div className="space-y-2">
+                            {(form.options || []).map((opt, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setForm(f => ({ ...f, correctAnswer: idx }))}
+                                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold border-2 transition-all ${form.correctAnswer === idx
+                                            ? 'bg-green-500 border-green-500 text-white'
+                                            : 'border-gray-300 text-gray-400 hover:border-green-400'
+                                            }`}
+                                        title={form.correctAnswer === idx ? 'Correct answer' : 'Mark as correct'}
+                                    >
+                                        {String.fromCharCode(65 + idx)}
+                                    </button>
+                                    <input
+                                        value={opt}
+                                        onChange={e => updateOption(idx, e.target.value)}
+                                        placeholder={`Option ${String.fromCharCode(65 + idx)}`}
+                                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F37022]"
+                                    />
+                                    {(form.options || []).length > 2 && (
+                                        <button
+                                            onClick={() => removeOption(idx)}
+                                            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1.5">Difficulty</label>
-                            <select
-                                value={form.difficulty}
-                                onChange={e => setForm(f => ({ ...f, difficulty: e.target.value as QuestionData['difficulty'] }))}
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37022]"
+                        {errors.options && <p className="text-red-500 text-xs mt-1">{errors.options}</p>}
+                        {(form.options || []).length < 6 && (
+                            <button
+                                onClick={addOption}
+                                className="mt-2 flex items-center gap-1 text-sm text-[#F37022] hover:text-[#D96419] font-medium"
                             >
-                                <option value="easy">Easy</option>
-                                <option value="medium">Medium</option>
-                                <option value="hard">Hard</option>
-                            </select>
-                        </div>
+                                <Plus className="w-4 h-4" /> Add Option
+                            </button>
+                        )}
+                        <p className="text-xs text-gray-400 mt-1">Click the letter to mark the correct answer (green = correct)</p>
                     </div>
 
-                    {/* Options for Multiple Choice */}
-                    {form.type === 'multiple_choice' && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Answer Options *</label>
-                            <div className="space-y-2">
-                                {(form.options || []).map((opt, idx) => (
-                                    <div key={idx} className="flex items-center gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => setForm(f => ({ ...f, correctAnswer: idx }))}
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold border-2 transition-all ${form.correctAnswer === idx
-                                                ? 'bg-green-500 border-green-500 text-white'
-                                                : 'border-gray-300 text-gray-400 hover:border-green-400'
-                                                }`}
-                                            title={form.correctAnswer === idx ? 'Correct answer' : 'Mark as correct'}
-                                        >
-                                            {String.fromCharCode(65 + idx)}
-                                        </button>
-                                        <input
-                                            value={opt}
-                                            onChange={e => updateOption(idx, e.target.value)}
-                                            placeholder={`Option ${String.fromCharCode(65 + idx)}`}
-                                            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#F37022]"
-                                        />
-                                        {(form.options || []).length > 2 && (
-                                            <button
-                                                onClick={() => removeOption(idx)}
-                                                className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                            {errors.options && <p className="text-red-500 text-xs mt-1">{errors.options}</p>}
-                            {(form.options || []).length < 6 && (
-                                <button
-                                    onClick={addOption}
-                                    className="mt-2 flex items-center gap-1 text-sm text-[#F37022] hover:text-[#D96419] font-medium"
-                                >
-                                    <Plus className="w-4 h-4" /> Add Option
-                                </button>
-                            )}
-                            <p className="text-xs text-gray-400 mt-1">Click the letter to mark the correct answer (green = correct)</p>
-                        </div>
-                    )}
-
-                    {/* Options for True/False */}
-                    {form.type === 'true_false' && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Correct Answer</label>
-                            <div className="flex gap-3">
-                                {['True', 'False'].map((label, idx) => (
-                                    <button
-                                        key={label}
-                                        onClick={() => setForm(f => ({ ...f, correctAnswer: idx }))}
-                                        className={`flex-1 py-3 rounded-xl font-medium text-sm border-2 transition-all ${form.correctAnswer === idx
-                                            ? 'border-green-500 bg-green-50 text-green-700'
-                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                                            }`}
-                                    >
-                                        {label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
 
                     {/* Tags */}
                     <div>
@@ -285,6 +233,7 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

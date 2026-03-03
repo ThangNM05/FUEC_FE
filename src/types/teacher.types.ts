@@ -48,4 +48,30 @@ export interface PaginatedResponse<T> {
     itemTo: number;
 }
 
+export interface TeachingClass {
+    classId: string;
+    classSubjectId: string;
+    classCode: string;
+    semesterId: string;
+    semesterCode: string;
+    studentCount: number;
+    completedSlots: number;
+    totalSlots: number;
+}
 
+export interface TeachingSubject {
+    id: string;
+    subjectId: string;
+    subjectCode: string;
+    subjectName: string;
+    credits: number;
+    totalStudents: number;
+    classCount: number;
+    classes: TeachingClass[];
+}
+
+export interface TeachingSubjectsResponse {
+    semesterId: string | null;
+    semesterCode: string | null;
+    subjects: TeachingSubject[];
+}

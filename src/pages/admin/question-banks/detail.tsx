@@ -40,7 +40,58 @@ const subjectNames: Record<string, string> = {
     MKT101: 'Marketing Principles'
 };
 
-function TeacherQuestionBankDetail() {
+const initialQuestions: Question[] = [
+    {
+        id: 'q1',
+        content: 'Which of the following describes the waterfall model?',
+        type: 'multiple_choice',
+        difficulty: 'easy',
+        tags: ['PT1', 'SDLC'],
+        options: ['A linear sequential approach', 'An iterative approach', 'A prototype-based approach', 'A random approach'],
+        correctAnswer: 0,
+        createdAt: '2025-02-15',
+    },
+    {
+        id: 'q2',
+        content: 'Agile manifesto prioritizes comprehensive documentation over working software.',
+        type: 'true_false',
+        difficulty: 'easy',
+        tags: ['PT1', 'Agile'],
+        options: ['True', 'False'],
+        correctAnswer: 1,
+        createdAt: '2025-02-16',
+    },
+    {
+        id: 'q3',
+        content: 'Explain the difference between functional and non-functional requirements with examples.',
+        type: 'essay',
+        difficulty: 'medium',
+        tags: ['PT2', 'Requirements'],
+        createdAt: '2025-02-20',
+    },
+    {
+        id: 'q4',
+        content: 'What design pattern should be used when you want a single instance of a class?',
+        type: 'multiple_choice',
+        difficulty: 'medium',
+        tags: ['PT2', 'Design Patterns'],
+        options: ['Singleton', 'Factory', 'Observer', 'Strategy'],
+        correctAnswer: 0,
+        createdAt: '2025-02-22',
+    },
+    {
+        id: 'q5',
+        content: 'The Open/Closed Principle states that software entities should be open for modification.',
+        type: 'true_false',
+        difficulty: 'hard',
+        tags: ['PT3', 'SOLID'],
+        options: ['True', 'False'],
+        correctAnswer: 1,
+        createdAt: '2025-02-24',
+    },
+];
+
+function AdminQuestionBankDetail() {
     const navigate = useNavigate();
     const { subjectId } = useParams();
     const subjectName = subjectNames[subjectId || ''] || 'Subject Details';
@@ -149,7 +200,7 @@ function TeacherQuestionBankDetail() {
     // ─── CRUD Operations ───
     const handleAddQuestion = () => {
         setEditingQuestion(null);
-        setModalOpen(true);
+        console.log("Add Question clicked"); setModalOpen(true);
     };
 
     const handleEditQuestion = (q: any) => {
@@ -161,7 +212,7 @@ function TeacherQuestionBankDetail() {
             correctAnswer: q.correctAnswer,
             rawOptions: q.rawOptions // Pass raw options to keep their IDs
         } as any);
-        setModalOpen(true);
+        console.log("Add Question clicked"); setModalOpen(true);
     };
 
     const handleSaveQuestion = async (data: any) => {
@@ -203,6 +254,7 @@ function TeacherQuestionBankDetail() {
             refetch(); // Ensure latest data
         } catch (error) {
             console.error("Failed to save question:", error);
+            // Optionally show error toast
         }
     };
 
@@ -265,6 +317,26 @@ function TeacherQuestionBankDetail() {
 
     const isAllSelected = filteredQuestions.length > 0 && selectedIds.size === filteredQuestions.length;
 
+    // ─── Helpers ───
+    const getDifficultyColor = (d: string) => {
+        if (d === 'easy') return 'bg-green-100 text-green-700';
+        if (d === 'medium') return 'bg-yellow-100 text-yellow-700';
+        if (d === 'hard') return 'bg-red-100 text-red-700';
+        return 'bg-gray-100 text-gray-700';
+    };
+
+    const getTypeDisplay = (t: string) => {
+        if (t === 'multiple_choice') return 'Multiple Choice';
+        if (t === 'true_false') return 'True/False';
+        return 'Essay';
+    };
+
+    const getTypeColor = (t: string) => {
+        if (t === 'multiple_choice') return 'bg-blue-50 text-blue-700';
+        if (t === 'true_false') return 'bg-purple-50 text-purple-700';
+        return 'bg-orange-50 text-orange-700';
+    };
+
     if (isLoading) {
         return (
             <div className="p-4 md:p-6 flex flex-col items-center justify-center h-64 gap-4">
@@ -277,11 +349,11 @@ function TeacherQuestionBankDetail() {
     return (
         <div className="p-4 md:p-6 animate-fadeIn">
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-                <button onClick={() => navigate('/teacher')} className="hover:text-[#F37022] transition-colors">
+                <button onClick={() => navigate('/admin')} className="hover:text-[#F37022] transition-colors">
                     Home
                 </button>
                 <ChevronRight className="w-4 h-4" />
-                <button onClick={() => navigate('/teacher/question-banks')} className="hover:text-[#F37022] transition-colors">
+                <button onClick={() => navigate('/admin/question-banks')} className="hover:text-[#F37022] transition-colors">
                     Question Banks
                 </button>
                 <ChevronRight className="w-4 h-4" />
@@ -420,6 +492,7 @@ function TeacherQuestionBankDetail() {
                                         />
                                     </td>
                                     <td className="px-6 py-4" onClick={(e) => {
+                                        // Make clicking the cell toggle selection as well, but ignore if clicking inside file icon (minor UX tweak)
                                         if ((e.target as HTMLElement).closest('.action-btn')) return;
                                         toggleSelect(q.id);
                                     }}>
@@ -570,8 +643,8 @@ function TeacherQuestionBankDetail() {
                     document.body
                 )
             }
-        </div>
+        </div >
     );
 }
 
-export default TeacherQuestionBankDetail;
+export default AdminQuestionBankDetail;
