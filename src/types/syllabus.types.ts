@@ -22,6 +22,26 @@ export interface Syllabus {
     isActive: boolean;
 }
 
+export interface SyllabusAssessment {
+    id: string;
+    syllabusId: string;
+    category: string;
+    type: number;
+    part: number;
+    weight: string;
+    completionCriteria: string;
+    duration: string;
+    questionType: string;
+    numberOfQuestion: string;
+    knowledgeAndSkill: string;
+    gradingGuide: string;
+    note: string;
+    totalInstances: number;
+    shortCode: string;
+    weightPerInstance: number;
+    syllabusName: string;
+}
+
 export interface CreateSyllabusRequest {
     subjectId: string;
     syllabusName: string;

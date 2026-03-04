@@ -52,6 +52,7 @@ import TeacherQuestionBankDetail from './pages/teacher/question-banks/detail';
 import CreateExam from './pages/teacher/create-exam';
 import ProfilePage from './pages/common/ProfilePage';
 import AdminMajors from './pages/admin/settings/majors';
+import NotFoundPage from './pages/not-found';
 
 function Router() {
   return (
@@ -114,6 +115,9 @@ function Router() {
       </Route>
 
       <Route path="/sign-in" element={<SignInPage />} />
+
+      {/* 404 Not Found - catch all unmatched routes */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

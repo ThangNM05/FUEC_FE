@@ -5,6 +5,7 @@ import {
     ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery } from '@/api/classDetailsApi';
+import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
 
 interface Assignment {
     id: string;
@@ -51,6 +52,11 @@ function TeacherCourseDetails() {
     const { data: classSubject, isLoading } = useGetClassSubjectByIdQuery(courseId || '', {
         skip: !courseId,
     });
+
+    const { data: examsData, isLoading: isLoadingExams } = useGetExamsByClassSubjectIdQuery(courseId || '', {
+        skip: !courseId,
+    });
+    const exams = examsData?.items || [];
 
     // Mock course data combined with real DB data if available
     const course = {
@@ -435,9 +441,65 @@ function TeacherCourseDetails() {
                     )}
 
                     {activeTab === 'tests' && (
-                        <div className="text-center py-12 text-gray-500 animate-fadeIn">
-                            <ClipboardCheck className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                            <p className="font-medium">Progress tests management coming soon</p>
+                        <div className="animate-fadeIn">
+                            {isLoadingExams ? (
+                                <div className="text-center py-12 text-gray-500">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F37022] mx-auto mb-4"></div>
+                                    <p className="font-medium animate-pulse">Loading tests...</p>
+                                </div>
+                            ) : exams.length === 0 ? (
+                                <div className="text-center py-12 text-gray-500 border border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+                                    <ClipboardCheck className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                                    <p className="font-medium text-lg text-gray-500">No tests available</p>
+                                    <p className="text-sm text-gray-400 mt-1">Create a new test to get started</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                    {exams.map((exam) => (
+                                        <div key={exam.id} className="border border-gray-200 rounded-xl p-5 hover:border-[#F37022] hover:shadow-md transition-all bg-white relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-[#F37022]"></div>
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-[#0A1B3C] group-hover:text-[#F37022] transition-colors leading-tight">
+                                                        {exam.category} {exam.displayName ? ` - ${exam.displayName}` : ''}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-500 mt-1.5 line-clamp-1">{exam.syllabusName}</p>
+                                                </div>
+                                                <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-blue-100 whitespace-nowrap ml-4 shrink-0">
+                                                    Wt: {exam.weight}%
+                                                </span>
+                                            </div>
+
+                                            <div className="space-y-2 mt-5">
+                                                <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50/80 p-2 rounded-lg border border-gray-100">
+                                                    <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                                                    <span className="font-medium">Starts:</span>
+                                                    <span className="text-gray-900">{new Date(exam.startTime).toLocaleString()}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50/80 p-2 rounded-lg border border-gray-100">
+                                                    <ClipboardCheck className="w-4 h-4 text-gray-400 shrink-0" />
+                                                    <span className="font-medium">Ends:</span>
+                                                    <span className="text-gray-900">{new Date(exam.endTime).toLocaleString()}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className={`px-2.5 py-1.5 text-xs font-medium rounded-lg ${exam.securityMode === 2 ? 'bg-purple-50 text-purple-700 border border-purple-100' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
+                                                        {exam.securityMode === 2 ? `Dynamic Code (${exam.codeDuration || 60}s)` : 'Static Code'}
+                                                    </span>
+                                                    {exam.requireIpCheck && (
+                                                        <span className="px-2.5 py-1.5 bg-orange-50 text-orange-700 border border-orange-100 text-xs font-medium rounded-lg flex items-center gap-1.5">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                                            IP Checked
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
