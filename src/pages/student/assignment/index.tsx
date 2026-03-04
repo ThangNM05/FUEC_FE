@@ -43,9 +43,7 @@ function AssignmentDetails() {
           <ArrowLeft className="w-4 h-4" />
           Back to Course
         </button>
-        <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">{assignment.title}</h1>
-        <p className="text-sm md:text-base text-gray-600 mt-1">{assignment.course}</p>
-      </div>
+        <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">{assignment.title}</h1>      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
@@ -103,12 +101,10 @@ function AssignmentDetails() {
                   ) : (
                     <>
                       <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600 mb-2">Drag and drop your file here, or</p>
                       <label className="inline-block px-4 py-2 bg-[#F37022] text-white rounded-lg font-medium cursor-pointer hover:bg-[#D96419]">
                         Browse Files
                         <input type="file" className="hidden" onChange={handleFileChange} />
                       </label>
-                      <p className="text-xs text-gray-500 mt-2">Max file size: 10MB. Accepted: .pdf, .zip, .doc, .docx</p>
                     </>
                   )}
                 </div>

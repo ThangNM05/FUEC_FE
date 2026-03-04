@@ -269,7 +269,6 @@ function TeacherQuestionBankDetail() {
         return (
             <div className="p-4 md:p-6 flex flex-col items-center justify-center h-64 gap-4">
                 <div className="w-12 h-12 border-4 border-[#F37022] border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-500">Loading questions...</p>
             </div>
         );
     }
@@ -519,7 +518,6 @@ function TeacherQuestionBankDetail() {
                                 <Trash2 className="w-7 h-7 text-red-600" />
                             </div>
                             <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Question?</h3>
-                            <p className="text-sm text-gray-500 mb-6">This action cannot be undone. The question will be permanently removed.</p>
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setDeleteId(null)}
@@ -550,7 +548,6 @@ function TeacherQuestionBankDetail() {
                                 <Trash2 className="w-7 h-7 text-red-600" />
                             </div>
                             <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Selected?</h3>
-                            <p className="text-sm text-gray-500 mb-6">Are you sure you want to delete {selectedIds.size} question{selectedIds.size !== 1 ? 's' : ''}? This action cannot be undone.</p>
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setBulkDeleteConfirmOpen(false)}

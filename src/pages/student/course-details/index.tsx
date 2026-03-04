@@ -173,7 +173,6 @@ function CourseDetails() {
                   <div>
                     <h4 className="font-medium text-[#0A1B3C] text-sm">{assignment.title}</h4>
                     <div className="flex items-center gap-2 mt-1">
-                      <p className="text-xs text-gray-500">Due: {assignment.due}</p>
                       {assignment.timeRemaining && (
                         <>
                           <span className="text-xs text-gray-400">•</span>

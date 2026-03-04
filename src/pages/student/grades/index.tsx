@@ -50,7 +50,6 @@ function StudentGrades() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Grades</h1>
-          <p className="text-gray-600 mt-1">Track your academic performance and progress.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-lg border border-gray-200">

@@ -168,10 +168,8 @@ function AdminQuestionBanks() {
     return (
       <div className="p-4 md:p-6">
         <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C] mb-2">Question Bank Management</h1>
-        <p className="text-gray-600 mb-6">Manage question banks and teacher access permissions.</p>
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <div className="w-12 h-12 border-4 border-[#F37022] border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-500">Loading question banks...</p>
         </div>
       </div>
     );
@@ -182,7 +180,6 @@ function AdminQuestionBanks() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Question Bank Management</h1>
-        <p className="text-sm md:text-base text-gray-600 mt-1">Manage question banks and teacher access permissions.</p>
       </div>
 
       {/* Row 1: Major tabs */}

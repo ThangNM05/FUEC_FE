@@ -392,7 +392,6 @@ function QuestionDetail() {
                 <div className="sticky top-6">
                     <div className="bg-white rounded-xl border border-gray-200 p-4">
                         <h3 className="font-bold text-[#0A1B3C] mb-1">Slot {question.slotNumber}</h3>
-                        <p className="text-xs text-gray-500 mb-4">Questions</p>
 
                         {/* Questions List */}
                         <div className="space-y-1">

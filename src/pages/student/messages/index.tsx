@@ -273,7 +273,6 @@ function StudentMessages() {
                         <div className="flex-1 flex items-center justify-center">
                             <div className="text-center">
                                 <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                                <p className="text-gray-500">Select a class to start messaging</p>
                             </div>
                         </div>
                     )}

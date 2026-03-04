@@ -256,7 +256,7 @@ File Requirements:
 
                         <div className="space-y-3">
                             {submissions.length === 0 ? (
-                                <p className="text-sm text-gray-500 text-center py-8">No submissions yet</p>
+                                <p className="text-xs text-gray-500 text-center py-4">No submissions yet.</p>
                             ) : (
                                 submissions.map((submission) => (
                                     <div

@@ -84,7 +84,6 @@ export default function SubMajorDrawer({ major, isOpen, onClose }: SubMajorDrawe
             <div className="p-6 bg-white border-b border-gray-100 flex justify-between items-center">
                 <div>
                     <h4 className="text-sm font-semibold text-gray-700">Specialized Areas</h4>
-                    <p className="text-xs text-gray-400">Manage all sub-majors for this academic field</p>
                 </div>
                 <button
                     onClick={handleAdd}
@@ -99,7 +98,6 @@ export default function SubMajorDrawer({ major, isOpen, onClose }: SubMajorDrawe
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center h-64 gap-4">
                         <Spin indicator={<LoadingOutlined style={{ fontSize: 40, color: '#F37022' }} spin />} />
-                        <p className="text-sm text-gray-500 animate-pulse font-medium">Fetching specialized areas...</p>
                     </div>
                 ) : !subMajors || subMajors.length === 0 ? (
                     <div className="py-20">
@@ -107,8 +105,6 @@ export default function SubMajorDrawer({ major, isOpen, onClose }: SubMajorDrawe
                             image={Empty.PRESENTED_IMAGE_SIMPLE}
                             description={
                                 <div className="text-center">
-                                    <p className="text-gray-500 font-medium">No Sub-Majors found</p>
-                                    <p className="text-xs text-gray-400 mt-1">Start by adding a new specialized area</p>
                                 </div>
                             }
                         />

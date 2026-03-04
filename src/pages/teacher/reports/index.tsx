@@ -305,7 +305,6 @@ function TeacherReports() {
             {filteredReports.length === 0 && (
                 <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
                     <AlertTriangle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500">No proctoring reports found for this filter</p>
                 </div>
             )}
         </div>

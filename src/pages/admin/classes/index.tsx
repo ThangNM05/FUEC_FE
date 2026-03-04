@@ -237,14 +237,12 @@ function AdminClasses() {
             <div className="p-4 md:p-6">
                 <div className="mb-4 md:mb-6">
                     <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Class Management</h1>
-                    <p className="text-gray-600 mt-1">Manage all classes in the system</p>
                 </div>
                 <div className="flex flex-col items-center justify-center h-64 gap-4">
                     <div 
                         className="w-12 h-12 border-4 border-[#F37022] border-t-transparent rounded-full"
                         style={{ animation: 'spin 1s linear infinite' }}
                     />
-                    <p className="text-gray-500">Loading classes...</p>
                 </div>
                 <style>{`
                     @keyframes spin {
@@ -260,7 +258,6 @@ function AdminClasses() {
         <div className="p-4 md:p-6">
             <div className="mb-4 md:mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Class Management</h1>
-                <p className="text-gray-600 mt-1">Manage all classes in the system</p>
             </div>
 
             <DataTable

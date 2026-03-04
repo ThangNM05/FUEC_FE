@@ -30,12 +30,12 @@ function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 relative overflow-x-hidden">
+    <div className="h-screen bg-slate-50/50 relative overflow-hidden">
       {/* Glassmorphism Background Blobs */}
       <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] bg-[#F37022]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none z-0"></div>
       <div className="fixed bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] bg-[#0A1B3C]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none z-0"></div>
 
-      <div className="relative z-10 w-full min-h-screen flex flex-col">
+      <div className="relative z-10 w-full h-screen flex flex-col">
         <AdminSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} isMobile={isMobile} />
 
         {/* Mobile Header */}
@@ -60,7 +60,7 @@ function AdminLayout() {
           {!isMobile && (
             <AdminHeader />
           )}
-          <div className="pt-4 px-4 pb-24">
+          <div className="pt-4 px-4 pb-6 h-[calc(100vh-56px)] overflow-y-auto">
             <Outlet />
           </div>
         </div>
