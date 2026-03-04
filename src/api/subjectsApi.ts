@@ -6,6 +6,7 @@ import type {
     Subject,
     UpdateSubjectRequest
 } from '../types/subject.types';
+import type { Syllabus } from '../types/syllabus.types';
 
 export const subjectsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -56,6 +57,13 @@ export const subjectsApi = baseApi.injectEndpoints({
             query: (code) => `/Subjects/code/${encodeURIComponent(code)}`,
             transformResponse: (response: any) => response?.result || response,
             providesTags: (_result, _error, code) => [{ type: 'Subjects', id: `code-${code}` }],
+        }),
+
+        // GET: Fetch Syllabuses by SubjectId
+        getSubjectSyllabuses: builder.query<Syllabus[], string>({
+            query: (subjectId) => `/Subjects/syllabuses?subjectId=${subjectId}`,
+            transformResponse: (response: any) => response?.result || [],
+            providesTags: ['Subjects'],
         }),
 
         // POST: Create
@@ -133,6 +141,7 @@ export const {
     useGetSubjectsQuery,
     useGetSubjectByIdQuery,
     useGetSubjectByCodeQuery,
+    useGetSubjectSyllabusesQuery,
     useCreateSubjectMutation,
     useUpdateSubjectMutation,
     useDeleteSubjectMutation,

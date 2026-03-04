@@ -5,7 +5,8 @@ import type {
     GetSyllabusesParams,
     CreateSyllabusRequest,
     UpdateSyllabusRequest,
-    ImportSyllabusesResponse
+    ImportSyllabusesResponse,
+    SyllabusAssessment
 } from '@/types/syllabus.types';
 
 export const syllabusApi = baseApi.injectEndpoints({
@@ -68,6 +69,17 @@ export const syllabusApi = baseApi.injectEndpoints({
         getSyllabusById: builder.query<Syllabus, string>({
             query: (id) => `/Syllabuses/${id}`,
             providesTags: (result, error, id) => [{ type: 'Syllabuses', id }],
+        }),
+
+        getSyllabusAssessments: builder.query<SyllabusAssessment[], string>({
+            query: (syllabusId) => `/SyllabusAssessments?SyllabusId=${syllabusId}`,
+            transformResponse: (response: any) => {
+                if (response?.result?.items && Array.isArray(response.result.items)) {
+                    return response.result.items;
+                }
+                return [];
+            },
+            providesTags: ['Syllabuses'],
         }),
 
         createSyllabus: builder.mutation<Syllabus, CreateSyllabusRequest>({
@@ -147,6 +159,7 @@ export const syllabusApi = baseApi.injectEndpoints({
 export const {
     useGetSyllabusesQuery,
     useGetSyllabusByIdQuery,
+    useGetSyllabusAssessmentsQuery,
     useCreateSyllabusMutation,
     useUpdateSyllabusMutation,
     useDeleteSyllabusMutation,
