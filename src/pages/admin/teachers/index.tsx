@@ -276,13 +276,13 @@ function AdminTeachers() {
         onConfirm={handleConfirmImport}
         title="Import Teachers"
         description="Please use the standard template to import teacher data"
-        templateUrl="/templates/teacher_import_template.xlsx"
+        templateUrl="/templates/Import_Teacher_Template.xlsx"
       />
 
       <ImportResultModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        result={importResult} // Use cast or ensures compatible structure
+        result={importResult}
         entityName="teachers"
       />
 

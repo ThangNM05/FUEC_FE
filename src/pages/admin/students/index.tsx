@@ -291,7 +291,7 @@ function AdminStudents() {
         onConfirm={handleConfirmImport}
         title="Import Students"
         description="Please use the standard template to import student data"
-        templateUrl="/templates/student_import_template.xlsx"
+        templateUrl="/templates/Import_Student_Template.xlsx"
       />
 
       <ImportResultModal

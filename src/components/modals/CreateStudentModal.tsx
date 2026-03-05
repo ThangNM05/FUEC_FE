@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Modal, Input, Button } from 'antd';
+import { Modal, Input, Button, Select } from 'antd';
 
 import { useCreateStudentMutation } from '@/api/studentsApi';
 import { useCreateAccountMutation } from '@/api/accountsApi';
+import { useGetSubMajorsQuery } from '@/api/subMajorsApi';
+import { useGetCurriculumsQuery } from '@/api/curriculumsApi';
 import type { CreateStudentRequest } from '@/types/student.types';
 import { Role, type CreateAccountRequest } from '@/types/account.types';
 
@@ -19,7 +21,16 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
         userName: '',
         cardId: '',
         email: '',
+        cohort: '',
+        subMajorId: '',
+        curriculumId: '',
     });
+
+    const { data: subMajorsData, isLoading: isLoadingSubMajors } = useGetSubMajorsQuery({ page: 1, pageSize: 100 });
+    const { data: curriculumsData, isLoading: isLoadingCurriculums } = useGetCurriculumsQuery({ page: 1, pageSize: 100 });
+
+    const subMajors = subMajorsData?.items || [];
+    const curriculums = curriculumsData?.items || [];
 
     const [createStudent, { isLoading: isCreatingStudent }] = useCreateStudentMutation();
     const [createAccount, { isLoading: isCreatingAccount }] = useCreateAccountMutation();
@@ -33,6 +44,9 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
             userName: '',
             cardId: '',
             email: '',
+            cohort: '',
+            subMajorId: '',
+            curriculumId: '',
         });
     };
 
@@ -91,10 +105,10 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
             // Step 2: Create Student using Account ID
             const studentPayload: CreateStudentRequest = {
                 userId: accountId,
-                studentCode: formData.studentCode.trim(),
-                studentName: formData.studentName.trim(),
-                email: formData.email.trim(),
                 cardId: formData.cardId.trim() || undefined,
+                cohort: formData.cohort.trim() || undefined,
+                subMajorId: formData.subMajorId || undefined,
+                curriculumId: formData.curriculumId || undefined,
             };
 
             await createStudent(studentPayload).unwrap();
@@ -146,7 +160,7 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
             open={isOpen}
             onCancel={handleClose}
             title="Add New Student"
-            width={800}
+            width={850}
             footer={[
                 <Button key="cancel" onClick={handleClose} disabled={isLoading}>
                     Cancel
@@ -174,7 +188,7 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
                             value={formData.studentCode}
                             onChange={handleChange}
                             disabled={isLoading}
-                            placeholder="Ex: S001"
+                            placeholder="Ex: DE180145"
                             size="large"
                         />
                     </div>
@@ -188,7 +202,7 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
                             value={formData.userName}
                             onChange={handleChange}
                             disabled={isLoading}
-                            placeholder="Ex: johndoe (No spaces)"
+                            placeholder="Ex: thangnm11"
                             size="large"
                         />
                     </div>
@@ -204,9 +218,71 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
                         value={formData.studentName}
                         onChange={handleChange}
                         disabled={isLoading}
-                        placeholder="Ex: Jane Doe"
+                        placeholder="Ex: Nguyen Minh Thang"
                         size="large"
                     />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                        <span className="mb-2 block text-sm font-semibold text-gray-700">
+                            Cohort
+                        </span>
+                        <Input
+                            id="cohort"
+                            name="cohort"
+                            value={formData.cohort}
+                            onChange={handleChange}
+                            disabled={isLoading}
+                            placeholder="Ex: K17"
+                            size="large"
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <span className="mb-2 block text-sm font-semibold text-gray-700">
+                            Sub Major
+                        </span>
+                        <Select
+                            id="subMajorId"
+                            value={formData.subMajorId || undefined}
+                            onChange={(val) => setFormData(prev => ({ ...prev, subMajorId: val }))}
+                            disabled={isLoading || isLoadingSubMajors}
+                            placeholder="Select Sub Major"
+                            size="large"
+                            className="w-full"
+                        >
+                            {subMajors.map(sm => (
+                                <Select.Option key={sm.id} value={sm.id}>
+                                    {sm.name} ({sm.code})
+                                </Select.Option>
+                            ))}
+                        </Select>
+                    </div>
+                </div>
+
+                <div className="grid gap-2">
+                    <span className="mb-2 block text-sm font-semibold text-gray-700">
+                        Curriculum
+                    </span>
+                    <Select
+                        id="curriculumId"
+                        value={formData.curriculumId || undefined}
+                        onChange={(val) => setFormData(prev => ({ ...prev, curriculumId: val }))}
+                        disabled={isLoading || isLoadingCurriculums}
+                        placeholder="Select Curriculum"
+                        size="large"
+                        className="w-full"
+                        popupMatchSelectWidth={false}
+                        dropdownStyle={{ maxWidth: '600px', whiteSpace: 'normal' }}
+                    >
+                        {curriculums.map(curr => (
+                            <Select.Option key={curr.id} value={curr.id}>
+                                <div className="break-words whitespace-normal leading-tight py-1">
+                                    {curr.name} <span className="text-gray-500">({curr.code})</span>
+                                </div>
+                            </Select.Option>
+                        ))}
+                    </Select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -221,7 +297,6 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
                             value={formData.email}
                             onChange={handleChange}
                             disabled={isLoading}
-                            placeholder="Ex: student@fe.edu.vn"
                             size="large"
                         />
                     </div>
@@ -235,7 +310,6 @@ export default function CreateStudentModal({ isOpen, onClose }: CreateStudentMod
                             value={formData.cardId}
                             onChange={handleChange}
                             disabled={isLoading}
-                            placeholder="Ex: 001099000001"
                             size="large"
                         />
                     </div>
