@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, Navigate } from 'react-router';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../redux/authSlice';
 import StudentSidebar from './StudentSidebar';
 import StudentHeader from './StudentHeader';
 
 function StudentLayout() {
   const [isMobile, setIsMobile] = useState(false);
+  const user = useSelector(selectCurrentUser);
+
+  if (!user || user.role !== 'Student') {
+    return <Navigate to="/not-found" replace />;
+  }
 
   useEffect(() => {
     const checkMobile = () => {

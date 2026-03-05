@@ -1,9 +1,27 @@
 import { useNavigate } from 'react-router';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/redux/authSlice';
 import Lottie from 'lottie-react';
 import notFoundAnimation from '@/assets/lottie/404.json';
 
 function NotFoundPage() {
     const navigate = useNavigate();
+    const user = useSelector(selectCurrentUser);
+
+    const handleBackToHome = () => {
+        if (!user) {
+            navigate('/sign-in', { replace: true });
+            return;
+        }
+        
+        if (user.role === 'Admin') {
+            navigate('/admin', { replace: true });
+        } else if (user.role === 'Teacher') {
+            navigate('/teacher', { replace: true });
+        } else {
+            navigate('/student', { replace: true });
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50/30 flex items-center justify-center px-4">
@@ -39,7 +57,7 @@ function NotFoundPage() {
                         ← Go Back
                     </button>
                     <button
-                        onClick={() => navigate('/sign-in', { replace: true })}
+                        onClick={handleBackToHome}
                         className="w-full sm:w-auto px-6 py-2.5 bg-[#F37022] text-white rounded-xl text-sm font-semibold hover:bg-[#d95f19] transition-all active:scale-95 shadow-lg shadow-orange-200/50"
                     >
                         Back to Home
