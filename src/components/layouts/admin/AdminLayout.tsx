@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router';
+import { Outlet, Navigate } from 'react-router';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../redux/authSlice';
 import { Menu } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
@@ -7,6 +9,11 @@ import AdminHeader from './AdminHeader';
 function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const user = useSelector(selectCurrentUser);
+
+  if (!user || user.role !== 'Admin') {
+    return <Navigate to="/not-found" replace />;
+  }
 
   // Check screen size
   useEffect(() => {

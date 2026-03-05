@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import QuestionModal, { type QuestionData } from '../../../components/modals/QuestionModal';
 import ImportPreviewModal from '../../../components/modals/ImportPreviewModal';
+import ImportExcelModal from '../../../components/shared/ImportExcelModal';
 import {
     useGetQuestionsQuery,
     useCreateQuestionMutation,
@@ -52,14 +53,11 @@ function TeacherQuestionBankDetail() {
     // Import Excel – 2-step: preview then confirm
     const [previewImport, { isLoading: isPreviewing }] = usePreviewImportQuestionsMutation();
     const [importQuestions, { isLoading: isImporting }] = useImportQuestionsMutation();
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isImportExcelModalOpen, setIsImportExcelModalOpen] = useState(false);
     const [importPreviewData, setImportPreviewData] = useState<ImportPreviewResult | null>(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
-    const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        e.target.value = '';
+    const handleConfirmFile = async (file: File) => {
         const formData = new FormData();
         formData.append('file', file);
         if (subjectId) {
@@ -72,6 +70,7 @@ function TeacherQuestionBankDetail() {
                 return;
             }
             setImportPreviewData(result);
+            setIsImportExcelModalOpen(false);
             setIsPreviewModalOpen(true);
         } catch {
             toast.error('Failed to parse file. Please check the format.');
@@ -296,14 +295,6 @@ function TeacherQuestionBankDetail() {
                     <p className="text-gray-500 text-sm mt-1">{questions.length} total questions in bank</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    {/* Hidden file input for import */}
-                    <input
-                        type="file"
-                        accept=".xlsx,.xls"
-                        className="hidden"
-                        ref={fileInputRef}
-                        onChange={handleFileImport}
-                    />
                     {/* Download Template */}
                     <a
                         href="/templates/question_bank_template.xlsx"
@@ -316,7 +307,7 @@ function TeacherQuestionBankDetail() {
                     {/* Import Excel */}
                     <button
                         className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-[#F37022] text-[#F37022] rounded-lg text-xs sm:text-sm font-medium hover:bg-orange-50 transition-colors bg-white disabled:opacity-60"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => setIsImportExcelModalOpen(true)}
                         disabled={isPreviewing || isImporting}
                     >
                         {(isPreviewing || isImporting)
@@ -497,6 +488,16 @@ function TeacherQuestionBankDetail() {
                 onClose={() => { setModalOpen(false); setEditingQuestion(null); }}
                 onSave={handleSaveQuestion}
                 editData={editingQuestion}
+            />
+
+            {/* Import Excel Modal */}
+            <ImportExcelModal
+                isOpen={isImportExcelModalOpen}
+                onClose={() => setIsImportExcelModalOpen(false)}
+                onConfirm={handleConfirmFile}
+                title="Import Questions"
+                description={`Please use the standard template to import questions for ${subjectId}`}
+                templateUrl="/templates/question_bank_template.xlsx"
             />
 
             {/* Import Preview Modal */}
