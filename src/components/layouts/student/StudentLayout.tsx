@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router';
-import { Menu } from 'lucide-react';
+import { Outlet, Navigate } from 'react-router';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '../../../redux/authSlice';
 import StudentSidebar from './StudentSidebar';
+import StudentHeader from './StudentHeader';
 
 function StudentLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const user = useSelector(selectCurrentUser);
+
+  if (!user || user.role !== 'Student') {
+    return <Navigate to="/not-found" replace />;
+  }
 
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (mobile) {
-        setIsSidebarOpen(false);
-      } else {
-        setIsSidebarOpen(true);
-      }
+      setIsMobile(window.innerWidth < 768);
     };
 
     checkMobile();
@@ -23,33 +23,22 @@ function StudentLayout() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <StudentSidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} isMobile={isMobile} />
+    <div className="h-screen bg-slate-50/50 relative overflow-hidden">
+      {/* Glassmorphism Background Blobs */}
+      <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] bg-[#F37022]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none"></div>
+      <div className="fixed bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] bg-[#0A1B3C]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none"></div>
 
-      {/* Mobile Header */}
-      {isMobile && !isSidebarOpen && (
-        <div className="fixed top-0 left-0 right-0 h-14 bg-white border-b border-gray-200 z-30 flex items-center px-4">
-          <button
-            onClick={toggleSidebar}
-            className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            <Menu className="w-5 h-5 text-gray-700" />
-          </button>
-          <span className="ml-3 font-semibold text-[#0A1B3C]">EduConnect</span>
+      <div className="relative z-10">
+        <StudentSidebar />
+
+        {/* Main Content */}
+        <div className="transition-all duration-200">
+          <StudentHeader />
+          <div className="pt-4 h-[calc(100vh-56px)] overflow-y-auto">
+            <Outlet />
+          </div>
         </div>
-      )}
-
-      {/* Main Content */}
-      <div className={`transition-all duration-200 ${isMobile
-          ? 'ml-0 pt-14'
-          : isSidebarOpen ? 'ml-64' : 'ml-20'
-        }`}>
-        <Outlet />
       </div>
     </div>
   );

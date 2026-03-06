@@ -33,19 +33,17 @@ function AssignmentDetails() {
   };
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 animate-fadeIn">
       {/* Header */}
       <div className="mb-6">
-        <button 
-          onClick={() => navigate('/student/course-details')} 
+        <button
+          onClick={() => navigate('/student/course-details')}
           className="flex items-center gap-2 text-gray-600 hover:text-[#0A1B3C] mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Course
         </button>
-        <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">{assignment.title}</h1>
-        <p className="text-sm md:text-base text-gray-600 mt-1">{assignment.course}</p>
-      </div>
+        <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">{assignment.title}</h1>      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
@@ -82,7 +80,7 @@ function AssignmentDetails() {
           {/* Submission */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
             <h2 className="text-lg font-bold text-[#0A1B3C] mb-4">Your Submission</h2>
-            
+
             {!assignment.submitted ? (
               <>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4">
@@ -93,7 +91,7 @@ function AssignmentDetails() {
                         <p className="font-medium text-[#0A1B3C]">{selectedFile.name}</p>
                         <p className="text-sm text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => setSelectedFile(null)}
                         className="p-1 hover:bg-gray-200 rounded"
                       >
@@ -103,21 +101,18 @@ function AssignmentDetails() {
                   ) : (
                     <>
                       <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                      <p className="text-gray-600 mb-2">Drag and drop your file here, or</p>
                       <label className="inline-block px-4 py-2 bg-[#F37022] text-white rounded-lg font-medium cursor-pointer hover:bg-[#D96419]">
                         Browse Files
                         <input type="file" className="hidden" onChange={handleFileChange} />
                       </label>
-                      <p className="text-xs text-gray-500 mt-2">Max file size: 10MB. Accepted: .pdf, .zip, .doc, .docx</p>
                     </>
                   )}
                 </div>
-                <button 
-                  className={`w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${
-                    selectedFile 
-                      ? 'bg-[#F37022] text-white hover:bg-[#D96419]' 
+                <button
+                  className={`w-full px-4 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 ${selectedFile
+                      ? 'bg-[#F37022] text-white hover:bg-[#D96419]'
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
+                    }`}
                   onClick={handleSubmit}
                   disabled={!selectedFile}
                 >

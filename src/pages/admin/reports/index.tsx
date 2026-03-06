@@ -30,7 +30,6 @@ function AdminReports() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6 md:mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Reports</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Generate and download system reports.</p>
         </div>
         <button className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F37022] text-white rounded-lg text-sm md:text-base font-semibold">
           <Download className="w-4 h-4" />

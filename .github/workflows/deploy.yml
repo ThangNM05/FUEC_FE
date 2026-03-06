@@ -1,0 +1,82 @@
+name: Deploy Frontend to S3 + CloudFront
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  VERSION: v1.0.${{ github.run_number }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build React app
+        env:
+          VITE_API_URL: https://fuec.site/api/v1
+          VITE_GOOGLE_CLIENT_ID: 843091633958-ehu83jknrt3paisrelcpp2v95aj3a4ae.apps.googleusercontent.com
+          NODE_ENV: production
+        run: |
+          echo "Building Frontend ${{ env.VERSION }}"
+          npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy to S3 (with smart caching headers)
+        run: |
+          echo "Deploying ${{ env.VERSION }} to S3..."
+
+          # Assets có hash trong tên → cache lâu (1 năm)
+          aws s3 sync dist/assets/ s3://${{ secrets.S3_BUCKET_NAME }}/assets/ \
+            --cache-control "public, max-age=31536000, immutable" \
+            --delete
+
+          # index.html + các file gốc → không cache (luôn lấy bản mới)
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }} \
+            --cache-control "public, max-age=0, must-revalidate" \
+            --exclude "assets/*" \
+            --delete
+
+      - name: Invalidate CloudFront cache (chỉ index.html)
+        run: |
+          echo "Invalidating CloudFront cache..."
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/index.html" "/"
+
+      - name: Create GitHub Release Tag
+        run: |
+          echo "Tagging release fe-${{ env.VERSION }}"
+          git tag fe-${{ env.VERSION }}
+          git push origin fe-${{ env.VERSION }}
+
+      - name: Summary
+        run: |
+          echo "## Frontend Deploy Complete" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ env.VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| S3 Bucket | \`${{ secrets.S3_BUCKET_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| CloudFront | \`${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| URL | [https://fuec.site](https://fuec.site) |" >> $GITHUB_STEP_SUMMARY

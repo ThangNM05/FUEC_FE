@@ -3,9 +3,11 @@ import { useNavigate, useLocation } from 'react-router';
 import {
   LayoutDashboard, Users, BookOpen, Database, Settings,
   ChevronDown, ChevronRight, User, LogOut, PanelLeftClose, Menu, Layers,
-  Building2, DoorOpen, GraduationCap, ClipboardList, Calendar, FileText, BookMarked
+  Building2, DoorOpen, GraduationCap, ClipboardList, Calendar, FileText, BookMarked, LayoutGrid
 } from 'lucide-react';
 import img_fpt from '../../../assets/img_fpt.svg';
+import { useDispatch } from 'react-redux';
+import { logout } from '../../../redux/authSlice';
 
 interface MenuItem {
   id: string;
@@ -31,6 +33,7 @@ interface SidebarProps {
 function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
   const [expandedMenus, setExpandedMenus] = useState<{ [key: string]: boolean }>({});
 
   const toggleSubMenu = (menuId: string) => {
@@ -42,6 +45,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
 
   const menuItems: MenuItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+
     {
       id: 'student_mgmt',
       label: 'Student Management',
@@ -53,13 +57,13 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
     },
     { id: 'teachers', label: 'Teacher Management', icon: Users, path: '/admin/teachers' },
     { id: 'schedule', label: 'Schedule', icon: Calendar, path: '/admin/schedule' },
-    { id: 'database', label: 'Database', icon: Database, path: '/admin/database' },
+    { id: 'database', label: 'Question Banks', icon: Database, path: '/admin/question-banks' },
     {
       id: 'settings',
       label: 'Settings',
       icon: Settings,
       subItems: [
-        { id: 'departments', label: 'Departments', icon: Building2, path: '/admin/settings/departments' },
+        { id: 'majors', label: 'Majors', icon: Building2, path: '/admin/settings/majors' },
         { id: 'classrooms', label: 'Classrooms', icon: DoorOpen, path: '/admin/settings/classrooms' },
         { id: 'subjects', label: 'Subjects', icon: GraduationCap, path: '/admin/settings/subjects' },
         { id: 'exam-types', label: 'Exam Types', icon: ClipboardList, path: '/admin/settings/exam-types' },
@@ -110,7 +114,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
       )}
 
       <div
-        className={`fixed left-0 top-0 h-full bg-white border-r border-gray-200 transition-all duration-200 z-50 flex flex-col ${isMobile ? 'w-72' : isOpen ? 'w-64' : 'w-20'
+        className={`fixed left-0 top-0 h-full bg-white/50 backdrop-blur-xl border-r border-white/40 shadow-[0_8px_32px_0_rgba(10,27,60,0.05)] transition-all duration-200 z-50 flex flex-col ${isMobile ? 'w-72' : isOpen ? 'w-64' : 'w-20'
           }`}
         style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}
       >
@@ -131,7 +135,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
             {(isOpen || isMobile) && (
               <button
                 onClick={toggleSidebar}
-                className="w-8 h-8 flex items-center justify-center border border-gray-200 bg-white rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all flex-shrink-0"
+                className="w-8 h-8 flex items-center justify-center border border-white/40 bg-white/50 rounded-lg hover:bg-white/80 hover:border-white/60 transition-all flex-shrink-0"
               >
                 <PanelLeftClose className="w-4 h-4 text-gray-500" />
               </button>
@@ -144,7 +148,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
           <div className="px-4 pb-3 flex justify-center">
             <button
               onClick={toggleSidebar}
-              className="w-12 h-10 flex items-center justify-center border border-gray-200 bg-white rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all"
+              className="w-12 h-10 flex items-center justify-center border border-white/40 bg-white/50 rounded-lg hover:bg-white/80 hover:border-white/60 transition-all shadow-sm"
             >
               <Menu className="w-4 h-4 text-gray-500" />
             </button>
@@ -164,8 +168,8 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
               <div key={item.id}>
                 <button
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all mb-1 ${isActive
-                    ? 'bg-orange-50 text-orange-600'
-                    : 'text-gray-700 hover:bg-gray-50'
+                    ? 'bg-orange-50/80 text-orange-600 shadow-sm border border-orange-100/50'
+                    : 'text-gray-700 hover:bg-white/60 hover:shadow-sm border border-transparent'
                     } ${!isOpen && !isMobile ? 'justify-center' : ''}`}
                   onClick={() => handleMenuClick(item)}
                   title={!isOpen && !isMobile ? item.label : ''}
@@ -185,7 +189,7 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
 
                 {/* Sub-menu */}
                 {(isOpen || isMobile) && item.subItems && isExpanded && (
-                  <div className="ml-3 pl-3 border-l border-gray-200 mt-1 mb-1 flex flex-col gap-1">
+                  <div className="ml-3 pl-3 border-l border-white/40 mt-1 mb-1 flex flex-col gap-1">
                     {item.subItems.map(sub => {
                       const SubIcon = sub.icon;
                       const isSubActive = location.pathname === sub.path;
@@ -193,9 +197,9 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
                       return (
                         <button
                           key={sub.id}
-                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all ${isSubActive
-                            ? 'bg-orange-50 text-orange-600'
-                            : 'text-gray-600 hover:bg-gray-50'
+                          className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all border border-transparent ${isSubActive
+                            ? 'bg-orange-50/80 text-orange-600 shadow-sm border-orange-100/50'
+                            : 'text-gray-600 hover:bg-white/60 hover:shadow-sm'
                             }`}
                           onClick={() => handleSubMenuClick(sub.path)}
                         >
@@ -212,19 +216,13 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
         </div>
 
         {/* Sidebar Footer */}
-        <div className="border-t border-gray-100 p-3 bg-white">
+        <div className="border-t border-white/40 p-3 bg-transparent">
+
           <button
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-all mb-1 ${!isOpen && !isMobile ? 'justify-center' : ''}`}
-            title={!isOpen && !isMobile ? 'Profile' : ''}
-          >
-            <User className="w-5 h-5 flex-shrink-0" />
-            {(isOpen || isMobile) && <span className="text-sm font-medium">Profile</span>}
-          </button>
-          <button
-            className={`w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-all ${!isOpen && !isMobile ? 'justify-center' : ''}`}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-white/60 hover:shadow-sm rounded-lg transition-all ${!isOpen && !isMobile ? 'justify-center' : ''}`}
             title={!isOpen && !isMobile ? 'Logout' : ''}
             onClick={() => {
-              localStorage.removeItem('user');
+              dispatch(logout());
               navigate('/sign-in');
             }}
           >

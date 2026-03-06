@@ -57,7 +57,7 @@ function StudentExams() {
   ];
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
@@ -103,7 +103,7 @@ function StudentExams() {
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-3 mb-3">
                     <h3 className="font-semibold text-[#0A1B3C] text-lg">{exam.course}</h3>
-                    <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded">{exam.code}</span>
+                    <span className="px-2 py-0.5 bg-blue-50 text-[#0066b3] text-xs font-semibold rounded">{exam.code}</span>
                     <span className="px-2 py-0.5 bg-orange-50 text-orange-600 text-xs font-semibold rounded">{exam.type}</span>
                   </div>
 
@@ -177,7 +177,7 @@ function StudentExams() {
                   </td>
                   <td className="p-4 text-center font-semibold text-orange-600">{exam.score}</td>
                   <td className="p-4 text-center">
-                    <span className="px-3 py-1 bg-orange-100 text-[#F37022] text-sm font-semibold rounded-full">
+                    <span className="px-3 py-1 bg-blue-50 text-[#0066b3] text-sm font-semibold rounded-full">
                       {exam.grade}
                     </span>
                   </td>

@@ -30,7 +30,7 @@ function StudentGrades() {
   ];
 
   const getGradeColor = (grade: string) => {
-    if (grade === 'A' || grade === 'A+') return 'text-[#F37022] bg-orange-50 font-bold';
+    if (grade === 'A' || grade === 'A+') return 'text-[#0066b3] bg-blue-50 font-bold';
     if (grade === 'B+' || grade === 'B') return 'text-orange-600 bg-orange-50';
     if (grade === 'In Progress') return 'text-orange-500 bg-orange-50';
     return 'text-gray-600 bg-gray-50';
@@ -45,12 +45,11 @@ function StudentGrades() {
   };
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Grades</h1>
-          <p className="text-gray-600 mt-1">Track your academic performance and progress.</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-lg border border-gray-200">
@@ -136,7 +135,11 @@ function StudentGrades() {
               {courses.map(course => (
                 <tr key={course.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="p-4 font-medium text-[#0A1B3C]">{course.name}</td>
-                  <td className="p-4 text-gray-600">{course.code}</td>
+                  <td className="p-4">
+                    <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block">
+                      {course.code}
+                    </span>
+                  </td>
                   <td className="p-4 text-center font-medium text-[#0A1B3C]">{course.assignments}</td>
                   <td className="p-4 text-center font-medium text-[#0A1B3C]">{course.midterm}</td>
                   <td className="p-4 text-center font-medium text-[#0A1B3C]">
@@ -159,7 +162,7 @@ function StudentGrades() {
       {/* Grade Distribution */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="text-lg font-bold text-[#0A1B3C] mb-5">Grade Distribution</h2>
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
           {gradeDistribution.map(item => (
             <div key={item.grade} className="text-center">
               <div className="text-3xl font-bold text-orange-600 mb-2">{item.count}</div>

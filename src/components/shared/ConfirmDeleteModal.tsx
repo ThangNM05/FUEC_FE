@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { Modal, Button } from 'antd';
 import Lottie from 'lottie-react';
 import errorAnimation from '@/assets/lottie/error.json';
 
@@ -8,7 +8,9 @@ interface ConfirmDeleteModalProps {
     onConfirm: () => void;
     title?: string;
     message?: string;
-    itemName?: string;
+    itemName?: string; // Keep for now to avoid breaking existing callers, but remove from UI
+    confirmButtonLabel?: string;
+    confirmButtonVariant?: 'danger' | 'success';
 }
 
 function ConfirmDeleteModal({
@@ -17,7 +19,9 @@ function ConfirmDeleteModal({
     onConfirm,
     title = 'Are you sure you want to delete this item?',
     message = 'This action cannot be undone. This will permanently delete the item from the system.',
-    itemName
+    itemName,
+    confirmButtonLabel = 'Delete',
+    confirmButtonVariant = 'danger'
 }: ConfirmDeleteModalProps) {
     if (!isOpen) return null;
 
@@ -27,27 +31,19 @@ function ConfirmDeleteModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0"
-                style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
-                onClick={onClose}
-            />
-
-            {/* Modal */}
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
-                {/* Close button */}
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                    <X className="w-5 h-5 text-gray-500" />
-                </button>
-
+        <Modal
+            open={isOpen}
+            onCancel={onClose}
+            footer={null}
+            closable={false}
+            width={500}
+            centered
+            className="confirm-delete-modal"
+        >
+            <div className="py-6 px-4">
                 {/* Lottie Animation */}
-                <div className="flex justify-center mb-4">
-                    <div className="w-20 h-20">
+                <div className="flex justify-center mb-6">
+                    <div className="w-24 h-24">
                         <Lottie
                             animationData={errorAnimation}
                             loop={true}
@@ -56,32 +52,40 @@ function ConfirmDeleteModal({
                 </div>
 
                 {/* Title */}
-                <h2 className="text-base font-bold text-[#0A1B3C] text-center mb-2">
+                <h2 className="text-2xl font-black text-[#0A1B3C] text-center mb-4 leading-tight">
                     {title}
                 </h2>
 
                 {/* Message */}
-                <p className="text-sm text-gray-600 text-center mb-6">
-                    {message}
-                </p>
+                <div className="text-center mb-8">
+                    <p className="text-gray-500 text-lg leading-relaxed">
+                        {message}
+                    </p>
+                </div>
 
                 {/* Actions */}
-                <div className="flex gap-3">
-                    <button
+                <div className="flex gap-4">
+                    <Button
                         onClick={onClose}
-                        className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm font-medium"
+                        size="large"
+                        className="flex-1 h-12 rounded-xl border-2 border-gray-100 font-bold text-gray-400 hover:text-gray-600 hover:border-gray-300 transition-all"
                     >
-                        Cancel
-                    </button>
-                    <button
+                        Keep It
+                    </Button>
+                    <Button
                         onClick={handleConfirm}
-                        className="flex-1 px-4 py-2 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-colors text-sm font-medium"
+                        size="large"
+                        type="primary"
+                        className={`flex-1 h-12 rounded-xl font-black shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] border-none ${confirmButtonVariant === 'danger'
+                            ? 'bg-red-500 hover:bg-red-600 shadow-red-200'
+                            : 'bg-green-500 hover:bg-green-600 shadow-green-200'
+                            }`}
                     >
-                        Delete
-                    </button>
+                        {confirmButtonLabel}
+                    </Button>
                 </div>
             </div>
-        </div>
+        </Modal>
     );
 }
 
