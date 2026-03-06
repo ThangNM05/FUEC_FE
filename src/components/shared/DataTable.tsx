@@ -224,9 +224,8 @@ function DataTable<T extends { id: string | number }>({
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4 md:mb-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-3">
         <div className="flex-1">
-          <h2 className="text-lg md:text-xl font-bold text-[#0A1B3C] mb-2">{title}</h2>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 flex-1 sm:flex-initial">
               <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -290,7 +289,7 @@ function DataTable<T extends { id: string | number }>({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto max-h-[70vh] overflow-y-auto border border-gray-200 rounded-lg -mx-4 md:mx-0 relative">
+      <div className="overflow-x-auto max-h-[52vh] overflow-y-auto border border-gray-200 rounded-lg -mx-4 md:mx-0 relative">
         <table className="w-full min-w-[600px]">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10 shadow-sm">

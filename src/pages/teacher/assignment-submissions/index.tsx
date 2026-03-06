@@ -235,8 +235,6 @@ function AssignmentSubmissionsList() {
                 {filteredSubmissions.length === 0 && (
                     <div className="text-center py-12">
                         <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <p className="text-gray-600 font-medium">No submissions found</p>
-                        <p className="text-gray-500 text-sm">Try adjusting your search or filter</p>
                     </div>
                 )}
             </div>

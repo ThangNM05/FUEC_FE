@@ -129,11 +129,8 @@ export const studentsApi = baseApi.injectEndpoints({
             },
             transformResponse: (response: any) => {
                 let data = response;
-                // Unwrap if wrapped in result/data
                 if (response?.result) data = response.result;
                 else if (response?.data) data = response.data;
-
-                // Handle String Response (Backend returning text message)
                 if (typeof data === 'string') {
 
                     const successMatch = data.match(/Successfully imported (\d+) students/);
@@ -165,12 +162,12 @@ export const studentsApi = baseApi.injectEndpoints({
         }),
         // POST: Auto-assign students to classes
         autoAssignClass: builder.mutation<AutoAssignClassResult, AutoAssignClassRequest>({
-             query: (data) => ({
-                 url: '/students/auto-assign-class',
-                 method: 'POST',
-                 body: data
-             }),
-             invalidatesTags: ['Classes', 'Students', 'ClassSubjectTeachers', 'StudentClasses'] 
+            query: (data) => ({
+                url: '/students/auto-assign-class',
+                method: 'POST',
+                body: data
+            }),
+            invalidatesTags: ['Classes', 'Students', 'ClassSubjectTeachers', 'StudentClasses']
         }),
     }),
 });

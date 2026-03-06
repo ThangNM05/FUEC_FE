@@ -80,21 +80,23 @@ function AdminSubjects() {
         setIsViewModalOpen(true);
     };
 
-    const handleDelete = (subject: Subject) => {
+    const handleStatusChange = (subject: Subject) => {
         setSubjectToDelete(subject);
         setIsDeleteModalOpen(true);
     };
 
-    const confirmDelete = async () => {
+    const confirmStatusChange = async () => {
         if (!subjectToDelete) return;
         try {
             await deleteSubject(subjectToDelete.id).unwrap();
-            toast.success(`Subject "${subjectToDelete.name}" deleted successfully!`);
+            const action = subjectToDelete.isActive ? 'deactivated' : 'activated';
+            toast.success(`Subject "${subjectToDelete.name}" ${action} successfully!`);
             setSubjectToDelete(null);
             setIsDeleteModalOpen(false);
         } catch (err: any) {
-            console.error('Delete failed', err);
-            toast.error(err?.data?.message || 'Failed to delete subject');
+            console.error('Status change failed', err);
+            const action = subjectToDelete.isActive ? 'deactivate' : 'activate';
+            toast.error(err?.data?.message || `Failed to ${action} subject`);
         }
     };
 
@@ -193,14 +195,27 @@ function AdminSubjects() {
                     >
                         <Edit className="w-4 h-4 text-blue-600" />
                     </button>
-                    <button
-                        className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                        onClick={() => handleDelete(item)}
-                        disabled={isDeleting}
-                        title="Delete"
-                    >
-                        <Trash2 className="w-4 h-4 text-red-600" />
-                    </button>
+                    {item.isActive ? (
+                        <button
+                            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                            onClick={() => handleStatusChange(item)}
+                            disabled={isDeleting}
+                            title="Deactivate"
+                        >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                        </button>
+                    ) : (
+                        <button
+                            className="p-2 hover:bg-green-50 rounded-lg transition-colors"
+                            onClick={() => handleStatusChange(item)}
+                            disabled={isDeleting}
+                            title="Activate"
+                        >
+                            <div className="w-4 h-4 text-green-600 font-bold flex items-center justify-center">
+                                ↺
+                            </div>
+                        </button>
+                    )}
                 </div>
             )
         }
@@ -224,7 +239,6 @@ function AdminSubjects() {
         <div className="p-4 md:p-6">
             <div className="mb-4 md:mb-6">
                 <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Subject Management</h1>
-                <p className="text-gray-600 mt-1">Manage curriculum subjects</p>
             </div>
 
             <DataTable
@@ -267,10 +281,12 @@ function AdminSubjects() {
             <ConfirmDeleteModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={confirmDelete}
-                title="Delete Subject"
-                message={`Are you sure you want to delete subject "${subjectToDelete?.name}"?`}
+                onConfirm={confirmStatusChange}
+                title={subjectToDelete?.isActive ? "Confirm Deactivation" : "Confirm Activation"}
+                message={`Are you sure you want to ${subjectToDelete?.isActive ? 'deactivate' : 'activate'} subject "${subjectToDelete?.name}"?`}
                 itemName={subjectToDelete?.name}
+                confirmButtonLabel={subjectToDelete?.isActive ? "Deactivate" : "Activate"}
+                confirmButtonVariant={subjectToDelete?.isActive ? "danger" : "success"}
             />
 
             <ImportExcelModal

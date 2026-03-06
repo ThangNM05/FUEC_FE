@@ -52,10 +52,10 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
     const validate = (): boolean => {
         const errs: Record<string, string> = {};
         if (!form.content.trim()) errs.content = 'Question content is required';
-        if (form.type === 'multiple_choice') {
-            const validOpts = (form.options || []).filter(o => o.trim());
-            if (validOpts.length < 2) errs.options = 'At least 2 options required';
-        }
+        
+        const validOpts = (form.options || []).filter(o => o.trim());
+        if (validOpts.length < 2) errs.options = 'At least 2 options required';
+        
         setErrors(errs);
         return Object.keys(errs).length === 0;
     };
@@ -64,8 +64,8 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
         if (!validate()) return;
         onSave({
             ...form,
-            options: form.type === 'multiple_choice' ? form.options : form.type === 'true_false' ? ['True', 'False'] : undefined,
-            correctAnswer: form.type !== 'essay' ? form.correctAnswer : undefined,
+            options: form.options,
+            correctAnswer: form.correctAnswer,
         });
     };
 

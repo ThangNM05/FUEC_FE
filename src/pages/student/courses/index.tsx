@@ -170,7 +170,6 @@ function StudentCourses() {
 
       {filteredCourses.length === 0 && (
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <p className="text-gray-500">No courses found matching "{searchQuery}"</p>
         </div>
       )}
 

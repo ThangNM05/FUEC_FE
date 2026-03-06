@@ -20,12 +20,10 @@ export interface Student {
 
 export interface CreateStudentRequest {
     userId: string;
-    studentCode: string;
-    studentName: string;
-    email: string;
-    phoneNumber?: string;
-    classId?: string;
     cardId?: string;
+    cohort?: string;
+    subMajorId?: string;
+    curriculumId?: string;
 }
 
 export interface UpdateStudentRequest {

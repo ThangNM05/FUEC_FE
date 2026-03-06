@@ -209,7 +209,6 @@ function StudentQuestions() {
                             <CheckCircle className="w-5 h-5 text-green-600" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-600">Finished</p>
                             <p className="text-xl font-bold text-[#0A1B3C]">
                                 {allQuestions.filter(q => q.status === 'finished').length}
                             </p>
@@ -223,7 +222,6 @@ function StudentQuestions() {
                             <AlertCircle className="w-5 h-5 text-orange-600" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-600">Custom</p>
                             <p className="text-xl font-bold text-[#0A1B3C]">
                                 {allQuestions.filter(q => q.status === 'custom').length}
                             </p>
@@ -237,7 +235,6 @@ function StudentQuestions() {
                             <Sparkles className="w-5 h-5 text-purple-600" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-600">AI Reviewed</p>
                             <p className="text-xl font-bold text-[#0A1B3C]">
                                 {allQuestions.filter(q => q.hasAIFeedback).length}
                             </p>
@@ -251,8 +248,6 @@ function StudentQuestions() {
                 {filteredQuestions.length === 0 ? (
                     <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
                         <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <p className="text-gray-600">No questions found</p>
-                        <p className="text-sm text-gray-500 mt-2">Try adjusting your search or filters</p>
                     </div>
                 ) : (
                     filteredQuestions.map((question, index) => (

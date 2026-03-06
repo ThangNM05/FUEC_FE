@@ -147,7 +147,6 @@ function AdminSchedule() {
             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Schedule Management</h1>
-                    <p className="text-gray-600 mt-1">View and manage classroom schedules</p>
                 </div>
                 <div className="flex gap-2">
                     <button className="flex items-center gap-2 px-4 py-2 bg-[#F37022] text-white rounded-lg text-sm font-medium">

@@ -120,9 +120,7 @@ function AdminDashboard() {
                   {activity.type === 'system' && <Server className="w-5 h-5 text-orange-600" />}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-[#0A1B3C] text-sm">{activity.action}</h4>
-                  <p className="text-sm text-gray-600 mt-1">{activity.user} • {activity.time}</p>
-                </div>
+                  <h4 className="font-semibold text-[#0A1B3C] text-sm">{activity.action}</h4>                </div>
               </div>
             ))}
           </div>

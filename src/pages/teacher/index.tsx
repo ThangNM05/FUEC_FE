@@ -286,19 +286,15 @@ function TeacherDashboard() {
                     <div className="grid grid-cols-2 gap-3">
                         <div className="text-center">
                             <p className="text-2xl font-bold text-[#F37022]">23</p>
-                            <p className="text-xs text-gray-500">To Grade</p>
                         </div>
                         <div className="text-center">
                             <p className="text-2xl font-bold text-[#0A1B3C]">156</p>
-                            <p className="text-xs text-gray-500">Graded</p>
                         </div>
                         <div className="text-center">
                             <p className="text-2xl font-bold text-[#0A1B3C]">8</p>
-                            <p className="text-xs text-gray-500">Classes</p>
                         </div>
                         <div className="text-center">
                             <p className="text-2xl font-bold text-[#0A1B3C]">247</p>
-                            <p className="text-xs text-gray-500">Students</p>
                         </div>
                     </div>
                 </div>

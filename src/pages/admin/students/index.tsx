@@ -260,7 +260,6 @@ function AdminStudents() {
     <div className="p-4 md:p-6">
       <div className="mb-4 md:mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Student Management</h1>
-        <p className="text-gray-600 mt-1">Manage your student list</p>
       </div>
 
       <DataTable
@@ -292,7 +291,7 @@ function AdminStudents() {
         onConfirm={handleConfirmImport}
         title="Import Students"
         description="Please use the standard template to import student data"
-        templateUrl="/templates/student_import_template.xlsx"
+        templateUrl="/templates/Import_Student_Template.xlsx"
       />
 
       <ImportResultModal

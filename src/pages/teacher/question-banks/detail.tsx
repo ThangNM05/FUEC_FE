@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import QuestionModal, { type QuestionData } from '../../../components/modals/QuestionModal';
 import ImportPreviewModal from '../../../components/modals/ImportPreviewModal';
+import ImportExcelModal from '../../../components/shared/ImportExcelModal';
 import {
     useGetQuestionsQuery,
     useCreateQuestionMutation,
@@ -52,14 +53,11 @@ function TeacherQuestionBankDetail() {
     // Import Excel – 2-step: preview then confirm
     const [previewImport, { isLoading: isPreviewing }] = usePreviewImportQuestionsMutation();
     const [importQuestions, { isLoading: isImporting }] = useImportQuestionsMutation();
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isImportExcelModalOpen, setIsImportExcelModalOpen] = useState(false);
     const [importPreviewData, setImportPreviewData] = useState<ImportPreviewResult | null>(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
-    const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        e.target.value = '';
+    const handleConfirmFile = async (file: File) => {
         const formData = new FormData();
         formData.append('file', file);
         if (subjectId) {
@@ -72,6 +70,7 @@ function TeacherQuestionBankDetail() {
                 return;
             }
             setImportPreviewData(result);
+            setIsImportExcelModalOpen(false);
             setIsPreviewModalOpen(true);
         } catch {
             toast.error('Failed to parse file. Please check the format.');
@@ -269,7 +268,6 @@ function TeacherQuestionBankDetail() {
         return (
             <div className="p-4 md:p-6 flex flex-col items-center justify-center h-64 gap-4">
                 <div className="w-12 h-12 border-4 border-[#F37022] border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-500">Loading questions...</p>
             </div>
         );
     }
@@ -297,14 +295,6 @@ function TeacherQuestionBankDetail() {
                     <p className="text-gray-500 text-sm mt-1">{questions.length} total questions in bank</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    {/* Hidden file input for import */}
-                    <input
-                        type="file"
-                        accept=".xlsx,.xls"
-                        className="hidden"
-                        ref={fileInputRef}
-                        onChange={handleFileImport}
-                    />
                     {/* Download Template */}
                     <a
                         href="/templates/question_bank_template.xlsx"
@@ -317,7 +307,7 @@ function TeacherQuestionBankDetail() {
                     {/* Import Excel */}
                     <button
                         className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-[#F37022] text-[#F37022] rounded-lg text-xs sm:text-sm font-medium hover:bg-orange-50 transition-colors bg-white disabled:opacity-60"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => setIsImportExcelModalOpen(true)}
                         disabled={isPreviewing || isImporting}
                     >
                         {(isPreviewing || isImporting)
@@ -500,6 +490,16 @@ function TeacherQuestionBankDetail() {
                 editData={editingQuestion}
             />
 
+            {/* Import Excel Modal */}
+            <ImportExcelModal
+                isOpen={isImportExcelModalOpen}
+                onClose={() => setIsImportExcelModalOpen(false)}
+                onConfirm={handleConfirmFile}
+                title="Import Questions"
+                description={`Please use the standard template to import questions for ${subjectId}`}
+                templateUrl="/templates/question_bank_template.xlsx"
+            />
+
             {/* Import Preview Modal */}
             <ImportPreviewModal
                 isOpen={isPreviewModalOpen}
@@ -519,7 +519,6 @@ function TeacherQuestionBankDetail() {
                                 <Trash2 className="w-7 h-7 text-red-600" />
                             </div>
                             <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Question?</h3>
-                            <p className="text-sm text-gray-500 mb-6">This action cannot be undone. The question will be permanently removed.</p>
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setDeleteId(null)}
@@ -550,7 +549,6 @@ function TeacherQuestionBankDetail() {
                                 <Trash2 className="w-7 h-7 text-red-600" />
                             </div>
                             <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Selected?</h3>
-                            <p className="text-sm text-gray-500 mb-6">Are you sure you want to delete {selectedIds.size} question{selectedIds.size !== 1 ? 's' : ''}? This action cannot be undone.</p>
                             <div className="flex gap-3">
                                 <button
                                     onClick={() => setBulkDeleteConfirmOpen(false)}

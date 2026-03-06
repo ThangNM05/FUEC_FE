@@ -246,7 +246,6 @@ function AdminTeachers() {
     <div className="p-4 md:p-6">
       <div className="mb-4 md:mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Teacher Management</h1>
-        <p className="text-gray-600 mt-1">Manage your teacher list</p>
       </div>
 
       <DataTable
@@ -277,13 +276,13 @@ function AdminTeachers() {
         onConfirm={handleConfirmImport}
         title="Import Teachers"
         description="Please use the standard template to import teacher data"
-        templateUrl="/templates/teacher_import_template.xlsx"
+        templateUrl="/templates/Import_Teacher_Template.xlsx"
       />
 
       <ImportResultModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        result={importResult} // Use cast or ensures compatible structure
+        result={importResult}
         entityName="teachers"
       />
 
