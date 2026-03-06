@@ -359,6 +359,7 @@ function AdminClasses() {
                 onConfirm={handleConfirmImport}
                 title="Import Class Subject Teacher Assignments"
                 description="Please ensure the Excel file contains columns: SemesterCode, ClassCode, SubjectCode, TeacherCode"
+                templateUrl="/templates/class_subject_teacher_import_template.xlsx"
             />
 
             <ImportResultModal
