@@ -84,8 +84,55 @@ export const classDetailsApi = baseApi.injectEndpoints({
             transformResponse: (response: any) => response?.result || [],
             providesTags: ['StudentClasses']
         }),
+
+        // POST: Import class-subject-teacher assignments from Excel file
+        importClassSubjectTeachers: builder.mutation<ImportClassSubjectTeachersResponse, File>({
+            query: (file) => {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                return {
+                    url: '/ClassSubjects/import-teachers',
+                    method: 'POST',
+                    body: formData,
+                };
+            },
+            transformResponse: (response: any) => {
+                let data = response;
+                if (response?.result) data = response.result;
+                else if (response?.data) data = response.data;
+
+                if (typeof data === 'string') {
+                    const successMatch = data.match(/Successfully (?:imported|processed) (\d+)/i);
+                    const errorMatch = data.match(/(\d+) errors/i);
+
+                    const successCount = successMatch ? parseInt(successMatch[1]) : 0;
+                    const failureCount = errorMatch ? parseInt(errorMatch[1]) : 0;
+
+                    const errors: string[] = [];
+                    if (data.includes("No valid")) {
+                        errors.push("No data imported. Please check if the file is empty or formatted correctly.");
+                    }
+
+                    if (failureCount > 0 && errors.length === 0) {
+                        errors.push(`Run into ${failureCount} errors during import. Please check your file format and try again.`);
+                    }
+
+                    return { successCount, failureCount, errors };
+                }
+
+                return data;
+            },
+            invalidatesTags: ['ClassSubjectTeachers'],
+        }),
     }),
 });
+
+export interface ImportClassSubjectTeachersResponse {
+    successCount: number;
+    failureCount: number;
+    errors?: string[];
+}
 
 export const {
     useGetClassSubjectsQuery,
@@ -95,5 +142,6 @@ export const {
     useGetStudentClassesQuery,
     useAddStudentClassMutation,
     useRemoveStudentClassMutation,
-    useGetIneligibleStudentIdsQuery
+    useGetIneligibleStudentIdsQuery,
+    useImportClassSubjectTeachersMutation,
 } = classDetailsApi;
