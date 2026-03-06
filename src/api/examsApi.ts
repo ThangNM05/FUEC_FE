@@ -1,5 +1,5 @@
 import { baseApi } from './baseApi';
-import type { CreateExamRequest, PaginatedExamsResponse, PaginatedExamQuestionsResponse } from '@/types/exam.types';
+import type { CreateExamRequest, UpdateExamRequest, PaginatedExamsResponse, PaginatedExamQuestionsResponse } from '@/types/exam.types';
 
 export const examsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -33,11 +33,28 @@ export const examsApi = baseApi.injectEndpoints({
             },
             providesTags: ['Exams'],
         }),
+        updateExam: builder.mutation<void, UpdateExamRequest>({
+            query: ({ id, ...exam }) => ({
+                url: `/Exams/${id}`,
+                method: 'PUT',
+                body: exam,
+            }),
+            invalidatesTags: ['Exams'],
+        }),
+        deleteExam: builder.mutation<void, string>({
+            query: (id) => ({
+                url: `/Exams/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['Exams'],
+        }),
     }),
 });
 
 export const {
     useCreateExamMutation,
     useGetExamsByClassSubjectIdQuery,
-    useGetExamQuestionsQuery
+    useGetExamQuestionsQuery,
+    useUpdateExamMutation,
+    useDeleteExamMutation
 } = examsApi;

@@ -14,6 +14,17 @@ export interface CreateExamRequest {
     codeDuration: number;
 }
 
+export interface UpdateExamRequest {
+    id: string;
+    startTime?: string;
+    endTime?: string;
+    isPublicGrade?: boolean;
+    requireIpCheck?: boolean;
+    allowedIpRanges?: string;
+    codeDuration?: number;
+    securityMode?: number;
+}
+
 export interface Exam {
     syllabusAssessmentId: string;
     classSubjectId: string;

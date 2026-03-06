@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { toast } from 'sonner';
 import {
     ChevronRight, Users, FileText, Calendar, ClipboardCheck, Plus,
     ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery } from '@/api/classDetailsApi';
-import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
+import { useGetExamsByClassSubjectIdQuery, useDeleteExamMutation } from '@/api/examsApi';
 import ExamDetailModal from '@/components/modals/ExamDetailModal';
+import EditExamModal from '@/components/modals/EditExamModal';
 import type { Exam } from '@/types/exam.types';
+import { Modal } from 'antd';
+import { Pencil, Trash2 } from 'lucide-react';
 
 interface Assignment {
     id: string;
@@ -48,6 +52,10 @@ function TeacherCourseDetails() {
     const [activeTab, setActiveTab] = useState('slots');
     const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
     const [isExamDetailModalOpen, setIsExamDetailModalOpen] = useState(false);
+    const [isEditExamModalOpen, setIsEditExamModalOpen] = useState(false);
+    const [examToEdit, setExamToEdit] = useState<Exam | null>(null);
+
+    const [deleteExam] = useDeleteExamMutation();
 
     // Pagination for slots
     const [currentPage, setCurrentPage] = useState(1);
@@ -156,6 +164,31 @@ function TeacherCourseDetails() {
         setSlots(slots.map(slot =>
             slot.id === slotId ? { ...slot, expanded: !slot.expanded } : slot
         ));
+    };
+
+    const handleDeleteExam = (e: React.MouseEvent, exam: Exam) => {
+        e.stopPropagation();
+        Modal.confirm({
+            title: 'Delete Exam',
+            content: `Are you sure you want to delete "${exam.category}${exam.displayName ? ` - ${exam.displayName}` : ''}"?`,
+            okText: 'Delete',
+            okType: 'danger',
+            cancelText: 'Cancel',
+            onOk: async () => {
+                try {
+                    await deleteExam(exam.id).unwrap();
+                    toast.success('Exam deleted successfully');
+                } catch (error) {
+                    toast.error('Failed to delete exam');
+                }
+            },
+        });
+    };
+
+    const handleEditExam = (e: React.MouseEvent, exam: Exam) => {
+        e.stopPropagation();
+        setExamToEdit(exam);
+        setIsEditExamModalOpen(true);
     };
 
     if (isLoading || isLoadingSlots) {
@@ -506,6 +539,22 @@ function TeacherCourseDetails() {
                                                         </span>
                                                     )}
                                                 </div>
+                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={(e) => handleEditExam(e, exam)}
+                                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        title="Edit Exam"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => handleDeleteExam(e, exam)}
+                                                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Delete Exam"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -520,6 +569,12 @@ function TeacherCourseDetails() {
                 exam={selectedExam}
                 isOpen={isExamDetailModalOpen}
                 onClose={() => setIsExamDetailModalOpen(false)}
+            />
+
+            <EditExamModal
+                exam={examToEdit}
+                isOpen={isEditExamModalOpen}
+                onClose={() => setIsEditExamModalOpen(false)}
             />
         </div>
     );
