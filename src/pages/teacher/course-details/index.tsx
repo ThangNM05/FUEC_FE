@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery } from '@/api/classDetailsApi';
 import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
+import ExamDetailModal from '@/components/modals/ExamDetailModal';
+import type { Exam } from '@/types/exam.types';
 
 interface Assignment {
     id: string;
@@ -44,6 +46,8 @@ function TeacherCourseDetails() {
     const navigate = useNavigate();
     const { courseId } = useParams();
     const [activeTab, setActiveTab] = useState('slots');
+    const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
+    const [isExamDetailModalOpen, setIsExamDetailModalOpen] = useState(false);
 
     // Pagination for slots
     const [currentPage, setCurrentPage] = useState(1);
@@ -456,7 +460,14 @@ function TeacherCourseDetails() {
                             ) : (
                                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                                     {exams.map((exam) => (
-                                        <div key={exam.id} className="border border-gray-200 rounded-xl p-5 hover:border-[#F37022] hover:shadow-md transition-all bg-white relative overflow-hidden group">
+                                        <div
+                                            key={exam.id}
+                                            className="border border-gray-200 rounded-xl p-5 hover:border-[#F37022] hover:shadow-md transition-all bg-white relative overflow-hidden group cursor-pointer"
+                                            onClick={() => {
+                                                setSelectedExam(exam);
+                                                setIsExamDetailModalOpen(true);
+                                            }}
+                                        >
                                             <div className="absolute top-0 left-0 w-1 h-full bg-[#F37022]"></div>
                                             <div className="flex justify-between items-start mb-4">
                                                 <div>
@@ -504,6 +515,12 @@ function TeacherCourseDetails() {
                     )}
                 </div>
             </div>
+
+            <ExamDetailModal
+                exam={selectedExam}
+                isOpen={isExamDetailModalOpen}
+                onClose={() => setIsExamDetailModalOpen(false)}
+            />
         </div>
     );
 }

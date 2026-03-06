@@ -5,18 +5,18 @@ export interface Curriculum {
     isActive: boolean;
     createdAt?: string;
     deletedAt?: string;
-    
+
     code: string;
     name: string;
     startYear: number;
     cohort?: string;
     totalTerms: number;
     description?: string;
-    
+
     subMajorId?: string;
     subMajorCode?: string;
     subMajorName?: string;
-    
+
     subjectCount: number;
 }
 

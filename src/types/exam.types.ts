@@ -50,3 +50,26 @@ export interface PaginatedExamsResponse {
     itemFrom: number;
     itemTo: number;
 }
+
+export interface ExamQuestion {
+    examId: string;
+    questionId: string;
+    points: number;
+    questionContent: string;
+    id: string;
+    createdAt: string;
+    createdBy: string | null;
+    updatedAt: string | null;
+    updatedBy: string | null;
+    deletedAt: string | null;
+    deletedBy: string | null;
+    isActive: boolean;
+}
+
+export interface PaginatedExamQuestionsResponse {
+    items: ExamQuestion[];
+    totalItemCount: number;
+    totalPages: number;
+    itemFrom: number;
+    itemTo: number;
+}
