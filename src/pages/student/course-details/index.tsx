@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { ArrowLeft, FileText, Calendar, ChevronDown, ChevronUp, Download, BookOpen, Play, Lock, CheckCircle, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { ArrowLeft, FileText, Calendar, ChevronDown, ChevronUp, Download, BookOpen, Play, Lock, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router';
+import { useGetClassSubjectSlotsQuery, useGetClassSubjectByIdQuery } from '@/api/classDetailsApi';
 
 interface Question {
   id: number;
@@ -14,7 +15,7 @@ interface Assignment {
 }
 
 interface Slot {
-  id: number;
+  id: string;
   title: string;
   startTime: string;
   endTime: string;
@@ -45,18 +46,29 @@ interface Material {
 
 function CourseDetails() {
   const navigate = useNavigate();
+  const { classSubjectId } = useParams<{ classSubjectId: string }>();
   const [activeSection, setActiveSection] = useState('assignments');
   const [currentPage, setCurrentPage] = useState(1);
   const [slotContentsExpanded, setSlotContentsExpanded] = useState(false);
   const SLOTS_PER_PAGE = 10;
 
+  const { data: slotsData, isLoading: isSlotsLoading, isError } = useGetClassSubjectSlotsQuery(classSubjectId || '', {
+    skip: !classSubjectId
+  });
+
+  const { data: classSubjectData, isLoading: isClassLoading } = useGetClassSubjectByIdQuery(classSubjectId || '', {
+    skip: !classSubjectId
+  });
+
+  const isLoading = isSlotsLoading || isClassLoading;
+
   const course = {
-    name: 'Mobile App Development',
-    code: 'MAD401',
-    instructor: 'Prof. Nguyen Van A',
-    schedule: 'Mon, Wed 8:00 AM - 10:00 AM',
-    room: 'Room 301',
-    credits: 3
+    name: classSubjectData?.subjectName || slotsData?.subjectName || 'Loading...',
+    code: classSubjectData?.subjectCode || slotsData?.subjectCode || '...',
+    instructor: classSubjectData?.teacherName || 'N/A',
+    schedule: classSubjectData?.classCode ? `${classSubjectData.classCode}` : 'N/A',
+    room: 'N/A',
+    credits: classSubjectData?.subjectCredits || 0
   };
 
   const courseAssignments = [
@@ -78,52 +90,27 @@ function CourseDetails() {
     { id: 3, title: 'Quiz 2: Design Patterns', questions: 15, duration: 20, status: 'locked', score: null }
   ];
 
-  // Generate 20 slots with realistic data and status
-  const getSlotStatus = (slotId: number): 'locked' | 'completed' | 'pending' | 'urgent' | 'overdue' => {
-    if (slotId <= 5) return 'completed';
-    if (slotId === 6) return 'overdue';
-    if (slotId <= 8) return 'urgent';
-    if (slotId <= 10) return 'pending';
-    return 'locked';
+  const [expandedSlots, setExpandedSlots] = useState<{ [key: string]: boolean }>({});
+
+  const toggleSlot = (slotId: string) => {
+    setExpandedSlots(prev => ({
+      ...prev,
+      [slotId]: !prev[slotId]
+    }));
   };
 
-  const getRemaining = (slotId: number): string | undefined => {
-    if (slotId === 6) return 'Overdue 2 days';
-    if (slotId === 7) return '23 hours';
-    if (slotId === 8) return '4 hours 30 min';
-    if (slotId === 9) return '2 days';
-    if (slotId === 10) return '5 days';
-    return undefined;
-  };
-
-  const [slots, setSlots] = useState<Slot[]>(
-    Array.from({ length: 20 }, (_, i) => ({
-      id: i + 1,
-      title: `Slot ${i + 1}`,
-      startTime: '12:30 10/09/2025',
-      endTime: '14:45 10/09/2025',
-      topics: i === 0
-        ? ['Mobile Development Overview', 'Android Introduction', 'Android Studio', 'Android Application Structure']
-        : [`Topic ${i * 3 + 1}`, `Topic ${i * 3 + 2}`, `Topic ${i * 3 + 3}`],
-      questions: [
-        { id: 1, title: 'What is android?', status: 'finished' as const },
-        { id: 2, title: 'What is Android Structure?', status: 'finished' as const },
-        { id: 3, title: 'Explain android activity life cycle?', status: 'custom' as const }
-      ],
-      assignments: [
-        { id: 1, title: 'Submit Demo Hello World!' }
-      ],
-      expanded: false, // All slots collapsed by default
-      status: getSlotStatus(i + 1),
-      remaining: getRemaining(i + 1)
-    }))
-  );
-
-  const toggleSlot = (slotId: number) => {
-    setSlots(slots.map(slot =>
-      slot.id === slotId ? { ...slot, expanded: !slot.expanded } : slot
-    ));
-  };
+  const slots: Slot[] = slotsData?.slots.map(slot => ({
+    id: slot.id,
+    title: `Slot ${slot.slotIndex}`,
+    startTime: new Date(slot.date).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+    endTime: new Date(slot.endDate).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+    topics: slot.sessions.map((s: any) => s.topic),
+    questions: [], // Mocking for now as not in this API
+    assignments: [], // Mocking for now as not in this API
+    expanded: !!expandedSlots[slot.id],
+    status: 'pending' as const, // Defaulting for now
+    remaining: undefined
+  })) || [];
 
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId);
@@ -155,8 +142,6 @@ function CourseDetails() {
             <span>{course.instructor}</span>
             <span>•</span>
             <span>{course.schedule}</span>
-            <span>•</span>
-            <span>{course.room}</span>
           </div>
         </div>
 
@@ -233,10 +218,20 @@ function CourseDetails() {
         <div id="slot-contents" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-[#0A1B3C]">Slot Contents</h2>
-            <div className="text-sm text-gray-500">
-              Page {currentPage} of {Math.ceil(slots.length / SLOTS_PER_PAGE)}
-            </div>
+            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-[#F37022]" />}
+            {!isLoading && (
+              <div className="text-sm text-gray-500">
+                Page {currentPage} of {Math.ceil(slots.length / SLOTS_PER_PAGE) || 1}
+              </div>
+            )}
           </div>
+
+          {isError && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center mb-4">
+              Failed to load slots data. Please try again.
+            </div>
+          )}
+
           <div className="space-y-4">
             {slots
               .slice((currentPage - 1) * SLOTS_PER_PAGE, currentPage * SLOTS_PER_PAGE)
@@ -383,7 +378,7 @@ function CourseDetails() {
               Previous
             </button>
             <div className="flex items-center gap-1">
-              {Array.from({ length: Math.ceil(slots.length / SLOTS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+              {Array.from({ length: Math.ceil(slots.length / SLOTS_PER_PAGE) || 1 }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
@@ -397,8 +392,8 @@ function CourseDetails() {
               ))}
             </div>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(slots.length / SLOTS_PER_PAGE), prev + 1))}
-              disabled={currentPage === Math.ceil(slots.length / SLOTS_PER_PAGE)}
+              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(slots.length / SLOTS_PER_PAGE) || 1, prev + 1))}
+              disabled={currentPage === (Math.ceil(slots.length / SLOTS_PER_PAGE) || 1)}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
@@ -510,7 +505,8 @@ function CourseDetails() {
                         key={slot.id}
                         onClick={() => {
                           if (slot.status !== 'locked') {
-                            const slotPage = Math.ceil(slot.id / SLOTS_PER_PAGE);
+                            const index = slots.findIndex(s => s.id === slot.id);
+                            const slotPage = Math.ceil((index + 1) / SLOTS_PER_PAGE);
                             setCurrentPage(slotPage);
                             setTimeout(() => scrollToSection(`slot-${slot.id}`), 100);
                           }
