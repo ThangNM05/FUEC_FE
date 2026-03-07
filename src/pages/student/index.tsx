@@ -4,6 +4,8 @@ import {
   Bell, CheckCircle, Clock, Calendar, ArrowRight, Search
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { useGetStudentSubjectsQuery } from '@/api/studentsApi';
+import { Loader2 } from 'lucide-react';
 
 function StudentDashboard() {
   const navigate = useNavigate();
@@ -18,14 +20,16 @@ function StudentDashboard() {
     }));
   };
 
-  const courses = [
-    { id: 1, code: 'SWE101', name: 'Software Engineering', term: 'Spring 2025', instructor: 'Prof. Nguyen Van A', newItems: 3 },
-    { id: 2, code: 'DBS202', name: 'Database Systems', term: 'Spring 2025', instructor: 'Prof. Tran Thi B', newItems: 1 },
-    { id: 3, code: 'WEB301', name: 'Web Development', term: 'Spring 2025', instructor: 'Prof. Le Van C', newItems: 0 },
-    { id: 4, code: 'MAD401', name: 'Mobile App Development', term: 'Spring 2025', instructor: 'Prof. Pham Thi D', newItems: 5 },
-    { id: 5, code: 'DSA201', name: 'Data Structures', term: 'Spring 2025', instructor: 'Prof. Hoang Van E', newItems: 0 },
-    { id: 6, code: 'NET301', name: 'Computer Networks', term: 'Spring 2025', instructor: 'Prof. Vu Thi F', newItems: 2 },
-  ];
+  const { data: studentSubjectsData, isLoading, isError } = useGetStudentSubjectsQuery('b0723dc3-02c0-49eb-9754-cdd437ca3852');
+
+  const courses = studentSubjectsData?.map(subject => ({
+    id: subject.classSubjectId,
+    code: subject.subjectCode,
+    name: subject.subjectName,
+    term: 'Spring 2025', // Fallback for term
+    instructor: subject.classCode, // Fallback since instructor name isn't in this API yet
+    newItems: 0 // Mocked for now
+  })) || [];
 
   const todoItems = [
     { id: 1, title: 'Assignment 2: Database Design', course: 'DBS202', dueDate: 'Jan 11 at 11:59pm', points: 100 },
@@ -108,7 +112,7 @@ function StudentDashboard() {
               <div
                 key={course.id}
                 className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-lg hover:border-[#F37022] hover:-translate-y-1 transition-all duration-300 cursor-pointer group animate-slideUp"
-                onClick={() => navigate('/student/course-details')}
+                onClick={() => navigate(`/student/course-details/${course.id}`)}
               >
                 <div className="mb-3">
                   <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2.5 py-1 rounded">
@@ -138,7 +142,7 @@ function StudentDashboard() {
                 <div
                   key={course.id}
                   className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer group"
-                  onClick={() => navigate('/student/course-details')}
+                  onClick={() => navigate(`/student/course-details/${course.id}`)}
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
@@ -183,6 +187,25 @@ function StudentDashboard() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-10 h-10 animate-spin text-[#F37022] mb-4" />
+            <p className="text-gray-500 font-medium">Loading your dashboard...</p>
+          </div>
+        )}
+
+        {isError && (
+          <div className="flex flex-col items-center justify-center py-20 bg-red-50 rounded-xl border border-red-100">
+            <p className="text-red-600 font-medium text-lg">Oops! Something went wrong</p>
+            <p className="text-red-400">We couldn't load your courses. Please try again later.</p>
+          </div>
+        )}
+
+        {!isLoading && !isError && courses.length === 0 && (
+          <div className="text-center py-20 bg-white rounded-lg border border-gray-200">
+            <p className="text-gray-500 italic">No courses assigned to you yet.</p>
           </div>
         )}
       </div>

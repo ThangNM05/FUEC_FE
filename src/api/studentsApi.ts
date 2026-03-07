@@ -8,6 +8,7 @@ import type {
     UpdateStudentRequest,
     AutoAssignClassRequest,
     AutoAssignClassResult,
+    StudentSubject,
 } from '../types/student.types';
 
 /**
@@ -189,6 +190,12 @@ export const studentsApi = baseApi.injectEndpoints({
             },
             providesTags: ['Students', 'Classes'], // Invalidate if classes change
         }),
+        // GET: Fetch student subjects by student ID
+        getStudentSubjects: builder.query<StudentSubject[], string>({
+            query: (studentId) => `/students/${studentId}/subjects`,
+            transformResponse: (response: any) => response?.result || response || [],
+            providesTags: (_result, _error, id) => [{ type: 'Students', id }, 'StudentClasses'],
+        }),
     }),
 });
 
@@ -202,5 +209,6 @@ export const {
     useImportStudentsMutation,
     useAutoAssignClassMutation,
     useGetStudentScheduleQuery,
+    useGetStudentSubjectsQuery,
 } = studentsApi;
 

@@ -85,7 +85,7 @@ function Router() {
       <Route element={<StudentLayout />}>
         <Route path="/student" element={<StudentDashboard />} />
         <Route path="/student/courses" element={<StudentCourses />} />
-        <Route path="/student/course-details" element={<CourseDetails />} />
+        <Route path="/student/course-details/:classSubjectId" element={<CourseDetails />} />
         <Route path="/student/assignment" element={<AssignmentDetails />} />
         <Route path="/student/quiz" element={<QuizTest />} />
         <Route path="/student/forums" element={<StudentForums />} />

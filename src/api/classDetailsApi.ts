@@ -21,6 +21,35 @@ export interface ClassSubject {
     updatedAt?: string;
 }
 
+export interface SlotSession {
+    slotSessionId: string;
+    sessionOrder: number;
+    syllabusSessionId: string;
+    sessionNumber: number;
+    topic: string;
+    learningTeachingType: string;
+    ituSkills: string;
+    studentTasks: string;
+}
+
+export interface Slot {
+    id: string;
+    slotIndex: number;
+    date: string;
+    endDate: string;
+    sessions: SlotSession[];
+}
+
+export interface ClassSubjectSlotsResponse {
+    subjectId: string;
+    subjectCode: string;
+    subjectName: string;
+    syllabusId: string;
+    syllabusName: string;
+    slots: Slot[];
+}
+
+
 export const classDetailsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         // Class Subjects
@@ -38,8 +67,8 @@ export const classDetailsApi = baseApi.injectEndpoints({
             query: (id) => `/ClassSubjects/${id}`,
             transformResponse: (response: any) => response?.result || response,
         }),
-        getClassSubjectSlots: builder.query<any, string>({
-            query: (id) => `/Slots/class-subject/${id}`,
+        getClassSubjectSlots: builder.query<ClassSubjectSlotsResponse, string>({
+            query: (id) => `/Slots/class-subject/${id}?sortBy=slotIndex&sortOrder=1`,
             transformResponse: (response: any) => response?.result || response,
             providesTags: ['Slots' as any],
         }),

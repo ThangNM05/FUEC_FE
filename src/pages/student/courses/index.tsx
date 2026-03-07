@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Search, ChevronRight, ArrowRight, Star, Clock } from 'lucide-react';
+import { Search, ChevronRight, Star, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { useGetStudentSubjectsQuery } from '@/api/studentsApi';
 
 function StudentCourses() {
   const navigate = useNavigate();
@@ -8,38 +9,19 @@ function StudentCourses() {
   const [semester, setSemester] = useState('SPRING2025');
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card');
 
-  const courses = [
-    {
-      id: 1, code: 'SWE101', name: 'Software Engineering',
-      instructor: 'Prof. Nguyen Van A', term: 'Spring 2025',
-      className: 'SE1801', schedule: 'Mon, Wed 9:00 AM', room: 'Room 301',
-      favorited: true
-    },
-    {
-      id: 2, code: 'DBS202', name: 'Database Systems',
-      instructor: 'Prof. Tran Thi B', term: 'Spring 2025',
-      className: 'DB1802', schedule: 'Wed, Fri 9:00 AM', room: 'Room 206',
-      favorited: true
-    },
-    {
-      id: 3, code: 'WEB301', name: 'Web Development',
-      instructor: 'Prof. Le Van C', term: 'Spring 2025',
-      className: 'WE1801', schedule: 'Thu, Sat 9:00 AM', room: 'Room 402',
-      favorited: false
-    },
-    {
-      id: 4, code: 'MAD401', name: 'Mobile App Development',
-      instructor: 'Prof. Pham Thi D', term: 'Spring 2025',
-      className: 'MA1801', schedule: 'Tue, Thu 2:00 PM', room: 'Room 305',
-      favorited: false
-    },
-    {
-      id: 5, code: 'DSA201', name: 'Data Structures',
-      instructor: 'Prof. Hoang Van E', term: 'Spring 2025',
-      className: 'DS1801', schedule: 'Mon, Wed 2:00 PM', room: 'Room 401',
-      favorited: false
-    },
-  ];
+  const { data: studentSubjectsData, isLoading, isError } = useGetStudentSubjectsQuery('b0723dc3-02c0-49eb-9754-cdd437ca3852');
+
+  const courses = studentSubjectsData?.map(subject => ({
+    id: subject.classSubjectId,
+    code: subject.subjectCode,
+    name: subject.subjectName,
+    instructor: subject.classCode, // Fallback since instructor name isn't in this API yet
+    term: 'Spring 2025', // Mocked for now
+    className: subject.classCode,
+    schedule: 'N/A',
+    room: 'N/A',
+    favorited: false
+  })) || [];
 
   const filteredCourses = courses.filter(course =>
     course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -106,7 +88,7 @@ function StudentCourses() {
             <div
               key={course.id}
               className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-lg hover:border-[#F37022] hover:-translate-y-1 transition-all duration-300 cursor-pointer group animate-slideUp"
-              onClick={() => navigate('/student/course-details')}
+              onClick={() => navigate(`/student/course-details/${course.id}`)}
             >
               <div className="mb-3">
                 <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2.5 py-1 rounded">
@@ -139,7 +121,7 @@ function StudentCourses() {
               <div
                 key={course.id}
                 className="grid grid-cols-12 gap-4 px-4 py-4 hover:bg-gray-50 cursor-pointer items-center group"
-                onClick={() => navigate('/student/course-details')}
+                onClick={() => navigate(`/student/course-details/${course.id}`)}
               >
                 <div className="col-span-5">
                   <div className="flex items-center gap-2">
@@ -168,10 +150,30 @@ function StudentCourses() {
         </div>
       )}
 
-      {filteredCourses.length === 0 && (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 animate-spin text-[#F37022] mb-4" />
+          <p className="text-gray-500 font-medium">Loading your courses...</p>
         </div>
       )}
+
+      {isError && (
+        <div className="flex flex-col items-center justify-center py-20 bg-red-50 rounded-xl border border-red-100">
+          <p className="text-red-600 font-medium text-lg">Oops! Something went wrong</p>
+          <p className="text-red-400">We couldn't load your courses. Please try again later.</p>
+        </div>
+      )}
+
+      {!isLoading && !isError && filteredCourses.length === 0 && (
+        <div className="text-center py-20 bg-white rounded-lg border border-gray-200">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Search className="w-8 h-8 text-gray-300" />
+          </div>
+          <h3 className="text-lg font-bold text-[#0A1B3C] mb-1">No courses found</h3>
+          <p className="text-gray-500 italic">No courses match your search or term selection.</p>
+        </div>
+      )}
+
 
     </div>
   );
