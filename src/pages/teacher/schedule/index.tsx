@@ -1,180 +1,274 @@
-import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Calendar, Clock, MapPin, User, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { useGetTeacherScheduleQuery } from '@/api/teachersApi';
+import { DatePicker, ConfigProvider } from 'antd';
+import dayjs from 'dayjs';
+import { useNavigate } from 'react-router';
 
-function TeacherSchedule() {
-    const [currentWeek, setCurrentWeek] = useState(0);
+// Interfaces for our API response
+interface SyllabusSessionDto {
+    slotSessionId: string;
+    sessionOrder: number;
+    syllabusSessionId: string;
+    sessionNumber: number;
+    topic: string;
+    learningTeachingType: string;
+    ituSkills: string;
+    studentTasks: string;
+}
 
-    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+interface ScheduleSlotDto {
+    slotId: string;
+    classId: string;
+    classCode: string;
+    classSubjectId: string;
+    subjectId: string;
+    subjectCode: string;
+    subjectName: string;
+    slotIndex: number;
+    date: string;
+    endDate: string;
+    room: string;
+    sessions: SyllabusSessionDto[];
+}
 
-    const timeSlots = [
-        { id: 1, time: '7:00 - 9:15', period: 'Slot 1' },
-        { id: 2, time: '9:30 - 11:45', period: 'Slot 2' },
-        { id: 3, time: '12:30 - 14:45', period: 'Slot 3' },
-        { id: 4, time: '15:00 - 17:15', period: 'Slot 4' },
-        { id: 5, time: '17:30 - 19:45', period: 'Slot 5' },
-        { id: 6, time: '20:00 - 22:15', period: 'Slot 6' }
+export default function TeacherSchedule() {
+    const navigate = useNavigate();
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    // Calculate the start (Monday) and end (Sunday) of the current week focus
+    const weekStart = useMemo(() => {
+        const date = new Date(currentDate);
+        const day = date.getDay();
+        const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+        return new Date(date.setDate(diff));
+    }, [currentDate]);
+
+    const weekEnd = useMemo(() => {
+        const date = new Date(weekStart);
+        date.setDate(date.getDate() + 6);
+        return date;
+    }, [weekStart]);
+
+    // Format dates for API query (YYYY-MM-DD)
+    const startDateStr = weekStart.toISOString().split('T')[0];
+    const endDateStr = weekEnd.toISOString().split('T')[0];
+
+    // Fetch schedule data for the week
+    const { data: scheduleData, isFetching, error } = useGetTeacherScheduleQuery({
+        startDate: startDateStr,
+        endDate: endDateStr
+    });
+
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    const slots = [
+        { index: 1, time: '7:00 - 9:15', period: 'Slot 1' },
+        { index: 2, time: '9:30 - 11:45', period: 'Slot 2' },
+        { index: 3, time: '12:30 - 14:45', period: 'Slot 3' },
+        { index: 4, time: '15:00 - 17:15', period: 'Slot 4' },
+        { index: 5, time: '17:30 - 19:45', period: 'Slot 5' },
+        { index: 6, time: '20:00 - 22:15', period: 'Slot 6' }
     ];
 
-    const schedule: Record<string, Record<number, { course: string; code: string; room: string; class: string } | null>> = {
-        Monday: {
-            2: { course: 'Database Systems', code: 'DBS202', room: 'Room 301', class: 'SE1801' },
-            4: { course: 'Database Systems', code: 'DBS202', room: 'Room 302', class: 'SE1802' }
-        },
-        Wednesday: {
-            2: { course: 'Database Systems', code: 'DBS202', room: 'Room 301', class: 'SE1801' },
-            3: { course: 'Web Development', code: 'WEB301', room: 'Room 205', class: 'SE1803' }
-        },
-        Thursday: {
-            5: { course: 'Data Structures', code: 'DSA201', room: 'Room 108', class: 'SE1804' }
-        },
-        Friday: {
-            1: { course: 'Web Development', code: 'WEB301', room: 'Room 205', class: 'SE1803' },
-            4: { course: 'Database Systems', code: 'DBS202', room: 'Room 302', class: 'SE1802' }
+    // Helpers to get dates
+    const getDates = () => {
+        const dates = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(weekStart);
+            date.setDate(weekStart.getDate() + i);
+            dates.push(date);
         }
+        return dates;
     };
 
-    // Calculate week display in "January 5-11, 2026" format
-    const getWeekDisplay = () => {
-        const baseDate = new Date('2026-01-05');
-        const weekStart = new Date(baseDate);
-        weekStart.setDate(baseDate.getDate() + currentWeek * 7);
+    const dates = getDates();
 
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekStart.getDate() + 6);
-
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'];
-
-        const startMonth = monthNames[weekStart.getMonth()];
-        const endMonth = monthNames[weekEnd.getMonth()];
-        const startDay = weekStart.getDate();
-        const endDay = weekEnd.getDate();
-        const year = weekEnd.getFullYear();
-
-        if (weekStart.getMonth() === weekEnd.getMonth()) {
-            return `${startMonth} ${startDay}-${endDay}, ${year}`;
-        } else {
-            return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
-        }
+    const previousWeek = () => {
+        const newDate = new Date(currentDate);
+        newDate.setDate(currentDate.getDate() - 7);
+        setCurrentDate(newDate);
     };
 
-    const goToDate = (dateString: string) => {
-        if (!dateString) return;
-
-        const selectedDate = new Date(dateString);
-        const baseDate = new Date('2026-01-05'); // Monday of first week
-
-        const diffTime = selectedDate.getTime() - baseDate.getTime();
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        const weekNumber = Math.floor(diffDays / 7);
-
-        setCurrentWeek(weekNumber);
+    const nextWeek = () => {
+        const newDate = new Date(currentDate);
+        newDate.setDate(currentDate.getDate() + 7);
+        setCurrentDate(newDate);
     };
 
-    // Get date for each day column
-    const getDayDate = (dayIndex: number) => {
-        const baseDate = new Date('2026-01-05'); // Monday of first week
-        const weekStart = new Date(baseDate);
-        weekStart.setDate(baseDate.getDate() + currentWeek * 7 + dayIndex);
+    const isToday = (date: Date) => {
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
+    };
 
-        const day = weekStart.getDate();
-        const month = weekStart.getMonth() + 1;
-        const year = weekStart.getFullYear();
-        return `${day}/${month}/${year}`;
+    const formatDate = (date: Date) => {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    const getTimeFromDateString = (dateString: string) => {
+        // extracts "07:00" from "2026-03-02T07:00:00"
+        return dateString.split('T')[1].substring(0, 5);
+    };
+
+    const getScheduleItem = (date: Date, slotIndex: number) => {
+        if (!scheduleData) return null;
+
+        const dateStr = date.toISOString().split('T')[0];
+        const targetTime = slots.find(s => s.index === slotIndex)?.time.split(' - ')[0]; // E.g., "7:00" or "9:30"
+
+        // Pad with leading zero if needed so "7:00" matches "07:00"
+        const formattedTargetTime = targetTime && targetTime.length === 4 ? `0${targetTime}` : targetTime;
+
+        return scheduleData.find((item: any) => {
+            const itemDateStr = item.date.split('T')[0];
+            const itemTimeStr = getTimeFromDateString(item.date);
+            return itemDateStr === dateStr && itemTimeStr === formattedTargetTime;
+        });
     };
 
     return (
-        <div className="p-6">
-            {/* Header */}
-            <div className="mb-8">
-                <div className="flex items-center justify-between mb-2">
-                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Schedule</h1>
-
-                    {/* Week Navigation */}
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => setCurrentWeek(currentWeek - 1)}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Previous week"
-                        >
-                            <ChevronLeft className="w-5 h-5 text-gray-600" />
-                        </button>
-
-                        {/* Date Range with Calendar Icon */}
-                        <div className="relative">
-                            <input
-                                type="date"
-                                onChange={(e) => goToDate(e.target.value)}
-                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                                title="Jump to specific date"
-                            />
-                            <button className="flex items-center gap-2 text-sm font-medium text-gray-700 px-4 py-2 hover:bg-gray-100 rounded-lg transition-colors">
-                                {getWeekDisplay()}
-                                <Calendar className="w-4 h-4 text-gray-500" />
-                            </button>
-                        </div>
-
-                        <button
-                            onClick={() => setCurrentWeek(currentWeek + 1)}
-                            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Next week"
-                        >
-                            <ChevronRight className="w-5 h-5 text-gray-600" />
-                        </button>
-                    </div>
+        <div className="space-y-6 max-w-6xl mx-auto w-full">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Teaching Schedule</h1>
                 </div>
 
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 bg-white rounded-lg border p-1 border-gray-200/60 shadow-sm">
+                        <Button variant="ghost" size="icon" onClick={previousWeek} className="h-8 w-8 text-gray-500 hover:text-gray-900 border border-transparent hover:border-gray-200">
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <div className="flex items-center gap-2 px-3 text-sm font-medium text-gray-700 justify-center bg-gray-50 rounded-md py-1 border border-gray-200">
+                            <ConfigProvider
+                                theme={{
+                                    token: {
+                                        colorPrimary: '#F37022',
+                                    },
+                                    components: {
+                                        DatePicker: {
+                                            activeBorderColor: 'transparent',
+                                            hoverBorderColor: 'transparent',
+                                        }
+                                    }
+                                }}
+                            >
+                                <DatePicker
+                                    variant="borderless"
+                                    allowClear={false}
+                                    value={dayjs(currentDate)}
+                                    onChange={(date) => {
+                                        if (date) {
+                                            setCurrentDate(date.toDate());
+                                        }
+                                    }}
+                                    className="w-32 cursor-pointer font-medium text-gray-700 bg-transparent p-0"
+                                    format="MMM D, YYYY"
+                                />
+                            </ConfigProvider>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={nextWeek} className="h-8 w-8 text-gray-500 hover:text-gray-900 border border-transparent hover:border-gray-200">
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
             </div>
 
-            {/* Schedule Table */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr className="bg-gray-50">
-                            <th className="border border-gray-200 p-3 text-left text-sm font-semibold text-[#0A1B3C] min-w-[100px]">Time</th>
-                            {daysOfWeek.map((day, index) => (
-                                <th key={day} className="border border-gray-200 p-3 text-center text-sm font-semibold text-[#0A1B3C] min-w-[140px]">
-                                    <div>{day}</div>
-                                    <div className="text-xs font-normal text-gray-500 mt-1">{getDayDate(index)}</div>
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {timeSlots.map((timeSlot) => (
-                            <tr key={timeSlot.id}>
-                                <td className="border border-gray-200 p-3 bg-gray-50 font-medium text-sm text-gray-700">
-                                    <div className="font-semibold">{timeSlot.period}</div>
-                                </td>
-                                {daysOfWeek.map((day) => {
-                                    const classItem = schedule[day]?.[timeSlot.id];
-                                    return (
-                                        <td key={day} className="border border-gray-200 p-3 align-top">
-                                            {classItem ? (
-                                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                                                    <div className="font-semibold text-[#0A1B3C] text-sm mb-1">{classItem.course}</div>
-                                                    <div className="text-xs font-semibold text-[#0066b3] bg-white px-2 py-0.5 rounded inline-block mb-2">
-                                                        {classItem.code}
-                                                    </div>
-                                                    <div className="text-xs text-gray-600 mb-2">{classItem.room}</div>
-                                                    <div className="text-xs font-medium text-gray-700 block mb-2">Class: {classItem.class}</div>
-                                                    <div className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded inline-block whitespace-nowrap">
-                                                        {timeSlot.time}
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="text-center text-gray-300">-</div>
+            <Card className="glass-card overflow-hidden rounded-xl border-orange-100/50 shadow-sm">
+                <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                        <table className="w-full table-fixed border-collapse">
+                            <thead>
+                                <tr>
+                                    <th className="w-24 min-w-[6rem] border-b border-r bg-gray-50/50 p-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider backdrop-blur-sm whitespace-nowrap">
+                                        Time
+                                    </th>
+                                    {dates.map((date, index) => (
+                                        <th
+                                            key={index}
+                                            className={`border-b border-r p-2 text-center w-[13.1%] ${isToday(date) ? 'bg-orange-50/50 backdrop-blur-sm relative overflow-hidden' : 'bg-gray-50/50 backdrop-blur-sm'
+                                                }`}
+                                        >
+                                            {isToday(date) && (
+                                                <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
                                             )}
+                                            <div className={`text-sm font-bold ${isToday(date) ? 'text-orange-700' : 'text-gray-900'}`}>
+                                                {days[index]}
+                                            </div>
+                                            <div className={`text-xs mt-1 ${isToday(date) ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
+                                                {formatDate(date)}
+                                            </div>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {isFetching ? (
+                                    Array.from({ length: 6 }).map((_, index) => (
+                                        <tr key={`loading-${index}`}>
+                                            <td className="border-b border-r bg-gray-50/50 p-2 text-center h-12">
+                                                <div className="h-4 bg-gray-200 rounded animate-pulse w-12 mx-auto mb-1"></div>
+                                                <div className="h-3 bg-gray-100 rounded animate-pulse w-16 mx-auto"></div>
+                                            </td>
+                                            {Array.from({ length: 7 }).map((_, colIndex) => (
+                                                <td key={`loading-col-${colIndex}`} className="border-b border-r p-1 align-top h-10">
+                                                    <div className="h-full w-full bg-gray-50/50 rounded animate-pulse"></div>
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                ) : error ? (
+                                    <tr>
+                                        <td colSpan={8} className="p-8 text-center text-red-500">
+                                            Error loading schedule. Please check your connection or contact support.
                                         </td>
-                                    );
-                                })}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                                    </tr>
+                                ) : slots.map((slot) => (
+                                    <tr key={slot.index}>
+                                        <td className="border-b border-r bg-gray-50/50 p-2 text-center text-xs font-medium text-gray-700 backdrop-blur-sm h-12 whitespace-nowrap">
+                                            <div className="font-semibold">{slot.period}</div>
+                                            <div className="text-gray-500 mt-1">{slot.time}</div>
+                                        </td>
+                                        {dates.map((date, dateIndex) => {
+                                            const scheduleItem = getScheduleItem(date, slot.index);
+                                            return (
+                                                <td key={dateIndex} className="border-b border-r p-1 align-top h-10">
+                                                    {scheduleItem ? (
+                                                        <div
+                                                            className="h-full w-full animate-in fade-in duration-300 cursor-pointer"
+                                                            onClick={() => navigate(`/teacher/course-details/${scheduleItem.classSubjectId}`)}
+                                                        >
+                                                            <div className="h-full rounded border border-orange-200 bg-orange-50/80 p-1.5 hover:bg-orange-100 hover:border-orange-300 transition-all shadow-sm">
+                                                                <div className="font-bold text-sm text-orange-900 mb-1 leading-tight flex justify-between items-start">
+                                                                    <span>{scheduleItem.subjectCode}</span>
+                                                                    <span className="text-[10px] bg-orange-200 text-orange-800 px-1 py-0.5 rounded font-medium">Slot {scheduleItem.slotIndex}</span>
+                                                                </div>
+
+                                                                <div className="space-y-0.5 opacity-90">
+                                                                    <div className="flex items-center text-xs text-orange-800">
+                                                                        <User className="mr-1 h-3 w-3 shrink-0 text-orange-600" />
+                                                                        <span className="flex-1 truncate"><span className="font-semibold">{scheduleItem.classCode}</span></span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-center text-gray-300 text-xs">-</div>
+                                                    )}
+                                                </td>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
     );
 }
 
-export default TeacherSchedule;

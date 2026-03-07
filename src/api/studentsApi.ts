@@ -169,6 +169,26 @@ export const studentsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['Classes', 'Students', 'ClassSubjectTeachers', 'StudentClasses']
         }),
+
+        // GET: Fetch student schedule
+        getStudentSchedule: builder.query<any[], { startDate?: string; endDate?: string }>({
+            query: ({ startDate, endDate }) => {
+                let url = '/students/schedule';
+                const params = new URLSearchParams();
+                if (startDate) params.append('startDate', startDate);
+                if (endDate) params.append('endDate', endDate);
+
+                const queryString = params.toString();
+                if (queryString) {
+                    url += `?${queryString}`;
+                }
+                return url;
+            },
+            transformResponse: (response: any) => {
+                return response?.result || response || [];
+            },
+            providesTags: ['Students', 'Classes'], // Invalidate if classes change
+        }),
     }),
 });
 
@@ -181,5 +201,6 @@ export const {
     useDeleteStudentMutation,
     useImportStudentsMutation,
     useAutoAssignClassMutation,
+    useGetStudentScheduleQuery,
 } = studentsApi;
 
