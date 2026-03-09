@@ -25,6 +25,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                 allowedIpRanges: exam.allowedIpRanges,
                 codeDuration: exam.codeDuration,
                 securityMode: exam.securityMode,
+                displayName: exam.displayName,
             });
         }
     }, [exam, isOpen, form]);
@@ -67,9 +68,17 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                     securityMode: 1,
                     codeDuration: 60,
                     isPublicGrade: true,
-                    requireIpCheck: false
+                    requireIpCheck: false,
+                    displayName: ''
                 }}
             >
+                <Form.Item
+                    name="displayName"
+                    label="Exam Title / Display Name"
+                    rules={[{ required: true, message: 'Please enter exam title' }]}
+                >
+                    <Input placeholder="e.g. Progress Test 1" />
+                </Form.Item>
                 <div className="grid grid-cols-2 gap-4">
                     <Form.Item
                         name="startTime"

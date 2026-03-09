@@ -31,6 +31,7 @@ interface Question {
     options?: string[];
     correctAnswer?: number;
     createdAt: string;
+    chapter: number;
 }
 
 const subjectNames: Record<string, string> = {
@@ -120,6 +121,7 @@ function TeacherQuestionBankDetail() {
             options: options.map((o: any) => o.choiceContent || ''),
             correctAnswer: correctIndex >= 0 ? correctIndex : undefined,
             createdAt: q.createdAt,
+            chapter: q.chapter || 1,
             rawOptions: options // Keep track of ids for updating
         } as any;
     });
@@ -158,6 +160,7 @@ function TeacherQuestionBankDetail() {
             tags: q.tags,
             options: q.options,
             correctAnswer: q.correctAnswer,
+            chapter: q.chapter,
             rawOptions: q.rawOptions // Pass raw options to keep their IDs
         } as any);
         setModalOpen(true);
@@ -183,6 +186,7 @@ function TeacherQuestionBankDetail() {
                         questionType: 0, // Single
                         tag: data.tags.join(','),
                         points: 1.0,
+                        chapter: data.chapter,
                         options: mappedOptions
                     }
                 }).unwrap();
@@ -194,6 +198,7 @@ function TeacherQuestionBankDetail() {
                     subjectId: actualSubjectId,
                     tag: data.tags.join(','),
                     points: 1.0,
+                    chapter: data.chapter,
                     options: mappedOptions
                 }).unwrap();
             }
@@ -394,6 +399,7 @@ function TeacherQuestionBankDetail() {
                                     />
                                 </th>
                                 <th className="px-6 py-4">Question Content</th>
+                                <th className="px-6 py-4 text-center">Chapter</th>
                                 <th className="px-6 py-4 hidden lg:table-cell">Tags</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
@@ -422,6 +428,11 @@ function TeacherQuestionBankDetail() {
                                                 </span>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg border border-gray-200">
+                                            Ch. {q.chapter}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 hidden lg:table-cell">
                                         <div className="flex flex-wrap gap-1">
@@ -510,64 +521,60 @@ function TeacherQuestionBankDetail() {
             />
 
             {/* Delete Confirmation */}
-            {
-                deleteId && createPortal(
-                    <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
-                        <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 text-center">
-                            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-7 h-7 text-red-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Question?</h3>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setDeleteId(null)}
-                                    className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteQuestion(deleteId)}
-                                    className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
-                                >
-                                    Delete
-                                </button>
-                            </div>
+            {deleteId && createPortal(
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 text-center">
+                        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="w-7 h-7 text-red-600" />
                         </div>
-                    </div>,
-                    document.body
-                )
-            }
+                        <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Question?</h3>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setDeleteId(null)}
+                                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleDeleteQuestion(deleteId)}
+                                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
 
             {/* Bulk Delete Confirmation */}
-            {
-                bulkDeleteConfirmOpen && createPortal(
-                    <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setBulkDeleteConfirmOpen(false)} />
-                        <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 text-center">
-                            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-7 h-7 text-red-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Selected?</h3>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setBulkDeleteConfirmOpen(false)}
-                                    className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleBulkDelete}
-                                    className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
-                                >
-                                    Delete All
-                                </button>
-                            </div>
+            {bulkDeleteConfirmOpen && createPortal(
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setBulkDeleteConfirmOpen(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 text-center">
+                        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="w-7 h-7 text-red-600" />
                         </div>
-                    </div>,
-                    document.body
-                )
-            }
+                        <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Selected?</h3>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setBulkDeleteConfirmOpen(false)}
+                                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleBulkDelete}
+                                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
+                            >
+                                Delete All
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 }

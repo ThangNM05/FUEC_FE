@@ -1,7 +1,14 @@
+export interface ChapterQuestionCount {
+    chapter: number;
+    count: number;
+}
+
 export interface CreateExamRequest {
     classSubjectId: string;
     questionCount: number;
+    chapterQuestionCounts: ChapterQuestionCount[];
     tag: string;
+    displayName: string;
     syllabusAssessmentId: string;
     examFormatId: string;
     startTime: string; // ISO 8601 string
@@ -23,6 +30,7 @@ export interface UpdateExamRequest {
     allowedIpRanges?: string;
     codeDuration?: number;
     securityMode?: number;
+    displayName?: string;
 }
 
 export interface Exam {
@@ -40,6 +48,7 @@ export interface Exam {
     allowedIpRanges: string;
     codeDuration: number;
     category: string;
+    tag: string;
     subjectCode: string;
     subjectName: string;
     syllabusName: string;
