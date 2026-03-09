@@ -10,6 +10,7 @@ export interface QuestionData {
     tags: string[];
     options?: string[];
     correctAnswer?: number; // index of correct option
+    chapter: number;
 }
 
 interface QuestionModalProps {
@@ -26,6 +27,7 @@ const emptyQuestion: QuestionData = {
     tags: [],
     options: ['', ''],
     correctAnswer: 0,
+    chapter: 1,
 };
 
 export default function QuestionModal({ isOpen, onClose, onSave, editData }: QuestionModalProps) {
@@ -52,10 +54,14 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
     const validate = (): boolean => {
         const errs: Record<string, string> = {};
         if (!form.content.trim()) errs.content = 'Question content is required';
-        
+
+        if (form.chapter < 1 || form.chapter > 10) {
+            errs.chapter = 'Chapter must be between 1 and 10';
+        }
+
         const validOpts = (form.options || []).filter(o => o.trim());
         if (validOpts.length < 2) errs.options = 'At least 2 options required';
-        
+
         setErrors(errs);
         return Object.keys(errs).length === 0;
     };
@@ -135,6 +141,20 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
                             placeholder="Enter question content..."
                         />
                         {errors.content && <p className="text-red-500 text-xs mt-1">{errors.content}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Chapter * (1-10)</label>
+                        <input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={form.chapter}
+                            onChange={e => setForm(f => ({ ...f, chapter: parseInt(e.target.value) || 0 }))}
+                            className={`w-full sm:w-32 px-4 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37022] focus:border-transparent ${errors.chapter ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                            placeholder="Ch."
+                        />
+                        {errors.chapter && <p className="text-red-500 text-xs mt-1">{errors.chapter}</p>}
                     </div>
 
 

@@ -31,6 +31,7 @@ interface Question {
     options?: string[];
     correctAnswer?: number;
     createdAt: string;
+    chapter: number;
 }
 
 const subjectNames: Record<string, string> = {
@@ -51,6 +52,7 @@ const initialQuestions: Question[] = [
         options: ['A linear sequential approach', 'An iterative approach', 'A prototype-based approach', 'A random approach'],
         correctAnswer: 0,
         createdAt: '2025-02-15',
+        chapter: 1
     },
     {
         id: 'q2',
@@ -61,6 +63,7 @@ const initialQuestions: Question[] = [
         options: ['True', 'False'],
         correctAnswer: 1,
         createdAt: '2025-02-16',
+        chapter: 1
     },
     {
         id: 'q3',
@@ -69,6 +72,7 @@ const initialQuestions: Question[] = [
         difficulty: 'medium',
         tags: ['PT2', 'Requirements'],
         createdAt: '2025-02-20',
+        chapter: 2
     },
     {
         id: 'q4',
@@ -79,6 +83,7 @@ const initialQuestions: Question[] = [
         options: ['Singleton', 'Factory', 'Observer', 'Strategy'],
         correctAnswer: 0,
         createdAt: '2025-02-22',
+        chapter: 3
     },
     {
         id: 'q5',
@@ -89,6 +94,7 @@ const initialQuestions: Question[] = [
         options: ['True', 'False'],
         correctAnswer: 1,
         createdAt: '2025-02-24',
+        chapter: 4
     },
 ];
 
@@ -171,6 +177,7 @@ function AdminQuestionBankDetail() {
             options: options.map((o: any) => o.choiceContent || ''),
             correctAnswer: correctIndex >= 0 ? correctIndex : undefined,
             createdAt: q.createdAt,
+            chapter: q.chapter || 1,
             rawOptions: options // Keep track of ids for updating
         } as any;
     });
@@ -199,7 +206,7 @@ function AdminQuestionBankDetail() {
     // ─── CRUD Operations ───
     const handleAddQuestion = () => {
         setEditingQuestion(null);
-        console.log("Add Question clicked"); setModalOpen(true);
+        setModalOpen(true);
     };
 
     const handleEditQuestion = (q: any) => {
@@ -209,9 +216,10 @@ function AdminQuestionBankDetail() {
             tags: q.tags,
             options: q.options,
             correctAnswer: q.correctAnswer,
+            chapter: q.chapter,
             rawOptions: q.rawOptions // Pass raw options to keep their IDs
         } as any);
-        console.log("Add Question clicked"); setModalOpen(true);
+        setModalOpen(true);
     };
 
     const handleSaveQuestion = async (data: any) => {
@@ -234,6 +242,7 @@ function AdminQuestionBankDetail() {
                         questionType: 0, // Single
                         tag: data.tags.join(','),
                         points: 1.0,
+                        chapter: data.chapter,
                         options: mappedOptions
                     }
                 }).unwrap();
@@ -245,6 +254,7 @@ function AdminQuestionBankDetail() {
                     subjectId: actualSubjectId,
                     tag: data.tags.join(','),
                     points: 1.0,
+                    chapter: data.chapter,
                     options: mappedOptions
                 }).unwrap();
             }
@@ -253,7 +263,6 @@ function AdminQuestionBankDetail() {
             refetch(); // Ensure latest data
         } catch (error) {
             console.error("Failed to save question:", error);
-            // Optionally show error toast
         }
     };
 
@@ -315,26 +324,6 @@ function AdminQuestionBankDetail() {
     };
 
     const isAllSelected = filteredQuestions.length > 0 && selectedIds.size === filteredQuestions.length;
-
-    // ─── Helpers ───
-    const getDifficultyColor = (d: string) => {
-        if (d === 'easy') return 'bg-green-100 text-green-700';
-        if (d === 'medium') return 'bg-yellow-100 text-yellow-700';
-        if (d === 'hard') return 'bg-red-100 text-red-700';
-        return 'bg-gray-100 text-gray-700';
-    };
-
-    const getTypeDisplay = (t: string) => {
-        if (t === 'multiple_choice') return 'Multiple Choice';
-        if (t === 'true_false') return 'True/False';
-        return 'Essay';
-    };
-
-    const getTypeColor = (t: string) => {
-        if (t === 'multiple_choice') return 'bg-blue-50 text-blue-700';
-        if (t === 'true_false') return 'bg-purple-50 text-purple-700';
-        return 'bg-orange-50 text-orange-700';
-    };
 
     if (isLoading) {
         return (
@@ -466,6 +455,7 @@ function AdminQuestionBankDetail() {
                                     />
                                 </th>
                                 <th className="px-6 py-4">Question Content</th>
+                                <th className="px-6 py-4 text-center">Chapter</th>
                                 <th className="px-6 py-4 hidden lg:table-cell">Tags</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
@@ -482,7 +472,6 @@ function AdminQuestionBankDetail() {
                                         />
                                     </td>
                                     <td className="px-6 py-4" onClick={(e) => {
-                                        // Make clicking the cell toggle selection as well, but ignore if clicking inside file icon (minor UX tweak)
                                         if ((e.target as HTMLElement).closest('.action-btn')) return;
                                         toggleSelect(q.id);
                                     }}>
@@ -495,6 +484,11 @@ function AdminQuestionBankDetail() {
                                                 </span>
                                             </div>
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg border border-gray-200">
+                                            Ch. {q.chapter}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 hidden lg:table-cell">
                                         <div className="flex flex-wrap gap-1">
@@ -583,65 +577,61 @@ function AdminQuestionBankDetail() {
             />
 
             {/* Delete Confirmation */}
-            {
-                deleteId && createPortal(
-                    <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
-                        <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 text-center">
-                            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-7 h-7 text-red-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Question?</h3>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setDeleteId(null)}
-                                    className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteQuestion(deleteId)}
-                                    className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
-                                >
-                                    Delete
-                                </button>
-                            </div>
+            {deleteId && createPortal(
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 text-center">
+                        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="w-7 h-7 text-red-600" />
                         </div>
-                    </div>,
-                    document.body
-                )
-            }
+                        <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Question?</h3>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setDeleteId(null)}
+                                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => handleDeleteQuestion(deleteId)}
+                                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
 
             {/* Bulk Delete Confirmation */}
-            {
-                bulkDeleteConfirmOpen && createPortal(
-                    <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setBulkDeleteConfirmOpen(false)} />
-                        <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 text-center">
-                            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-7 h-7 text-red-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Selected?</h3>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setBulkDeleteConfirmOpen(false)}
-                                    className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleBulkDelete}
-                                    className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
-                                >
-                                    Delete All
-                                </button>
-                            </div>
+            {bulkDeleteConfirmOpen && createPortal(
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setBulkDeleteConfirmOpen(false)} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 text-center">
+                        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Trash2 className="w-7 h-7 text-red-600" />
                         </div>
-                    </div>,
-                    document.body
-                )
-            }
-        </div >
+                        <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Selected?</h3>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setBulkDeleteConfirmOpen(false)}
+                                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleBulkDelete}
+                                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
+                            >
+                                Delete All
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+        </div>
     );
 }
 
