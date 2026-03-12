@@ -563,7 +563,7 @@ function TeacherCourseDetails() {
                                                                     </div>
                                                                 )}
                                                                 {/* Empty State warning if there's no progress tests and assignments and questions */}
-                                                                {slot.progressTests.length === 0 && slot.assignments.length === 0 && !hasQuestionsMap[slot.id] && (
+                                                                {slot.progressTests.length === 0 && slot.assignments.length === 0 && hasQuestionsMap[slot.id] === false && (
                                                                     <div className="py-8 text-center bg-gray-50 border border-dashed border-gray-200 rounded-xl mt-2">
                                                                         <p className="text-sm text-gray-500 font-medium">
                                                                             No contents for this slot.
@@ -840,19 +840,22 @@ function TeacherCourseDetails() {
                 }}
                 isSaving={isCreatingQuestion}
                 slotTitle={createQuestionSlotInfo?.title}
-                onSave={async (data) => {
+                onSave={async (questions) => {
                     if (createQuestionSlotInfo) {
                         try {
-                            await createSlotQuestion({
-                                slotId: createQuestionSlotInfo.id,
-                                content: data.content,
-                                description: data.description
-                            }).unwrap();
-                            toast.success('Question created successfully');
+                            // Create all questions in parallel
+                            await Promise.all(
+                                questions.map(q => createSlotQuestion({
+                                    slotId: createQuestionSlotInfo.id,
+                                    content: q.content,
+                                    description: q.description
+                                }).unwrap())
+                            );
+                            toast.success(`Created ${questions.length} question${questions.length > 1 ? 's' : ''} successfully`);
                             setIsCreateQuestionModalOpen(false);
                             setCreateQuestionSlotInfo(null);
                         } catch {
-                            toast.error('Failed to create question');
+                            toast.error('Failed to create one or more questions');
                         }
                     }
                 }}

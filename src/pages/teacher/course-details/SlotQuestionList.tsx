@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Modal } from 'antd';
@@ -28,11 +28,11 @@ export default function SlotQuestionList({
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState<SlotQuestionContentData | null>(null);
 
-    // Expose open modal function to parent via an event or just keep it simple with a button here?
-    // Based on the UI, the "Create Question" button is in the parent dropdown. 
-    // We will listen to a custom event from window or just let parent render the modal.
-    // Actually, it's better to export the raw questions and let parent map it, but hooks break if called in a loop.
-    // So this component ONLY renders the QUESTIONS list.
+    useEffect(() => {
+        if (!isLoading) {
+            onLoad?.(questions ? questions.length > 0 : false);
+        }
+    }, [questions, isLoading, onLoad]);
 
     const handleDelete = (id: string, content: string) => {
         Modal.confirm({
@@ -62,11 +62,8 @@ export default function SlotQuestionList({
     }
 
     if (!questions || questions.length === 0) {
-        if (onLoad) onLoad(false);
         return null;
     }
-
-    if (onLoad) onLoad(true);
 
     return (
         <div className="mb-6">
@@ -81,7 +78,7 @@ export default function SlotQuestionList({
                                 <FileText className="w-4 h-4" />
                             </div>
                             <div className="min-w-0 flex flex-col">
-                                <span className="text-sm font-medium text-gray-800 line-clamp-2">
+                                <span className="text-sm font-medium text-gray-800">
                                     {question.content}
                                 </span>
                                 {question.description && (
@@ -123,8 +120,9 @@ export default function SlotQuestionList({
                 isSaving={isUpdating}
                 slotTitle={slotTitle}
                 editData={editingQuestion}
-                onSave={async (data) => {
-                    if (data.id) {
+                onSave={async (dataList) => {
+                    const data = dataList[0];
+                    if (data && data.id) {
                         try {
                             await updateQuestion({
                                 id: data.id,
