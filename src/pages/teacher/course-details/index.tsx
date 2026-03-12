@@ -636,34 +636,33 @@ function TeacherCourseDetails() {
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <h3 className="text-lg font-bold text-[#0A1B3C]">{assignment.displayName || `Assignment ${assignment.instanceNumber}`}</h3>
                                                 </div>
-                                                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                                                        <span className="flex items-center gap-1">
-                                                            <Calendar className="w-4 h-4" />
-                                                            Due: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
-                                                        </span>
-                                                        {/* Mocked submissions counts since API doesn't return it directly here */}
-                                                        {(() => {
-                                                            const mockTotal = course.enrolledStudents || 0;
-                                                            const mockSubmitted = Math.floor(Math.random() * mockTotal);
-                                                            const isDoneGrading = mockSubmitted > 0 && Math.random() > 0.5; // Simulate some being done
-                                                            return (
-                                                                <>
-                                                                    <span className="font-semibold text-orange-600">
-                                                                        {mockSubmitted}/{mockTotal} submitted
-                                                                    </span>
-                                                                    <span className={`font-semibold ${isDoneGrading ? 'text-green-600' : 'text-blue-600'}`}>
-                                                                        {isDoneGrading ? 'Done Grading' : 'Pending Grading'}
-                                                                    </span>
-                                                                </>
-                                                            );
-                                                        })()}
+                                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                                                    <span className="flex items-center gap-1">
+                                                        <Calendar className="w-4 h-4" />
+                                                        Due: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
                                                     </span>
-                                                    {assignment.description && (
-                                                        <span className="font-medium text-gray-500 max-w-sm truncate whitespace-nowrap ml-2 hidden lg:inline">
-                                                            {assignment.description}
-                                                        </span>
-                                                    )}
+                                                    {/* Mocked submissions counts since API doesn't return it directly here */}
+                                                    {(() => {
+                                                        const mockTotal = course.enrolledStudents || 0;
+                                                        const mockSubmitted = Math.floor(Math.random() * mockTotal);
+                                                        const isDoneGrading = mockSubmitted > 0 && Math.random() > 0.5; // Simulate some being done
+                                                        return (
+                                                            <>
+                                                                <span className="font-semibold text-orange-600">
+                                                                    {mockSubmitted}/{mockTotal} submitted
+                                                                </span>
+                                                                <span className={`font-semibold ${isDoneGrading ? 'text-green-600' : 'text-blue-600'}`}>
+                                                                    {isDoneGrading ? 'Done Grading' : 'Pending Grading'}
+                                                                </span>
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </div>
+                                                {assignment.description && (
+                                                    <div className="mt-2 text-sm font-medium text-gray-500 max-w-lg truncate">
+                                                        {assignment.description}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-3 shrink-0">
                                                 <button
