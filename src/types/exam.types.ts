@@ -5,6 +5,7 @@ export interface ChapterQuestionCount {
 
 export interface CreateExamRequest {
     classSubjectId: string;
+    slotId?: string;
     questionCount: number;
     chapterQuestionCounts: ChapterQuestionCount[];
     tag: string;
@@ -36,6 +37,7 @@ export interface UpdateExamRequest {
 export interface Exam {
     syllabusAssessmentId: string;
     classSubjectId: string;
+    slotId?: string;
     examFormatId: string;
     startTime: string;
     endTime: string;

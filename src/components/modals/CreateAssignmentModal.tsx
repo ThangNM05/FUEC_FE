@@ -9,6 +9,7 @@ interface CreateAssignmentModalProps {
     isOpen: boolean;
     onClose: () => void;
     classSubjectId: string;
+    slotId?: string;
     slotTitle?: string;
     existingCount?: number;
 }
@@ -17,6 +18,7 @@ export default function CreateAssignmentModal({
     isOpen,
     onClose,
     classSubjectId,
+    slotId,
     slotTitle,
     existingCount = 0,
 }: CreateAssignmentModalProps) {
@@ -96,6 +98,7 @@ export default function CreateAssignmentModal({
             // Step 2: Create the assignment
             await createAssignment({
                 classSubjectIds: [classSubjectId],
+                slotId: slotId || undefined,
                 attachedFileId: fileResult.id,
                 instanceNumber,
                 description: description.trim(),

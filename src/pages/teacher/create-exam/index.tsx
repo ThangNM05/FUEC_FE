@@ -238,6 +238,7 @@ function CreateExam() {
             ...formData,
             chapterQuestionCounts: selectionMode === 'chapter' ? formData.chapterQuestionCounts : [],
             classSubjectId: courseId,
+            slotId: targetSlotId || undefined,
             startTime: new Date(formData.startTime).toISOString(),
             endTime: new Date(formData.endTime).toISOString(),
         };

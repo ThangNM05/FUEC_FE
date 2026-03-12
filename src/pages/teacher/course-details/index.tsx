@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import {
-    ChevronRight, Users, FileText, Calendar, ClipboardCheck, Plus,
+    ChevronRight, Users, User, FileText, Calendar, ClipboardCheck, Plus,
     ChevronDown, ChevronUp, Clock, Loader2, Pencil, Trash2
 } from 'lucide-react';
 import {
@@ -12,18 +12,15 @@ import {
 } from '@/api/classDetailsApi';
 import { useGetExamsByClassSubjectIdQuery, useDeleteExamMutation } from '@/api/examsApi';
 import { useGetAssignmentsByClassSubjectIdQuery } from '@/api/assignmentsApi';
+import { useCreateSlotQuestionContentMutation } from '@/api/slotQuestionContentsApi';
 import ExamDetailModal from '@/components/modals/ExamDetailModal';
 import EditExamModal from '@/components/modals/EditExamModal';
 import CreateAssignmentModal from '@/components/modals/CreateAssignmentModal';
+import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentModal';
+import SlotQuestionList from './SlotQuestionList';
 import type { Exam } from '@/types/exam.types';
 import type { Assignment } from '@/types/assignment.types';
 import { Modal } from 'antd';
-
-interface Question {
-    id: number;
-    title: string;
-    status: 'custom' | 'finished';
-}
 
 type SlotAssignment = Assignment;
 
@@ -33,8 +30,8 @@ interface Slot {
     startTime: string;
     endTime: string;
     topics: string[];
-    questions: Question[];
     assignments: SlotAssignment[];
+    progressTests: Exam[];
     expanded: boolean;
     isAssessment: boolean;
     slotIndex: number;
@@ -51,11 +48,17 @@ function TeacherCourseDetails() {
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null);
-    const [isStudentListModalOpen, setIsStudentListModalOpen] = useState(false);
     const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false);
     const [createAssignmentSlotInfo, setCreateAssignmentSlotInfo] = useState<{ id: string; title: string; slotIndex: number } | null>(null);
 
+    // Slot Question Create State
+    const [isCreateQuestionModalOpen, setIsCreateQuestionModalOpen] = useState(false);
+    const [createQuestionSlotInfo, setCreateQuestionSlotInfo] = useState<{ id: string; title: string } | null>(null);
+    const [hasQuestionsMap, setHasQuestionsMap] = useState<Record<string, boolean>>({});
+    // API
     const [deleteExam] = useDeleteExamMutation();
+    const [createSlotQuestion, { isLoading: isCreatingQuestion }] = useCreateSlotQuestionContentMutation();
+    const [isStudentListModalOpen, setIsStudentListModalOpen] = useState(false);
 
     const handleOpenCreateAssignment = (slotInfo: any) => {
         setCreateAssignmentSlotInfo(slotInfo);
@@ -167,20 +170,18 @@ function TeacherCourseDetails() {
                     year: 'numeric'
                 }),
                 topics: s.sessions?.map((session: any) => session.topic) || [],
-                questions: [], // mock for now
+                // Filter assignments matching this slotId (or falling back to instanceNumber regex logic if needed)
                 assignments: (() => {
-                    // Extract assignment numbers from session topics (e.g., "Assignment 01" → 1)
-                    const asmNumbers: number[] = [];
-                    s.sessions?.forEach((session: any) => {
-                        const match = session.topic?.match(/\bAssignment\s*(\d+)\b/i);
-                        if (match) asmNumbers.push(parseInt(match[1]));
-                    });
                     return (assignmentsData?.items || [])
-                        .filter((a: any) => asmNumbers.includes(a.instanceNumber))
+                        .filter((a: any) => a.slotId === s.id)
                         .map((a: any) => ({
                             ...a,
                             fileUrl: a.fileUrl || a.filePaths?.[0] || ''
                         }));
+                })(),
+                progressTests: (() => {
+                    return (examsData?.items || [])
+                        .filter((e: any) => e.slotId === s.id);
                 })(),
                 expanded: i === 0,
                 isAssessment: s.sessions?.some((sess: any) =>
@@ -315,9 +316,9 @@ function TeacherCourseDetails() {
                                 {slots
                                     .slice((currentPage - 1) * SLOTS_PER_PAGE, currentPage * SLOTS_PER_PAGE)
                                     .map(slot => (
-                                        <div key={slot.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                                        <div key={slot.id} className="border border-gray-200 rounded-lg bg-white">
                                             {/* Slot Header */}
-                                            <div className="p-4 bg-gray-50 border-b border-gray-100">
+                                            <div className={`p-4 bg-gray-50 border-b border-gray-100 ${slot.expanded ? 'rounded-t-lg' : 'rounded-lg'}`}>
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center gap-2">
                                                         <span className="px-3 py-1 text-sm font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
@@ -361,8 +362,11 @@ function TeacherCourseDetails() {
                                                 <div className="p-4 bg-white">
                                                     {/* Slot Content Sections */}
                                                     <div>
-                                                        {/* Top Actions: Create Content Dropdown */}
-                                                        <div className="flex justify-end mb-4">
+                                                        {/* Top Actions: Header & Create Content Dropdown */}
+                                                        <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100 relative z-10">
+                                                            <h4 className="text-sm font-bold text-[#0A1B3C] uppercase tracking-wider flex items-center gap-2">
+                                                                Slot Content
+                                                            </h4>
                                                             <div className="relative">
                                                                 <button
                                                                     onClick={(e) => {
@@ -383,12 +387,13 @@ function TeacherCourseDetails() {
                                                                                 setOpenDropdownId(null);
                                                                             }}
                                                                         />
-                                                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                                                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2">
                                                                             <button
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
                                                                                     setOpenDropdownId(null);
-                                                                                    // Navigate to create question
+                                                                                    setCreateQuestionSlotInfo({ id: slot.id, title: slot.title });
+                                                                                    setIsCreateQuestionModalOpen(true);
                                                                                 }}
                                                                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                                                                             >
@@ -436,46 +441,21 @@ function TeacherCourseDetails() {
                                                             </div>
                                                         ) : (
                                                             <>
-                                                                {/* QUESTION Section */}
-                                                                {slot.questions.length > 0 && (
-                                                                    <div className="mb-6">
-                                                                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 pb-2 border-b border-gray-100">
-                                                                            QUESTION
-                                                                        </h4>
-                                                                        <div className="space-y-1">
-                                                                            {slot.questions.map(question => (
-                                                                                <div key={question.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors">
-                                                                                    <div className="flex items-center gap-3">
-                                                                                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 text-orange-500">
-                                                                                            <FileText className="w-4 h-4" />
-                                                                                        </div>
-                                                                                        <span className="text-sm font-medium text-gray-800">{question.title}</span>
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-4">
-                                                                                        <span className="text-xs font-bold text-red-500">Custom</span>
-                                                                                        <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-bold rounded">Cancelled</span>
-                                                                                    </div>
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
+                                                                {/* QUESTION Section (API loaded from SlotQuestionList component) */}
+                                                                <SlotQuestionList 
+                                                                    slotId={slot.id} 
+                                                                    slotTitle={slot.title} 
+                                                                    onLoad={(has) => setHasQuestionsMap(prev => prev[slot.id] === has ? prev : { ...prev, [slot.id]: has })}
+                                                                />
 
                                                                 {/* PROGRESS TEST Section */}
-                                                                {(() => {
-                                                                    const ptNumbers: number[] = [];
-                                                                    slot.topics.forEach(topic => {
-                                                                        const match = topic.match(/\b(?:Progress Test|PT)\s*(\d+)\b/i);
-                                                                        if (match) ptNumbers.push(parseInt(match[1]));
-                                                                    });
-                                                                    const slotExams = exams.filter(e => ptNumbers.includes(e.instanceNumber));
-                                                                    return slotExams.length > 0 ? (
+                                                                {slot.progressTests.length > 0 && (
                                                                     <div className="mb-6">
                                                                         <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 pb-2 border-b border-gray-100">
                                                                             PROGRESS TEST
                                                                         </h4>
                                                                         <div className="space-y-1">
-                                                                            {slotExams.map(exam => (
+                                                                            {slot.progressTests.map(exam => (
                                                                                 <div
                                                                                     key={exam.id}
                                                                                     className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors cursor-pointer"
@@ -514,8 +494,7 @@ function TeacherCourseDetails() {
                                                                             ))}
                                                                         </div>
                                                                     </div>
-                                                                    ) : null;
-                                                                })()}
+                                                                )}
 
                                                                 {/* ASSIGNMENT Section */}
                                                                 {slot.assignments.length > 0 && (
@@ -573,18 +552,12 @@ function TeacherCourseDetails() {
                                                                         </div>
                                                                     </div>
                                                                 )}
-                                                                {/* Empty State if all 3 are empty */}
-                                                                {slot.questions.length === 0 && (() => {
-                                                                    const ptNums: number[] = [];
-                                                                    slot.topics.forEach(topic => {
-                                                                        const m = topic.match(/\b(?:Progress Test|PT)\s*(\d+)\b/i);
-                                                                        if (m) ptNums.push(parseInt(m[1]));
-                                                                    });
-                                                                    return exams.filter(e => ptNums.includes(e.instanceNumber)).length === 0;
-                                                                })() && slot.assignments.length === 0 && (
-                                                                    <div className="py-6 text-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/30">
-                                                                        <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                                                                        <p className="text-sm text-gray-400 italic">No slot contents for this slot</p>
+                                                                {/* Empty State warning if there's no progress tests and assignments and questions */}
+                                                                {slot.progressTests.length === 0 && slot.assignments.length === 0 && !hasQuestionsMap[slot.id] && (
+                                                                    <div className="py-8 text-center bg-gray-50 border border-dashed border-gray-200 rounded-xl mt-2">
+                                                                        <p className="text-sm text-gray-500 font-medium">
+                                                                            No contents for this slot.
+                                                                        </p>
                                                                     </div>
                                                                 )}
                                                             </>
@@ -658,43 +631,53 @@ function TeacherCourseDetails() {
                             ) : (
                                 <div className="space-y-4">
                                     {assignmentsData?.items?.map(assignment => (
-                                        <div key={assignment.id} className="p-5 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white">
-                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <h3 className="text-lg font-bold text-[#0A1B3C]">{assignment.displayName || `Assignment ${assignment.instanceNumber}`}</h3>
-                                                        {assignment.dueDate && new Date(assignment.dueDate) < new Date() ? (
-                                                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-red-50 border border-red-200 text-red-700">Closed</span>
-                                                        ) : (
-                                                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-green-50 border border-green-200 text-green-700">Active</span>
-                                                        )}
-                                                    </div>
+                                        <div key={assignment.id} className="p-5 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <h3 className="text-lg font-bold text-[#0A1B3C]">{assignment.displayName || `Assignment ${assignment.instanceNumber}`}</h3>
+                                                </div>
                                                     <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                                                         <span className="flex items-center gap-1">
                                                             <Calendar className="w-4 h-4" />
                                                             Due: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
                                                         </span>
-                                                        {assignment.description && (
-                                                            <span className="font-medium text-gray-500 max-w-sm truncate whitespace-nowrap">
-                                                                {assignment.description}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                        {/* Mocked submissions counts since API doesn't return it directly here */}
+                                                        {(() => {
+                                                            const mockTotal = course.enrolledStudents || 0;
+                                                            const mockSubmitted = Math.floor(Math.random() * mockTotal);
+                                                            const isDoneGrading = mockSubmitted > 0 && Math.random() > 0.5; // Simulate some being done
+                                                            return (
+                                                                <>
+                                                                    <span className="font-semibold text-orange-600">
+                                                                        {mockSubmitted}/{mockTotal} submitted
+                                                                    </span>
+                                                                    <span className={`font-semibold ${isDoneGrading ? 'text-green-600' : 'text-blue-600'}`}>
+                                                                        {isDoneGrading ? 'Done Grading' : 'Pending Grading'}
+                                                                    </span>
+                                                                </>
+                                                            );
+                                                        })()}
+                                                    </span>
+                                                    {assignment.description && (
+                                                        <span className="font-medium text-gray-500 max-w-sm truncate whitespace-nowrap ml-2 hidden lg:inline">
+                                                            {assignment.description}
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                <div className="flex items-center gap-3">
-                                                    <button
-                                                        onClick={() => navigate(`/teacher/assignment/${assignment.id}/submissions`)}
-                                                        className="px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#d95f19] transition-colors text-sm font-medium shadow-sm"
-                                                    >
-                                                        View Submissions
-                                                    </button>
-                                                    <button
-                                                        onClick={() => toast.info('Edit functionality coming soon')}
-                                                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-[#0A1B3C] transition-colors text-sm font-medium"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 shrink-0">
+                                                <button
+                                                    onClick={() => navigate(`/teacher/assignment/${assignment.id}/submissions`)}
+                                                    className="px-5 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#d95f19] transition-colors text-sm font-semibold shadow-sm"
+                                                >
+                                                    View Submissions
+                                                </button>
+                                                <button
+                                                    onClick={() => toast.info('Edit functionality coming soon')}
+                                                    className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold shadow-sm"
+                                                >
+                                                    Edit
+                                                </button>
                                             </div>
                                         </div>
                                     ))}
@@ -833,48 +816,6 @@ function TeacherCourseDetails() {
                 />
             )}
 
-            <Modal
-                title={`Students Enrolled in ${course.code}`}
-                open={isStudentListModalOpen}
-                onCancel={() => setIsStudentListModalOpen(false)}
-                footer={null}
-                width={600}
-                centered
-            >
-                <div className="mt-4">
-                    {isLoadingStudents ? (
-                        <div className="flex flex-col items-center justify-center py-10">
-                            <Loader2 className="w-8 h-8 text-[#F37022] animate-spin mb-4" />
-                            <p className="text-gray-500 font-medium">Loading student list...</p>
-                        </div>
-                    ) : (
-                        <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                            {studentsData?.items && studentsData.items.length > 0 ? (
-                                <div className="space-y-3">
-                                    <div className="text-sm text-gray-500 mb-2">Total: {studentsData.items.length} students</div>
-                                    {studentsData.items.map((student) => (
-                                        <div key={student.id} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-lg hover:bg-orange-50 hover:border-orange-100 transition-colors">
-                                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#F37022] font-bold shadow-sm border border-gray-100 flex-shrink-0">
-                                                {student.studentName?.charAt(0) || <Users className="w-5 h-5" />}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-[#0A1B3C] truncate">{student.studentName}</p>
-                                                <p className="text-xs text-gray-500 font-medium">{formatStudentCode(student.studentCode)}</p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="py-10 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-                                    <Users className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-                                    <p className="text-gray-500 font-medium">No students currently enrolled.</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </Modal>
-
             <CreateAssignmentModal
                 isOpen={isCreateAssignmentModalOpen}
                 onClose={() => {
@@ -885,6 +826,87 @@ function TeacherCourseDetails() {
                 slotTitle={createAssignmentSlotInfo?.title}
                 existingCount={assignments.length}
             />
+
+            {/* Create Question Modal */}
+            <SlotQuestionContentModal
+                isOpen={isCreateQuestionModalOpen}
+                onClose={() => {
+                    setIsCreateQuestionModalOpen(false);
+                    setCreateQuestionSlotInfo(null);
+                }}
+                isSaving={isCreatingQuestion}
+                slotTitle={createQuestionSlotInfo?.title}
+                onSave={async (data) => {
+                    if (createQuestionSlotInfo) {
+                        try {
+                            await createSlotQuestion({
+                                slotId: createQuestionSlotInfo.id,
+                                content: data.content,
+                                description: data.description
+                            }).unwrap();
+                            toast.success('Question created successfully');
+                            setIsCreateQuestionModalOpen(false);
+                            setCreateQuestionSlotInfo(null);
+                        } catch {
+                            toast.error('Failed to create question');
+                        }
+                    }
+                }}
+            />
+            <Modal
+                title={
+                    <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+                        <Users className="w-5 h-5 text-[#F37022]" />
+                        <span className="text-lg font-bold text-[#0A1B3C]">Enrolled Students</span>
+                        <span className="px-2.5 py-0.5 bg-orange-100 text-[#F37022] text-xs font-semibold rounded-full ml-2">
+                            {course.enrolledStudents}
+                        </span>
+                    </div>
+                }
+                open={isStudentListModalOpen}
+                onCancel={() => setIsStudentListModalOpen(false)}
+                footer={null}
+                width={600}
+                centered
+                destroyOnClose
+                className="student-list-modal"
+            >
+                <div className="max-h-[60vh] overflow-y-auto pr-2 mt-4 custom-scrollbar">
+                    {isLoadingStudents ? (
+                        <div className="flex flex-col items-center justify-center py-12">
+                            <Loader2 className="w-8 h-8 text-[#F37022] animate-spin mb-4" />
+                            <p className="text-gray-500 font-medium">Loading student list...</p>
+                        </div>
+                    ) : studentsData?.items && studentsData.items.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {studentsData.items.map((student: any) => (
+                                <div 
+                                    key={student.id} 
+                                    className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-orange-200 hover:bg-orange-50/50 transition-colors group"
+                                >
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-200 flex items-center justify-center flex-shrink-0">
+                                        <User className="w-5 h-5 text-[#F37022]" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-[#0A1B3C] transition-colors">
+                                            {formatStudentCode(student.studentCode)}
+                                        </p>
+                                        <p className="text-xs text-gray-500 truncate mt-0.5">
+                                            {student.studentName || 'Unknown Student'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                            <Users className="w-12 h-12 text-gray-300 mb-3" />
+                            <p className="text-gray-500 font-medium">No students enrolled</p>
+                            <p className="text-sm text-gray-400 mt-1">Students will appear here once they join the class</p>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 }

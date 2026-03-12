@@ -20,6 +20,7 @@ export interface Assignment {
     id: string;
     attachedFileId: string;
     classSubjectId: string;
+    slotId?: string;
     instanceNumber: number;
     displayName?: string;
     description: string;
@@ -61,6 +62,7 @@ export interface FileEntityDto {
 
 export interface CreateAssignmentRequest {
     classSubjectIds: string[];
+    slotId?: string;
     attachedFileId: string;
     instanceNumber: number;
     description: string;
