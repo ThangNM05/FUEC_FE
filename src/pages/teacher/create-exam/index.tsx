@@ -32,6 +32,30 @@ interface ExamFormData {
     codeDuration: number;
 }
 
+const Field = ({ label, required, error, children, icon: Icon, hint, isSubmitted }: {
+    label: string;
+    required?: boolean;
+    error?: string;
+    children: React.ReactNode;
+    icon?: any;
+    hint?: string;
+    isSubmitted?: boolean;
+}) => {
+    const displayError = isSubmitted ? error : undefined;
+    return (
+        <div>
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
+                {Icon && <Icon className="w-4 h-4 text-gray-400" />}
+                {label}
+                {required && <span className="text-red-500">*</span>}
+            </label>
+            {children}
+            {hint && !displayError && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+            {displayError && <p className="text-xs text-red-500 mt-1">{displayError}</p>}
+        </div>
+    );
+};
+
 // Mock data — will be replaced by API calls later
 function CreateExam() {
     const navigate = useNavigate();
@@ -253,28 +277,6 @@ function CreateExam() {
         }
     };
 
-    const Field = ({ label, required, error, children, icon: Icon, hint }: {
-        label: string;
-        required?: boolean;
-        error?: string;
-        children: React.ReactNode;
-        icon?: any;
-        hint?: string;
-    }) => {
-        const displayError = isSubmitted ? error : undefined;
-        return (
-            <div>
-                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
-                    {Icon && <Icon className="w-4 h-4 text-gray-400" />}
-                    {label}
-                    {required && <span className="text-red-500">*</span>}
-                </label>
-                {children}
-                {hint && !displayError && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
-                {displayError && <p className="text-xs text-red-500 mt-1">{displayError}</p>}
-            </div>
-        );
-    };
 
     const inputClass = (hasError?: string) =>
         `w-full px-3.5 py-2.5 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 ${(isSubmitted && hasError)
@@ -324,7 +326,7 @@ function CreateExam() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         {/* Exam Format */}
-                        <Field label="Exam Format" required error={errors.examFormatId} icon={FileQuestion}>
+                        <Field isSubmitted={isSubmitted} label="Exam Format" required error={errors.examFormatId} icon={FileQuestion}>
                             <select
                                 value={form.examFormatId}
                                 onChange={e => updateField('examFormatId', e.target.value)}
@@ -338,7 +340,7 @@ function CreateExam() {
                         </Field>
 
                         {/* Tag */}
-                        <Field label="Tag / Label" icon={Tag}>
+                        <Field isSubmitted={isSubmitted} label="Tag / Label" icon={Tag}>
                             <select
                                 value={form.tag}
                                 onChange={e => updateField('tag', e.target.value)}
@@ -449,7 +451,7 @@ function CreateExam() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <Field label="Start Time" required error={errors.startTime} icon={Clock}>
+                        <Field isSubmitted={isSubmitted} label="Start Time" required error={errors.startTime} icon={Clock}>
                             <DatePicker
                                 showTime
                                 format="YYYY-MM-DD HH:mm"
@@ -460,7 +462,7 @@ function CreateExam() {
                             />
                         </Field>
 
-                        <Field label="End Time" required error={errors.endTime} icon={Clock}>
+                        <Field isSubmitted={isSubmitted} label="End Time" required error={errors.endTime} icon={Clock}>
                             <DatePicker
                                 showTime
                                 format="YYYY-MM-DD HH:mm"
@@ -486,7 +488,7 @@ function CreateExam() {
 
                     <div className="space-y-5">
                         {/* Security Mode */}
-                        <Field label="Security Mode" icon={Lock}>
+                        <Field isSubmitted={isSubmitted} label="Security Mode" icon={Lock}>
                             <div className="flex gap-3">
                                 {[
                                     { value: 1, label: 'Static Code', desc: 'One exam code for the entire session' },
@@ -521,7 +523,7 @@ function CreateExam() {
                         {/* Code Duration (only relevant for Dynamic Code) */}
                         {form.securityMode === 2 && (
                             <div className="animate-fadeIn">
-                                <Field label="Code Duration (seconds)" icon={Clock} hint="How long each code remains valid">
+                                <Field isSubmitted={isSubmitted} label="Code Duration (seconds)" icon={Clock} hint="How long each code remains valid">
                                     <input
                                         type="number"
                                         value={form.codeDuration}
@@ -536,7 +538,7 @@ function CreateExam() {
                         {/* Toggles Row */}
                         <div className="grid grid-cols-1 gap-5">
                             {/* Display Name */}
-                            <Field label="Exam Title / Display Name" required error={errors.displayName} icon={FileQuestion} hint="Enter a clear name for students (e.g. Progress Test 1 - Logic Circuit)">
+                            <Field isSubmitted={isSubmitted} label="Exam Title / Display Name" required error={errors.displayName} icon={FileQuestion} hint="Enter a clear name for students (e.g. Progress Test 1 - Logic Circuit)">
                                 <input
                                     type="text"
                                     value={form.displayName}
@@ -592,7 +594,7 @@ function CreateExam() {
                         {/* Allowed IP Ranges — conditional */}
                         {form.requireIpCheck && (
                             <div className="animate-fadeIn">
-                                <Field label="Allowed IP Ranges" required error={errors.allowedIpRanges} icon={Wifi} hint="e.g. 192.168.1.0/24, 10.0.0.0/8">
+                                <Field isSubmitted={isSubmitted} label="Allowed IP Ranges" required error={errors.allowedIpRanges} icon={Wifi} hint="e.g. 192.168.1.0/24, 10.0.0.0/8">
                                     <input
                                         type="text"
                                         value={form.allowedIpRanges}

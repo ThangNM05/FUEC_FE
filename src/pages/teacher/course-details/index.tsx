@@ -11,7 +11,7 @@ import {
     useGetStudentClassesQuery
 } from '@/api/classDetailsApi';
 import { useGetExamsByClassSubjectIdQuery, useDeleteExamMutation } from '@/api/examsApi';
-import { useGetAssignmentsByClassSubjectIdQuery } from '@/api/assignmentsApi';
+import { useGetAssignmentsByClassSubjectIdQuery, useDeleteAssignmentMutation } from '@/api/assignmentsApi';
 import { useCreateSlotQuestionContentMutation } from '@/api/slotQuestionContentsApi';
 import ExamDetailModal from '@/components/modals/ExamDetailModal';
 import EditExamModal from '@/components/modals/EditExamModal';
@@ -65,16 +65,26 @@ function TeacherCourseDetails() {
         setIsCreateAssignmentModalOpen(true);
     };
 
-    const handleDeleteAssignment = (e: React.MouseEvent, assignment: any) => {
+    const [deleteAssignment] = useDeleteAssignmentMutation();
+
+    const handleDeleteAssignment = (e: React.MouseEvent, assignment: Assignment) => {
         e.stopPropagation();
         Modal.confirm({
             title: 'Delete Assignment',
-            content: `Are you sure you want to delete ${assignment.displayName || assignment.title}?`,
-            onOk: () => {
-                toast.success('Mock delete successful');
+            content: `Are you sure you want to delete "${assignment.displayName || `Assignment ${assignment.instanceNumber}`}"?`,
+            okText: 'Delete',
+            okType: 'danger',
+            cancelText: 'Cancel',
+            onOk: async () => {
+                try {
+                    await deleteAssignment(assignment.id).unwrap();
+                    toast.success('Assignment deleted successfully');
+                } catch (error) {
+                    toast.error('Failed to delete assignment');
+                }
             }
         });
-    }
+    };
 
 
     // Pagination for slots
@@ -641,22 +651,10 @@ function TeacherCourseDetails() {
                                                         <Calendar className="w-4 h-4" />
                                                         Due: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
                                                     </span>
-                                                    {/* Mocked submissions counts since API doesn't return it directly here */}
-                                                    {(() => {
-                                                        const mockTotal = course.enrolledStudents || 0;
-                                                        const mockSubmitted = Math.floor(Math.random() * mockTotal);
-                                                        const isDoneGrading = mockSubmitted > 0 && Math.random() > 0.5; // Simulate some being done
-                                                        return (
-                                                            <>
-                                                                <span className="font-semibold text-orange-600">
-                                                                    {mockSubmitted}/{mockTotal} submitted
-                                                                </span>
-                                                                <span className={`font-semibold ${isDoneGrading ? 'text-green-600' : 'text-blue-600'}`}>
-                                                                    {isDoneGrading ? 'Done Grading' : 'Pending Grading'}
-                                                                </span>
-                                                            </>
-                                                        );
-                                                    })()}
+                                                    <span className="font-semibold text-orange-600">
+                                                        0/{course.enrolledStudents} submitted
+                                                    </span>
+                                                    <span className="font-semibold text-blue-600">Pending Grading</span>
                                                 </div>
                                                 {assignment.description && (
                                                     <div className="mt-2 text-sm font-medium text-gray-500 max-w-lg truncate">
@@ -676,6 +674,13 @@ function TeacherCourseDetails() {
                                                     className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold shadow-sm"
                                                 >
                                                     Edit
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDeleteAssignment(e, assignment)}
+                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 shadow-sm"
+                                                    title="Delete Assignment"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         </div>
