@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
-import { ArrowLeft, FileText, Calendar, ChevronDown, ChevronUp, Download, BookOpen, Play, Lock, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Calendar, ChevronDown, ChevronUp, Download, BookOpen, Lock, CheckCircle, Clock, Loader2, Play } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/redux/authSlice';
 import { useGetClassSubjectSlotsQuery, useGetClassSubjectByIdQuery } from '@/api/classDetailsApi';
 import { useGetAssignmentsByClassSubjectIdQuery } from '@/api/assignmentsApi';
 import { useGetStudentAssignmentsByStudentIdQuery } from '@/api/studentAssignmentsApi';
+import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
 import type { Assignment, StudentAssignment } from '@/types/assignment.types';
+import StudentSlotContent from './StudentSlotContent';
 
 interface Question {
   id: number;
@@ -77,7 +79,11 @@ function CourseDetails() {
     skip: !user?.id
   });
 
-  const isLoading = isSlotsLoading || isClassLoading || isAssignmentsLoading || isStudentAssignmentsLoading;
+  const { data: examsData, isLoading: isLoadingExams } = useGetExamsByClassSubjectIdQuery(classSubjectId || '', {
+    skip: !classSubjectId
+  });
+
+  const isLoading = isSlotsLoading || isClassLoading || isAssignmentsLoading || isStudentAssignmentsLoading || isLoadingExams;
 
   const course = {
     name: classSubjectData?.subjectName || slotsData?.subjectName || 'Loading...',
@@ -365,67 +371,15 @@ function CourseDetails() {
 
                   {/* Slot Content (Expandable) */}
                   {slot.expanded && (
-                    <div className="p-4 bg-white">
-                      {/* Questions Section */}
-                      <div className="mb-6">
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">QUESTION</h4>
-                        <div className="space-y-2">
-                          {slot.questions.map(question => (
-                            <div
-                              key={question.id}
-                              onClick={() => navigate(`/student/course-details/questions/${slot.id}-${question.id}`)}
-                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-orange-50 hover:border-[#F37022] border border-transparent transition-all cursor-pointer group"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                                  <FileText className="w-4 h-4 text-orange-600" />
-                                </div>
-                                <span className="text-sm text-[#0A1B3C] group-hover:text-[#F37022] font-medium transition-colors">{question.title}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`px-3 py-1 text-xs font-semibold rounded ${question.status === 'custom'
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'bg-green-100 text-green-700'
-                                  }`}>
-                                  {question.status === 'custom' ? 'Custom' : 'Finished'}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Assignments Section */}
-                      {slot.assignments.length > 0 && (
-                        <div>
-                          <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">ASSIGNMENT</h4>
-                          <div className="space-y-2">
-                            {slot.assignments.map(assignment => (
-                              <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-                                    <FileText className="w-4 h-4 text-pink-600" />
-                                  </div>
-                                  <span className="text-sm text-[#0A1B3C]">{assignment.displayName || `ASM${assignment.instanceNumber}`}</span>
-                                </div>
-                                <button
-                                  className={`px-3 py-1.5 rounded-md text-xs font-medium ${assignment.submitted
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                                    }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/student/assignment-submission/${assignment.id}`);
-                                  }}
-                                >
-                                  {assignment.submitted ? 'View' : 'Submit'}
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <StudentSlotContent
+                      slotId={slot.id}
+                      slotAssignments={courseAssignments.filter(a => {
+                        // assignments API returns assignments associated with this classSubject;
+                        // filter those whose slotId matches (if set) or show all if slot not set
+                        return (a as any).slotId === slot.id || !(a as any).slotId;
+                      })}
+                      slotExams={(examsData?.items || []).filter(e => e.slotId === slot.id)}
+                    />
                   )}
                 </div>
               ))}
