@@ -3,26 +3,21 @@ import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import {
     ChevronRight, Users, FileText, Calendar, ClipboardCheck, Plus,
-    ChevronDown, ChevronUp
+    ChevronDown, ChevronUp, Clock, Loader2, Pencil, Trash2
 } from 'lucide-react';
-import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery } from '@/api/classDetailsApi';
+import {
+    useGetClassSubjectByIdQuery, 
+    useGetClassSubjectSlotsQuery,
+    useGetStudentClassesQuery
+} from '@/api/classDetailsApi';
 import { useGetExamsByClassSubjectIdQuery, useDeleteExamMutation } from '@/api/examsApi';
+import { useGetAssignmentsByClassSubjectIdQuery } from '@/api/assignmentsApi';
 import ExamDetailModal from '@/components/modals/ExamDetailModal';
 import EditExamModal from '@/components/modals/EditExamModal';
+import CreateAssignmentModal from '@/components/modals/CreateAssignmentModal';
 import type { Exam } from '@/types/exam.types';
+import type { Assignment } from '@/types/assignment.types';
 import { Modal } from 'antd';
-import { Pencil, Trash2 } from 'lucide-react';
-
-interface Assignment {
-    id: string;
-    title: string;
-    dueDate: Date;
-    maxScore: number;
-    submissionCount: number;
-    totalStudents: number;
-    averageScore?: number;
-    status: 'active' | 'closed';
-}
 
 interface Question {
     id: number;
@@ -30,10 +25,7 @@ interface Question {
     status: 'custom' | 'finished';
 }
 
-interface SlotAssignment {
-    id: number;
-    title: string;
-}
+type SlotAssignment = Assignment;
 
 interface Slot {
     id: string;
@@ -45,6 +37,7 @@ interface Slot {
     assignments: SlotAssignment[];
     expanded: boolean;
     isAssessment: boolean;
+    slotIndex: number;
 }
 
 function TeacherCourseDetails() {
@@ -55,8 +48,31 @@ function TeacherCourseDetails() {
     const [isExamDetailModalOpen, setIsExamDetailModalOpen] = useState(false);
     const [isEditExamModalOpen, setIsEditExamModalOpen] = useState(false);
     const [examToEdit, setExamToEdit] = useState<Exam | null>(null);
+    const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null);
+    const [isStudentListModalOpen, setIsStudentListModalOpen] = useState(false);
+    const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false);
+    const [createAssignmentSlotInfo, setCreateAssignmentSlotInfo] = useState<{ id: string; title: string; slotIndex: number } | null>(null);
 
     const [deleteExam] = useDeleteExamMutation();
+
+    const handleOpenCreateAssignment = (slotInfo: any) => {
+        setCreateAssignmentSlotInfo(slotInfo);
+        setIsCreateAssignmentModalOpen(true);
+    };
+
+    const handleDeleteAssignment = (e: React.MouseEvent, assignment: any) => {
+        e.stopPropagation();
+        Modal.confirm({
+            title: 'Delete Assignment',
+            content: `Are you sure you want to delete ${assignment.displayName || assignment.title}?`,
+            onOk: () => {
+                toast.success('Mock delete successful');
+            }
+        });
+    }
+
 
     // Pagination for slots
     const [currentPage, setCurrentPage] = useState(1);
@@ -80,6 +96,16 @@ function TeacherCourseDetails() {
         skip: !courseId,
     });
 
+    const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentClassesQuery(
+        { classId: classSubject?.classId || '', pageSize: 200 },
+        { skip: !classSubject?.classId }
+    );
+
+    const { data: assignmentsData, isLoading: isLoadingAssignments } = useGetAssignmentsByClassSubjectIdQuery(
+        classSubject?.id || '',
+        { skip: !classSubject?.id }
+    );
+
     const exams = useMemo(() => {
         if (!examsData?.items) return [];
         return [...examsData.items].sort((a, b) =>
@@ -94,42 +120,13 @@ function TeacherCourseDetails() {
         code: classSubject ? `${classSubject.subjectCode} - ${classSubject.classCode}` : 'SE1801',
         room: 'TBA',
         schedule: 'TBA',
-        totalStudents: 45,
-        enrolledStudents: 45,
+        totalStudents: studentsData?.totalItemCount || 0,
+        enrolledStudents: studentsData?.totalItemCount || 0,
     };
 
-    // Mock assignments
-    const assignments: Assignment[] = [
-        {
-            id: '1',
-            title: 'Lab 1: Introduction to React',
-            dueDate: new Date('2025-01-15'),
-            maxScore: 100,
-            submissionCount: 40,
-            totalStudents: 45,
-            averageScore: 85,
-            status: 'active',
-        },
-        {
-            id: '2',
-            title: 'Assignment 2: Database Design',
-            dueDate: new Date('2025-01-20'),
-            maxScore: 100,
-            submissionCount: 35,
-            totalStudents: 45,
-            status: 'active',
-        },
-        {
-            id: '3',
-            title: 'Project Proposal',
-            dueDate: new Date('2025-01-10'),
-            maxScore: 100,
-            submissionCount: 45,
-            totalStudents: 45,
-            averageScore: 78,
-            status: 'closed',
-        },
-    ];
+    const assignments = useMemo(() => {
+        return assignmentsData?.items || [];
+    }, [assignmentsData]);
 
     const getStatusColor = (status: string) => {
         return status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600';
@@ -171,15 +168,35 @@ function TeacherCourseDetails() {
                 }),
                 topics: s.sessions?.map((session: any) => session.topic) || [],
                 questions: [], // mock for now
-                assignments: [], // mock for now
+                assignments: (() => {
+                    // Extract assignment numbers from session topics (e.g., "Assignment 01" → 1)
+                    const asmNumbers: number[] = [];
+                    s.sessions?.forEach((session: any) => {
+                        const match = session.topic?.match(/\bAssignment\s*(\d+)\b/i);
+                        if (match) asmNumbers.push(parseInt(match[1]));
+                    });
+                    return (assignmentsData?.items || [])
+                        .filter((a: any) => asmNumbers.includes(a.instanceNumber))
+                        .map((a: any) => ({
+                            ...a,
+                            fileUrl: a.fileUrl || a.filePaths?.[0] || ''
+                        }));
+                })(),
                 expanded: i === 0,
                 isAssessment: s.sessions?.some((sess: any) =>
                     sess.isAssessment ||
                     /\b(Progress Test|PT|Examination|Final Exam|Exam|Quiz|Test)\b/i.test(sess.topic)
-                ) || false
+                ) || false,
+                slotIndex: s.slotIndex
             })));
         }
-    }, [slotData]);
+    }, [slotData, assignmentsData]);
+
+    const formatStudentCode = (code?: string) => {
+        if (!code) return '';
+        const match = code.match(/[a-zA-Z]{2}\d{6}$/);
+        return match ? match[0].toUpperCase() : code;
+    };
 
     const toggleSlot = (slotId: string) => {
         setSlots(slots.map(slot =>
@@ -247,9 +264,12 @@ function TeacherCourseDetails() {
                                 <Calendar className="w-4 h-4" />
                                 {course.schedule}
                             </span> */}
-                            <span className="flex items-center gap-1">
+                            <span 
+                                className="flex items-center gap-1 cursor-pointer hover:text-[#F37022] hover:underline"
+                                onClick={() => setIsStudentListModalOpen(true)}
+                            >
                                 <Users className="w-4 h-4" />
-                                {course.enrolledStudents} students
+                                <span className="text-[#F37022] bg-orange-100 px-1 rounded">{course.enrolledStudents} students</span>
                             </span>
                         </div>
                     </div>
@@ -306,21 +326,9 @@ function TeacherCourseDetails() {
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         {/* Actions for teachers */}
-                                                        {slot.isAssessment && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    navigate(`/teacher/create-exam?course=${courseId}&slot=${slot.id}`);
-                                                                }}
-                                                                className="px-3 py-1.5 bg-[#F37022] text-white rounded-lg hover:bg-[#d95f19] transition-colors text-xs font-medium flex items-center gap-1.5 shadow-sm active:scale-95"
-                                                            >
-                                                                <Plus className="w-3 h-3" />
-                                                                Create Progress Test
-                                                            </button>
-                                                        )}
-                                                        <button className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors text-xs font-medium">
-                                                            Edit Slot
-                                                        </button>
+
+
+
                                                         <button
                                                             onClick={() => toggleSlot(slot.id)}
                                                             className="p-1 hover:bg-gray-200 rounded transition-colors"
@@ -351,69 +359,237 @@ function TeacherCourseDetails() {
                                             {/* Slot Content (Expandable) */}
                                             {slot.expanded && (
                                                 <div className="p-4 bg-white">
-                                                    {/* Questions Section */}
-                                                    <div className="mb-6 flex flex-col">
-                                                        <div className="flex items-center justify-between mb-3">
-                                                            <h4 className="text-xs font-semibold text-gray-500 uppercase">QUESTIONS</h4>
-                                                            <button className="text-xs font-medium text-[#F37022] hover:text-[#D96419] flex items-center gap-1">
-                                                                <Plus className="w-3 h-3" /> Add Question
-                                                            </button>
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            {slot.questions.length > 0 ? (
-                                                                slot.questions.map(question => (
-                                                                    <div
-                                                                        key={question.id}
-                                                                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-orange-50 hover:border-[#F37022] border border-transparent transition-all cursor-pointer group"
-                                                                    >
-                                                                        <div className="flex items-center gap-3">
-                                                                            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                                                                                <FileText className="w-4 h-4 text-orange-600" />
-                                                                            </div>
-                                                                            <span className="text-sm text-[#0A1B3C] group-hover:text-[#F37022] font-medium transition-colors">{question.title}</span>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className={`px-3 py-1 text-xs font-semibold rounded ${question.status === 'custom'
-                                                                                ? 'bg-orange-100 text-orange-700'
-                                                                                : 'bg-green-100 text-green-700'
-                                                                                }`}>
-                                                                                {question.status === 'custom' ? 'Custom' : 'Finished'}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                ))
-                                                            ) : (
-                                                                <div className="py-8 text-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/30">
-                                                                    <p className="text-sm text-gray-400 italic">No question added yet</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Assignments Section */}
-                                                    {slot.assignments.length > 0 && (
-                                                        <div>
-                                                            <div className="flex items-center justify-between mb-3">
-                                                                <h4 className="text-xs font-semibold text-gray-500 uppercase">ASSIGNMENTS</h4>
-                                                                <button className="text-xs font-medium text-[#F37022] hover:text-[#D96419] flex items-center gap-1">
-                                                                    <Plus className="w-3 h-3" /> Add Assignment
+                                                    {/* Slot Content Sections */}
+                                                    <div>
+                                                        {/* Top Actions: Create Content Dropdown */}
+                                                        <div className="flex justify-end mb-4">
+                                                            <div className="relative">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setOpenDropdownId(openDropdownId === `${slot.id}-content` ? null : `${slot.id}-content`);
+                                                                    }}
+                                                                    className="text-xs font-semibold text-[#F37022] hover:text-[#D96419] flex items-center gap-1 transition-colors px-3 py-1.5 bg-orange-50 rounded-lg border border-orange-100"
+                                                                >
+                                                                    <Plus className="w-3 h-3" /> Create content
                                                                 </button>
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                {slot.assignments.map(assignment => (
-                                                                    <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                                                        <div className="flex items-center gap-3">
-                                                                            <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-                                                                                <FileText className="w-4 h-4 text-pink-600" />
-                                                                            </div>
-                                                                            <span className="text-sm text-[#0A1B3C]">{assignment.title}</span>
+
+                                                                {openDropdownId === `${slot.id}-content` && (
+                                                                    <>
+                                                                        <div
+                                                                            className="fixed inset-0 z-40"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setOpenDropdownId(null);
+                                                                            }}
+                                                                        />
+                                                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setOpenDropdownId(null);
+                                                                                    // Navigate to create question
+                                                                                }}
+                                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                                            >
+                                                                                <FileText className="w-4 h-4 text-gray-400" />
+                                                                                Create Question
+                                                                            </button>
+
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setOpenDropdownId(null);
+                                                                                    navigate(`/teacher/create-exam?course=${courseId}&slot=${slot.id}`);
+                                                                                }}
+                                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-50"
+                                                                            >
+                                                                                <FileText className="w-4 h-4 text-gray-400" />
+                                                                                Create Progress Test
+                                                                            </button>
+
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setOpenDropdownId(null);
+                                                                                    handleOpenCreateAssignment({
+                                                                                        id: slot.id,
+                                                                                        title: slot.title,
+                                                                                        slotIndex: slot.slotIndex,
+                                                                                    });
+                                                                                }}
+                                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-50"
+                                                                            >
+                                                                                <FileText className="w-4 h-4 text-gray-400" />
+                                                                                Create Assignment
+                                                                            </button>
                                                                         </div>
-                                                                        <span className="text-sm text-gray-500">N/A</span>
-                                                                    </div>
-                                                                ))}
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                    )}
+
+                                                        {isLoadingExams || isLoadingAssignments ? (
+                                                            <div className="py-4 flex items-center justify-center gap-2 text-gray-400">
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                                <span className="text-sm">Loading content...</span>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                {/* QUESTION Section */}
+                                                                {slot.questions.length > 0 && (
+                                                                    <div className="mb-6">
+                                                                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 pb-2 border-b border-gray-100">
+                                                                            QUESTION
+                                                                        </h4>
+                                                                        <div className="space-y-1">
+                                                                            {slot.questions.map(question => (
+                                                                                <div key={question.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors">
+                                                                                    <div className="flex items-center gap-3">
+                                                                                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 text-orange-500">
+                                                                                            <FileText className="w-4 h-4" />
+                                                                                        </div>
+                                                                                        <span className="text-sm font-medium text-gray-800">{question.title}</span>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-4">
+                                                                                        <span className="text-xs font-bold text-red-500">Custom</span>
+                                                                                        <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-bold rounded">Cancelled</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* PROGRESS TEST Section */}
+                                                                {(() => {
+                                                                    const ptNumbers: number[] = [];
+                                                                    slot.topics.forEach(topic => {
+                                                                        const match = topic.match(/\b(?:Progress Test|PT)\s*(\d+)\b/i);
+                                                                        if (match) ptNumbers.push(parseInt(match[1]));
+                                                                    });
+                                                                    const slotExams = exams.filter(e => ptNumbers.includes(e.instanceNumber));
+                                                                    return slotExams.length > 0 ? (
+                                                                    <div className="mb-6">
+                                                                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 pb-2 border-b border-gray-100">
+                                                                            PROGRESS TEST
+                                                                        </h4>
+                                                                        <div className="space-y-1">
+                                                                            {slotExams.map(exam => (
+                                                                                <div
+                                                                                    key={exam.id}
+                                                                                    className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors cursor-pointer"
+                                                                                    onClick={() => {
+                                                                                        setSelectedExam(exam);
+                                                                                        setIsExamDetailModalOpen(true);
+                                                                                    }}
+                                                                                >
+                                                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                                                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                                                            <FileText className="w-4 h-4 text-blue-700" />
+                                                                                        </div>
+                                                                                        <div className="min-w-0">
+                                                                                            <p className="text-sm font-medium text-gray-800">
+                                                                                                {exam.displayName || (exam.category ? `${exam.category} ${exam.instanceNumber}` : `Progress Test ${exam.instanceNumber}`)}
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
+                                                                                        <button
+                                                                                            onClick={(e) => handleEditExam(e, exam)}
+                                                                                            className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                                            title="Edit Exam"
+                                                                                        >
+                                                                                            <Pencil className="w-4 h-4" />
+                                                                                        </button>
+                                                                                        <button
+                                                                                            onClick={(e) => handleDeleteExam(e, exam)}
+                                                                                            className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                                            title="Delete Exam"
+                                                                                        >
+                                                                                            <Trash2 className="w-4 h-4" />
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                    ) : null;
+                                                                })()}
+
+                                                                {/* ASSIGNMENT Section */}
+                                                                {slot.assignments.length > 0 && (
+                                                                    <div className="mb-6">
+                                                                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 pb-2 border-b border-gray-100">
+                                                                            ASSIGNMENT
+                                                                        </h4>
+                                                                        <div className="space-y-1">
+                                                                            {slot.assignments.map((assignment: Assignment) => (
+                                                                                <div key={assignment.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors">
+                                                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                                                        <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                                                            <FileText className="w-4 h-4 text-pink-600" />
+                                                                                        </div>
+                                                                                        <div className="min-w-0 flex flex-col">
+                                                                                            <span className="text-sm font-medium text-gray-800">
+                                                                                                {assignment.displayName || `ASM${assignment.instanceNumber}`}
+                                                                                            </span>
+                                                                                            {assignment.description && (
+                                                                                                <span className="text-xs text-gray-500 truncate">{assignment.description}</span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-4 flex-shrink-0 ml-2">
+                                                                                        {assignment.fileUrl && (
+                                                                                            <button
+                                                                                                onClick={() => {
+                                                                                                    setPreviewFile({ url: assignment.fileUrl!, name: assignment.fileName || 'Assignment File' });
+                                                                                                    setIsPreviewModalOpen(true);
+                                                                                                }}
+                                                                                                className="px-2 py-1 text-xs text-orange-600 hover:underline transition-colors bg-transparent font-medium"
+                                                                                            >
+                                                                                                Preview
+                                                                                            </button>
+                                                                                        )}
+                                                                                        <span className="text-xs font-bold text-gray-500">N/A</span>
+                                                                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                            <button
+                                                                                                onClick={() => navigate(`/teacher/assignment/${assignment.id}/submissions`)}
+                                                                                                className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                                                title="Submissions"
+                                                                                            >
+                                                                                                <Users className="w-4 h-4" />
+                                                                                            </button>
+                                                                                            <button
+                                                                                                onClick={(e) => handleDeleteAssignment(e, assignment)}
+                                                                                                className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                                            >
+                                                                                                <Trash2 className="w-4 h-4" />
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {/* Empty State if all 3 are empty */}
+                                                                {slot.questions.length === 0 && (() => {
+                                                                    const ptNums: number[] = [];
+                                                                    slot.topics.forEach(topic => {
+                                                                        const m = topic.match(/\b(?:Progress Test|PT)\s*(\d+)\b/i);
+                                                                        if (m) ptNums.push(parseInt(m[1]));
+                                                                    });
+                                                                    return exams.filter(e => ptNums.includes(e.instanceNumber)).length === 0;
+                                                                })() && slot.assignments.length === 0 && (
+                                                                    <div className="py-6 text-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/30">
+                                                                        <FileText className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                                                                        <p className="text-sm text-gray-400 italic">No slot contents for this slot</p>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -458,52 +634,72 @@ function TeacherCourseDetails() {
                         <div className="animate-fadeIn">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-[#0A1B3C]">Course Assignments</h2>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#D96419] transition-colors">
-                                    <Plus className="w-4 h-4" />
-                                    Create Assignment
+                                <button
+                                    onClick={() => {
+                                        setCreateAssignmentSlotInfo(null);
+                                        setIsCreateAssignmentModalOpen(true);
+                                    }}
+                                    className="px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#d95f19] transition-colors font-medium flex items-center gap-2 shadow-sm"
+                                >
+                                    <Plus className="w-4 h-4" /> Create Assignment
                                 </button>
                             </div>
 
-                            <div className="space-y-4">
-                                {assignments.map((assignment) => (
-                                    <div
-                                        key={assignment.id}
-                                        className="border border-gray-200 rounded-lg p-5 hover:border-gray-300 transition-colors bg-white"
-                                    >
-                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <h3 className="text-lg font-semibold text-[#0A1B3C]">{assignment.title}</h3>
+                            {isLoadingAssignments ? (
+                                <div className="text-center py-12 text-gray-500">
+                                    <Loader2 className="w-8 h-8 text-[#F37022] animate-spin mx-auto mb-4" />
+                                    Loading assignments...
+                                </div>
+                            ) : assignmentsData?.items?.length === 0 ? (
+                                <div className="text-center py-12 text-gray-500 border border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+                                    <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                                    <p className="font-medium text-lg text-gray-500">No assignments created</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {assignmentsData?.items?.map(assignment => (
+                                        <div key={assignment.id} className="p-5 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white">
+                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <h3 className="text-lg font-bold text-[#0A1B3C]">{assignment.displayName || `Assignment ${assignment.instanceNumber}`}</h3>
+                                                        {assignment.dueDate && new Date(assignment.dueDate) < new Date() ? (
+                                                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-red-50 border border-red-200 text-red-700">Closed</span>
+                                                        ) : (
+                                                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-green-50 border border-green-200 text-green-700">Active</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar className="w-4 h-4" />
+                                                            Due: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
+                                                        </span>
+                                                        {assignment.description && (
+                                                            <span className="font-medium text-gray-500 max-w-sm truncate whitespace-nowrap">
+                                                                {assignment.description}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                                                    <span className="flex items-center gap-1">
-                                                        <Calendar className="w-4 h-4" />
-                                                        Due: {assignment.dueDate.toLocaleDateString()}
-                                                    </span>
-                                                    <span className={`font-medium ${getSubmissionColor(assignment.submissionCount, assignment.totalStudents)}`}>
-                                                        {assignment.submissionCount}/{assignment.totalStudents} submitted
-                                                    </span>
-                                                    {assignment.averageScore && (
-                                                        <span className="text-gray-700 font-medium">Avg: {assignment.averageScore}/100</span>
-                                                    )}
+                                                <div className="flex items-center gap-3">
+                                                    <button
+                                                        onClick={() => navigate(`/teacher/assignment/${assignment.id}/submissions`)}
+                                                        className="px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#d95f19] transition-colors text-sm font-medium shadow-sm"
+                                                    >
+                                                        View Submissions
+                                                    </button>
+                                                    <button
+                                                        onClick={() => toast.info('Edit functionality coming soon')}
+                                                        className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-[#0A1B3C] transition-colors text-sm font-medium"
+                                                    >
+                                                        Edit
+                                                    </button>
                                                 </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => navigate(`/teacher/assignment/${assignment.id}/submissions`)}
-                                                    className="px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#D96419] transition-colors text-sm font-medium"
-                                                >
-                                                    View Submissions
-                                                </button>
-                                                <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                                                    Edit
-                                                </button>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -595,16 +791,99 @@ function TeacherCourseDetails() {
                 </div>
             </div>
 
+            <Modal
+                title={previewFile?.name}
+                open={isPreviewModalOpen}
+                onCancel={() => {
+                    setIsPreviewModalOpen(false);
+                    setPreviewFile(null);
+                }}
+                footer={null}
+                width={800}
+                centered
+                destroyOnClose
+            >
+                {previewFile && (
+                    <div className="mt-4">
+                        {/* Dummy preview component since filePreview isn't imported, but matches prior behavior */}
+                        <div className="w-full h-[600px] bg-gray-50 border rounded-lg flex items-center justify-center text-gray-500">
+                           <FileText className="w-8 h-8 mr-2" /> <a href={previewFile.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">View File: {previewFile.url}</a>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
             <ExamDetailModal
                 exam={selectedExam}
                 isOpen={isExamDetailModalOpen}
-                onClose={() => setIsExamDetailModalOpen(false)}
+                onClose={() => {
+                    setIsExamDetailModalOpen(false);
+                    setSelectedExam(null);
+                }}
             />
 
-            <EditExamModal
-                exam={examToEdit}
-                isOpen={isEditExamModalOpen}
-                onClose={() => setIsEditExamModalOpen(false)}
+            {examToEdit && (
+                <EditExamModal
+                    exam={examToEdit}
+                    isOpen={isEditExamModalOpen}
+                    onClose={() => {
+                        setIsEditExamModalOpen(false);
+                        setExamToEdit(null);
+                    }}
+                />
+            )}
+
+            <Modal
+                title={`Students Enrolled in ${course.code}`}
+                open={isStudentListModalOpen}
+                onCancel={() => setIsStudentListModalOpen(false)}
+                footer={null}
+                width={600}
+                centered
+            >
+                <div className="mt-4">
+                    {isLoadingStudents ? (
+                        <div className="flex flex-col items-center justify-center py-10">
+                            <Loader2 className="w-8 h-8 text-[#F37022] animate-spin mb-4" />
+                            <p className="text-gray-500 font-medium">Loading student list...</p>
+                        </div>
+                    ) : (
+                        <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                            {studentsData?.items && studentsData.items.length > 0 ? (
+                                <div className="space-y-3">
+                                    <div className="text-sm text-gray-500 mb-2">Total: {studentsData.items.length} students</div>
+                                    {studentsData.items.map((student) => (
+                                        <div key={student.id} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-lg hover:bg-orange-50 hover:border-orange-100 transition-colors">
+                                            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#F37022] font-bold shadow-sm border border-gray-100 flex-shrink-0">
+                                                {student.studentName?.charAt(0) || <Users className="w-5 h-5" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-[#0A1B3C] truncate">{student.studentName}</p>
+                                                <p className="text-xs text-gray-500 font-medium">{formatStudentCode(student.studentCode)}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-10 text-center border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+                                    <Users className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+                                    <p className="text-gray-500 font-medium">No students currently enrolled.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </Modal>
+
+            <CreateAssignmentModal
+                isOpen={isCreateAssignmentModalOpen}
+                onClose={() => {
+                    setIsCreateAssignmentModalOpen(false);
+                    setCreateAssignmentSlotInfo(null);
+                }}
+                classSubjectId={classSubject?.id || courseId || ''}
+                slotTitle={createAssignmentSlotInfo?.title}
+                existingCount={assignments.length}
             />
         </div>
     );

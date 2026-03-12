@@ -6,11 +6,12 @@ import CodeViewer from './CodeViewer';
 import mammoth from 'mammoth';
 
 interface FilePreviewProps {
-    file: File;
+    file?: File;
+    fileUrl?: string;
     filename: string;
 }
 
-function FilePreview({ file, filename }: FilePreviewProps) {
+function FilePreview({ file, fileUrl: fileUrlProp, filename }: FilePreviewProps) {
     const [fileContent, setFileContent] = useState<string>('');
     const [fileUrl, setFileUrl] = useState<string>('');
     const [loading, setLoading] = useState(true);
@@ -19,9 +20,9 @@ function FilePreview({ file, filename }: FilePreviewProps) {
     useEffect(() => {
         loadFile();
         return () => {
-            if (fileUrl) URL.revokeObjectURL(fileUrl);
+            if (fileUrl && file) URL.revokeObjectURL(fileUrl);
         };
-    }, [file]);
+    }, [file, fileUrlProp]);
 
     const loadFile = async () => {
         setLoading(true);
@@ -30,16 +31,36 @@ function FilePreview({ file, filename }: FilePreviewProps) {
         try {
             const fileType = getFileType(filename);
 
-            if (fileType === 'image' || fileType === 'pdf') {
-                const url = URL.createObjectURL(file);
-                setFileUrl(url);
-            } else if (fileType === 'code' || fileType === 'text') {
-                const text = await file.text();
-                setFileContent(text);
-            } else if (fileType === 'docx') {
-                const arrayBuffer = await file.arrayBuffer();
-                const result = await mammoth.convertToHtml({ arrayBuffer });
-                setFileContent(result.value);
+            if (file) {
+                if (fileType === 'image' || fileType === 'pdf') {
+                    const url = URL.createObjectURL(file);
+                    setFileUrl(url);
+                } else if (fileType === 'code' || fileType === 'text') {
+                    const text = await file.text();
+                    setFileContent(text);
+                } else if (fileType === 'docx') {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const result = await mammoth.convertToHtml({ arrayBuffer });
+                    setFileContent(result.value);
+                }
+            } else if (fileUrlProp) {
+                if (fileType === 'image' || fileType === 'pdf') {
+                    setFileUrl(fileUrlProp);
+                } else {
+                    const res = await fetch(fileUrlProp);
+                    if (!res.ok) throw new Error('Failed to load file content from URL');
+                    
+                    if (fileType === 'docx') {
+                        const arrayBuffer = await res.arrayBuffer();
+                        const result = await mammoth.convertToHtml({ arrayBuffer });
+                        setFileContent(result.value);
+                    } else if (fileType === 'code' || fileType === 'text') {
+                        const text = await res.text();
+                        setFileContent(text);
+                    }
+                }
+            } else {
+                throw new Error('No file or file URL provided');
             }
         } catch (err: any) {
             setError(err.message || 'Failed to load file');
@@ -150,11 +171,13 @@ function FilePreview({ file, filename }: FilePreviewProps) {
                 <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-700 font-medium mb-2">Preview not available</p>
                 <p className="text-sm text-gray-500 mb-4">
-                    {filename} ({file.type || 'unknown type'})
+                    {filename} ({file?.type || 'unknown type'})
                 </p>
                 <a
-                    href={URL.createObjectURL(file)}
+                    href={fileUrlProp || (file ? URL.createObjectURL(file) : '#')}
                     download={filename}
+                    target={fileUrlProp ? "_blank" : undefined}
+                    rel={fileUrlProp ? "noopener noreferrer" : undefined}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#D96419] transition-colors"
                 >
                     <Download className="w-4 h-4" />

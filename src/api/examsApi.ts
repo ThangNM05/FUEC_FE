@@ -13,12 +13,15 @@ export const examsApi = baseApi.injectEndpoints({
         }),
         getExamsByClassSubjectId: builder.query<PaginatedExamsResponse, string>({
             query: (classSubjectId) => `/Exams?ClassSubjectId=${classSubjectId}`,
-            transformResponse: (response: any) => response?.result || {
-                items: [],
-                totalItemCount: 0,
-                totalPages: 0,
-                itemFrom: 0,
-                itemTo: 0
+            transformResponse: (response: any) => {
+                console.log("EXAMS RESPONSE:", response);
+                return response?.result || {
+                    items: [],
+                    totalItemCount: 0,
+                    totalPages: 0,
+                    itemFrom: 0,
+                    itemTo: 0
+                };
             },
             providesTags: ['Exams'],
         }),

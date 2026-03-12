@@ -139,9 +139,19 @@ function CreateExam() {
         }
     }, [filteredAssessments, form.syllabusAssessmentId]);
 
-    // Handle initial sequence for PT titles based on existing exams
+    // Handle initial sequence for PT titles based on target slot or existing exams
     useEffect(() => {
-        if (existingExams.length > 0 && form.displayName === 'Progress Test 1') {
+        if (slotData?.slots && targetSlotId) {
+            const targetSlot = slotData.slots.find(s => s.id === targetSlotId);
+            if (targetSlot) {
+                setForm(prev => ({
+                    ...prev,
+                    instanceNumber: targetSlot.slotIndex,
+                    tag: `PT${targetSlot.slotIndex}`,
+                    displayName: `Progress Test ${targetSlot.slotIndex}`
+                }));
+            }
+        } else if (existingExams.length > 0 && form.displayName === 'Progress Test 1') {
             const ptExams = existingExams.filter(e => e.tag?.startsWith('PT'));
             const nextIndex = ptExams.length + 1;
             setForm(prev => ({
@@ -151,7 +161,7 @@ function CreateExam() {
                 instanceNumber: nextIndex
             }));
         }
-    }, [existingExams.length]); // Only run when exams are loaded
+    }, [existingExams.length, slotData, targetSlotId]);
 
     const updateChapterCount = (chapter: number, count: number) => {
         setForm(prev => {
