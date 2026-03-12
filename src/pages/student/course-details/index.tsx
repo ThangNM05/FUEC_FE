@@ -1,7 +1,14 @@
-import { useState } from 'react';
-import { ArrowLeft, FileText, Calendar, ChevronDown, ChevronUp, Download, BookOpen, Play, Lock, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ArrowLeft, FileText, Calendar, ChevronDown, ChevronUp, Download, BookOpen, Lock, CheckCircle, Clock, Loader2, Play } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/redux/authSlice';
 import { useGetClassSubjectSlotsQuery, useGetClassSubjectByIdQuery } from '@/api/classDetailsApi';
+import { useGetAssignmentsByClassSubjectIdQuery } from '@/api/assignmentsApi';
+import { useGetStudentAssignmentsByStudentIdQuery } from '@/api/studentAssignmentsApi';
+import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
+import type { Assignment, StudentAssignment } from '@/types/assignment.types';
+import StudentSlotContent from './StudentSlotContent';
 
 interface Question {
   id: number;
@@ -9,10 +16,12 @@ interface Question {
   status: 'custom' | 'finished';
 }
 
-interface Assignment {
-  id: number;
-  title: string;
-}
+export type ExtendedAssignment = Assignment & {
+  submitted: boolean;
+  timeRemaining: string | null;
+  isOverdue: boolean;
+  studentSubmission?: StudentAssignment;
+};
 
 interface Slot {
   id: string;
@@ -21,7 +30,7 @@ interface Slot {
   endTime: string;
   topics: string[];
   questions: Question[];
-  assignments: Assignment[];
+  assignments: ExtendedAssignment[];
   expanded: boolean;
   status: 'locked' | 'completed' | 'pending' | 'urgent' | 'overdue';
   remaining?: string;
@@ -52,6 +61,8 @@ function CourseDetails() {
   const [slotContentsExpanded, setSlotContentsExpanded] = useState(false);
   const SLOTS_PER_PAGE = 10;
 
+  const user = useSelector(selectCurrentUser);
+
   const { data: slotsData, isLoading: isSlotsLoading, isError } = useGetClassSubjectSlotsQuery(classSubjectId || '', {
     skip: !classSubjectId
   });
@@ -60,7 +71,19 @@ function CourseDetails() {
     skip: !classSubjectId
   });
 
-  const isLoading = isSlotsLoading || isClassLoading;
+  const { data: assignmentsData, isLoading: isAssignmentsLoading } = useGetAssignmentsByClassSubjectIdQuery(classSubjectId || '', {
+    skip: !classSubjectId
+  });
+
+  const { data: studentAssignmentsData, isLoading: isStudentAssignmentsLoading } = useGetStudentAssignmentsByStudentIdQuery(user?.id || '', {
+    skip: !user?.id
+  });
+
+  const { data: examsData, isLoading: isLoadingExams } = useGetExamsByClassSubjectIdQuery(classSubjectId || '', {
+    skip: !classSubjectId
+  });
+
+  const isLoading = isSlotsLoading || isClassLoading || isAssignmentsLoading || isStudentAssignmentsLoading || isLoadingExams;
 
   const course = {
     name: classSubjectData?.subjectName || slotsData?.subjectName || 'Loading...',
@@ -71,11 +94,46 @@ function CourseDetails() {
     credits: classSubjectData?.subjectCredits || 0
   };
 
-  const courseAssignments = [
-    { id: 1, title: 'Assignment 1: Requirements Analysis', due: '2024-05-10', submitted: true, timeRemaining: null },
-    { id: 2, title: 'Assignment 2: Design Patterns', due: '2024-05-17', submitted: false, timeRemaining: '3hr remaining' },
-    { id: 3, title: 'Final Project: Software Development', due: '2024-06-01', submitted: false, timeRemaining: '5 days remaining' }
-  ];
+  const courseAssignments = useMemo(() => {
+    if (!assignmentsData?.items) return [];
+
+    const submissions = studentAssignmentsData?.items || [];
+    
+    return assignmentsData.items.map((assignment: Assignment) => {
+      const submission = submissions.find((sub: StudentAssignment) => sub.assignmentId === assignment.id);
+      
+      let timeRemaining = null;
+      let isOverdue = false;
+      
+      if (assignment.dueDate) {
+        const due = new Date(assignment.dueDate).getTime();
+        const now = new Date().getTime();
+        const diff = due - now;
+        
+        if (diff < 0) {
+           timeRemaining = 'Overdue';
+           isOverdue = true;
+        } else {
+           const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+           const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+           if (days > 0) {
+             timeRemaining = `${days} day${days !== 1 ? 's' : ''} remaining`;
+           } else {
+             timeRemaining = `${hours} hour${hours !== 1 ? 's' : ''} remaining`;
+           }
+        }
+      }
+
+      return {
+        ...assignment,
+        submitted: !!submission,
+        timeRemaining: !submission ? timeRemaining : null,
+        isOverdue: !submission && isOverdue,
+        studentSubmission: submission
+      };
+    }).sort((a: ExtendedAssignment, b: ExtendedAssignment) => a.instanceNumber - b.instanceNumber);
+  }, [assignmentsData, studentAssignmentsData]);
+
 
   const learningMaterials: Material[] = [
     { id: 1, title: 'Week 1: Introduction to Mobile Development', type: 'Lecture', date: '2024-05-01', downloadable: true },
@@ -156,7 +214,7 @@ function CourseDetails() {
                     <FileText className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-[#0A1B3C] text-sm">{assignment.title}</h4>
+                    <h4 className="font-medium text-[#0A1B3C] text-sm">{assignment.displayName || `ASM${assignment.instanceNumber}`}</h4>
                     <div className="flex items-center gap-2 mt-1">
                       {assignment.timeRemaining && (
                         <>
@@ -313,56 +371,15 @@ function CourseDetails() {
 
                   {/* Slot Content (Expandable) */}
                   {slot.expanded && (
-                    <div className="p-4 bg-white">
-                      {/* Questions Section */}
-                      <div className="mb-6">
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">QUESTION</h4>
-                        <div className="space-y-2">
-                          {slot.questions.map(question => (
-                            <div
-                              key={question.id}
-                              onClick={() => navigate(`/student/course-details/questions/${slot.id}-${question.id}`)}
-                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-orange-50 hover:border-[#F37022] border border-transparent transition-all cursor-pointer group"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                                  <FileText className="w-4 h-4 text-orange-600" />
-                                </div>
-                                <span className="text-sm text-[#0A1B3C] group-hover:text-[#F37022] font-medium transition-colors">{question.title}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`px-3 py-1 text-xs font-semibold rounded ${question.status === 'custom'
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'bg-green-100 text-green-700'
-                                  }`}>
-                                  {question.status === 'custom' ? 'Custom' : 'Finished'}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Assignments Section */}
-                      {slot.assignments.length > 0 && (
-                        <div>
-                          <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">ASSIGNMENT</h4>
-                          <div className="space-y-2">
-                            {slot.assignments.map(assignment => (
-                              <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-                                    <FileText className="w-4 h-4 text-pink-600" />
-                                  </div>
-                                  <span className="text-sm text-[#0A1B3C]">{assignment.title}</span>
-                                </div>
-                                <span className="text-sm text-gray-500">N/A</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <StudentSlotContent
+                      slotId={slot.id}
+                      slotAssignments={courseAssignments.filter(a => {
+                        // assignments API returns assignments associated with this classSubject;
+                        // filter those whose slotId matches (if set) or show all if slot not set
+                        return (a as any).slotId === slot.id || !(a as any).slotId;
+                      })}
+                      slotExams={(examsData?.items || []).filter(e => e.slotId === slot.id)}
+                    />
                   )}
                 </div>
               ))}

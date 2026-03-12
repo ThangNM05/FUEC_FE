@@ -2,38 +2,27 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import {
-    ChevronRight, Users, FileText, Calendar, ClipboardCheck, Plus,
-    ChevronDown, ChevronUp
+    ChevronRight, Users, User, FileText, Calendar, ClipboardCheck, Plus,
+    ChevronDown, ChevronUp, Clock, Loader2, Pencil, Trash2
 } from 'lucide-react';
-import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery } from '@/api/classDetailsApi';
+import {
+    useGetClassSubjectByIdQuery, 
+    useGetClassSubjectSlotsQuery,
+    useGetStudentClassesQuery
+} from '@/api/classDetailsApi';
 import { useGetExamsByClassSubjectIdQuery, useDeleteExamMutation } from '@/api/examsApi';
+import { useGetAssignmentsByClassSubjectIdQuery, useDeleteAssignmentMutation } from '@/api/assignmentsApi';
+import { useCreateSlotQuestionContentMutation } from '@/api/slotQuestionContentsApi';
 import ExamDetailModal from '@/components/modals/ExamDetailModal';
 import EditExamModal from '@/components/modals/EditExamModal';
+import CreateAssignmentModal from '@/components/modals/CreateAssignmentModal';
+import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentModal';
+import SlotQuestionList from './SlotQuestionList';
 import type { Exam } from '@/types/exam.types';
+import type { Assignment } from '@/types/assignment.types';
 import { Modal } from 'antd';
-import { Pencil, Trash2 } from 'lucide-react';
 
-interface Assignment {
-    id: string;
-    title: string;
-    dueDate: Date;
-    maxScore: number;
-    submissionCount: number;
-    totalStudents: number;
-    averageScore?: number;
-    status: 'active' | 'closed';
-}
-
-interface Question {
-    id: number;
-    title: string;
-    status: 'custom' | 'finished';
-}
-
-interface SlotAssignment {
-    id: number;
-    title: string;
-}
+type SlotAssignment = Assignment;
 
 interface Slot {
     id: string;
@@ -41,10 +30,11 @@ interface Slot {
     startTime: string;
     endTime: string;
     topics: string[];
-    questions: Question[];
     assignments: SlotAssignment[];
+    progressTests: Exam[];
     expanded: boolean;
     isAssessment: boolean;
+    slotIndex: number;
 }
 
 function TeacherCourseDetails() {
@@ -55,8 +45,47 @@ function TeacherCourseDetails() {
     const [isExamDetailModalOpen, setIsExamDetailModalOpen] = useState(false);
     const [isEditExamModalOpen, setIsEditExamModalOpen] = useState(false);
     const [examToEdit, setExamToEdit] = useState<Exam | null>(null);
+    const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null);
+    const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false);
+    const [createAssignmentSlotInfo, setCreateAssignmentSlotInfo] = useState<{ id: string; title: string; slotIndex: number } | null>(null);
 
+    // Slot Question Create State
+    const [isCreateQuestionModalOpen, setIsCreateQuestionModalOpen] = useState(false);
+    const [createQuestionSlotInfo, setCreateQuestionSlotInfo] = useState<{ id: string; title: string } | null>(null);
+    const [hasQuestionsMap, setHasQuestionsMap] = useState<Record<string, boolean>>({});
+    // API
     const [deleteExam] = useDeleteExamMutation();
+    const [createSlotQuestion, { isLoading: isCreatingQuestion }] = useCreateSlotQuestionContentMutation();
+    const [isStudentListModalOpen, setIsStudentListModalOpen] = useState(false);
+
+    const handleOpenCreateAssignment = (slotInfo: any) => {
+        setCreateAssignmentSlotInfo(slotInfo);
+        setIsCreateAssignmentModalOpen(true);
+    };
+
+    const [deleteAssignment] = useDeleteAssignmentMutation();
+
+    const handleDeleteAssignment = (e: React.MouseEvent, assignment: Assignment) => {
+        e.stopPropagation();
+        Modal.confirm({
+            title: 'Delete Assignment',
+            content: `Are you sure you want to delete "${assignment.displayName || `Assignment ${assignment.instanceNumber}`}"?`,
+            okText: 'Delete',
+            okType: 'danger',
+            cancelText: 'Cancel',
+            onOk: async () => {
+                try {
+                    await deleteAssignment(assignment.id).unwrap();
+                    toast.success('Assignment deleted successfully');
+                } catch (error) {
+                    toast.error('Failed to delete assignment');
+                }
+            }
+        });
+    };
+
 
     // Pagination for slots
     const [currentPage, setCurrentPage] = useState(1);
@@ -80,6 +109,16 @@ function TeacherCourseDetails() {
         skip: !courseId,
     });
 
+    const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentClassesQuery(
+        { classId: classSubject?.classId || '', pageSize: 200 },
+        { skip: !classSubject?.classId }
+    );
+
+    const { data: assignmentsData, isLoading: isLoadingAssignments } = useGetAssignmentsByClassSubjectIdQuery(
+        classSubject?.id || '',
+        { skip: !classSubject?.id }
+    );
+
     const exams = useMemo(() => {
         if (!examsData?.items) return [];
         return [...examsData.items].sort((a, b) =>
@@ -94,42 +133,13 @@ function TeacherCourseDetails() {
         code: classSubject ? `${classSubject.subjectCode} - ${classSubject.classCode}` : 'SE1801',
         room: 'TBA',
         schedule: 'TBA',
-        totalStudents: 45,
-        enrolledStudents: 45,
+        totalStudents: studentsData?.totalItemCount || 0,
+        enrolledStudents: studentsData?.totalItemCount || 0,
     };
 
-    // Mock assignments
-    const assignments: Assignment[] = [
-        {
-            id: '1',
-            title: 'Lab 1: Introduction to React',
-            dueDate: new Date('2025-01-15'),
-            maxScore: 100,
-            submissionCount: 40,
-            totalStudents: 45,
-            averageScore: 85,
-            status: 'active',
-        },
-        {
-            id: '2',
-            title: 'Assignment 2: Database Design',
-            dueDate: new Date('2025-01-20'),
-            maxScore: 100,
-            submissionCount: 35,
-            totalStudents: 45,
-            status: 'active',
-        },
-        {
-            id: '3',
-            title: 'Project Proposal',
-            dueDate: new Date('2025-01-10'),
-            maxScore: 100,
-            submissionCount: 45,
-            totalStudents: 45,
-            averageScore: 78,
-            status: 'closed',
-        },
-    ];
+    const assignments = useMemo(() => {
+        return assignmentsData?.items || [];
+    }, [assignmentsData]);
 
     const getStatusColor = (status: string) => {
         return status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600';
@@ -170,16 +180,34 @@ function TeacherCourseDetails() {
                     year: 'numeric'
                 }),
                 topics: s.sessions?.map((session: any) => session.topic) || [],
-                questions: [], // mock for now
-                assignments: [], // mock for now
+                // Filter assignments matching this slotId (or falling back to instanceNumber regex logic if needed)
+                assignments: (() => {
+                    return (assignmentsData?.items || [])
+                        .filter((a: any) => a.slotId === s.id)
+                        .map((a: any) => ({
+                            ...a,
+                            fileUrl: a.fileUrl || a.filePaths?.[0] || ''
+                        }));
+                })(),
+                progressTests: (() => {
+                    return (examsData?.items || [])
+                        .filter((e: any) => e.slotId === s.id);
+                })(),
                 expanded: i === 0,
                 isAssessment: s.sessions?.some((sess: any) =>
                     sess.isAssessment ||
                     /\b(Progress Test|PT|Examination|Final Exam|Exam|Quiz|Test)\b/i.test(sess.topic)
-                ) || false
+                ) || false,
+                slotIndex: s.slotIndex
             })));
         }
-    }, [slotData]);
+    }, [slotData, assignmentsData]);
+
+    const formatStudentCode = (code?: string) => {
+        if (!code) return '';
+        const match = code.match(/[a-zA-Z]{2}\d{6}$/);
+        return match ? match[0].toUpperCase() : code;
+    };
 
     const toggleSlot = (slotId: string) => {
         setSlots(slots.map(slot =>
@@ -247,9 +275,12 @@ function TeacherCourseDetails() {
                                 <Calendar className="w-4 h-4" />
                                 {course.schedule}
                             </span> */}
-                            <span className="flex items-center gap-1">
+                            <span 
+                                className="flex items-center gap-1 cursor-pointer hover:text-[#F37022] hover:underline"
+                                onClick={() => setIsStudentListModalOpen(true)}
+                            >
                                 <Users className="w-4 h-4" />
-                                {course.enrolledStudents} students
+                                <span className="text-[#F37022] bg-orange-100 px-1 rounded">{course.enrolledStudents} students</span>
                             </span>
                         </div>
                     </div>
@@ -295,9 +326,9 @@ function TeacherCourseDetails() {
                                 {slots
                                     .slice((currentPage - 1) * SLOTS_PER_PAGE, currentPage * SLOTS_PER_PAGE)
                                     .map(slot => (
-                                        <div key={slot.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                                        <div key={slot.id} className="border border-gray-200 rounded-lg bg-white">
                                             {/* Slot Header */}
-                                            <div className="p-4 bg-gray-50 border-b border-gray-100">
+                                            <div className={`p-4 bg-gray-50 border-b border-gray-100 ${slot.expanded ? 'rounded-t-lg' : 'rounded-lg'}`}>
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center gap-2">
                                                         <span className="px-3 py-1 text-sm font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
@@ -306,21 +337,9 @@ function TeacherCourseDetails() {
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         {/* Actions for teachers */}
-                                                        {slot.isAssessment && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    navigate(`/teacher/create-exam?course=${courseId}&slot=${slot.id}`);
-                                                                }}
-                                                                className="px-3 py-1.5 bg-[#F37022] text-white rounded-lg hover:bg-[#d95f19] transition-colors text-xs font-medium flex items-center gap-1.5 shadow-sm active:scale-95"
-                                                            >
-                                                                <Plus className="w-3 h-3" />
-                                                                Create Progress Test
-                                                            </button>
-                                                        )}
-                                                        <button className="px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors text-xs font-medium">
-                                                            Edit Slot
-                                                        </button>
+
+
+
                                                         <button
                                                             onClick={() => toggleSlot(slot.id)}
                                                             className="p-1 hover:bg-gray-200 rounded transition-colors"
@@ -351,69 +370,209 @@ function TeacherCourseDetails() {
                                             {/* Slot Content (Expandable) */}
                                             {slot.expanded && (
                                                 <div className="p-4 bg-white">
-                                                    {/* Questions Section */}
-                                                    <div className="mb-6 flex flex-col">
-                                                        <div className="flex items-center justify-between mb-3">
-                                                            <h4 className="text-xs font-semibold text-gray-500 uppercase">QUESTIONS</h4>
-                                                            <button className="text-xs font-medium text-[#F37022] hover:text-[#D96419] flex items-center gap-1">
-                                                                <Plus className="w-3 h-3" /> Add Question
-                                                            </button>
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            {slot.questions.length > 0 ? (
-                                                                slot.questions.map(question => (
-                                                                    <div
-                                                                        key={question.id}
-                                                                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-orange-50 hover:border-[#F37022] border border-transparent transition-all cursor-pointer group"
-                                                                    >
-                                                                        <div className="flex items-center gap-3">
-                                                                            <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                                                                                <FileText className="w-4 h-4 text-orange-600" />
-                                                                            </div>
-                                                                            <span className="text-sm text-[#0A1B3C] group-hover:text-[#F37022] font-medium transition-colors">{question.title}</span>
-                                                                        </div>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className={`px-3 py-1 text-xs font-semibold rounded ${question.status === 'custom'
-                                                                                ? 'bg-orange-100 text-orange-700'
-                                                                                : 'bg-green-100 text-green-700'
-                                                                                }`}>
-                                                                                {question.status === 'custom' ? 'Custom' : 'Finished'}
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                ))
-                                                            ) : (
-                                                                <div className="py-8 text-center border-2 border-dashed border-gray-100 rounded-xl bg-gray-50/30">
-                                                                    <p className="text-sm text-gray-400 italic">No question added yet</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Assignments Section */}
-                                                    {slot.assignments.length > 0 && (
-                                                        <div>
-                                                            <div className="flex items-center justify-between mb-3">
-                                                                <h4 className="text-xs font-semibold text-gray-500 uppercase">ASSIGNMENTS</h4>
-                                                                <button className="text-xs font-medium text-[#F37022] hover:text-[#D96419] flex items-center gap-1">
-                                                                    <Plus className="w-3 h-3" /> Add Assignment
+                                                    {/* Slot Content Sections */}
+                                                    <div>
+                                                        {/* Top Actions: Header & Create Content Dropdown */}
+                                                        <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100 relative z-10">
+                                                            <h4 className="text-sm font-bold text-[#0A1B3C] uppercase tracking-wider flex items-center gap-2">
+                                                                Slot Content
+                                                            </h4>
+                                                            <div className="relative">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setOpenDropdownId(openDropdownId === `${slot.id}-content` ? null : `${slot.id}-content`);
+                                                                    }}
+                                                                    className="text-xs font-semibold text-[#F37022] hover:text-[#D96419] flex items-center gap-1 transition-colors px-3 py-1.5 bg-orange-50 rounded-lg border border-orange-100"
+                                                                >
+                                                                    <Plus className="w-3 h-3" /> Create content
                                                                 </button>
-                                                            </div>
-                                                            <div className="space-y-2">
-                                                                {slot.assignments.map(assignment => (
-                                                                    <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                                                        <div className="flex items-center gap-3">
-                                                                            <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-                                                                                <FileText className="w-4 h-4 text-pink-600" />
-                                                                            </div>
-                                                                            <span className="text-sm text-[#0A1B3C]">{assignment.title}</span>
+
+                                                                {openDropdownId === `${slot.id}-content` && (
+                                                                    <>
+                                                                        <div
+                                                                            className="fixed inset-0 z-40"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setOpenDropdownId(null);
+                                                                            }}
+                                                                        />
+                                                                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setOpenDropdownId(null);
+                                                                                    setCreateQuestionSlotInfo({ id: slot.id, title: slot.title });
+                                                                                    setIsCreateQuestionModalOpen(true);
+                                                                                }}
+                                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                                            >
+                                                                                <FileText className="w-4 h-4 text-gray-400" />
+                                                                                Create Question
+                                                                            </button>
+
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setOpenDropdownId(null);
+                                                                                    navigate(`/teacher/create-exam?course=${courseId}&slot=${slot.id}`);
+                                                                                }}
+                                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-50"
+                                                                            >
+                                                                                <FileText className="w-4 h-4 text-gray-400" />
+                                                                                Create Progress Test
+                                                                            </button>
+
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    setOpenDropdownId(null);
+                                                                                    handleOpenCreateAssignment({
+                                                                                        id: slot.id,
+                                                                                        title: slot.title,
+                                                                                        slotIndex: slot.slotIndex,
+                                                                                    });
+                                                                                }}
+                                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-50"
+                                                                            >
+                                                                                <FileText className="w-4 h-4 text-gray-400" />
+                                                                                Create Assignment
+                                                                            </button>
                                                                         </div>
-                                                                        <span className="text-sm text-gray-500">N/A</span>
-                                                                    </div>
-                                                                ))}
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                    )}
+
+                                                        {isLoadingExams || isLoadingAssignments ? (
+                                                            <div className="py-4 flex items-center justify-center gap-2 text-gray-400">
+                                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                                <span className="text-sm">Loading content...</span>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                {/* QUESTION Section (API loaded from SlotQuestionList component) */}
+                                                                <SlotQuestionList 
+                                                                    slotId={slot.id} 
+                                                                    slotTitle={slot.title} 
+                                                                    onLoad={(has) => setHasQuestionsMap(prev => prev[slot.id] === has ? prev : { ...prev, [slot.id]: has })}
+                                                                />
+
+                                                                {/* PROGRESS TEST Section */}
+                                                                {slot.progressTests.length > 0 && (
+                                                                    <div className="mb-6">
+                                                                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 pb-2 border-b border-gray-100">
+                                                                            PROGRESS TEST
+                                                                        </h4>
+                                                                        <div className="space-y-1">
+                                                                            {slot.progressTests.map(exam => (
+                                                                                <div
+                                                                                    key={exam.id}
+                                                                                    className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors cursor-pointer"
+                                                                                    onClick={() => {
+                                                                                        setSelectedExam(exam);
+                                                                                        setIsExamDetailModalOpen(true);
+                                                                                    }}
+                                                                                >
+                                                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                                                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                                                            <FileText className="w-4 h-4 text-blue-700" />
+                                                                                        </div>
+                                                                                        <div className="min-w-0">
+                                                                                            <p className="text-sm font-medium text-gray-800">
+                                                                                                {exam.displayName || (exam.category ? `${exam.category} ${exam.instanceNumber}` : `Progress Test ${exam.instanceNumber}`)}
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
+                                                                                        <button
+                                                                                            onClick={(e) => handleEditExam(e, exam)}
+                                                                                            className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                                            title="Edit Exam"
+                                                                                        >
+                                                                                            <Pencil className="w-4 h-4" />
+                                                                                        </button>
+                                                                                        <button
+                                                                                            onClick={(e) => handleDeleteExam(e, exam)}
+                                                                                            className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                                            title="Delete Exam"
+                                                                                        >
+                                                                                            <Trash2 className="w-4 h-4" />
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+
+                                                                {/* ASSIGNMENT Section */}
+                                                                {slot.assignments.length > 0 && (
+                                                                    <div className="mb-6">
+                                                                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 pb-2 border-b border-gray-100">
+                                                                            ASSIGNMENT
+                                                                        </h4>
+                                                                        <div className="space-y-1">
+                                                                            {slot.assignments.map((assignment: Assignment) => (
+                                                                                <div key={assignment.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors">
+                                                                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                                                        <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                                                            <FileText className="w-4 h-4 text-pink-600" />
+                                                                                        </div>
+                                                                                        <div className="min-w-0 flex flex-col">
+                                                                                            <span className="text-sm font-medium text-gray-800">
+                                                                                                {assignment.displayName || `ASM${assignment.instanceNumber}`}
+                                                                                            </span>
+                                                                                            {assignment.description && (
+                                                                                                <span className="text-xs text-gray-500 truncate">{assignment.description}</span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-4 flex-shrink-0 ml-2">
+                                                                                        {assignment.fileUrl && (
+                                                                                            <button
+                                                                                                onClick={() => {
+                                                                                                    setPreviewFile({ url: assignment.fileUrl!, name: assignment.fileName || 'Assignment File' });
+                                                                                                    setIsPreviewModalOpen(true);
+                                                                                                }}
+                                                                                                className="px-2 py-1 text-xs text-orange-600 hover:underline transition-colors bg-transparent font-medium"
+                                                                                            >
+                                                                                                Preview
+                                                                                            </button>
+                                                                                        )}
+                                                                                        <span className="text-xs font-bold text-gray-500">N/A</span>
+                                                                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                            <button
+                                                                                                onClick={() => navigate(`/teacher/assignment/${assignment.id}/submissions`)}
+                                                                                                className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                                                title="Submissions"
+                                                                                            >
+                                                                                                <Users className="w-4 h-4" />
+                                                                                            </button>
+                                                                                            <button
+                                                                                                onClick={(e) => handleDeleteAssignment(e, assignment)}
+                                                                                                className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                                            >
+                                                                                                <Trash2 className="w-4 h-4" />
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {/* Empty State warning if there's no progress tests and assignments and questions */}
+                                                                {slot.progressTests.length === 0 && slot.assignments.length === 0 && hasQuestionsMap[slot.id] === false && (
+                                                                    <div className="py-8 text-center bg-gray-50 border border-dashed border-gray-200 rounded-xl mt-2">
+                                                                        <p className="text-sm text-gray-500 font-medium">
+                                                                            No contents for this slot.
+                                                                        </p>
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -458,52 +617,76 @@ function TeacherCourseDetails() {
                         <div className="animate-fadeIn">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-[#0A1B3C]">Course Assignments</h2>
-                                <button className="flex items-center gap-2 px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#D96419] transition-colors">
-                                    <Plus className="w-4 h-4" />
-                                    Create Assignment
+                                <button
+                                    onClick={() => {
+                                        setCreateAssignmentSlotInfo(null);
+                                        setIsCreateAssignmentModalOpen(true);
+                                    }}
+                                    className="px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#d95f19] transition-colors font-medium flex items-center gap-2 shadow-sm"
+                                >
+                                    <Plus className="w-4 h-4" /> Create Assignment
                                 </button>
                             </div>
 
-                            <div className="space-y-4">
-                                {assignments.map((assignment) => (
-                                    <div
-                                        key={assignment.id}
-                                        className="border border-gray-200 rounded-lg p-5 hover:border-gray-300 transition-colors bg-white"
-                                    >
-                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <h3 className="text-lg font-semibold text-[#0A1B3C]">{assignment.title}</h3>
+                            {isLoadingAssignments ? (
+                                <div className="text-center py-12 text-gray-500">
+                                    <Loader2 className="w-8 h-8 text-[#F37022] animate-spin mx-auto mb-4" />
+                                    Loading assignments...
+                                </div>
+                            ) : assignmentsData?.items?.length === 0 ? (
+                                <div className="text-center py-12 text-gray-500 border border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+                                    <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                                    <p className="font-medium text-lg text-gray-500">No assignments created</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {assignmentsData?.items?.map(assignment => (
+                                        <div key={assignment.id} className="p-5 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <h3 className="text-lg font-bold text-[#0A1B3C]">{assignment.displayName || `Assignment ${assignment.instanceNumber}`}</h3>
                                                 </div>
                                                 <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                                                     <span className="flex items-center gap-1">
                                                         <Calendar className="w-4 h-4" />
-                                                        Due: {assignment.dueDate.toLocaleDateString()}
+                                                        Due: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
                                                     </span>
-                                                    <span className={`font-medium ${getSubmissionColor(assignment.submissionCount, assignment.totalStudents)}`}>
-                                                        {assignment.submissionCount}/{assignment.totalStudents} submitted
+                                                    <span className="font-semibold text-orange-600">
+                                                        0/{course.enrolledStudents} submitted
                                                     </span>
-                                                    {assignment.averageScore && (
-                                                        <span className="text-gray-700 font-medium">Avg: {assignment.averageScore}/100</span>
-                                                    )}
+                                                    <span className="font-semibold text-blue-600">Pending Grading</span>
                                                 </div>
+                                                {assignment.description && (
+                                                    <div className="mt-2 text-sm font-medium text-gray-500 max-w-lg truncate">
+                                                        {assignment.description}
+                                                    </div>
+                                                )}
                                             </div>
-
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-3 shrink-0">
                                                 <button
                                                     onClick={() => navigate(`/teacher/assignment/${assignment.id}/submissions`)}
-                                                    className="px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#D96419] transition-colors text-sm font-medium"
+                                                    className="px-5 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#d95f19] transition-colors text-sm font-semibold shadow-sm"
                                                 >
                                                     View Submissions
                                                 </button>
-                                                <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
+                                                <button
+                                                    onClick={() => toast.info('Edit functionality coming soon')}
+                                                    className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold shadow-sm"
+                                                >
                                                     Edit
+                                                </button>
+                                                <button
+                                                    onClick={(e) => handleDeleteAssignment(e, assignment)}
+                                                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100 shadow-sm"
+                                                    title="Delete Assignment"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
                                                 </button>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -595,17 +778,142 @@ function TeacherCourseDetails() {
                 </div>
             </div>
 
+            <Modal
+                title={previewFile?.name}
+                open={isPreviewModalOpen}
+                onCancel={() => {
+                    setIsPreviewModalOpen(false);
+                    setPreviewFile(null);
+                }}
+                footer={null}
+                width={800}
+                centered
+                destroyOnClose
+            >
+                {previewFile && (
+                    <div className="mt-4">
+                        {/* Dummy preview component since filePreview isn't imported, but matches prior behavior */}
+                        <div className="w-full h-[600px] bg-gray-50 border rounded-lg flex items-center justify-center text-gray-500">
+                           <FileText className="w-8 h-8 mr-2" /> <a href={previewFile.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">View File: {previewFile.url}</a>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+
             <ExamDetailModal
                 exam={selectedExam}
                 isOpen={isExamDetailModalOpen}
-                onClose={() => setIsExamDetailModalOpen(false)}
+                onClose={() => {
+                    setIsExamDetailModalOpen(false);
+                    setSelectedExam(null);
+                }}
             />
 
-            <EditExamModal
-                exam={examToEdit}
-                isOpen={isEditExamModalOpen}
-                onClose={() => setIsEditExamModalOpen(false)}
+            {examToEdit && (
+                <EditExamModal
+                    exam={examToEdit}
+                    isOpen={isEditExamModalOpen}
+                    onClose={() => {
+                        setIsEditExamModalOpen(false);
+                        setExamToEdit(null);
+                    }}
+                />
+            )}
+
+            <CreateAssignmentModal
+                isOpen={isCreateAssignmentModalOpen}
+                onClose={() => {
+                    setIsCreateAssignmentModalOpen(false);
+                    setCreateAssignmentSlotInfo(null);
+                }}
+                classSubjectId={classSubject?.id || courseId || ''}
+                slotTitle={createAssignmentSlotInfo?.title}
+                existingCount={assignments.length}
             />
+
+            {/* Create Question Modal */}
+            <SlotQuestionContentModal
+                isOpen={isCreateQuestionModalOpen}
+                onClose={() => {
+                    setIsCreateQuestionModalOpen(false);
+                    setCreateQuestionSlotInfo(null);
+                }}
+                isSaving={isCreatingQuestion}
+                slotTitle={createQuestionSlotInfo?.title}
+                onSave={async (questions) => {
+                    if (createQuestionSlotInfo) {
+                        try {
+                            // Create all questions in parallel
+                            await Promise.all(
+                                questions.map(q => createSlotQuestion({
+                                    slotId: createQuestionSlotInfo.id,
+                                    content: q.content,
+                                    description: q.description
+                                }).unwrap())
+                            );
+                            toast.success(`Created ${questions.length} question${questions.length > 1 ? 's' : ''} successfully`);
+                            setIsCreateQuestionModalOpen(false);
+                            setCreateQuestionSlotInfo(null);
+                        } catch {
+                            toast.error('Failed to create one or more questions');
+                        }
+                    }
+                }}
+            />
+            <Modal
+                title={
+                    <div className="flex items-center gap-2 pb-3 border-b border-gray-100">
+                        <Users className="w-5 h-5 text-[#F37022]" />
+                        <span className="text-lg font-bold text-[#0A1B3C]">Enrolled Students</span>
+                        <span className="px-2.5 py-0.5 bg-orange-100 text-[#F37022] text-xs font-semibold rounded-full ml-2">
+                            {course.enrolledStudents}
+                        </span>
+                    </div>
+                }
+                open={isStudentListModalOpen}
+                onCancel={() => setIsStudentListModalOpen(false)}
+                footer={null}
+                width={600}
+                centered
+                destroyOnClose
+                className="student-list-modal"
+            >
+                <div className="max-h-[60vh] overflow-y-auto pr-2 mt-4 custom-scrollbar">
+                    {isLoadingStudents ? (
+                        <div className="flex flex-col items-center justify-center py-12">
+                            <Loader2 className="w-8 h-8 text-[#F37022] animate-spin mb-4" />
+                            <p className="text-gray-500 font-medium">Loading student list...</p>
+                        </div>
+                    ) : studentsData?.items && studentsData.items.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {studentsData.items.map((student: any) => (
+                                <div 
+                                    key={student.id} 
+                                    className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-orange-200 hover:bg-orange-50/50 transition-colors group"
+                                >
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-200 flex items-center justify-center flex-shrink-0">
+                                        <User className="w-5 h-5 text-[#F37022]" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-semibold text-gray-800 truncate group-hover:text-[#0A1B3C] transition-colors">
+                                            {formatStudentCode(student.studentCode)}
+                                        </p>
+                                        <p className="text-xs text-gray-500 truncate mt-0.5">
+                                            {student.studentName || 'Unknown Student'}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                            <Users className="w-12 h-12 text-gray-300 mb-3" />
+                            <p className="text-gray-500 font-medium">No students enrolled</p>
+                            <p className="text-sm text-gray-400 mt-1">Students will appear here once they join the class</p>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 }

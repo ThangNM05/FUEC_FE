@@ -16,15 +16,14 @@ const baseQuery = fetchBaseQuery({
 
     return headers;
   },
-
 });
 
 // Custom base query with error handling and token refresh
-const baseQueryWithReauth: BaseQueryFn<
-  string | FetchArgs,
-  unknown,
-  FetchBaseQueryError
-> = async (args, api, extraOptions) => {
+const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extraOptions,
+) => {
   const result = await baseQuery(args, api, extraOptions);
 
   // Handle 401 Unauthorized - token expired or invalid
@@ -42,7 +41,29 @@ const baseQueryWithReauth: BaseQueryFn<
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Students', 'Teachers', 'Majors', 'SubMajors', 'Accounts', 'Rooms', 'Subjects', 'Syllabuses', 'Semesters', 'ExamFormats', 'Classes', 'ClassSubjectTeachers', 'StudentClasses', 'Curriculums', 'QuestionBanks', 'Question', 'TeachingSubjects', 'Exams'],
+  tagTypes: [
+    'Students',
+    'Teachers',
+    'Majors',
+    'SubMajors',
+    'Accounts',
+    'Rooms',
+    'Subjects',
+    'Syllabuses',
+    'Semesters',
+    'ExamFormats',
+    'Classes',
+    'ClassSubjectTeachers',
+    'StudentClasses',
+    'Curriculums',
+    'QuestionBanks',
+    'Question',
+    'TeachingSubjects',
+    'Exams',
+    'Assignments',
+    'StudentAssignments',
+    'Files',
+    'SlotQuestionContents',
+  ],
   endpoints: () => ({}),
 });
-
