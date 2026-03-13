@@ -90,7 +90,11 @@ export default function SlotQuestionList({
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button
                                     onClick={() => {
-                                        setEditingQuestion(question);
+                                        setEditingQuestion({
+                                            id: question.id,
+                                            content: question.content,
+                                            description: question.description
+                                        });
                                         setIsModalOpen(true);
                                     }}
                                     className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"

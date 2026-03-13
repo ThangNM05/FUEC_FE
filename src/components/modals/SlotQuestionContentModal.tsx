@@ -5,7 +5,7 @@ import { FileText, Plus, Trash2, Loader2, AlertCircle, HelpCircle } from 'lucide
 export interface SlotQuestionContentData {
     id?: string;
     content: string;
-    description: string;
+    description?: string;
 }
 
 interface SlotQuestionContentModalProps {
@@ -134,12 +134,11 @@ export default function SlotQuestionContentModal({
                                         Content <span className="text-red-500">*</span>
                                     </label>
                                     <textarea
-                                        value={row.content}
+                                        value={row.content || ''}
                                         onChange={(e) => handleChange(idx, 'content', e.target.value)}
                                         placeholder="Enter question content..."
                                         className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-50 outline-none transition-all resize-none font-medium text-gray-800"
                                         rows={2}
-                                        required={idx === 0 || row.description.length > 0}
                                     />
                                 </div>
                                 <div>
@@ -148,7 +147,7 @@ export default function SlotQuestionContentModal({
                                     </label>
                                     <input
                                         type="text"
-                                        value={row.description}
+                                        value={row.description || ''}
                                         onChange={(e) => handleChange(idx, 'description', e.target.value)}
                                         placeholder="Add more details or hints..."
                                         className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-50 outline-none transition-all"

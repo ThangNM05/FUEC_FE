@@ -63,7 +63,7 @@ export interface FileEntityDto {
 export interface CreateAssignmentRequest {
     classSubjectIds: string[];
     slotId?: string;
-    attachedFileId: string;
+    attachedFileId?: string;
     instanceNumber: number;
     description: string;
     dueDate?: string;

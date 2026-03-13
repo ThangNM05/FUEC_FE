@@ -84,22 +84,24 @@ export default function CreateAssignmentModal({
             toast.error('Please enter a description for the assignment.');
             return;
         }
-        if (!selectedFile) {
-            toast.error('Please attach a file for the assignment.');
-            return;
-        }
+
 
         try {
-            // Step 1: Upload the file
-            setUploadProgress('uploading');
-            const fileResult = await uploadFile({ file: selectedFile, folder: 'assignments' }).unwrap();
-            setUploadProgress('done');
+            let attachedFileId = undefined;
+
+            // Step 1: Upload the file if one is selected
+            if (selectedFile) {
+                setUploadProgress('uploading');
+                const fileResult = await uploadFile({ file: selectedFile, folder: 'assignments' }).unwrap();
+                setUploadProgress('done');
+                attachedFileId = fileResult.id;
+            }
 
             // Step 2: Create the assignment
             await createAssignment({
                 classSubjectIds: [classSubjectId],
                 slotId: slotId || undefined,
-                attachedFileId: fileResult.id,
+                attachedFileId,
                 instanceNumber,
                 description: description.trim(),
                 dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
@@ -207,7 +209,7 @@ export default function CreateAssignmentModal({
                 {/* File Attachment */}
                 <div>
                     <label className="block text-sm font-semibold text-[#0A1B3C] mb-1.5">
-                        Attachment <span className="text-red-500">*</span>
+                        Attachment <span className="text-gray-400 font-normal">(optional)</span>
                         <span className="text-gray-400 font-normal ml-1">(Assignment brief / requirements file)</span>
                     </label>
 
@@ -283,7 +285,7 @@ export default function CreateAssignmentModal({
                     </button>
                     <button
                         onClick={handleSubmit}
-                        disabled={isSubmitting || !description.trim() || !selectedFile}
+                        disabled={isSubmitting || !description.trim()}
                         className="flex items-center gap-2 px-5 py-2 bg-[#F37022] text-white rounded-lg text-sm font-semibold hover:bg-[#D96419] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isSubmitting ? (
