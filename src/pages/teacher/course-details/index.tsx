@@ -5,8 +5,9 @@ import {
     ChevronRight, Users, User, FileText, Calendar, ClipboardCheck, Plus,
     ChevronDown, ChevronUp, Clock, Loader2, Pencil, Trash2, Upload, BookOpen, Download
 } from 'lucide-react';
+import { Modal } from 'antd';
 import {
-    useGetClassSubjectByIdQuery, 
+    useGetClassSubjectByIdQuery,
     useGetClassSubjectSlotsQuery,
     useGetStudentClassesQuery
 } from '@/api/classDetailsApi';
@@ -19,11 +20,11 @@ import ExamDetailModal from '@/components/modals/ExamDetailModal';
 import EditExamModal from '@/components/modals/EditExamModal';
 import CreateAssignmentModal from '@/components/modals/CreateAssignmentModal';
 import EditAssignmentModal from '@/components/modals/EditAssignmentModal';
-import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentModal';
 import SlotQuestionList from './SlotQuestionList';
 import type { Exam } from '@/types/exam.types';
 import type { Assignment } from '@/types/assignment.types';
-import { Modal } from 'antd';
+import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
+import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentModal';
 
 type SlotAssignment = Assignment;
 
@@ -58,11 +59,16 @@ function TeacherCourseDetails() {
 
     // Slot Question Create State
     const [isCreateQuestionModalOpen, setIsCreateQuestionModalOpen] = useState(false);
-    const [createQuestionSlotInfo, setCreateQuestionSlotInfo] = useState<{ id: string; title: string } | null>(null);
+    const [createQuestionSlotInfo, setCreateQuestionSlotInfo] = useState<{ id: string; title: string; topics?: string[] } | null>(null);
     const [hasQuestionsMap, setHasQuestionsMap] = useState<Record<string, boolean>>({});
     // API
     const [deleteExam] = useDeleteExamMutation();
     const [createSlotQuestion, { isLoading: isCreatingQuestion }] = useCreateSlotQuestionContentMutation();
+    const [isAssignmentDeleteModalOpen, setIsAssignmentDeleteModalOpen] = useState(false);
+    const [assignmentToDelete, setAssignmentToDelete] = useState<Assignment | null>(null);
+    const [isExamDeleteModalOpen, setIsExamDeleteModalOpen] = useState(false);
+    const [examToDelete, setExamToDelete] = useState<Exam | null>(null);
+
     const [isStudentListModalOpen, setIsStudentListModalOpen] = useState(false);
 
     const handleOpenCreateAssignment = (slotInfo: any) => {
@@ -80,21 +86,21 @@ function TeacherCourseDetails() {
 
     const handleDeleteAssignment = (e: React.MouseEvent, assignment: Assignment) => {
         e.stopPropagation();
-        Modal.confirm({
-            title: 'Delete Assignment',
-            content: `Are you sure you want to delete "${assignment.displayName || `Assignment ${assignment.instanceNumber}`}"?`,
-            okText: 'Delete',
-            okType: 'danger',
-            cancelText: 'Cancel',
-            onOk: async () => {
-                try {
-                    await deleteAssignment(assignment.id).unwrap();
-                    toast.success('Assignment deleted successfully');
-                } catch (error) {
-                    toast.error('Failed to delete assignment');
-                }
-            }
-        });
+        setAssignmentToDelete(assignment);
+        setIsAssignmentDeleteModalOpen(true);
+    };
+
+    const confirmDeleteAssignment = async () => {
+        if (!assignmentToDelete) return;
+        try {
+            await deleteAssignment(assignmentToDelete.id).unwrap();
+            toast.success('Assignment deleted successfully');
+        } catch (error) {
+            toast.error('Failed to delete assignment');
+        } finally {
+            setAssignmentToDelete(null);
+            setIsAssignmentDeleteModalOpen(false);
+        }
     };
 
 
@@ -102,15 +108,41 @@ function TeacherCourseDetails() {
     const [currentPage, setCurrentPage] = useState(1);
     const SLOTS_PER_PAGE = 10;
 
+    const { data: slotData, isLoading: isLoadingSlots } = useGetClassSubjectSlotsQuery(courseId || '', {
+        skip: !courseId,
+    });
+
+    const [slots, setSlots] = useState<Slot[]>([]);
+
+
+    // Auto-scroll to current slot
+    const hasScrolledToCurrentRef = useRef(false);
+    const targetSlotIdRef = useRef<string | null>(null);
+
     // Scroll to top when page changes
     useEffect(() => {
-        const scrollContainer = document.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (hasScrolledToCurrentRef.current) {
+            const scrollContainer = document.querySelector('.overflow-y-auto');
+            if (scrollContainer) {
+                scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
     }, [currentPage, activeTab]);
+
+    // Handle auto-scroll to current slot
+    useEffect(() => {
+        if (!hasScrolledToCurrentRef.current && slots.length > 0 && targetSlotIdRef.current) {
+            const element = document.getElementById(`slot-${targetSlotIdRef.current}`);
+            if (element) {
+                setTimeout(() => {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    hasScrolledToCurrentRef.current = true;
+                }, 500); // Give it a bit of time to render
+            }
+        }
+    }, [slots, currentPage, activeTab]);
 
     const { data: classSubject, isLoading } = useGetClassSubjectByIdQuery(courseId || '', {
         skip: !courseId,
@@ -211,18 +243,34 @@ function TeacherCourseDetails() {
 
     // Removed mock slot status generation since teacher slots do not need time-based color coding
 
-    const { data: slotData, isLoading: isLoadingSlots } = useGetClassSubjectSlotsQuery(courseId || '', {
-        skip: !courseId,
-    });
 
-    const [slots, setSlots] = useState<Slot[]>([]);
 
     useEffect(() => {
         if (slotData && slotData.slots) {
-            // DEBUG: Check what API returns for slotId
-            console.log('[DEBUG] Slot IDs:', slotData.slots.map((s: any) => ({ slotIndex: s.slotIndex, id: s.id })));
-            console.log('[DEBUG] Exams from API:', examsData?.items?.map((e: any) => ({ id: e.id, displayName: e.displayName, slotId: e.slotId })));
-            console.log('[DEBUG] Assignments from API:', assignmentsData?.items?.map((a: any) => ({ id: a.id, instanceNumber: a.instanceNumber, slotId: a.slotId })));
+            const now = new Date();
+            let targetIdx = slotData.slots.findIndex((s: any) => {
+                const start = new Date(s.date);
+                const end = new Date(s.endDate);
+                return now >= start && now <= end;
+            });
+
+            if (targetIdx === -1) {
+                // Find next upcoming slot
+                targetIdx = slotData.slots.findIndex((s: any) => new Date(s.date) > now);
+            }
+
+            // Fallback to first slot if everything is in the past or not found
+            const finalTargetIdx = targetIdx !== -1 ? targetIdx : 0;
+            const targetPage = Math.floor(finalTargetIdx / SLOTS_PER_PAGE) + 1;
+
+            if (!hasScrolledToCurrentRef.current && targetPage !== currentPage) {
+                setCurrentPage(targetPage);
+            }
+
+            const currentTargetSlot = slotData.slots[finalTargetIdx];
+            if (currentTargetSlot) {
+                targetSlotIdRef.current = currentTargetSlot.id;
+            }
 
             setSlots(slotData.slots.map((s: any, i: number) => ({
                 id: s.id,
@@ -255,7 +303,7 @@ function TeacherCourseDetails() {
                     return (examsData?.items || [])
                         .filter((e: any) => e.slotId === s.id);
                 })(),
-                expanded: i === 0,
+                expanded: i === finalTargetIdx,
                 isAssessment: s.sessions?.some((sess: any) =>
                     sess.isAssessment ||
                     /\b(Progress Test|PT|Examination|Final Exam|Exam|Quiz|Test)\b/i.test(sess.topic)
@@ -279,21 +327,21 @@ function TeacherCourseDetails() {
 
     const handleDeleteExam = (e: React.MouseEvent, exam: Exam) => {
         e.stopPropagation();
-        Modal.confirm({
-            title: 'Delete Exam',
-            content: `Are you sure you want to delete "${exam.category}${exam.displayName ? ` - ${exam.displayName}` : ''}"?`,
-            okText: 'Delete',
-            okType: 'danger',
-            cancelText: 'Cancel',
-            onOk: async () => {
-                try {
-                    await deleteExam(exam.id).unwrap();
-                    toast.success('Exam deleted successfully');
-                } catch (error) {
-                    toast.error('Failed to delete exam');
-                }
-            },
-        });
+        setExamToDelete(exam);
+        setIsExamDeleteModalOpen(true);
+    };
+
+    const confirmDeleteExam = async () => {
+        if (!examToDelete) return;
+        try {
+            await deleteExam(examToDelete.id).unwrap();
+            toast.success('Exam deleted successfully');
+        } catch (error) {
+            toast.error('Failed to delete exam');
+        } finally {
+            setExamToDelete(null);
+            setIsExamDeleteModalOpen(false);
+        }
     };
 
     const handleEditExam = (e: React.MouseEvent, exam: Exam) => {
@@ -342,7 +390,7 @@ function TeacherCourseDetails() {
                                 <Calendar className="w-4 h-4" />
                                 {course.schedule}
                             </span> */}
-                            <span 
+                            <span
                                 className="flex items-center gap-1 cursor-pointer hover:text-[#F37022] hover:underline"
                                 onClick={() => setIsStudentListModalOpen(true)}
                             >
@@ -394,7 +442,7 @@ function TeacherCourseDetails() {
                                 {slots
                                     .slice((currentPage - 1) * SLOTS_PER_PAGE, currentPage * SLOTS_PER_PAGE)
                                     .map(slot => (
-                                        <div key={slot.id} className="border border-gray-200 rounded-lg bg-white">
+                                        <div key={slot.id} id={`slot-${slot.id}`} className="border border-gray-200 rounded-lg bg-white">
                                             {/* Slot Header */}
                                             <div className={`p-4 bg-gray-50 border-b border-gray-100 ${slot.expanded ? 'rounded-t-lg' : 'rounded-lg'}`}>
                                                 <div className="flex items-center justify-between mb-3">
@@ -470,7 +518,7 @@ function TeacherCourseDetails() {
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
                                                                                     setOpenDropdownId(null);
-                                                                                    setCreateQuestionSlotInfo({ id: slot.id, title: slot.title });
+                                                                                    setCreateQuestionSlotInfo({ id: slot.id, title: slot.title, topics: slot.topics });
                                                                                     setIsCreateQuestionModalOpen(true);
                                                                                 }}
                                                                                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
@@ -520,9 +568,10 @@ function TeacherCourseDetails() {
                                                         ) : (
                                                             <>
                                                                 {/* QUESTION Section (API loaded from SlotQuestionList component) */}
-                                                                <SlotQuestionList 
-                                                                    slotId={slot.id} 
-                                                                    slotTitle={slot.title} 
+                                                                <SlotQuestionList
+                                                                    slotId={slot.id}
+                                                                    slotTitle={slot.title}
+                                                                    topics={slot.topics}
                                                                     onLoad={(has) => setHasQuestionsMap(prev => prev[slot.id] === has ? prev : { ...prev, [slot.id]: has })}
                                                                 />
 
@@ -1000,7 +1049,7 @@ function TeacherCourseDetails() {
                     <div className="mt-4">
                         {/* Dummy preview component since filePreview isn't imported, but matches prior behavior */}
                         <div className="w-full h-[600px] bg-gray-50 border rounded-lg flex items-center justify-center text-gray-500">
-                           <FileText className="w-8 h-8 mr-2" /> <a href={previewFile.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">View File: {previewFile.url}</a>
+                            <FileText className="w-8 h-8 mr-2" /> <a href={previewFile.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">View File: {previewFile.url}</a>
                         </div>
                     </div>
                 )}
@@ -1056,6 +1105,7 @@ function TeacherCourseDetails() {
                 }}
                 isSaving={isCreatingQuestion}
                 slotTitle={createQuestionSlotInfo?.title}
+                topics={createQuestionSlotInfo?.topics}
                 onSave={async (questions) => {
                     if (createQuestionSlotInfo) {
                         try {
@@ -1103,8 +1153,8 @@ function TeacherCourseDetails() {
                     ) : studentsData?.items && studentsData.items.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {studentsData.items.map((student: any) => (
-                                <div 
-                                    key={student.id} 
+                                <div
+                                    key={student.id}
                                     className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-orange-200 hover:bg-orange-50/50 transition-colors group"
                                 >
                                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-200 flex items-center justify-center flex-shrink-0">
@@ -1130,6 +1180,24 @@ function TeacherCourseDetails() {
                     )}
                 </div>
             </Modal>
+            {/* Delete Confirmation Modals */}
+            <ConfirmDeleteModal
+                isOpen={isExamDeleteModalOpen}
+                onClose={() => setIsExamDeleteModalOpen(false)}
+                onConfirm={confirmDeleteExam}
+                title="Delete Progress Test?"
+                message={`Are you sure you want to delete "${examToDelete?.displayName || (examToDelete?.category ? `${examToDelete.category} ${examToDelete.instanceNumber}` : 'this progress test')}"?`}
+                confirmButtonLabel="Delete"
+            />
+
+            <ConfirmDeleteModal
+                isOpen={isAssignmentDeleteModalOpen}
+                onClose={() => setIsAssignmentDeleteModalOpen(false)}
+                onConfirm={confirmDeleteAssignment}
+                title="Delete Assignment?"
+                message={`Are you sure you want to delete "${assignmentToDelete?.displayName || `Assignment ${assignmentToDelete?.instanceNumber}`}"?`}
+                confirmButtonLabel="Delete"
+            />
         </div>
     );
 }

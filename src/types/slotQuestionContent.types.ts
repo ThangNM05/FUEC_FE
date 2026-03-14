@@ -19,3 +19,14 @@ export interface UpdateSlotQuestionContentRequest {
     description?: string;
     displayOrder?: number;
 }
+
+export interface GenerateAISlotQuestionsRequest {
+    topics: string;
+    count: number;
+}
+
+export interface AIQuestionResult {
+    content: string;
+    description: string;
+}
+

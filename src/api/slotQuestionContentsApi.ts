@@ -1,8 +1,10 @@
 import { baseApi } from '@/api/baseApi';
-import type { 
-    SlotQuestionContentDto, 
-    CreateSlotQuestionContentRequest, 
-    UpdateSlotQuestionContentRequest 
+import type {
+    SlotQuestionContentDto,
+    CreateSlotQuestionContentRequest,
+    UpdateSlotQuestionContentRequest,
+    GenerateAISlotQuestionsRequest,
+    AIQuestionResult
 } from '@/types/slotQuestionContent.types';
 
 export const slotQuestionContentsApi = baseApi.injectEndpoints({
@@ -42,6 +44,16 @@ export const slotQuestionContentsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: [{ type: 'SlotQuestionContents', id: 'LIST' }],
         }),
+
+        // Generate AI questions
+        generateAISlotQuestions: builder.mutation<AIQuestionResult[], GenerateAISlotQuestionsRequest>({
+            query: (body) => ({
+                url: '/slot-question-contents/generate-ai',
+                method: 'POST',
+                body,
+            }),
+            transformResponse: (response: any) => response?.result || [],
+        }),
     }),
 });
 
@@ -50,4 +62,5 @@ export const {
     useCreateSlotQuestionContentMutation,
     useUpdateSlotQuestionContentMutation,
     useDeleteSlotQuestionContentMutation,
+    useGenerateAISlotQuestionsMutation,
 } = slotQuestionContentsApi;

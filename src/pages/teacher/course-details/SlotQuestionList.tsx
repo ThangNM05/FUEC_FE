@@ -1,24 +1,26 @@
 import { useState, useEffect } from 'react';
 import { FileText, Loader2, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Modal } from 'antd';
-import { 
-    useGetSlotQuestionContentsBySlotIdQuery, 
+import {
+    useGetSlotQuestionContentsBySlotIdQuery,
     useCreateSlotQuestionContentMutation,
     useUpdateSlotQuestionContentMutation,
     useDeleteSlotQuestionContentMutation
 } from '@/api/slotQuestionContentsApi';
 import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentModal';
+import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 import type { SlotQuestionContentData } from '@/components/modals/SlotQuestionContentModal';
 
-export default function SlotQuestionList({ 
-    slotId, 
-    slotTitle, 
-    onLoad 
-}: { 
-    slotId: string, 
+export default function SlotQuestionList({
+    slotId,
+    slotTitle,
+    onLoad,
+    topics = []
+}: {
+    slotId: string,
     slotTitle: string,
-    onLoad?: (hasQuestions: boolean) => void 
+    onLoad?: (hasQuestions: boolean) => void,
+    topics?: string[]
 }) {
     const { data: questions, isLoading } = useGetSlotQuestionContentsBySlotIdQuery(slotId);
     const [createQuestion, { isLoading: isCreating }] = useCreateSlotQuestionContentMutation();
@@ -27,6 +29,8 @@ export default function SlotQuestionList({
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState<SlotQuestionContentData | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [idToDelete, setIdToDelete] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isLoading) {
@@ -34,22 +38,22 @@ export default function SlotQuestionList({
         }
     }, [questions, isLoading, onLoad]);
 
-    const handleDelete = (id: string, content: string) => {
-        Modal.confirm({
-            title: 'Delete Question',
-            content: `Are you sure you want to delete this question?`,
-            okText: 'Delete',
-            okType: 'danger',
-            cancelText: 'Cancel',
-            onOk: async () => {
-                try {
-                    await deleteQuestion(id).unwrap();
-                    toast.success('Question deleted successfully');
-                } catch (error) {
-                    toast.error('Failed to delete question');
-                }
-            },
-        });
+    const handleDelete = (id: string) => {
+        setIdToDelete(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!idToDelete) return;
+        try {
+            await deleteQuestion(idToDelete).unwrap();
+            toast.success('Question deleted successfully');
+        } catch (error) {
+            toast.error('Failed to delete question');
+        } finally {
+            setIdToDelete(null);
+            setIsDeleteModalOpen(false);
+        }
     };
 
     if (isLoading) {
@@ -103,7 +107,7 @@ export default function SlotQuestionList({
                                     <Pencil className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={() => handleDelete(question.id, question.content)}
+                                    onClick={() => handleDelete(question.id)}
                                     className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                     title="Delete Question"
                                 >
@@ -124,6 +128,7 @@ export default function SlotQuestionList({
                 isSaving={isUpdating}
                 slotTitle={slotTitle}
                 editData={editingQuestion}
+                topics={topics}
                 onSave={async (dataList) => {
                     const data = dataList[0];
                     if (data && data.id) {
@@ -140,6 +145,14 @@ export default function SlotQuestionList({
                         }
                     }
                 }}
+            />
+            <ConfirmDeleteModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Delete Question?"
+                message="This action cannot be undone. This will permanently delete this question."
+                confirmButtonLabel="Delete"
             />
         </div>
     );
