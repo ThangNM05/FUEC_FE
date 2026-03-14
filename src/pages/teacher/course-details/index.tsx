@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import {
     ChevronRight, Users, User, FileText, Calendar, ClipboardCheck, Plus,
-    ChevronDown, ChevronUp, Clock, Loader2, Pencil, Trash2, Upload, BookOpen, Download
+    ChevronDown, ChevronUp, Clock, Loader2, Pencil, Trash2, Upload, BookOpen, Download, Eye
 } from 'lucide-react';
 import { Modal } from 'antd';
 import {
@@ -1002,18 +1002,31 @@ function TeacherCourseDetails() {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 flex-shrink-0 ml-14 sm:ml-0">
+                                                <div className="flex items-center gap-1 flex-shrink-0 ml-14 sm:ml-0">
                                                     {material.fileUrl && (
-                                                        <a
-                                                            href={material.fileUrl}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                            title="Download"
-                                                            onClick={(e) => e.stopPropagation()}
-                                                        >
-                                                            <Download className="w-4 h-4" />
-                                                        </a>
+                                                        <>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setPreviewFile({ url: material.fileUrl!, name: material.fileName || 'Material' });
+                                                                    setIsPreviewModalOpen(true);
+                                                                }}
+                                                                className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-1.5"
+                                                                title="Preview"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                                Preview
+                                                            </button>
+                                                            <a
+                                                                href={material.fileUrl}
+                                                                download
+                                                                className="px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center gap-1.5"
+                                                                title="Download"
+                                                                onClick={(e) => e.stopPropagation()}
+                                                            >
+                                                                <Download className="w-4 h-4" />
+                                                                Download
+                                                            </a>
+                                                        </>
                                                     )}
                                                     <button
                                                         onClick={() => handleDeleteMaterial(material.id, material.fileName)}
