@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Modal } from 'antd';
-import { FileText, Plus, Trash2, Loader2, AlertCircle, HelpCircle } from 'lucide-react';
+import { Modal, Tooltip } from 'antd';
+import { FileText, Plus, Trash2, Loader2, AlertCircle, HelpCircle, Sparkles } from 'lucide-react';
+import { useGenerateAISlotQuestionsMutation } from '@/api/slotQuestionContentsApi';
+import { toast } from 'sonner';
 
 export interface SlotQuestionContentData {
     id?: string;
@@ -15,6 +17,7 @@ interface SlotQuestionContentModalProps {
     isSaving: boolean;
     slotTitle?: string;
     editData?: SlotQuestionContentData | null;
+    topics?: string[];
 }
 
 export default function SlotQuestionContentModal({
@@ -23,8 +26,10 @@ export default function SlotQuestionContentModal({
     onSave,
     isSaving,
     slotTitle,
-    editData
+    editData,
+    topics = []
 }: SlotQuestionContentModalProps) {
+    const [generateAI, { isLoading: isGenerating }] = useGenerateAISlotQuestionsMutation();
     const [rows, setRows] = useState<SlotQuestionContentData[]>([
         { content: '', description: '' },
         { content: '', description: '' },
@@ -63,9 +68,37 @@ export default function SlotQuestionContentModal({
         }
     };
 
+    const handleGenerateAI = async () => {
+        if (topics.length === 0) {
+            toast.error('No topics available for AI generation');
+            return;
+        }
+
+        try {
+            const result = await generateAI({
+                topics: topics.join(', '),
+                count: 3
+            }).unwrap();
+
+            if (result && result.length > 0) {
+                // Filter out empty rows and add AI rows
+                const existingContent = rows.filter(r => r.content.trim() !== '');
+                const aiRows = result.map(q => ({
+                    content: q.content,
+                    description: q.description
+                }));
+
+                setRows([...existingContent, ...aiRows]);
+                toast.success(`Generated ${result.length} questions successfully`);
+            }
+        } catch (error) {
+            toast.error('Failed to generate questions with AI');
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validation: at least one row must have content
         const validRows = rows.filter(r => r.content.trim());
         if (validRows.length === 0) {
@@ -104,10 +137,32 @@ export default function SlotQuestionContentModal({
             <form onSubmit={handleSubmit} className="py-2">
                 <div className={`space-y-6 ${!isEditMode ? 'max-h-[60vh] overflow-y-auto pr-3 custom-scrollbar' : ''} mb-6`}>
                     {!isEditMode && (
-                        <p className="text-sm text-gray-500 mb-4 bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-start gap-2">
-                            <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                            <span>You can create multiple questions at once. Only rows with content will be saved.</span>
-                        </p>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                            <div className="flex items-start gap-2">
+                                <AlertCircle className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                                <span className="text-sm text-blue-800 font-medium">You can create multiple questions at once. Only rows with content will be saved.</span>
+                            </div>
+                            <Tooltip title={topics.length === 0 ? "No topics available in this slot" : "Generate 3 questions based on slot topics"}>
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateAI}
+                                    disabled={isGenerating || topics.length === 0}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg text-sm font-bold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md shadow-purple-100 disabled:opacity-50 shrink-0"
+                                >
+                                    {isGenerating ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Generating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-4 h-4" />
+                                            AI Suggest
+                                        </>
+                                    )}
+                                </button>
+                            </Tooltip>
+                        </div>
                     )}
 
                     {rows.map((row, idx) => (
