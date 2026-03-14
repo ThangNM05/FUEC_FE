@@ -1,53 +1,40 @@
-import { useState, useRef } from 'react';
-import { Modal, DatePicker } from 'antd';
-import dayjs from 'dayjs';
-import { Upload, X, FileText, Calendar, ClipboardList, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Modal } from 'antd';
+import { Upload, X, FileText, ClipboardList, AlertCircle, CheckCircle, Loader2, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUploadFileMutation } from '@/api/filesApi';
-import { useCreateAssignmentMutation } from '@/api/assignmentsApi';
+import { useUpdateAssignmentMutation } from '@/api/assignmentsApi';
+import type { Assignment } from '@/types/assignment.types';
 
-interface CreateAssignmentModalProps {
+interface EditAssignmentModalProps {
     isOpen: boolean;
     onClose: () => void;
-    classSubjectId: string;
-    slotId?: string;
-    slotTitle?: string;
-    existingCount?: number;
+    assignment: Assignment | null;
 }
 
-export default function CreateAssignmentModal({
-    isOpen,
-    onClose,
-    classSubjectId,
-    slotId,
-    slotTitle,
-    existingCount = 0,
-}: CreateAssignmentModalProps) {
+export default function EditAssignmentModal({ isOpen, onClose, assignment }: EditAssignmentModalProps) {
     const [description, setDescription] = useState('');
-    const [dueDate, setDueDate] = useState('');
-    const [instanceNumber, setInstanceNumber] = useState(existingCount + 1);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation();
-    const [createAssignment, { isLoading: isCreating }] = useCreateAssignmentMutation();
+    const [updateAssignment, { isLoading: isUpdating }] = useUpdateAssignmentMutation();
 
-    const isSubmitting = isUploading || isCreating;
+    const isSubmitting = isUploading || isUpdating;
+
+    useEffect(() => {
+        if (assignment && isOpen) {
+            setDescription(assignment.description || '');
+            setSelectedFile(null);
+            setUploadProgress('idle');
+        }
+    }, [assignment, isOpen]);
 
     const handleClose = () => {
         if (isSubmitting) return;
-        resetForm();
         onClose();
-    };
-
-    const resetForm = () => {
-        setDescription('');
-        setDueDate('');
-        setInstanceNumber(existingCount + 1);
-        setSelectedFile(null);
-        setUploadProgress('idle');
     };
 
     const handleFileSelect = (file: File) => {
@@ -81,16 +68,15 @@ export default function CreateAssignmentModal({
     };
 
     const handleSubmit = async () => {
+        if (!assignment) return;
         if (!description.trim()) {
-            toast.error('Please enter a description for the assignment.');
+            toast.error('Please enter a description.');
             return;
         }
 
-
         try {
-            let attachedFileId = undefined;
+            let attachedFileId: string | undefined;
 
-            // Step 1: Upload the file if one is selected
             if (selectedFile) {
                 setUploadProgress('uploading');
                 const fileResult = await uploadFile({ file: selectedFile, folder: 'assignments' }).unwrap();
@@ -98,22 +84,17 @@ export default function CreateAssignmentModal({
                 attachedFileId = fileResult.id;
             }
 
-            // Step 2: Create the assignment
-            await createAssignment({
-                classSubjectIds: [classSubjectId],
-                slotId: slotId || undefined,
-                attachedFileId,
-                instanceNumber,
+            await updateAssignment({
+                id: assignment.id,
                 description: description.trim(),
-                dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+                ...(attachedFileId && { attachedFileId }),
             }).unwrap();
 
-            toast.success(`Assignment ${instanceNumber} created successfully!`);
-            resetForm();
+            toast.success(`${assignment.displayName || `ASM${assignment.instanceNumber}`} updated successfully!`);
             onClose();
         } catch (error: any) {
             setUploadProgress('error');
-            const message = error?.data?.message || error?.message || 'Failed to create assignment.';
+            const message = error?.data?.message || error?.message || 'Failed to update assignment.';
             toast.error(message);
         }
     };
@@ -131,14 +112,15 @@ export default function CreateAssignmentModal({
         }
     };
 
+    if (!assignment) return null;
+
     return (
         <Modal
             title={
                 <div className="flex items-center gap-2">
-                    <ClipboardList className="w-5 h-5 text-[#F37022]" />
+                    <Pencil className="w-5 h-5 text-[#F37022]" />
                     <span className="font-bold text-[#0A1B3C]">
-                        Create Assignment
-                        {slotTitle ? ` — ${slotTitle}` : ''}
+                        Edit {assignment.displayName || `ASM${assignment.instanceNumber}`}
                     </span>
                 </div>
             }
@@ -151,27 +133,6 @@ export default function CreateAssignmentModal({
             maskClosable={!isSubmitting}
         >
             <div className="py-4 space-y-5">
-                {/* Instance Number */}
-                <div>
-                    <label className="block text-sm font-semibold text-[#0A1B3C] mb-1.5">
-                        Assignment Number
-                    </label>
-                    <div className="flex items-center gap-3">
-                        <input
-                            type="number"
-                            min={1}
-                            max={99}
-                            value={instanceNumber}
-                            onChange={(e) => setInstanceNumber(Number(e.target.value))}
-                            className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:border-[#F37022] focus:ring-2 focus:ring-orange-100 outline-none"
-                            disabled={isSubmitting}
-                        />
-                        <span className="text-sm text-gray-500">
-                            This will be labelled <span className="font-semibold text-[#0A1B3C]">ASM{instanceNumber}</span>
-                        </span>
-                    </div>
-                </div>
-
                 {/* Description */}
                 <div>
                     <label className="block text-sm font-semibold text-[#0A1B3C] mb-1.5">
@@ -188,30 +149,19 @@ export default function CreateAssignmentModal({
                     <p className="text-xs text-gray-400 mt-1 text-right">{description.length}/4000</p>
                 </div>
 
-                {/* Due Date */}
+                {/* File Attachment (replace existing) */}
                 <div>
                     <label className="block text-sm font-semibold text-[#0A1B3C] mb-1.5">
-                        <Calendar className="w-4 h-4 inline mr-1 text-gray-500" />
-                        Due Date <span className="text-gray-400 font-normal">(optional)</span>
+                        Replace Attachment <span className="text-gray-400 font-normal">(optional)</span>
                     </label>
-                    <DatePicker
-                        showTime
-                        format="YYYY-MM-DD HH:mm"
-                        className="w-full h-[42px] border-gray-300 rounded-lg hover:border-[#F37022] focus:border-[#F37022]"
-                        value={dueDate ? dayjs(dueDate) : null}
-                        onChange={(date) => setDueDate(date ? date.toISOString() : '')}
-                        placeholder="Select due date & time"
-                        disabled={isSubmitting}
-                        disabledDate={(current) => current && current < dayjs().startOf('day')}
-                    />
-                </div>
 
-                {/* File Attachment */}
-                <div>
-                    <label className="block text-sm font-semibold text-[#0A1B3C] mb-1.5">
-                        Attachment <span className="text-gray-400 font-normal">(optional)</span>
-                        <span className="text-gray-400 font-normal ml-1">(Assignment brief / requirements file)</span>
-                    </label>
+                    {assignment.fileName && !selectedFile && (
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg mb-3">
+                            <FileText className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                            <span className="text-sm text-gray-600 truncate">{assignment.fileName}</span>
+                            <span className="text-xs text-gray-400 ml-auto">Current file</span>
+                        </div>
+                    )}
 
                     {selectedFile ? (
                         <div className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
@@ -260,7 +210,7 @@ export default function CreateAssignmentModal({
                             <p className="text-sm font-medium text-gray-700">
                                 {isDragging ? 'Drop file here' : 'Click to browse or drag & drop'}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">PDF, DOCX, ZIP, etc. — max 50MB</p>
+                            <p className="text-xs text-gray-400 mt-1">Upload a new file to replace the current one</p>
                         </div>
                     )}
 
@@ -291,12 +241,12 @@ export default function CreateAssignmentModal({
                         {isSubmitting ? (
                             <>
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                {isUploading ? 'Uploading...' : 'Creating...'}
+                                {isUploading ? 'Uploading...' : 'Saving...'}
                             </>
                         ) : (
                             <>
                                 <ClipboardList className="w-4 h-4" />
-                                Create Assignment
+                                Save Changes
                             </>
                         )}
                     </button>

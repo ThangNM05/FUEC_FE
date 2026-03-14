@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import {
     ChevronRight, Users, User, FileText, Calendar, ClipboardCheck, Plus,
-    ChevronDown, ChevronUp, Clock, Loader2, Pencil, Trash2
+    ChevronDown, ChevronUp, Clock, Loader2, Pencil, Trash2, Upload, BookOpen, Download
 } from 'lucide-react';
 import {
     useGetClassSubjectByIdQuery, 
@@ -12,10 +12,13 @@ import {
 } from '@/api/classDetailsApi';
 import { useGetExamsByClassSubjectIdQuery, useDeleteExamMutation } from '@/api/examsApi';
 import { useGetAssignmentsByClassSubjectIdQuery, useDeleteAssignmentMutation } from '@/api/assignmentsApi';
+import { useGetCourseMaterialsByClassSubjectIdQuery, useCreateCourseMaterialMutation, useDeleteCourseMaterialMutation } from '@/api/courseMaterialsApi';
+import { useUploadFileMutation } from '@/api/filesApi';
 import { useCreateSlotQuestionContentMutation } from '@/api/slotQuestionContentsApi';
 import ExamDetailModal from '@/components/modals/ExamDetailModal';
 import EditExamModal from '@/components/modals/EditExamModal';
 import CreateAssignmentModal from '@/components/modals/CreateAssignmentModal';
+import EditAssignmentModal from '@/components/modals/EditAssignmentModal';
 import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentModal';
 import SlotQuestionList from './SlotQuestionList';
 import type { Exam } from '@/types/exam.types';
@@ -50,6 +53,8 @@ function TeacherCourseDetails() {
     const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null);
     const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false);
     const [createAssignmentSlotInfo, setCreateAssignmentSlotInfo] = useState<{ id: string; title: string; slotIndex: number } | null>(null);
+    const [isEditAssignmentModalOpen, setIsEditAssignmentModalOpen] = useState(false);
+    const [assignmentToEdit, setAssignmentToEdit] = useState<Assignment | null>(null);
 
     // Slot Question Create State
     const [isCreateQuestionModalOpen, setIsCreateQuestionModalOpen] = useState(false);
@@ -63,6 +68,12 @@ function TeacherCourseDetails() {
     const handleOpenCreateAssignment = (slotInfo: any) => {
         setCreateAssignmentSlotInfo(slotInfo);
         setIsCreateAssignmentModalOpen(true);
+    };
+
+    const handleEditAssignment = (e: React.MouseEvent, assignment: Assignment) => {
+        e.stopPropagation();
+        setAssignmentToEdit(assignment);
+        setIsEditAssignmentModalOpen(true);
     };
 
     const [deleteAssignment] = useDeleteAssignmentMutation();
@@ -119,6 +130,52 @@ function TeacherCourseDetails() {
         { skip: !classSubject?.id }
     );
 
+    const { data: materialsData, isLoading: isLoadingMaterials } = useGetCourseMaterialsByClassSubjectIdQuery(
+        classSubject?.id || '',
+        { skip: !classSubject?.id }
+    );
+    const [createCourseMaterial] = useCreateCourseMaterialMutation();
+    const [deleteCourseMaterial] = useDeleteCourseMaterialMutation();
+    const [uploadFile] = useUploadFileMutation();
+    const [materialUploading, setMaterialUploading] = useState(false);
+    const materialFileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleUploadMaterial = async (file: File) => {
+        if (!classSubject?.id) return;
+        setMaterialUploading(true);
+        try {
+            const fileResult = await uploadFile({ file, folder: 'course-materials' }).unwrap();
+            await createCourseMaterial({
+                classSubjectId: classSubject.id,
+                fileId: fileResult.id,
+            }).unwrap();
+            toast.success(`"${file.name}" uploaded successfully!`);
+        } catch (error: any) {
+            const message = error?.data?.message || error?.message || 'Failed to upload material.';
+            toast.error(message);
+        } finally {
+            setMaterialUploading(false);
+        }
+    };
+
+    const handleDeleteMaterial = (materialId: string, fileName?: string) => {
+        Modal.confirm({
+            title: 'Delete Material',
+            content: `Are you sure you want to delete "${fileName || 'this material'}"?`,
+            okText: 'Delete',
+            okType: 'danger',
+            cancelText: 'Cancel',
+            onOk: async () => {
+                try {
+                    await deleteCourseMaterial(materialId).unwrap();
+                    toast.success('Material deleted successfully');
+                } catch {
+                    toast.error('Failed to delete material');
+                }
+            },
+        });
+    };
+
     const exams = useMemo(() => {
         if (!examsData?.items) return [];
         return [...examsData.items].sort((a, b) =>
@@ -162,6 +219,11 @@ function TeacherCourseDetails() {
 
     useEffect(() => {
         if (slotData && slotData.slots) {
+            // DEBUG: Check what API returns for slotId
+            console.log('[DEBUG] Slot IDs:', slotData.slots.map((s: any) => ({ slotIndex: s.slotIndex, id: s.id })));
+            console.log('[DEBUG] Exams from API:', examsData?.items?.map((e: any) => ({ id: e.id, displayName: e.displayName, slotId: e.slotId })));
+            console.log('[DEBUG] Assignments from API:', assignmentsData?.items?.map((a: any) => ({ id: a.id, instanceNumber: a.instanceNumber, slotId: a.slotId })));
+
             setSlots(slotData.slots.map((s: any, i: number) => ({
                 id: s.id,
                 title: `Slot ${s.slotIndex}`,
@@ -201,7 +263,7 @@ function TeacherCourseDetails() {
                 slotIndex: s.slotIndex
             })));
         }
-    }, [slotData, assignmentsData]);
+    }, [slotData, assignmentsData, examsData]);
 
     const formatStudentCode = (code?: string) => {
         if (!code) return '';
@@ -241,7 +303,12 @@ function TeacherCourseDetails() {
     };
 
     if (isLoading || isLoadingSlots) {
-        return <div className="p-6 text-center animate-pulse">Loading course data...</div>;
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                <Loader2 className="w-10 h-10 text-[#F37022] animate-spin" />
+                <p className="text-gray-500 font-medium">Loading course data...</p>
+            </div>
+        );
     }
 
     return (
@@ -295,6 +362,7 @@ function TeacherCourseDetails() {
                             { id: 'slots', label: 'Slots', icon: Calendar },
                             { id: 'assignments', label: 'Assignments', icon: FileText },
                             { id: 'tests', label: 'Progress Tests', icon: ClipboardCheck },
+                            { id: 'materials', label: 'Learning Materials', icon: BookOpen },
                         ].map((tab) => (
                             <button
                                 key={tab.id}
@@ -468,7 +536,7 @@ function TeacherCourseDetails() {
                                                                             {slot.progressTests.map(exam => (
                                                                                 <div
                                                                                     key={exam.id}
-                                                                                    className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors cursor-pointer"
+                                                                                    className="flex flex-col sm:flex-row sm:items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors cursor-pointer gap-2"
                                                                                     onClick={() => {
                                                                                         setSelectedExam(exam);
                                                                                         setIsExamDetailModalOpen(true);
@@ -484,21 +552,33 @@ function TeacherCourseDetails() {
                                                                                             </p>
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
-                                                                                        <button
-                                                                                            onClick={(e) => handleEditExam(e, exam)}
-                                                                                            className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                                                            title="Edit Exam"
-                                                                                        >
-                                                                                            <Pencil className="w-4 h-4" />
-                                                                                        </button>
-                                                                                        <button
-                                                                                            onClick={(e) => handleDeleteExam(e, exam)}
-                                                                                            className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                                                            title="Delete Exam"
-                                                                                        >
-                                                                                            <Trash2 className="w-4 h-4" />
-                                                                                        </button>
+                                                                                    <div className="flex items-center gap-2 flex-shrink-0 ml-11 sm:ml-2">
+                                                                                        <span className="text-xs font-semibold text-orange-600 whitespace-nowrap">
+                                                                                            0/{course.enrolledStudents} participated
+                                                                                        </span>
+                                                                                        <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                                                            <button
+                                                                                                onClick={(e) => { e.stopPropagation(); navigate(`/teacher/exam/${exam.id}/participants`); }}
+                                                                                                className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                                                                title="Participants"
+                                                                                            >
+                                                                                                <Users className="w-4 h-4" />
+                                                                                            </button>
+                                                                                            <button
+                                                                                                onClick={(e) => handleEditExam(e, exam)}
+                                                                                                className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                                                title="Edit Exam"
+                                                                                            >
+                                                                                                <Pencil className="w-4 h-4" />
+                                                                                            </button>
+                                                                                            <button
+                                                                                                onClick={(e) => handleDeleteExam(e, exam)}
+                                                                                                className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                                                title="Delete Exam"
+                                                                                            >
+                                                                                                <Trash2 className="w-4 h-4" />
+                                                                                            </button>
+                                                                                        </div>
                                                                                     </div>
                                                                                 </div>
                                                                             ))}
@@ -514,7 +594,7 @@ function TeacherCourseDetails() {
                                                                         </h4>
                                                                         <div className="space-y-1">
                                                                             {slot.assignments.map((assignment: Assignment) => (
-                                                                                <div key={assignment.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors">
+                                                                                <div key={assignment.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-2 hover:bg-gray-50 rounded-lg group transition-colors gap-2">
                                                                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                                                                         <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                                                                             <FileText className="w-4 h-4 text-pink-600" />
@@ -528,7 +608,7 @@ function TeacherCourseDetails() {
                                                                                             )}
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div className="flex items-center gap-4 flex-shrink-0 ml-2">
+                                                                                    <div className="flex flex-wrap items-center gap-2 flex-shrink-0 ml-11 sm:ml-2">
                                                                                         {assignment.fileUrl && (
                                                                                             <button
                                                                                                 onClick={() => {
@@ -540,8 +620,16 @@ function TeacherCourseDetails() {
                                                                                                 Preview
                                                                                             </button>
                                                                                         )}
-                                                                                        <span className="text-xs font-bold text-gray-500">N/A</span>
-                                                                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                                        <span className="text-xs text-gray-500 flex items-center gap-1 whitespace-nowrap">
+                                                                                            <Clock className="w-3 h-3" />
+                                                                                            {assignment.dueDate
+                                                                                                ? new Date(assignment.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                                                                                : 'No due date'}
+                                                                                        </span>
+                                                                                        <span className="text-xs font-semibold text-orange-600 whitespace-nowrap">
+                                                                                            0/{course.enrolledStudents} submitted
+                                                                                        </span>
+                                                                                        <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                                                             <button
                                                                                                 onClick={() => navigate(`/teacher/assignment/${assignment.id}/submissions`)}
                                                                                                 className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
@@ -550,8 +638,16 @@ function TeacherCourseDetails() {
                                                                                                 <Users className="w-4 h-4" />
                                                                                             </button>
                                                                                             <button
+                                                                                                onClick={(e) => handleEditAssignment(e, assignment)}
+                                                                                                className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                                                title="Edit Assignment"
+                                                                                            >
+                                                                                                <Pencil className="w-4 h-4" />
+                                                                                            </button>
+                                                                                            <button
                                                                                                 onClick={(e) => handleDeleteAssignment(e, assignment)}
                                                                                                 className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                                                title="Delete Assignment"
                                                                                             >
                                                                                                 <Trash2 className="w-4 h-4" />
                                                                                             </button>
@@ -670,7 +766,7 @@ function TeacherCourseDetails() {
                                                     View Submissions
                                                 </button>
                                                 <button
-                                                    onClick={() => toast.info('Edit functionality coming soon')}
+                                                    onClick={(e) => handleEditAssignment(e, assignment)}
                                                     className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-semibold shadow-sm"
                                                 >
                                                     Edit
@@ -775,6 +871,116 @@ function TeacherCourseDetails() {
                             )}
                         </div>
                     )}
+
+                    {activeTab === 'materials' && (
+                        <div className="animate-fadeIn">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-bold text-[#0A1B3C]">Learning Materials</h2>
+                                <div>
+                                    <input
+                                        ref={materialFileInputRef}
+                                        type="file"
+                                        className="hidden"
+                                        accept=".pdf,.doc,.docx,.pptx,.xlsx,.xls,.zip,.rar,.txt,.png,.jpg,.jpeg"
+                                        multiple
+                                        onChange={async (e) => {
+                                            const files = e.target.files;
+                                            if (!files) return;
+                                            for (const file of Array.from(files)) {
+                                                await handleUploadMaterial(file);
+                                            }
+                                            if (materialFileInputRef.current) materialFileInputRef.current.value = '';
+                                        }}
+                                    />
+                                    <button
+                                        onClick={() => materialFileInputRef.current?.click()}
+                                        disabled={materialUploading}
+                                        className="px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#d95f19] transition-colors font-medium flex items-center gap-2 shadow-sm disabled:opacity-50"
+                                    >
+                                        {materialUploading ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</>
+                                        ) : (
+                                            <><Upload className="w-4 h-4" /> Upload Material</>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {isLoadingMaterials ? (
+                                <div className="text-center py-12 text-gray-500">
+                                    <Loader2 className="w-8 h-8 text-[#F37022] animate-spin mx-auto mb-4" />
+                                    Loading materials...
+                                </div>
+                            ) : !materialsData?.items?.length ? (
+                                <div className="text-center py-12 text-gray-500 border border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+                                    <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                                    <p className="font-medium text-lg text-gray-500">No learning materials uploaded</p>
+                                    <p className="text-sm text-gray-400 mt-1">Upload files to share with your students</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {materialsData.items.map(material => {
+                                        const ext = material.fileName?.split('.').pop()?.toLowerCase() || '';
+                                        const isImage = ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext);
+                                        const isPdf = ext === 'pdf';
+                                        const isDoc = ['doc', 'docx'].includes(ext);
+                                        const isPpt = ['ppt', 'pptx'].includes(ext);
+
+                                        const getFileColor = () => {
+                                            if (isPdf) return 'bg-red-100 text-red-600';
+                                            if (isDoc) return 'bg-blue-100 text-blue-600';
+                                            if (isPpt) return 'bg-orange-100 text-orange-600';
+                                            if (isImage) return 'bg-green-100 text-green-600';
+                                            return 'bg-gray-100 text-gray-600';
+                                        };
+
+                                        return (
+                                            <div
+                                                key={material.id}
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-gray-200 rounded-xl hover:shadow-md transition-shadow bg-white group gap-3"
+                                            >
+                                                <div className="flex items-center gap-4 flex-1 min-w-0">
+                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${getFileColor()}`}>
+                                                        <FileText className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm font-semibold text-[#0A1B3C] truncate">
+                                                            {material.fileName || 'Unnamed file'}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400 mt-0.5">
+                                                            Uploaded {new Date(material.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                            {ext && <span className="ml-2 uppercase font-medium text-gray-500">{ext}</span>}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-shrink-0 ml-14 sm:ml-0">
+                                                    {material.fileUrl && (
+                                                        <a
+                                                            href={material.fileUrl}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Download"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                        </a>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteMaterial(material.id, material.fileName)}
+                                                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -827,8 +1033,18 @@ function TeacherCourseDetails() {
                     setCreateAssignmentSlotInfo(null);
                 }}
                 classSubjectId={classSubject?.id || courseId || ''}
+                slotId={createAssignmentSlotInfo?.id}
                 slotTitle={createAssignmentSlotInfo?.title}
                 existingCount={assignments.length}
+            />
+
+            <EditAssignmentModal
+                isOpen={isEditAssignmentModalOpen}
+                onClose={() => {
+                    setIsEditAssignmentModalOpen(false);
+                    setAssignmentToEdit(null);
+                }}
+                assignment={assignmentToEdit}
             />
 
             {/* Create Question Modal */}
