@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Modal, Descriptions, Spin, Table, Tag } from 'antd';
-import { Calendar, ClipboardCheck, Lock, Globe, Shield, RefreshCw } from 'lucide-react';
+import { Calendar, ClipboardCheck, Lock, Globe, Shield, RefreshCw, Copy, Check } from 'lucide-react';
 import { useGetExamQuestionsQuery } from '@/api/examsApi';
+import { toast } from 'sonner';
 import type { Exam } from '@/types/exam.types';
 
 interface ExamDetailModalProps {
@@ -10,6 +12,7 @@ interface ExamDetailModalProps {
 }
 
 export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailModalProps) {
+    const [copied, setCopied] = useState(false);
     const { data: questionsData, isLoading } = useGetExamQuestionsQuery(
         { examId: exam?.id || '' },
         { skip: !exam?.id || !isOpen }
@@ -108,11 +111,50 @@ export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailMod
                                     <Tag color="volcano">Private</Tag>
                                 )}
                             </Descriptions.Item>
-                            <Descriptions.Item label="Syllabus" span={3}>
+                            <Descriptions.Item label="Syllabus" span={2}>
                                 {exam.syllabusName} ({exam.weight}%)
                             </Descriptions.Item>
+                            {(exam.securityMode === 1 || exam.securityMode === 2) && (
+                                <Descriptions.Item label="Access Code">
+                                    <Tag color="blue" className="font-mono text-sm px-3">
+                                        {exam.accessCode || 'Not Set'}
+                                    </Tag>
+                                </Descriptions.Item>
+                            )}
                         </Descriptions>
                     </div>
+
+                    {/* Access Code Highlight */}
+                    {(exam.securityMode === 1 || exam.securityMode === 2) && (
+                        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-3 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center gap-2 text-blue-800 font-bold uppercase tracking-wider text-sm">
+                                <Lock className="w-4 h-4" />
+                                {exam.securityMode === 2 ? 'Dynamic Secret Key' : 'Static Access Code'}
+                            </div>
+                            <div className="flex items-center gap-4 bg-white px-8 py-4 rounded-xl border-2 border-dashed border-blue-200 group relative">
+                                <span className="text-4xl font-black font-mono tracking-widest text-blue-900">
+                                    {exam.accessCode || 'XXXXXX'}
+                                </span>
+                                <button
+                                    onClick={() => {
+                                        if (exam.accessCode) {
+                                            navigator.clipboard.writeText(exam.accessCode);
+                                            setCopied(true);
+                                            toast.success('Access code copied to clipboard!');
+                                            setTimeout(() => setCopied(false), 2000);
+                                        }
+                                    }}
+                                    className="p-2 hover:bg-blue-50 rounded-lg border border-blue-100 transition-all active:scale-95"
+                                    title="Copy to clipboard"
+                                >
+                                    {copied ? <Check className="w-6 h-6 text-green-500" /> : <Copy className="w-6 h-6 text-blue-600" />}
+                                </button>
+                            </div>
+                            <p className="text-xs text-blue-600 font-medium italic">
+                                * Share this code with students to allow them to enter the exam.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Questions Table */}
                     <div>

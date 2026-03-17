@@ -1,5 +1,5 @@
 import { FileText, ClipboardCheck, BookOpen, Loader2, Play } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useGetSlotQuestionContentsBySlotIdQuery } from '@/api/slotQuestionContentsApi';
 import type { Exam } from '@/types/exam.types';
 import type { ExtendedAssignment } from './index';
@@ -10,10 +10,12 @@ interface StudentSlotContentProps {
     slotAssignments: ExtendedAssignment[];
     /** Progress tests belonging to this slot (pre-filtered by parent) */
     slotExams: Exam[];
+    studentClassesId?: string | null; // Added prop
 }
 
 export default function StudentSlotContent({ slotId, slotAssignments, slotExams }: StudentSlotContentProps) {
     const navigate = useNavigate();
+    const { classSubjectId } = useParams<{ classSubjectId: string }>();
 
     const { data: questions = [], isLoading: isLoadingQuestions } = useGetSlotQuestionContentsBySlotIdQuery(slotId, {
         skip: !slotId,
@@ -93,13 +95,12 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams 
                                 </div>
                                 <button
                                     onClick={() => navigate(`/student/assignment-submission/${assignment.id}`)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                                        assignment.submitted
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${assignment.submitted
                                             ? 'bg-green-100 text-green-700'
                                             : assignment.isOverdue
-                                            ? 'bg-red-100 text-red-700'
-                                            : 'bg-[#F37022] text-white hover:bg-[#D96419]'
-                                    }`}
+                                                ? 'bg-red-100 text-red-700'
+                                                : 'bg-[#F37022] text-white hover:bg-[#D96419]'
+                                        }`}
                                 >
                                     {assignment.submitted ? 'View Submission' : assignment.isOverdue ? 'Overdue' : 'Submit'}
                                 </button>
@@ -128,9 +129,8 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams 
                             return (
                                 <div key={exam.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                                            isAvailable ? 'bg-blue-100' : isEnded ? 'bg-green-100' : 'bg-gray-200'
-                                        }`}>
+                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isAvailable ? 'bg-blue-100' : isEnded ? 'bg-green-100' : 'bg-gray-200'
+                                            }`}>
                                             {isAvailable ? (
                                                 <Play className="w-3.5 h-3.5 text-blue-600" />
                                             ) : (
@@ -146,19 +146,26 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams 
                                             </p>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => navigate(`/student/quiz?examId=${exam.id}`)}
-                                        disabled={!isAvailable}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                                            isAvailable
-                                                ? 'bg-[#F37022] text-white hover:bg-[#D96419]'
-                                                : isEnded
-                                                ? 'bg-green-100 text-green-700 cursor-default'
-                                                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                        }`}
-                                    >
-                                        {isAvailable ? 'Take Test' : isEnded ? 'Ended' : 'Not Started'}
-                                    </button>
+                                    {isAvailable ? (
+                                        <button
+                                            className="px-4 py-2 bg-[#F37022] text-white rounded-lg text-sm font-medium hover:bg-[#D96419] flex items-center gap-2"
+                                            onClick={() => {
+                                                navigate(`/student/exam-lobby/${exam.id}?classSubjectId=${classSubjectId}`);
+                                            }}
+                                        >
+                                            Start Test
+                                        </button>
+                                    ) : (
+                                        <button
+                                            disabled
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${isEnded
+                                                    ? 'bg-green-100 text-green-700 cursor-default'
+                                                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                                }`}
+                                        >
+                                            {isEnded ? 'Ended' : 'Not Started'}
+                                        </button>
+                                    )}
                                 </div>
                             );
                         })}

@@ -65,6 +65,7 @@ export const baseApi = createApi({
     'Files',
     'SlotQuestionContents',
     'CourseMaterials',
+    'StudentExams',
   ],
   endpoints: () => ({}),
 });

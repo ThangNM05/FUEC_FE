@@ -7,6 +7,7 @@ import { useGetClassSubjectSlotsQuery, useGetClassSubjectByIdQuery } from '@/api
 import { useGetAssignmentsByClassSubjectIdQuery } from '@/api/assignmentsApi';
 import { useGetStudentAssignmentsByStudentIdQuery } from '@/api/studentAssignmentsApi';
 import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
+import { useGetStudentClassesQuery } from '@/api/studentsApi';
 import type { Assignment, StudentAssignment } from '@/types/assignment.types';
 import StudentSlotContent from './StudentSlotContent';
 
@@ -83,6 +84,21 @@ function CourseDetails() {
     skip: !classSubjectId
   });
 
+  // Need user's StudentClasses to know their ID for this course
+  // We use studentId: user?.entityId ?? user?.id
+  const { data: studentClassesData } = useGetStudentClassesQuery({
+    studentId: user?.entityId ?? user?.id,
+    pageSize: 100
+  }, { skip: !user?.id });
+
+  // Find the exact StudentClass object for this classSubject's classId
+  const currentStudentClassId = useMemo(() => {
+    if (!classSubjectData?.classId || !studentClassesData?.items) return null;
+    const match = studentClassesData.items.find((sc: any) => sc.classId === classSubjectData.classId);
+    return match?.id || null;
+  }, [classSubjectData, studentClassesData]);
+
+
   const isLoading = isSlotsLoading || isClassLoading || isAssignmentsLoading || isStudentAssignmentsLoading || isLoadingExams;
 
   const course = {
@@ -98,29 +114,29 @@ function CourseDetails() {
     if (!assignmentsData?.items) return [];
 
     const submissions = studentAssignmentsData?.items || [];
-    
+
     return assignmentsData.items.map((assignment: Assignment) => {
       const submission = submissions.find((sub: StudentAssignment) => sub.assignmentId === assignment.id);
-      
+
       let timeRemaining = null;
       let isOverdue = false;
-      
+
       if (assignment.dueDate) {
         const due = new Date(assignment.dueDate).getTime();
         const now = new Date().getTime();
         const diff = due - now;
-        
+
         if (diff < 0) {
-           timeRemaining = 'Overdue';
-           isOverdue = true;
+          timeRemaining = 'Overdue';
+          isOverdue = true;
         } else {
-           const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-           const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-           if (days > 0) {
-             timeRemaining = `${days} day${days !== 1 ? 's' : ''} remaining`;
-           } else {
-             timeRemaining = `${hours} hour${hours !== 1 ? 's' : ''} remaining`;
-           }
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          if (days > 0) {
+            timeRemaining = `${days} day${days !== 1 ? 's' : ''} remaining`;
+          } else {
+            timeRemaining = `${hours} hour${hours !== 1 ? 's' : ''} remaining`;
+          }
         }
       }
 
@@ -142,11 +158,31 @@ function CourseDetails() {
     { id: 4, title: 'Lab 2: Building First App', type: 'Lab', date: '2024-05-10', downloadable: true }
   ];
 
-  const progressTests: ProgressTest[] = [
-    { id: 1, title: 'Quiz 1: OOP Fundamentals', questions: 20, duration: 30, status: 'completed', score: 85 },
-    { id: 2, title: 'Midterm Exam', questions: 50, duration: 90, status: 'available', score: null },
-    { id: 3, title: 'Quiz 2: Design Patterns', questions: 15, duration: 20, status: 'locked', score: null }
-  ];
+  const progressTests = useMemo(() => {
+    return (examsData?.items || []).map((exam: any) => {
+      const now = new Date();
+      const start = new Date(exam.startTime);
+      const end = new Date(exam.endTime);
+
+      let status: 'completed' | 'available' | 'locked' = 'locked';
+      if (now >= start && now <= end) {
+        status = 'available';
+      } else if (now > end) {
+        status = 'completed';
+      }
+
+      return {
+        id: exam.id,
+        title: exam.displayName || (exam.category ? `${exam.category} ${exam.instanceNumber}` : `Progress Test ${exam.instanceNumber}`),
+        startTime: exam.startTime,
+        endTime: exam.endTime,
+        questions: exam.questions?.length || 0,
+        duration: 0, // Duration could be derived from endTime - startTime if needed
+        status: status,
+        score: null // Score will come from StudentExam record later
+      };
+    });
+  }, [examsData]);
 
   const [expandedSlots, setExpandedSlots] = useState<{ [key: string]: boolean }>({});
 
@@ -379,6 +415,7 @@ function CourseDetails() {
                         return (a as any).slotId === slot.id || !(a as any).slotId;
                       })}
                       slotExams={(examsData?.items || []).filter(e => e.slotId === slot.id)}
+                      studentClassesId={currentStudentClassId}
                     />
                   )}
                 </div>
@@ -422,7 +459,9 @@ function CourseDetails() {
         <div id="progress-tests" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-6">
           <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Progress Tests</h2>
           <div className="space-y-3">
-            {progressTests.map(test => (
+            {progressTests.length === 0 ? (
+              <p className="text-gray-500 italic">No progress tests available for this course.</p>
+            ) : progressTests.map(test => (
               <div key={test.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${test.status === 'completed' ? 'bg-green-100' :
@@ -436,11 +475,10 @@ function CourseDetails() {
                   <div>
                     <h4 className="font-medium text-[#0A1B3C] text-sm">{test.title}</h4>
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-gray-500">{test.questions} questions</span>
-                      <span className="text-xs text-gray-500">•</span>
+                      {/* <span className="text-xs text-gray-500">{test.questions} questions</span> */}
                       <span className="text-xs text-gray-500 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {test.duration} mins
+                        End: {new Date(test.endTime).toLocaleString('en-GB')}
                       </span>
                       {test.score !== null && (
                         <>
@@ -452,12 +490,16 @@ function CourseDetails() {
                   </div>
                 </div>
                 <button
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${test.status === 'completed' ? 'bg-green-100 text-green-700' :
+                  className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 ${test.status === 'completed' ? 'bg-green-100 text-green-700' :
                     test.status === 'available' ? 'bg-[#F37022] text-white hover:bg-[#D96419]' :
                       'bg-gray-200 text-gray-500 cursor-not-allowed'
                     }`}
                   disabled={test.status === 'locked'}
-                  onClick={() => test.status === 'available' && navigate('/student/quiz')}
+                  onClick={() => {
+                    if (test.status === 'available') {
+                      navigate(`/student/exam-lobby/${test.id}?classSubjectId=${classSubjectId}`);
+                    }
+                  }}
                 >
                   {test.status === 'completed' ? 'Review' :
                     test.status === 'available' ? 'Start Test' :

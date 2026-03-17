@@ -32,6 +32,7 @@ import StudentForums from './pages/student/forums';
 import StudentGrades from './pages/student/grades';
 import StudentProfile from './pages/student/profile';
 import QuizTest from './pages/student/quiz';
+import ExamLobby from './pages/student/exam-lobby';
 import StudentSchedule from './pages/student/schedule';
 // Teacher Components
 import TeacherLayout from './components/layouts/teacher/TeacherLayout';
@@ -87,6 +88,7 @@ function Router() {
         <Route path="/student/courses" element={<StudentCourses />} />
         <Route path="/student/course-details/:classSubjectId" element={<CourseDetails />} />
         <Route path="/student/assignment" element={<AssignmentDetails />} />
+        <Route path="/student/exam-lobby/:examId" element={<ExamLobby />} />
         <Route path="/student/quiz" element={<QuizTest />} />
         <Route path="/student/forums" element={<StudentForums />} />
         <Route path="/student/exams" element={<StudentExamsPage />} />
