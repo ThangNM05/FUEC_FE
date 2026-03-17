@@ -9,10 +9,6 @@ function StudentLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const user = useSelector(selectCurrentUser);
 
-  if (!user || user.role !== 'Student') {
-    return <Navigate to="/not-found" replace />;
-  }
-
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -22,6 +18,10 @@ function StudentLayout() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  if (!user || user.role !== 'Student') {
+    return <Navigate to="/not-found" replace />;
+  }
 
   return (
     <div className="h-screen bg-slate-50/50 relative overflow-hidden">

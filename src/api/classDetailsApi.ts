@@ -84,7 +84,7 @@ export const classDetailsApi = baseApi.injectEndpoints({
         }),
 
         // Student Classes
-        getStudentClasses: builder.query<PaginatedResponse<StudentClass>, { classId: string; pageSize?: number }>({
+        getStudentClassesByClassId: builder.query<PaginatedResponse<StudentClass>, { classId: string; pageSize?: number }>({
             query: ({ classId, pageSize = 100 }) => `/StudentClasses?ClassId=${classId}&PageSize=${pageSize}`,
             transformResponse: (response: any) => response?.result || response,
             providesTags: ['StudentClasses']
@@ -168,7 +168,7 @@ export const {
     useGetClassSubjectByIdQuery,
     useGetClassSubjectSlotsQuery,
     useUpdateClassSubjectMutation,
-    useGetStudentClassesQuery,
+    useGetStudentClassesByClassIdQuery,
     useAddStudentClassMutation,
     useRemoveStudentClassMutation,
     useGetIneligibleStudentIdsQuery,

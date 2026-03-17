@@ -9,7 +9,7 @@ import { Modal } from 'antd';
 import {
     useGetClassSubjectByIdQuery,
     useGetClassSubjectSlotsQuery,
-    useGetStudentClassesQuery
+    useGetStudentClassesByClassIdQuery
 } from '@/api/classDetailsApi';
 import { useGetExamsByClassSubjectIdQuery, useDeleteExamMutation } from '@/api/examsApi';
 import { useGetAssignmentsByClassSubjectIdQuery, useDeleteAssignmentMutation } from '@/api/assignmentsApi';
@@ -152,7 +152,7 @@ function TeacherCourseDetails() {
         skip: !courseId,
     });
 
-    const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentClassesQuery(
+    const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentClassesByClassIdQuery(
         { classId: classSubject?.classId || '', pageSize: 200 },
         { skip: !classSubject?.classId }
     );

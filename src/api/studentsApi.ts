@@ -196,6 +196,27 @@ export const studentsApi = baseApi.injectEndpoints({
             transformResponse: (response: any) => response?.result || response || [],
             providesTags: (_result, _error, id) => [{ type: 'Students', id }, 'StudentClasses'],
         }),
+
+        // GET: Fetch student classes
+        getStudentClasses: builder.query<PaginatedResponse<any>, {
+            page?: number;
+            pageSize?: number;
+            studentId?: string;
+            classId?: string;
+        }>({
+            query: ({ page = 1, pageSize = 10, studentId, classId }) => {
+                const pageIndex = page - 1;
+                let url = `/StudentClasses?PageSize=${pageSize}&PageNumber=${pageIndex}`;
+                if (studentId) url += `&StudentId=${studentId}`;
+                if (classId) url += `&ClassId=${classId}`;
+                return url;
+            },
+            transformResponse: (response: any) => {
+                if (response?.result?.items) return response.result;
+                return { items: response?.result || response || [], totalItemCount: 0 };
+            },
+            providesTags: ['StudentClasses'],
+        }),
     }),
 });
 
@@ -210,5 +231,6 @@ export const {
     useAutoAssignClassMutation,
     useGetStudentScheduleQuery,
     useGetStudentSubjectsQuery,
+    useGetStudentClassesQuery,
 } = studentsApi;
 

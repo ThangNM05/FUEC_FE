@@ -4,6 +4,8 @@ import {
   Bell, CheckCircle, Clock, Calendar, ArrowRight, Search
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/redux/authSlice';
 import { useGetStudentSubjectsQuery } from '@/api/studentsApi';
 import { Loader2 } from 'lucide-react';
 
@@ -20,7 +22,12 @@ function StudentDashboard() {
     }));
   };
 
-  const { data: studentSubjectsData, isLoading, isError } = useGetStudentSubjectsQuery('b0723dc3-02c0-49eb-9754-cdd437ca3852');
+  const user = useSelector(selectCurrentUser);
+
+  const { data: studentSubjectsData, isLoading, isError } = useGetStudentSubjectsQuery(
+      user?.entityId ?? user?.id ?? '', 
+      { skip: !user?.id }
+  );
 
   const courses = studentSubjectsData?.map(subject => ({
     id: subject.classSubjectId,
