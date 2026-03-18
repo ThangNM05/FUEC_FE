@@ -21,10 +21,12 @@ import EditExamModal from '@/components/modals/EditExamModal';
 import CreateAssignmentModal from '@/components/modals/CreateAssignmentModal';
 import EditAssignmentModal from '@/components/modals/EditAssignmentModal';
 import SlotQuestionList from './SlotQuestionList';
+import AssignmentSubmissionCount from './AssignmentSubmissionCount';
 import type { Exam } from '@/types/exam.types';
 import type { Assignment } from '@/types/assignment.types';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentModal';
+import ExamParticipantsModal from '@/components/modals/ExamParticipantsModal';
 
 type SlotAssignment = Assignment;
 
@@ -70,6 +72,8 @@ function TeacherCourseDetails() {
     const [examToDelete, setExamToDelete] = useState<Exam | null>(null);
 
     const [isStudentListModalOpen, setIsStudentListModalOpen] = useState(false);
+    const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
+    const [selectedParticipantsExam, setSelectedParticipantsExam] = useState<Exam | null>(null);
 
     const handleOpenCreateAssignment = (slotInfo: any) => {
         setCreateAssignmentSlotInfo(slotInfo);
@@ -153,8 +157,8 @@ function TeacherCourseDetails() {
     });
 
     const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentClassesByClassIdQuery(
-        { classId: classSubject?.classId || '', pageSize: 200 },
-        { skip: !classSubject?.classId }
+        { classSubjectId: classSubject?.id || '', pageSize: 200 },
+        { skip: !classSubject?.id }
     );
 
     const { data: assignmentsData, isLoading: isLoadingAssignments } = useGetAssignmentsByClassSubjectIdQuery(
@@ -607,7 +611,11 @@ function TeacherCourseDetails() {
                                                                                         </span>
                                                                                         <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                                                             <button
-                                                                                                onClick={(e) => { e.stopPropagation(); navigate(`/teacher/exam/${exam.id}/participants`); }}
+                                                                                                onClick={(e) => { 
+                                                                                                    e.stopPropagation(); 
+                                                                                                    setSelectedParticipantsExam(exam);
+                                                                                                    setIsParticipantsModalOpen(true);
+                                                                                                }}
                                                                                                 className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                                                                                                 title="Participants"
                                                                                             >
@@ -796,10 +804,10 @@ function TeacherCourseDetails() {
                                                         <Calendar className="w-4 h-4" />
                                                         Due: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
                                                     </span>
-                                                    <span className="font-semibold text-orange-600">
-                                                        0/{course.enrolledStudents} submitted
-                                                    </span>
-                                                    <span className="font-semibold text-blue-600">Pending Grading</span>
+                                                    <AssignmentSubmissionCount
+                                                        assignmentId={assignment.id}
+                                                        totalStudents={course.enrolledStudents}
+                                                    />
                                                 </div>
                                                 {assignment.description && (
                                                     <div className="mt-2 text-sm font-medium text-gray-500 max-w-lg truncate">
@@ -1210,6 +1218,13 @@ function TeacherCourseDetails() {
                 title="Delete Assignment?"
                 message={`Are you sure you want to delete "${assignmentToDelete?.displayName || `Assignment ${assignmentToDelete?.instanceNumber}`}"?`}
                 confirmButtonLabel="Delete"
+            />
+
+            <ExamParticipantsModal
+                isOpen={isParticipantsModalOpen}
+                onClose={() => setIsParticipantsModalOpen(false)}
+                exam={selectedParticipantsExam}
+                classSubjectId={classSubject?.id || ''}
             />
         </div>
     );

@@ -80,6 +80,12 @@ export const studentExamsApi = baseApi.injectEndpoints({
             transformResponse: normalizeStudentExam,
             providesTags: (_result, _error, id) => [{ type: 'StudentExams', id }],
         }),
+        getStudentExamsByExamId: builder.query<any, { examId: string; page?: number; pageSize?: number }>({
+            query: ({ examId, page = 1, pageSize = 100 }) => 
+                `/StudentExams?ExamId=${examId}&PageNumber=${page - 1}&PageSize=${pageSize}`,
+            transformResponse: (response: any) => response.result || response,
+            providesTags: ['StudentExams'],
+        }),
         submitStudentExam: builder.mutation<any, string>({
             query: (id) => ({
                 url: `/StudentExams/${id}/submit`,
@@ -94,5 +100,6 @@ export const studentExamsApi = baseApi.injectEndpoints({
 export const {
     useStartStudentExamMutation,
     useGetStudentExamByIdQuery,
+    useGetStudentExamsByExamIdQuery,
     useSubmitStudentExamMutation,
 } = studentExamsApi;
