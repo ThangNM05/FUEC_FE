@@ -46,8 +46,8 @@ const ClassSubjectDetailModal = ({ isOpen, onClose, classData, subject }: ClassS
         data: studentsData,
         isLoading: isLoadingEnrollments
     } = useGetStudentClassesByClassIdQuery(
-        { classId: classSubject?.classId || '' },
-        { skip: !classSubject?.classId }
+        { classSubjectId: classSubject?.id || '' },
+        { skip: !classSubject?.id }
     );
 
     // Mutations

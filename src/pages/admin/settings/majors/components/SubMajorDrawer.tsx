@@ -5,11 +5,14 @@ import { Layers, Edit, Trash2, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useGetSubMajorsByMajorIdQuery } from '@/api/majorsApi';
-import { useDeleteSubMajorMutation } from '@/api/subMajorsApi';
+import { useDeleteSubMajorMutation, useImportSubMajorsMutation } from '@/api/subMajorsApi';
 import type { Major } from '@/types/major.types';
-import type { SubMajor } from '@/types/subMajor.types';
+import type { SubMajor, ImportSubMajorsResponse } from '@/types/subMajor.types';
 import EditSubMajorModal from '@/components/modals/EditSubMajorModal';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
+import ImportExcelModal from '@/components/shared/ImportExcelModal';
+import ImportResultModal from '@/components/shared/ImportResultModal';
+import { Download, Upload } from 'lucide-react';
 
 interface SubMajorDrawerProps {
     major: Major | null;
@@ -21,12 +24,18 @@ export default function SubMajorDrawer({ major, isOpen, onClose }: SubMajorDrawe
     const { data: subMajors, isLoading } = useGetSubMajorsByMajorIdQuery(major?.id || '', {
         skip: !major?.id
     });
-    const [deleteSubMajor, { isLoading: isDeleting }] = useDeleteSubMajorMutation();
+    const [deleteSubMajor] = useDeleteSubMajorMutation();
+    const [importSubMajors, { isLoading: isImporting }] = useImportSubMajorsMutation();
 
     const [selectedSubMajor, setSelectedSubMajor] = useState<SubMajor | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [subMajorToDelete, setSubMajorToDelete] = useState<SubMajor | null>(null);
+
+    // Import Modal State
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isImportResultModalOpen, setIsImportResultModalOpen] = useState(false);
+    const [importResult, setImportResult] = useState<ImportSubMajorsResponse | null>(null);
 
     const handleEdit = (subMajor: SubMajor) => {
         setSelectedSubMajor(subMajor);
@@ -51,6 +60,23 @@ export default function SubMajorDrawer({ major, isOpen, onClose }: SubMajorDrawe
             setIsDeleteModalOpen(false);
         } catch (err) {
             toast.error('Deletion failed!');
+        }
+    };
+
+    const handleImportClick = () => {
+        setIsImportModalOpen(true);
+    };
+
+    const handleConfirmImport = async (file: File) => {
+        toast.info('Processing import...');
+        try {
+            const result = await importSubMajors(file).unwrap();
+            setImportResult(result);
+            setIsImportModalOpen(false);
+            setIsImportResultModalOpen(true);
+            toast.success('Import completed. Please check the results.');
+        } catch (err: any) {
+            toast.error('Import failed! ' + (err?.data?.message || 'Please check the file or try again later.'));
         }
     };
 
@@ -85,13 +111,22 @@ export default function SubMajorDrawer({ major, isOpen, onClose }: SubMajorDrawe
                 <div>
                     <h4 className="text-sm font-semibold text-gray-700">Specialized Areas</h4>
                 </div>
-                <button
-                    onClick={handleAdd}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#F37022] text-white rounded-lg text-sm font-medium hover:bg-[#d95f19] transition-all active:scale-95 shadow-md shadow-orange-100"
-                >
-                    <Plus className="w-4 h-4" />
-                    <span>Add Sub-Major</span>
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleImportClick}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all active:scale-95 shadow-sm"
+                    >
+                        <Upload className="w-4 h-4" />
+                        <span>{isImporting ? 'Importing...' : 'Import Excel'}</span>
+                    </button>
+                    <button
+                        onClick={handleAdd}
+                        className="flex items-center gap-2 px-4 py-2 bg-[#F37022] text-white rounded-lg text-sm font-medium hover:bg-[#d95f19] transition-all active:scale-95 shadow-md shadow-orange-100"
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Sub-Major</span>
+                    </button>
+                </div>
             </div>
 
             <div className="p-6">
@@ -170,6 +205,22 @@ export default function SubMajorDrawer({ major, isOpen, onClose }: SubMajorDrawe
                 message={`Are you sure you want to ${subMajorToDelete?.isActive ? 'deactivate' : 'activate'} sub-major "${subMajorToDelete?.name}"?`}
                 confirmButtonLabel={subMajorToDelete?.isActive ? "Deactivate" : "Activate"}
                 confirmButtonVariant={subMajorToDelete?.isActive ? "danger" : "success"}
+            />
+
+            <ImportExcelModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onConfirm={handleConfirmImport}
+                title="Import Sub-Majors from Excel"
+                description="Please ensure the Excel file contains columns: MajorCode, SubMajorCode, SubMajorName, Description"
+                templateUrl="/templates/submajor_import_template.xlsx"
+            />
+
+            <ImportResultModal
+                isOpen={isImportResultModalOpen}
+                onClose={() => setIsImportResultModalOpen(false)}
+                result={importResult}
+                entityName="sub-majors"
             />
         </Drawer>
     );

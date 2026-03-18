@@ -84,8 +84,13 @@ export const classDetailsApi = baseApi.injectEndpoints({
         }),
 
         // Student Classes
-        getStudentClassesByClassId: builder.query<PaginatedResponse<StudentClass>, { classId: string; pageSize?: number }>({
-            query: ({ classId, pageSize = 100 }) => `/StudentClasses?ClassId=${classId}&PageSize=${pageSize}`,
+        getStudentClassesByClassId: builder.query<PaginatedResponse<StudentClass>, { classId?: string; classSubjectId?: string; pageSize?: number }>({
+            query: ({ classId, classSubjectId, pageSize = 100 }) => {
+                let url = `/StudentClasses?PageSize=${pageSize}`;
+                if (classId) url += `&ClassId=${classId}`;
+                if (classSubjectId) url += `&ClassSubjectId=${classSubjectId}`;
+                return url;
+            },
             transformResponse: (response: any) => response?.result || response,
             providesTags: ['StudentClasses']
         }),
