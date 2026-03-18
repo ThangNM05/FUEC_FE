@@ -35,8 +35,8 @@ function AssignmentSubmissionsList() {
     });
 
     const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentClassesByClassIdQuery(
-        { classId: classSubjectData?.classId || '', pageSize: 200 },
-        { skip: !classSubjectData?.classId }
+        { classSubjectId: assignmentData?.classSubjectId || '', pageSize: 200 },
+        { skip: !assignmentData?.classSubjectId }
     );
 
     // Process and combine data
