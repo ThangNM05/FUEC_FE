@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Modal, Descriptions, Spin, Table, Tag } from 'antd';
-import { Calendar, ClipboardCheck, Lock, Globe, Shield, RefreshCw, Copy, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Modal, Descriptions, Spin, Table, Tag, Progress } from 'antd';
+import { Calendar, ClipboardCheck, Lock, Globe, Shield, RefreshCw, Copy, Check, Timer } from 'lucide-react';
 import { useGetExamQuestionsQuery } from '@/api/examsApi';
 import { toast } from 'sonner';
 import type { Exam } from '@/types/exam.types';
+import { generateTOTP } from '@/utils/otp';
 
 interface ExamDetailModalProps {
     exam: Exam | null;
@@ -13,12 +14,42 @@ interface ExamDetailModalProps {
 
 export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailModalProps) {
     const [copied, setCopied] = useState(false);
+    const [otpCode, setOtpCode] = useState<string>('');
+    const [timeLeft, setTimeLeft] = useState<number>(30);
+    const [progress, setProgress] = useState<number>(100);
+
     const { data: questionsData, isLoading } = useGetExamQuestionsQuery(
         { examId: exam?.id || '' },
         { skip: !exam?.id || !isOpen }
     );
 
     const questions = questionsData?.items || [];
+
+    // TOTP Logic
+    useEffect(() => {
+        if (!isOpen || !exam || exam.securityMode !== 2 || !exam.accessCode) return;
+
+        const handleGenerate = async () => {
+            const secret = (exam.accessCode || '').split('=')[0]; 
+            const code = await generateTOTP(secret);
+            setOtpCode(code);
+        };
+
+        handleGenerate();
+
+        const timer = setInterval(() => {
+            const second = Math.floor(Date.now() / 1000) % 30;
+            const remaining = 30 - second;
+            setTimeLeft(remaining);
+            setProgress((remaining / 30) * 100);
+
+            if (remaining === 30) {
+                handleGenerate();
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isOpen, exam]);
 
     const columns = [
         {
@@ -81,7 +112,7 @@ export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailMod
                                     {exam.securityMode === 2 ? (
                                         <>
                                             <RefreshCw className="w-4 h-4 text-purple-500" />
-                                            <Tag color="purple">Dynamic Code ({exam.codeDuration}s)</Tag>
+                                            <Tag color="purple">Dynamic Code (30s)</Tag>
                                         </>
                                     ) : (
                                         <>
@@ -114,45 +145,86 @@ export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailMod
                             <Descriptions.Item label="Syllabus" span={2}>
                                 {exam.syllabusName} ({exam.weight}%)
                             </Descriptions.Item>
-                            {(exam.securityMode === 1 || exam.securityMode === 2) && (
-                                <Descriptions.Item label="Access Code">
-                                    <Tag color="blue" className="font-mono text-sm px-3">
-                                        {exam.accessCode || 'Not Set'}
-                                    </Tag>
-                                </Descriptions.Item>
-                            )}
+                            <Descriptions.Item label="Encrypted Secret">
+                                <Tag color="blue" className="font-mono text-xs max-w-[150px] truncate" title={exam.accessCode || ''}>
+                                    {exam.accessCode || 'Not Set'}
+                                </Tag>
+                            </Descriptions.Item>
                         </Descriptions>
                     </div>
 
                     {/* Access Code Highlight */}
                     {(exam.securityMode === 1 || exam.securityMode === 2) && (
-                        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-3 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-center gap-2 text-blue-800 font-bold uppercase tracking-wider text-sm">
+                        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                            {/* Background Pattern */}
+                            <div className="absolute top-0 right-0 p-4 opacity-5">
+                                <Shield className="w-24 h-24" />
+                            </div>
+
+                            <div className="flex items-center gap-2 text-blue-800 font-bold uppercase tracking-wider text-sm z-10">
                                 <Lock className="w-4 h-4" />
-                                {exam.securityMode === 2 ? 'Dynamic Secret Key' : 'Static Access Code'}
+                                {exam.securityMode === 2 ? 'DYNAMIC ACCESS CODE (TOTP)' : 'STATIC ACCESS CODE'}
                             </div>
-                            <div className="flex items-center gap-4 bg-white px-8 py-4 rounded-xl border-2 border-dashed border-blue-200 group relative">
-                                <span className="text-4xl font-black font-mono tracking-widest text-blue-900">
-                                    {exam.accessCode || 'XXXXXX'}
-                                </span>
-                                <button
-                                    onClick={() => {
-                                        if (exam.accessCode) {
-                                            navigator.clipboard.writeText(exam.accessCode);
-                                            setCopied(true);
-                                            toast.success('Access code copied to clipboard!');
-                                            setTimeout(() => setCopied(false), 2000);
-                                        }
-                                    }}
-                                    className="p-2 hover:bg-blue-50 rounded-lg border border-blue-100 transition-all active:scale-95"
-                                    title="Copy to clipboard"
-                                >
-                                    {copied ? <Check className="w-6 h-6 text-green-500" /> : <Copy className="w-6 h-6 text-blue-600" />}
-                                </button>
+
+                            <div className="flex flex-col items-center gap-4 z-10 w-full max-w-md">
+                                <div className="flex items-center gap-4 bg-white px-10 py-6 rounded-2xl border-2 border-dashed border-blue-200 group relative shadow-inner">
+                                    <span className={`text-5xl font-black font-mono tracking-widest ${exam.securityMode === 2 ? 'text-[#F37022]' : 'text-blue-900'}`}>
+                                        {exam.securityMode === 2 ? otpCode || '------' : exam.accessCode || 'XXXXXX'}
+                                    </span>
+                                    <button
+                                        onClick={() => {
+                                            const codeStr = exam.securityMode === 2 ? otpCode : exam.accessCode;
+                                            if (codeStr) {
+                                                navigator.clipboard.writeText(codeStr);
+                                                setCopied(true);
+                                                toast.success('Code copied to clipboard!');
+                                                setTimeout(() => setCopied(false), 2000);
+                                            }
+                                        }}
+                                        className="p-3 hover:bg-blue-50 rounded-xl border border-blue-100 transition-all active:scale-95 bg-white shadow-sm"
+                                        title="Copy code"
+                                    >
+                                        {copied ? <Check className="w-6 h-6 text-green-500" /> : <Copy className="w-6 h-6 text-blue-600" />}
+                                    </button>
+                                </div>
+
+                                {exam.securityMode === 2 && (
+                                    <div className="w-full space-y-2 px-4">
+                                        <div className="flex items-center justify-between text-xs font-bold text-blue-600">
+                                            <span className="flex items-center gap-1">
+                                                <Timer className="w-3 h-3" />
+                                                EXPIRES IN
+                                            </span>
+                                            <span>{timeLeft}s</span>
+                                        </div>
+                                        <Progress
+                                            percent={progress}
+                                            showInfo={false}
+                                            strokeColor={{
+                                                '0%': '#F37022',
+                                                '100%': '#FF9A5C',
+                                            }}
+                                            trailColor="#E6F0FF"
+                                            size="small"
+                                            className="m-0"
+                                        />
+                                    </div>
+                                )}
                             </div>
-                            <p className="text-xs text-blue-600 font-medium italic">
-                                * Share this code with students to allow them to enter the exam.
+
+                            <p className="text-sm text-blue-600 font-medium z-10">
+                                {exam.securityMode === 2 
+                                    ? '* Provide this 6-digit code to students. It refreshes automatically.' 
+                                    : '* Share this static code with students to allow them to enter the exam.'}
                             </p>
+                            
+                            {exam.securityMode === 2 && (
+                                <div className="mt-2 p-2 bg-blue-100/50 rounded-lg border border-blue-200/50 z-10">
+                                    <p className="text-[10px] text-blue-500 font-mono">
+                                        Secret Key: {exam.accessCode}
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     )}
 

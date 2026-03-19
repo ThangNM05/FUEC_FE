@@ -27,23 +27,41 @@ const ExamParticipantsModal: React.FC<ExamParticipantsModalProps> = ({ isOpen, o
 
     const allStudents = studentsData?.items || [];
     const studentExams = studentExamsData?.items || [];
-    
+
     // Create a map of student exam attempts 
-    const studentExamMap = new Map();
+    const studentExamMap = new Map<string, any>();
     studentExams.forEach((se: any) => {
-        studentExamMap.set(se.studentCode, se);
+        const code = se.studentCode?.toString().toLowerCase().trim();
+        if (code) {
+            studentExamMap.set(code, se);
+        }
     });
 
     const dataSource = allStudents.map(student => {
-        const attempt = studentExamMap.get(student.studentCode);
+        const studentCode = student.studentCode?.toString().toLowerCase().trim();
+        const attempt = studentCode ? studentExamMap.get(studentCode) : null;
+
+        // Status logic: 
+        // 1. If grade exists -> Done
+        // 2. If attempt exists but no grade -> In Progress
+        // 3. Otherwise -> Not Started
+        let status = 'not_started';
+        if (attempt) {
+            if (attempt.grade !== null && attempt.grade !== undefined) {
+                status = 'done';
+            } else {
+                status = 'in_progress';
+            }
+        }
         return {
-            key: student.studentId,
+            key: student.studentId || student.studentCode,
             studentCode: student.studentCode,
             studentName: student.studentName,
-            status: attempt ? (attempt.isSubmitted ? 'submitted' : 'in_progress') : 'not_started',
+            status: status,
             grade: attempt?.grade,
-            startTime: attempt?.initTime || attempt?.examStartTime,
-            endTime: attempt?.examEndTime,
+            startTime: attempt?.startTime || attempt?.initTime,
+            endTime: attempt?.endTime,
+            studentExamId: attempt?.studentExamId,
         };
     });
 
@@ -65,11 +83,11 @@ const ExamParticipantsModal: React.FC<ExamParticipantsModalProps> = ({ isOpen, o
             dataIndex: 'status',
             key: 'status',
             render: (status: string) => {
-                if (status === 'submitted') {
+                if (status === 'done') {
                     return (
                         <Tag color="green">
                             <span className="flex items-center gap-1 whitespace-nowrap">
-                                <CheckCircle className="w-3 h-3" /> Submitted
+                                <CheckCircle className="w-3 h-3" /> Done
                             </span>
                         </Tag>
                     );
@@ -94,12 +112,33 @@ const ExamParticipantsModal: React.FC<ExamParticipantsModalProps> = ({ isOpen, o
             title: 'Grade',
             dataIndex: 'grade',
             key: 'grade',
-            render: (grade: number | undefined, record: any) => 
-                record.status === 'submitted' && grade !== undefined && grade !== null ? (
-                    <span className="font-bold text-[#F37022]">{Number(grade).toFixed(2)} / 100</span>
+            render: (grade: number | undefined, record: any) =>
+                record.status === 'done' && grade !== undefined && grade !== null ? (
+                    <span className="font-bold text-[#F37022]">{Number(grade).toFixed(1)} / 10</span>
                 ) : (
                     <span className="text-gray-400">-</span>
                 )
+        },
+        {
+            title: 'Action',
+            key: 'action',
+            width: 100,
+            render: (_: any, record: any) => (
+                record.status === 'done' ? (
+                    <button
+                        onClick={() => {
+                            if (record.studentExamId) {
+                                window.open(`/teacher/exam-review/${record.studentExamId}`, '_blank');
+                            } else {
+                                alert(`Không tìm thấy ID bài làm của sinh viên ${record.studentCode}.`);
+                            }
+                        }}
+                        className="px-3 py-1 bg-[#F37022]/10 text-[#F37022] hover:bg-[#F37022] hover:text-white rounded-lg text-xs font-bold transition-all"
+                    >
+                        Review
+                    </button>
+                ) : null
+            )
         }
     ];
 
@@ -125,10 +164,10 @@ const ExamParticipantsModal: React.FC<ExamParticipantsModalProps> = ({ isOpen, o
                 </div>
             </div>
             <div>
-                <Table 
-                    dataSource={dataSource} 
-                    columns={columns} 
-                    loading={isLoadingStudents || isLoadingExams} 
+                <Table
+                    dataSource={dataSource}
+                    columns={columns}
+                    loading={isLoadingStudents || isLoadingExams}
                     pagination={{ pageSize: 10 }}
                     size="small"
                 />

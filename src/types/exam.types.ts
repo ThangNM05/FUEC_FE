@@ -63,6 +63,11 @@ export interface Exam {
     deletedAt: string | null;
     deletedBy: string | null;
     isActive: boolean;
+    isSubmitted: boolean;
+    grade: number | null;
+    studentExamId: string | null;
+    submittedAt: string | null;
+    participationCount: number;
 }
 
 export interface PaginatedExamsResponse {

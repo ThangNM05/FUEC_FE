@@ -12,8 +12,11 @@ const SecurityMode = {
   DynamicCode: 2,
 } as const;
 
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString('vi-VN', {
+function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return '---';
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return '---';
+  return date.toLocaleString('vi-VN', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -79,7 +82,7 @@ export default function ExamLobby() {
     try {
       const response = await startStudentExam({
         examId,
-        accessCode: requiresCode ? accessCode.trim() : undefined,
+        accessCode: (requiresCode && !exam?.isSubmitted) ? accessCode.trim() : undefined,
       }).unwrap();
 
       navigate(`/student/quiz?studentExamId=${response.studentExamId}&examId=${response.examId}`);
@@ -119,11 +122,11 @@ export default function ExamLobby() {
     <div className="p-4 md:p-6 max-w-3xl mx-auto animate-fadeIn">
       {/* Back button */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate('/student/exams')}
         className="flex items-center gap-2 text-gray-600 hover:text-[#0A1B3C] mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span className="text-sm font-medium">Quay lại</span>
+        <span className="text-sm font-medium">Quay lại khóa học</span>
       </button>
 
       {/* Exam Info Card */}
@@ -199,21 +202,41 @@ export default function ExamLobby() {
           )}
 
           {status === 'available' && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-              <div className="flex items-center gap-3">
-                <Play className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-semibold text-green-800">Bài thi đang mở</p>
-                  <p className="text-sm text-green-600 font-mono mt-1">
-                    Còn lại: {getCountdown(exam.endTime)}
-                  </p>
+            exam.isSubmitted ? (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-blue-800">Bạn đã hoàn thành bài thi này</p>
+                      <p className="text-sm text-blue-600 mt-0.5">Thời gian nộp bài: {formatDateTime(exam.submittedAt)}</p>
+                    </div>
+                  </div>
+                  {exam.grade !== null && (
+                    <div className="text-right">
+                      <p className="text-xs text-blue-500 font-medium uppercase tracking-wider">Điểm số</p>
+                      <p className="text-2xl font-black text-blue-700">{exam.grade.toFixed(1)} <span className="text-sm font-normal text-blue-400">/ 10</span></p>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <Play className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-green-800">Bài thi đang mở</p>
+                    <p className="text-sm text-green-600 font-mono mt-1">
+                      Còn lại: {getCountdown(exam.endTime)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )
           )}
 
           {/* Access Code Input */}
-          {status === 'available' && requiresCode && (
+          {status === 'available' && requiresCode && !exam.isSubmitted && (
             <div className="mb-6">
               <label className="block text-sm font-semibold text-[#0A1B3C] mb-2">
                 <Lock className="w-4 h-4 inline mr-1.5 -mt-0.5" />
@@ -241,7 +264,7 @@ export default function ExamLobby() {
           )}
 
           {/* Start Button */}
-          {status === 'available' && (
+          {status === 'available' && !exam.isSubmitted && (
             <button
               onClick={handleStart}
               disabled={isStarting}
@@ -252,6 +275,18 @@ export default function ExamLobby() {
               ) : (
                 <><Play className="w-5 h-5" /> Vào làm bài</>
               )}
+            </button>
+          )}
+
+          {/* View Result Button for submitted exams */}
+          {exam.isSubmitted && (
+            <button
+              onClick={() => {
+                navigate(`/student/quiz?studentExamId=${exam.studentExamId}&examId=${exam.id}`);
+              }}
+              className="w-full py-4 bg-[#0A1B3C] text-white rounded-lg font-bold text-lg hover:bg-[#1a3a6c] transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-200"
+            >
+              <FileText className="w-5 h-5" /> Xem kết quả bài làm
             </button>
           )}
 
