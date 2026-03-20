@@ -11,6 +11,25 @@ export const examsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['Exams'],
         }),
+        getAllExams: builder.query<PaginatedExamsResponse, { classSubjectId?: string; studentId?: string }>({
+            query: (params) => {
+                const searchParams = new URLSearchParams();
+                if (params.classSubjectId) searchParams.append('ClassSubjectId', params.classSubjectId);
+                if (params.studentId) searchParams.append('StudentId', params.studentId);
+                return `/Exams?${searchParams.toString()}`;
+            },
+            transformResponse: (response: any) => {
+                console.log("EXAMS RESPONSE:", response);
+                return response?.result || {
+                    items: [],
+                    totalItemCount: 0,
+                    totalPages: 0,
+                    itemFrom: 0,
+                    itemTo: 0
+                };
+            },
+            providesTags: ['Exams'],
+        }),
         getExamsByClassSubjectId: builder.query<PaginatedExamsResponse, string>({
             query: (classSubjectId) => `/Exams?ClassSubjectId=${classSubjectId}`,
             transformResponse: (response: any) => {
@@ -56,6 +75,7 @@ export const examsApi = baseApi.injectEndpoints({
 
 export const {
     useCreateExamMutation,
+    useGetAllExamsQuery,
     useGetExamsByClassSubjectIdQuery,
     useGetExamQuestionsQuery,
     useUpdateExamMutation,

@@ -3,7 +3,7 @@ import { baseApi } from './baseApi';
 export interface CreateStudentAnswerDto {
     studentExamId: string;
     questionId: string;
-    selectedOptionId: string;
+    choiceId: string;
 }
 
 export const studentAnswersApi = baseApi.injectEndpoints({
@@ -16,11 +16,11 @@ export const studentAnswersApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['StudentExams'],
         }),
-        updateStudentAnswer: builder.mutation<any, { id: string; selectedOptionId: string }>({
-            query: ({ id, selectedOptionId }) => ({
+        updateStudentAnswer: builder.mutation<any, { id: string; choiceId: string }>({
+            query: ({ id, choiceId }) => ({
                 url: `/StudentAnswers/${id}`,
                 method: 'PUT',
-                body: { selectedOptionId },
+                body: { choiceId },
             }),
             invalidatesTags: ['StudentExams'],
         }),

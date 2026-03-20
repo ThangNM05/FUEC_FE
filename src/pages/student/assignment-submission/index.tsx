@@ -10,6 +10,7 @@ import FileUploader from '@/components/FileUploader';
 import FileTreeView from '@/components/FileTreeView';
 import { useGetAssignmentByIdQuery } from '@/api/assignmentsApi';
 import { useGetStudentAssignmentsByAssignmentIdQuery, useSubmitAssignmentMutation } from '@/api/studentAssignmentsApi';
+import { useGetAssignmentFeedbacksQuery } from '@/api/assignmentFeedbacksApi';
 import { useUploadFileMutation } from '@/api/filesApi';
 import { selectCurrentUser } from '@/redux/authSlice';
 import { AssignmentStatusLabel, AssignmentStatusColor } from '@/types/assignment.types';
@@ -40,13 +41,6 @@ function AssignmentSubmission() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [uploadProgress, setUploadProgress] = useState<string | null>(null);
-    const [classComment, setClassComment] = useState('');
-    const [privateComment, setPrivateComment] = useState('');
-    const [isAddingClassComment, setIsAddingClassComment] = useState(false);
-    const [isAddingPrivateComment, setIsAddingPrivateComment] = useState(false);
-    // Comments – replace with API hooks when backend is ready
-    const [classComments] = useState<{ id: string; author: string; text: string; time: string }[]>([]);
-    const [privateComments] = useState<{ id: string; author: string; text: string; time: string }[]>([]);
 
     // Fetch assignment data from API
     const {
@@ -61,12 +55,14 @@ function AssignmentSubmission() {
         isLoading: isLoadingSubmissions,
     } = useGetStudentAssignmentsByAssignmentIdQuery(id!, { skip: !id });
 
-    // Filter by current student
     const mySubmissions = (submissionsData?.items ?? []).filter(
         (s) => s.studentId === currentUser?.entityId
     );
     const latestSubmission = mySubmissions[0] ?? null;
     const isSubmitted = !!latestSubmission;
+
+    // Fetch instructor feedback for the latest submission
+    const { data: feedbacks } = useGetAssignmentFeedbacksQuery(latestSubmission?.id ?? '', { skip: !latestSubmission?.id });
 
     // Submit mutation
     const [submitAssignment, { isLoading: isSubmitting }] = useSubmitAssignmentMutation();
@@ -284,72 +280,46 @@ function AssignmentSubmission() {
                         </div>
                     )}
 
-                    {/* Class Comments */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                        <div className="flex items-center gap-2 mb-5">
-                            <Users className="w-5 h-5 text-gray-500" />
-                            <h2 className="font-semibold text-gray-700">Class comments</h2>
-                        </div>
-
-                        {classComments.length === 0 && (
-                            <p className="text-sm text-gray-400 mb-4">No class comments yet.</p>
-                        )}
-
-                        {classComments.map((c) => (
-                            <div key={c.id} className="flex gap-3 mb-4">
-                                <div className="w-8 h-8 rounded-full bg-[#F37022] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                    {c.author.charAt(0)}
-                                </div>
-                                <div className="flex-1 bg-gray-50 rounded-xl px-4 py-3">
-                                    <p className="text-xs font-semibold text-gray-700">
-                                        {c.author}{' '}
-                                        <span className="font-normal text-gray-400">{c.time}</span>
-                                    </p>
-                                    <p className="text-sm text-gray-700 mt-0.5">{c.text}</p>
+                    {/* Instructor Feedback History */}
+                    {feedbacks && feedbacks.length > 0 && (
+                        <div className="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden animate-slideIn">
+                            <div className="px-6 py-4 border-b border-orange-50 bg-orange-50/30">
+                                <div className="flex items-center gap-2">
+                                    <MessageSquare className="w-5 h-5 text-[#F37022]" />
+                                    <h2 className="font-bold text-[#0A1B3C]">Instructor Feedback History</h2>
                                 </div>
                             </div>
-                        ))}
-
-                        {isAddingClassComment ? (
-                            <div className="flex gap-3 items-start">
-                                <div className="w-8 h-8 rounded-full bg-[#F37022] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                    {currentUser?.fullName?.charAt(0) ?? 'S'}
-                                </div>
-                                <div className="flex-1">
-                                    <textarea
-                                        autoFocus
-                                        rows={3}
-                                        value={classComment}
-                                        onChange={(e) => setClassComment(e.target.value)}
-                                        placeholder="Add a class comment..."
-                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-[#F37022]/30 focus:border-[#F37022] transition-all"
-                                    />
-                                    <div className="flex justify-end gap-2 mt-2">
-                                        <button
-                                            onClick={() => { setIsAddingClassComment(false); setClassComment(''); }}
-                                            className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            disabled={!classComment.trim()}
-                                            className="px-4 py-1.5 text-xs font-semibold text-white bg-[#F37022] rounded-lg hover:bg-[#d96419] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            Post
-                                        </button>
+                            <div className="p-6 space-y-6">
+                                {feedbacks.slice().reverse().map((fb, idx) => (
+                                    <div key={fb.id || idx} className="flex gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0A1B3C] to-[#1a2d5a] flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">
+                                            {fb.teacherName?.charAt(0) ?? 'T'}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-bold text-[#0A1B3C]">
+                                                        {fb.teacherName ?? 'Instructor'}
+                                                    </p>
+                                                    {fb.grade !== null && (
+                                                        <span className="text-[10px] font-bold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded border border-orange-100">
+                                                            Grade: {fb.grade}/100
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 font-medium">
+                                                    {new Date(fb.createdAt).toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-100 italic text-gray-700 text-sm leading-relaxed">
+                                                "{fb.comment}"
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
                             </div>
-                        ) : (
-                            <button
-                                onClick={() => setIsAddingClassComment(true)}
-                                className="flex items-center gap-2 text-sm text-[#F37022] hover:text-[#d96419] font-medium transition-colors"
-                            >
-                                <MessageSquare className="w-4 h-4" />
-                                Add class comment
-                            </button>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* ── RIGHT: Your Work + Private Comments ── */}
@@ -467,66 +437,6 @@ function AssignmentSubmission() {
                         </div>
                     </div>
 
-                    {/* Private Comments Card */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Lock className="w-4 h-4 text-gray-500" />
-                            <h2 className="font-semibold text-gray-700 text-sm">Private comments</h2>
-                        </div>
-
-                        {privateComments.length === 0 && (
-                            <p className="text-xs text-gray-400 mb-3">Only visible to you and your instructor.</p>
-                        )}
-
-                        {privateComments.map((c) => (
-                            <div key={c.id} className="flex gap-2.5 mb-3">
-                                <div className="w-7 h-7 rounded-full bg-[#0A1B3C] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                    {c.author.charAt(0)}
-                                </div>
-                                <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2">
-                                    <p className="text-xs font-semibold text-gray-700">
-                                        {c.author} <span className="font-normal text-gray-400">{c.time}</span>
-                                    </p>
-                                    <p className="text-xs text-gray-700 mt-0.5">{c.text}</p>
-                                </div>
-                            </div>
-                        ))}
-
-                        {isAddingPrivateComment ? (
-                            <div>
-                                <textarea
-                                    autoFocus
-                                    rows={3}
-                                    value={privateComment}
-                                    onChange={(e) => setPrivateComment(e.target.value)}
-                                    placeholder="Add a private comment to your instructor..."
-                                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-[#F37022]/30 focus:border-[#F37022] transition-all"
-                                />
-                                <div className="flex justify-end gap-2 mt-2">
-                                    <button
-                                        onClick={() => { setIsAddingPrivateComment(false); setPrivateComment(''); }}
-                                        className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        disabled={!privateComment.trim()}
-                                        className="px-4 py-1.5 text-xs font-semibold text-white bg-[#0A1B3C] rounded-lg hover:bg-[#1a2d5a] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        Post
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => setIsAddingPrivateComment(true)}
-                                className="flex items-center gap-2 text-xs text-[#0A1B3C] hover:text-[#F37022] font-medium transition-colors"
-                            >
-                                <MessageSquare className="w-3.5 h-3.5" />
-                                Add comment to instructor
-                            </button>
-                        )}
-                    </div>
                 </div>
             </div>
         </div>

@@ -236,7 +236,7 @@ export default function SlotQuestionContentModal({
                     <button
                         type="submit"
                         disabled={isSaving || rows.filter(r => r.content.trim()).length === 0}
-                        className="flex items-center gap-2 px-8 py-2 bg-orange-500 text-white rounded-lg text-sm font-bold hover:bg-orange-600 shadow-md shadow-orange-100 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-8 py-2 bg-orange-500 text-white rounded-lg text-sm font-bold shadow-md shadow-orange-100 transition-all disabled:opacity-50"
                     >
                         {isSaving ? (
                             <>
