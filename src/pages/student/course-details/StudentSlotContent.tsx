@@ -85,7 +85,7 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams 
                                             <p className="text-xs text-gray-500 mt-0.5">
                                                 Due: {new Date(assignment.dueDate).toLocaleDateString()}
                                                 {assignment.timeRemaining && !assignment.submitted && (
-                                                    <span className={`ml-2 font-medium ${assignment.isOverdue ? 'text-red-500' : 'text-orange-500'}`}>
+                                                    <span className={`ml-2 font-semibold ${assignment.isOverdue ? 'text-red-500' : 'text-blue-500'}`}>
                                                         · {assignment.timeRemaining}
                                                     </span>
                                                 )}
@@ -95,14 +95,20 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams 
                                 </div>
                                 <button
                                     onClick={() => navigate(`/student/assignment-submission/${assignment.id}`)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${assignment.submitted
-                                            ? 'bg-green-100 text-green-700'
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${assignment.studentSubmission?.grade !== null && assignment.studentSubmission?.grade !== undefined
+                                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                        : assignment.submitted
+                                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                                             : assignment.isOverdue
                                                 ? 'bg-red-100 text-red-700'
                                                 : 'bg-[#F37022] text-white hover:bg-[#D96419]'
                                         }`}
                                 >
-                                    {assignment.submitted ? 'View Submission' : assignment.isOverdue ? 'Overdue' : 'Submit'}
+                                    {assignment.submitted || (assignment.studentSubmission?.grade !== null && assignment.studentSubmission?.grade !== undefined)
+                                        ? 'Review'
+                                        : assignment.isOverdue
+                                            ? 'Overdue'
+                                            : 'Submit'}
                                 </button>
                             </div>
                         ))}
@@ -146,7 +152,7 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams 
                                             </p>
                                         </div>
                                     </div>
-                                    {isAvailable ? (
+                                    {(isAvailable && !exam.isSubmitted) ? (
                                         <button
                                             className="px-4 py-2 bg-[#F37022] text-white rounded-lg text-sm font-medium hover:bg-[#D96419] flex items-center gap-2"
                                             onClick={() => {
@@ -157,13 +163,18 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams 
                                         </button>
                                     ) : (
                                         <button
-                                            disabled
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${isEnded
-                                                    ? 'bg-green-100 text-green-700 cursor-default'
-                                                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${isEnded || exam.isSubmitted
+                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                                                 }`}
+                                            disabled={!isEnded && !exam.isSubmitted}
+                                            onClick={() => {
+                                                if (isEnded || exam.isSubmitted) {
+                                                    navigate(`/student/exam-lobby/${exam.id}?classSubjectId=${classSubjectId}`);
+                                                }
+                                            }}
                                         >
-                                            {isEnded ? 'Ended' : 'Not Started'}
+                                            {(isEnded || exam.isSubmitted) ? 'Review' : 'Not Started'}
                                         </button>
                                     )}
                                 </div>

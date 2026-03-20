@@ -389,11 +389,11 @@ export default function QuizTest() {
 
   // ── Quiz UI ──
   return (
-    <div className="min-h-screen bg-gray-50/50 animate-fadeIn">
+    <>
       {/* Confirm Submit Modal */}
       {showConfirmSubmit && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-scaleIn">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-4 p-safe animate-fadeIn overflow-hidden">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative">
             <div className="flex items-center gap-4 mb-5">
               <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="w-6 h-6 text-yellow-600" />
@@ -428,207 +428,209 @@ export default function QuizTest() {
         </div>
       )}
 
-      {/* ── Main Layout Container ── */}
-      <div className="max-w-[1600px] mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="min-h-screen bg-gray-50/50 animate-fadeIn">
+        {/* ── Main Layout Container ── */}
+        <div className="max-w-[1600px] mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-          {/* 1. LEFT SIDEBAR: Info, Timer, Navigator */}
-          <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-8">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-[#F37022]/10 flex items-center justify-center">
-                  <GraduationCap className="w-6 h-6 text-[#F37022]" />
+            {/* 1. LEFT SIDEBAR: Info, Timer, Navigator */}
+            <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-8">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-2xl bg-[#F37022]/10 flex items-center justify-center">
+                    <GraduationCap className="w-6 h-6 text-[#F37022]" />
+                  </div>
+                  <div>
+                    <h1 className="text-lg font-bold text-[#0A1B3C] leading-tight line-clamp-2 uppercase">{examData.examDisplayName || 'Exam'}</h1>
+                    <p className="text-[10px] font-semibold text-gray-400 tracking-widest mt-0.5 uppercase">TEST / EXAM</p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-lg font-bold text-[#0A1B3C] leading-tight line-clamp-2 uppercase">{examData.examDisplayName || 'Exam'}</h1>
-                  <p className="text-[10px] font-semibold text-gray-400 tracking-widest mt-0.5 uppercase">TEST / EXAM</p>
+
+                <div className="space-y-4">
+                  <div className="pt-4 border-t border-gray-100">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Time Remaining</p>
+                    {timeLeft !== null && (
+                      <div className={`text-3xl font-mono font-bold ${timeLeft <= 300 ? 'text-red-500' : 'text-[#F37022]'}`}>
+                        {formatTime(timeLeft)}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Navigator moved to Left */}
+                  <div className="pt-6 border-t border-gray-100">
+                    <h3 className="text-sm font-bold text-[#0A1B3C] mb-4 flex items-center gap-2">
+                      <div className="w-1 h-4 bg-[#F37022] rounded-full" />
+                      Question Index
+                    </h3>
+
+                    <div className="grid grid-cols-5 gap-2">
+                      {questions.map((q, index) => {
+                        const isAnswered = answers[q.id] !== undefined;
+                        const isStarred = starred[q.id];
+                        const isCurrent = currentQuestion === index;
+                        return (
+                          <button
+                            key={q.id}
+                            onClick={() => scrollToQuestion(q.id, index)}
+                            className={`h-10 rounded-lg font-bold text-xs transition-all relative ${isCurrent
+                              ? 'bg-orange-50 text-[#F37022] border-2 border-[#F37022] shadow-md scale-110 z-10'
+                              : isStarred
+                                ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-300 shadow-sm'
+                                : isAnswered
+                                  ? 'bg-[#F37022] text-white shadow-sm'
+                                  : 'bg-white text-gray-400 border border-gray-100 hover:border-gray-300'
+                              }`}
+                          >
+                            {index + 1}
+                            {isStarred && (
+                              <Star className={`absolute -top-1 -right-1 w-3 h-3 ${isAnswered ? 'text-yellow-600 fill-current' : 'text-yellow-500 fill-current'}`} />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-6 border-t border-gray-100">
+                    <button
+                      onClick={() => {
+                        const prevIdx = Math.max(0, currentQuestion - 1);
+                        scrollToQuestion(questions[prevIdx].id, prevIdx);
+                      }}
+                      disabled={currentQuestion === 0}
+                      className="flex items-center justify-center gap-2 px-4 py-4 bg-gray-100 text-[#0A1B3C] rounded-xl font-bold text-sm hover:bg-gray-200 transition-all active:scale-95 disabled:opacity-40"
+                    >
+                      <ChevronLeft className="w-5 h-5" /> Previous
+                    </button>
+                    <button
+                      onClick={() => {
+                        const nextIdx = Math.min(questions.length - 1, currentQuestion + 1);
+                        scrollToQuestion(questions[nextIdx].id, nextIdx);
+                      }}
+                      disabled={currentQuestion === questions.length - 1}
+                      className="flex items-center justify-center gap-2 px-4 py-4 bg-[#F37022] text-white rounded-xl font-bold text-sm hover:bg-[#D96419] transition-all active:scale-95 shadow-lg shadow-orange-100 disabled:opacity-40"
+                    >
+                      Next <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-4">
-                <div className="pt-4 border-t border-gray-100">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Time Remaining</p>
-                  {timeLeft !== null && (
-                    <div className={`text-3xl font-mono font-bold ${timeLeft <= 300 ? 'text-red-500' : 'text-[#F37022]'}`}>
-                      {formatTime(timeLeft)}
+            {/* 2. CENTER CONTENT: Question Scrolling List */}
+            <div className="lg:col-span-7 space-y-8 pb-32">
+              {questions.map((q, index) => (
+                <div
+                  key={q.id}
+                  id={`question-${q.id}`}
+                  className={`bg-white rounded-2xl border transition-all duration-300 ${currentQuestion === index ? 'border-[#F37022] ring-1 ring-[#F37022]/20 shadow-md scale-[1.01]' : 'border-gray-100 shadow-sm'} p-8`}
+                  onClick={() => setCurrentQuestion(index)}
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="inline-block px-3 py-1 bg-[#F37022]/10 text-[#F37022] text-xs font-bold rounded-full uppercase tracking-wider">
+                          Question {index + 1}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleStar(q.id);
+                          }}
+                          className={`p-1.5 rounded-lg transition-all ${starred[q.id] ? 'bg-yellow-50 text-yellow-500' : 'bg-gray-50 text-gray-300 hover:text-gray-400'}`}
+                        >
+                          <Star className={`w-4 h-4 ${starred[q.id] ? 'fill-current' : ''}`} />
+                        </button>
+                      </div>
+                      <h3 className="text-xl font-bold text-[#0A1B3C] leading-relaxed">
+                        {q.questionContent}
+                      </h3>
                     </div>
-                  )}
-                </div>
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1 ml-4 whitespace-nowrap">Single Choice</span>
+                  </div>
 
-                {/* Navigator moved to Left */}
-                <div className="pt-6 border-t border-gray-100">
-                  <h3 className="text-sm font-bold text-[#0A1B3C] mb-4 flex items-center gap-2">
-                    <div className="w-1 h-4 bg-[#F37022] rounded-full" />
-                    Question Index
-                  </h3>
-
-                  <div className="grid grid-cols-5 gap-2">
-                    {questions.map((q, index) => {
-                      const isAnswered = answers[q.id] !== undefined;
-                      const isStarred = starred[q.id];
-                      const isCurrent = currentQuestion === index;
+                  <div className="space-y-4">
+                    {q.options.map((option, oIdx) => {
+                      const isSelected = answers[q.id] === option.id;
                       return (
                         <button
-                          key={q.id}
-                          onClick={() => scrollToQuestion(q.id, index)}
-                          className={`h-10 rounded-lg font-bold text-xs transition-all relative ${isCurrent
-                            ? 'bg-orange-50 text-[#F37022] border-2 border-[#F37022] shadow-md scale-110 z-10'
-                            : isStarred
-                              ? 'bg-yellow-100 text-yellow-700 border-2 border-yellow-300 shadow-sm'
-                              : isAnswered
-                                ? 'bg-[#F37022] text-white shadow-sm'
-                                : 'bg-white text-gray-400 border border-gray-100 hover:border-gray-300'
+                          key={option.id}
+                          onClick={() => {
+                            handleAnswer(q.id, option.id);
+                          }}
+                          className={`group w-full flex items-center gap-4 p-5 text-left rounded-xl border-2 transition-all duration-200 ${isSelected
+                            ? 'border-[#F37022] bg-[#F37022]/5'
+                            : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
                             }`}
                         >
-                          {index + 1}
-                          {isStarred && (
-                            <Star className={`absolute -top-1 -right-1 w-3 h-3 ${isAnswered ? 'text-yellow-600 fill-current' : 'text-yellow-500 fill-current'}`} />
-                          )}
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-[#F37022] bg-[#F37022]' : 'border-gray-200 group-hover:border-gray-300'
+                            }`}>
+                            {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />}
+                          </div>
+                          <span className="text-base font-semibold text-[#0A1B3C] flex items-start gap-3">
+                            <span className="text-gray-400 font-bold">{String.fromCharCode(65 + oIdx)}.</span>
+                            {option.choiceContent}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
-
                 </div>
+              ))}
+            </div>
 
-                <div className="grid grid-cols-2 gap-3 pt-6 border-t border-gray-100">
-                  <button
-                    onClick={() => {
-                      const prevIdx = Math.max(0, currentQuestion - 1);
-                      scrollToQuestion(questions[prevIdx].id, prevIdx);
-                    }}
-                    disabled={currentQuestion === 0}
-                    className="flex items-center justify-center gap-2 px-4 py-4 bg-gray-100 text-[#0A1B3C] rounded-xl font-bold text-sm hover:bg-gray-200 transition-all active:scale-95 disabled:opacity-40"
-                  >
-                    <ChevronLeft className="w-5 h-5" /> Previous
-                  </button>
-                  <button
-                    onClick={() => {
-                      const nextIdx = Math.min(questions.length - 1, currentQuestion + 1);
-                      scrollToQuestion(questions[nextIdx].id, nextIdx);
-                    }}
-                    disabled={currentQuestion === questions.length - 1}
-                    className="flex items-center justify-center gap-2 px-4 py-4 bg-[#F37022] text-white rounded-xl font-bold text-sm hover:bg-[#D96419] transition-all active:scale-95 shadow-lg shadow-orange-100 disabled:opacity-40"
-                  >
-                    Next <ChevronRight className="w-5 h-5" />
-                  </button>
+            {/* 3. RIGHT SIDEBAR: Progress & Status */}
+            <div className="lg:col-span-2 space-y-6 lg:sticky lg:top-8">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Submission Status</h3>
+
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-gray-600 uppercase">Overall Progress</span>
+                      <span className="text-sm font-bold text-[#F37022]">{answeredCount}/{questions.length}</span>
+                    </div>
+                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-50">
+                      <div
+                        className="h-full bg-[#F37022] transition-all duration-700 ease-out shadow-sm"
+                        style={{ width: `${questions.length > 0 ? (answeredCount / questions.length) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+
+
+                  <div className="pt-6 border-t border-gray-100">
+                    {savingStatus !== 'idle' && (
+                      <div className={`flex items-center justify-center gap-2 text-[10px] font-semibold px-3 py-2 rounded-lg border ${savingStatus === 'saving' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
+                        savingStatus === 'saved' ? 'bg-green-50 text-green-600 border-green-100' :
+                          'bg-red-50 text-red-600 border-red-100'
+                        }`}>
+                        {savingStatus === 'saving' ? <Loader2 className="w-3 h-3 animate-spin" /> :
+                          savingStatus === 'saved' ? <Cloud className="w-3.5 h-3.5" /> :
+                            <CloudOff className="w-3.5 h-3.5" />}
+                        {savingStatus === 'saving' ? 'Saving...' :
+                          savingStatus === 'saved' ? 'Synced' : 'Sync Error'}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* 2. CENTER CONTENT: Question Scrolling List */}
-          <div className="lg:col-span-7 space-y-8 pb-32">
-            {questions.map((q, index) => (
-              <div
-                key={q.id}
-                id={`question-${q.id}`}
-                className={`bg-white rounded-2xl border transition-all duration-300 ${currentQuestion === index ? 'border-[#F37022] ring-1 ring-[#F37022]/20 shadow-md scale-[1.01]' : 'border-gray-100 shadow-sm'} p-8`}
-                onClick={() => setCurrentQuestion(index)}
+              <button
+                onClick={() => handleSubmit(false)}
+                disabled={isSubmitting}
+                className="w-full h-16 bg-[#F37022] text-white rounded-2xl font-bold text-sm hover:bg-[#D96419] disabled:opacity-50 transition-all active:scale-95 shadow-xl shadow-orange-100 flex items-center justify-center gap-2"
               >
-                <div className="flex justify-between items-start mb-6">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="inline-block px-3 py-1 bg-[#F37022]/10 text-[#F37022] text-xs font-bold rounded-full uppercase tracking-wider">
-                        Question {index + 1}
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleStar(q.id);
-                        }}
-                        className={`p-1.5 rounded-lg transition-all ${starred[q.id] ? 'bg-yellow-50 text-yellow-500' : 'bg-gray-50 text-gray-300 hover:text-gray-400'}`}
-                      >
-                        <Star className={`w-4 h-4 ${starred[q.id] ? 'fill-current' : ''}`} />
-                      </button>
-                    </div>
-                    <h3 className="text-xl font-bold text-[#0A1B3C] leading-relaxed">
-                      {q.questionContent}
-                    </h3>
-                  </div>
-                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1 ml-4 whitespace-nowrap">Single Choice</span>
-                </div>
-
-                <div className="space-y-4">
-                  {q.options.map((option, oIdx) => {
-                    const isSelected = answers[q.id] === option.id;
-                    return (
-                      <button
-                        key={option.id}
-                        onClick={() => {
-                          handleAnswer(q.id, option.id);
-                        }}
-                        className={`group w-full flex items-center gap-4 p-5 text-left rounded-xl border-2 transition-all duration-200 ${isSelected
-                          ? 'border-[#F37022] bg-[#F37022]/5'
-                          : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
-                          }`}
-                      >
-                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-[#F37022] bg-[#F37022]' : 'border-gray-200 group-hover:border-gray-300'
-                          }`}>
-                          {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />}
-                        </div>
-                        <span className="text-base font-semibold text-[#0A1B3C] flex items-start gap-3">
-                          <span className="text-gray-400 font-bold">{String.fromCharCode(65 + oIdx)}.</span>
-                          {option.choiceContent}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* 3. RIGHT SIDEBAR: Progress & Status */}
-          <div className="lg:col-span-2 space-y-6 lg:sticky lg:top-8">
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Submission Status</h3>
-
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold text-gray-600 uppercase">Overall Progress</span>
-                    <span className="text-sm font-bold text-[#F37022]">{answeredCount}/{questions.length}</span>
-                  </div>
-                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-50">
-                    <div
-                      className="h-full bg-[#F37022] transition-all duration-700 ease-out shadow-sm"
-                      style={{ width: `${questions.length > 0 ? (answeredCount / questions.length) * 100 : 0}%` }}
-                    />
-                  </div>
-                </div>
-
-
-                <div className="pt-6 border-t border-gray-100">
-                  {savingStatus !== 'idle' && (
-                    <div className={`flex items-center justify-center gap-2 text-[10px] font-semibold px-3 py-2 rounded-lg border ${savingStatus === 'saving' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
-                      savingStatus === 'saved' ? 'bg-green-50 text-green-600 border-green-100' :
-                        'bg-red-50 text-red-600 border-red-100'
-                      }`}>
-                      {savingStatus === 'saving' ? <Loader2 className="w-3 h-3 animate-spin" /> :
-                        savingStatus === 'saved' ? <Cloud className="w-3.5 h-3.5" /> :
-                          <CloudOff className="w-3.5 h-3.5" />}
-                      {savingStatus === 'saving' ? 'Saving...' :
-                        savingStatus === 'saved' ? 'Synced' : 'Sync Error'}
-                    </div>
-                  )}
-                </div>
-              </div>
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                <span>SUBMIT EXAM</span>
+              </button>
             </div>
-
-            <button
-              onClick={() => handleSubmit(false)}
-              disabled={isSubmitting}
-              className="w-full h-16 bg-[#F37022] text-white rounded-2xl font-bold text-sm hover:bg-[#D96419] disabled:opacity-50 transition-all active:scale-95 shadow-xl shadow-orange-100 flex items-center justify-center gap-2"
-            >
-              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-              <span>SUBMIT EXAM</span>
-            </button>
           </div>
         </div>
+        {/* Spacer to prevent overlap with floating navigation bar in Quiz mode */}
+        <div className="h-10" />
       </div>
-      {/* Spacer to prevent overlap with floating navigation bar in Quiz mode */}
-      <div className="h-10" />
-    </div>
+    </>
   );
 }
