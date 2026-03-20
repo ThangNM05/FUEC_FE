@@ -13,7 +13,7 @@ const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions }) => {
         <div className="space-y-8 mt-12 max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold text-[#0A1B3C] border-b pb-4 flex items-center gap-3">
                 <div className="w-2 h-8 bg-[#F37022] rounded-full" />
-                Chi tiết bài làm
+                Exam Details
             </h2>
             
             {questions.map((q, index) => {
@@ -25,22 +25,22 @@ const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions }) => {
                     <div key={q.id || index} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
-                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-full uppercase tracking-wider">
-                                    Câu {index + 1}
+                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full uppercase tracking-wider">
+                                    Question {index + 1}
                                 </span>
                                 {studentChoiceId ? (
                                     isCorrect ? (
-                                        <span className="flex items-center gap-1 text-xs font-bold text-green-600">
-                                            <Check className="w-3.5 h-3.5" /> Đúng
+                                        <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
+                                            <Check className="w-3.5 h-3.5" /> Correct
                                         </span>
                                     ) : (
-                                        <span className="flex items-center gap-1 text-xs font-bold text-red-600">
-                                            <X className="w-3.5 h-3.5" /> Sai
+                                        <span className="flex items-center gap-1 text-xs font-semibold text-red-600">
+                                            <X className="w-3.5 h-3.5" /> Incorrect
                                         </span>
                                     )
                                 ) : (
-                                    <span className="flex items-center gap-1 text-xs font-bold text-gray-400 font-medium">
-                                        <AlertCircle className="w-3.5 h-3.5" /> Chưa trả lời
+                                        <span className="flex items-center gap-1 text-xs font-semibold text-gray-400">
+                                        <AlertCircle className="w-3.5 h-3.5" /> Unanswered
                                     </span>
                                 )}
                             </div>

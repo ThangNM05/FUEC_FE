@@ -29,12 +29,11 @@ function StudentExams() {
 
       const examItem = {
         ...exam,
-        course: exam.subjectName || exam.category,
+        course: exam.displayName || exam.subjectName || exam.category,
         code: exam.subjectCode || '-',
         type: exam.tag || 'Exam',
         date: exam.startTime,
         time: `${new Date(exam.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(exam.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-        room: 'Online',
         duration: Math.round((new Date(exam.endTime).getTime() - new Date(exam.startTime).getTime()) / 60000) + ' minutes',
         daysLeft: Math.ceil((new Date(exam.startTime).getTime() - now) / (1000 * 60 * 60 * 24)),
         score: exam.grade !== null && exam.grade !== undefined ? exam.grade : null,
@@ -68,7 +67,7 @@ function StudentExams() {
   const nearestExam = filteredUpcoming[0];
 
   return (
-    <div className="p-4 md:p-6 animate-fadeIn">
+    <div className="p-4 md:p-6 pb-24 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
         <div className="flex items-center gap-4">
@@ -106,24 +105,33 @@ function StudentExams() {
             <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-300 rounded-xl mb-6 shadow-sm">
               <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
               <div>
-                <div className="font-semibold text-yellow-800">Sắp thi</div>
+                <div className="font-semibold text-yellow-800">Upcoming Exam</div>
                 <div className="text-sm text-yellow-700">
-                  Bạn có bài kiểm tra môn {nearestExam.course} trong {nearestExam.daysLeft} ngày tới. Hãy chuẩn bị kỹ lưỡng!
+                  You have an exam for {nearestExam.course} in {nearestExam.daysLeft} days. Get ready!
                 </div>
               </div>
             </div>
           )}
 
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-[#F37022]/10 flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-[#F37022]" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-[#0A1B3C]">Upcoming Exams</h1>
+              <p className="text-gray-500 text-sm mt-0.5">Manage your exam schedules and participation</p>
+            </div>
+          </div>
           {/* Upcoming Exams */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6 shadow-sm">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-[#0A1B3C]">Bài thi sắp diễn ra</h2>
+              <h2 className="text-lg font-bold text-[#0A1B3C]">Upcoming Exams</h2>
             </div>
 
             <div className="space-y-4">
               {filteredUpcoming.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
-                  Không có bài thi nào sắp diễn ra.
+                  No upcoming exams.
                 </div>
               ) : (
                 filteredUpcoming.map(exam => (
@@ -132,32 +140,24 @@ function StudentExams() {
                       <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-3 mb-3">
                           <h3 className="font-semibold text-[#0A1B3C] text-lg">{exam.course}</h3>
-                          <span className="px-2 py-0.5 bg-blue-50 text-[#0066b3] text-xs font-semibold rounded">{exam.code}</span>
                           <span className="px-2 py-0.5 bg-orange-50 text-orange-600 text-xs font-semibold rounded">{exam.type}</span>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-gray-400" />
                             <div>
-                              <div className="text-xs text-gray-500">Ngày thi</div>
+                              <div className="text-xs text-gray-500">Date</div>
                               <div className="text-sm font-medium text-[#0A1B3C]">
-                                {new Date(exam.date).toLocaleDateString('vi-VN')}
+                                {new Date(exam.date).toLocaleDateString('en-US')}
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-gray-400" />
                             <div>
-                              <div className="text-xs text-gray-500">Thời gian</div>
+                              <div className="text-xs text-gray-500">Time</div>
                               <div className="text-sm font-medium text-[#0A1B3C]">{exam.time}</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-gray-400" />
-                            <div>
-                              <div className="text-xs text-gray-500">Phòng thi</div>
-                              <div className="text-sm font-medium text-[#0A1B3C]">{exam.room}</div>
                             </div>
                           </div>
                         </div>
@@ -165,13 +165,13 @@ function StudentExams() {
 
                       <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
                         <div className={`px-4 py-2 rounded-lg font-semibold text-sm ${exam.daysLeft <= 0 ? 'bg-green-100 text-green-700' : exam.daysLeft <= 3 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}`}>
-                          {exam.daysLeft <= 0 ? 'Đang diễn ra' : `Còn ${exam.daysLeft} ngày`}
+                          {exam.daysLeft <= 0 ? 'Ongoing' : `${exam.daysLeft} days left`}
                         </div>
                         <button
                           onClick={() => navigate(`/student/exam-lobby/${exam.id}?classSubjectId=${exam.classSubjectId}`)}
-                          className="px-4 py-2 w-full bg-[#0A1B3C] hover:bg-[#1a3a6c] text-white text-sm font-semibold rounded-lg transition-colors"
+                          className="px-4 py-2 w-full bg-[#0A1B3C] hover:bg-[#F37022] text-white text-sm font-semibold rounded-lg transition-colors"
                         >
-                          Vào Lobby
+                          Enter Exam
                         </button>
                       </div>
                     </div>
@@ -184,35 +184,33 @@ function StudentExams() {
           {/* Past Exams */}
           <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-[#0A1B3C]">Lịch sử bài thi</h2>
+              <h2 className="text-lg font-bold text-[#0A1B3C]">Exam History</h2>
             </div>
 
             {filteredPast.length === 0 ? (
               <div className="text-center py-8 text-gray-500 border rounded-xl border-dashed border-gray-300">
-                Chưa có lịch sử làm bài.
+                No exam history found.
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b-2 border-gray-200">
-                      <th className="p-3 text-left text-sm font-semibold text-gray-700">Môn học</th>
-                      <th className="p-3 text-left text-sm font-semibold text-gray-700">Mã môn</th>
-                      <th className="p-3 text-left text-sm font-semibold text-gray-700">Loại bài thi</th>
-                      <th className="p-3 text-center text-sm font-semibold text-gray-700">Thời gian</th>
-                      <th className="p-3 text-center text-sm font-semibold text-gray-700">Điểm (hệ 10)</th>
-                      <th className="p-3 text-center text-sm font-semibold text-gray-700">Trạng thái</th>
-                      <th className="p-3 text-right text-sm font-semibold text-gray-700">Hành động</th>
+                      <th className="p-3 text-left text-sm font-semibold text-gray-700">Course</th>
+                      <th className="p-3 text-left text-sm font-semibold text-gray-700">Type</th>
+                      <th className="p-3 text-center text-sm font-semibold text-gray-700">Time</th>
+                      <th className="p-3 text-center text-sm font-semibold text-gray-700">Grade (10-pt)</th>
+                      <th className="p-3 text-center text-sm font-semibold text-gray-700">Status</th>
+                      <th className="p-3 text-right text-sm font-semibold text-gray-700">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredPast.map(exam => (
                       <tr key={exam.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                         <td className="p-4 font-medium text-[#0A1B3C]">{exam.course}</td>
-                        <td className="p-4 text-gray-600 font-mono text-sm">{exam.code}</td>
                         <td className="p-4 text-gray-600">{exam.type}</td>
                         <td className="p-4 text-center text-gray-600 text-sm">
-                          {new Date(exam.date).toLocaleDateString('vi-VN')}
+                          {new Date(exam.date).toLocaleDateString('en-US')}
                         </td>
                         <td className="p-4 text-center font-bold text-orange-600 text-lg">
                           {exam.score !== null ? Number(exam.score).toFixed(1) : '-'}
@@ -220,11 +218,11 @@ function StudentExams() {
                         <td className="p-4 text-center">
                           {exam.isSubmitted ? (
                             <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-full border border-green-200">
-                              Đã nộp bài
+                              Submitted
                             </span>
                           ) : (
                             <span className="px-3 py-1 bg-red-50 text-red-700 text-xs font-semibold rounded-full border border-red-200">
-                              Bỏ lỡ
+                              Missed
                             </span>
                           )}
                         </td>
@@ -233,7 +231,7 @@ function StudentExams() {
                             onClick={() => navigate(`/student/exam-lobby/${exam.id}?classSubjectId=${exam.classSubjectId}`)}
                             className="text-orange-500 text-sm font-semibold hover:text-orange-600 hover:underline"
                           >
-                            Chi tiết
+                            Details
                           </button>
                         </td>
                       </tr>
@@ -243,6 +241,8 @@ function StudentExams() {
               </div>
             )}
           </div>
+          {/* Spacer to prevent overlap with floating navigation bar */}
+          <div className="h-20" />
         </>
       )}
     </div>

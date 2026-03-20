@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Modal, Descriptions, Spin, Table, Tag, Progress } from 'antd';
 import { Calendar, ClipboardCheck, Lock, Globe, Shield, RefreshCw, Copy, Check, Timer } from 'lucide-react';
-import { useGetExamQuestionsQuery } from '@/api/examsApi';
 import { toast } from 'sonner';
 import type { Exam } from '@/types/exam.types';
+import StudentProgressionView from './StudentProgressionView';
 import { generateTOTP } from '@/utils/otp';
 
 interface ExamDetailModalProps {
@@ -18,19 +18,12 @@ export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailMod
     const [timeLeft, setTimeLeft] = useState<number>(30);
     const [progress, setProgress] = useState<number>(100);
 
-    const { data: questionsData, isLoading } = useGetExamQuestionsQuery(
-        { examId: exam?.id || '' },
-        { skip: !exam?.id || !isOpen }
-    );
-
-    const questions = questionsData?.items || [];
-
     // TOTP Logic
     useEffect(() => {
         if (!isOpen || !exam || exam.securityMode !== 2 || !exam.accessCode) return;
 
         const handleGenerate = async () => {
-            const secret = (exam.accessCode || '').split('=')[0]; 
+            const secret = (exam.accessCode || '').split('=')[0];
             const code = await generateTOTP(secret);
             setOtpCode(code);
         };
@@ -51,36 +44,14 @@ export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailMod
         return () => clearInterval(timer);
     }, [isOpen, exam]);
 
-    const columns = [
-        {
-            title: '#',
-            key: 'index',
-            width: 60,
-            render: (_: any, __: any, index: number) => index + 1,
-        },
-        {
-            title: 'Question Content',
-            dataIndex: 'questionContent',
-            key: 'content',
-            render: (text: string) => (
-                <div className="max-w-xl whitespace-pre-wrap">{text}</div>
-            ),
-        },
-        {
-            title: 'Points',
-            dataIndex: 'points',
-            key: 'points',
-            width: 100,
-            render: (points: number) => <Tag color="blue">{points} pts</Tag>,
-        },
-    ];
+    // TOTP Logic
 
     return (
         <Modal
             title={
                 <div className="flex items-center gap-2">
                     <ClipboardCheck className="w-5 h-5 text-[#F37022]" />
-                    <span>Exam Details: {exam?.category} {exam?.displayName ? `- ${exam.displayName}` : ''}</span>
+                    <span className="font-bold text-[#0A1B3C]">Exam Details: {exam?.category} {exam?.displayName ? `- ${exam.displayName}` : ''}</span>
                 </div>
             }
             open={isOpen}
@@ -112,7 +83,7 @@ export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailMod
                                     {exam.securityMode === 2 ? (
                                         <>
                                             <RefreshCw className="w-4 h-4 text-purple-500" />
-                                            <Tag color="purple">Dynamic Code (30s)</Tag>
+                                            <Tag color="purple">Dynamic Code</Tag>
                                         </>
                                     ) : (
                                         <>
@@ -145,11 +116,6 @@ export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailMod
                             <Descriptions.Item label="Syllabus" span={2}>
                                 {exam.syllabusName} ({exam.weight}%)
                             </Descriptions.Item>
-                            <Descriptions.Item label="Encrypted Secret">
-                                <Tag color="blue" className="font-mono text-xs max-w-[150px] truncate" title={exam.accessCode || ''}>
-                                    {exam.accessCode || 'Not Set'}
-                                </Tag>
-                            </Descriptions.Item>
                         </Descriptions>
                     </div>
 
@@ -163,12 +129,12 @@ export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailMod
 
                             <div className="flex items-center gap-2 text-blue-800 font-bold uppercase tracking-wider text-sm z-10">
                                 <Lock className="w-4 h-4" />
-                                {exam.securityMode === 2 ? 'DYNAMIC ACCESS CODE (TOTP)' : 'STATIC ACCESS CODE'}
+                                {exam.securityMode === 2 ? 'DYNAMIC ACCESS CODE' : 'STATIC ACCESS CODE'}
                             </div>
 
                             <div className="flex flex-col items-center gap-4 z-10 w-full max-w-md">
                                 <div className="flex items-center gap-4 bg-white px-10 py-6 rounded-2xl border-2 border-dashed border-blue-200 group relative shadow-inner">
-                                    <span className={`text-5xl font-black font-mono tracking-widest ${exam.securityMode === 2 ? 'text-[#F37022]' : 'text-blue-900'}`}>
+                                    <span className={`text-5xl font-bold font-mono tracking-widest ${exam.securityMode === 2 ? 'text-[#F37022]' : 'text-blue-900'}`}>
                                         {exam.securityMode === 2 ? otpCode || '------' : exam.accessCode || 'XXXXXX'}
                                     </span>
                                     <button
@@ -213,38 +179,17 @@ export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailMod
                             </div>
 
                             <p className="text-sm text-blue-600 font-medium z-10">
-                                {exam.securityMode === 2 
-                                    ? '* Provide this 6-digit code to students. It refreshes automatically.' 
+                                {exam.securityMode === 2
+                                    ? '* Provide this 6-digit code to students. It refreshes automatically.'
                                     : '* Share this static code with students to allow them to enter the exam.'}
                             </p>
-                            
-                            {exam.securityMode === 2 && (
-                                <div className="mt-2 p-2 bg-blue-100/50 rounded-lg border border-blue-200/50 z-10">
-                                    <p className="text-[10px] text-blue-500 font-mono">
-                                        Secret Key: {exam.accessCode}
-                                    </p>
-                                </div>
-                            )}
+
                         </div>
                     )}
 
-                    {/* Questions Table */}
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-[#0A1B3C] flex items-center gap-2">
-                                <Shield className="w-5 h-5 text-[#F37022]" />
-                                Exam Questions ({questions.length})
-                            </h3>
-                        </div>
-                        <Table
-                            columns={columns}
-                            dataSource={questions}
-                            rowKey="id"
-                            loading={isLoading}
-                            pagination={{ pageSize: 10 }}
-                            bordered
-                            size="middle"
-                        />
+                    {/* Analytics and Progression */}
+                    <div className="border-t border-gray-100 pt-6">
+                        <StudentProgressionView exam={exam} />
                     </div>
                 </div>
             ) : (

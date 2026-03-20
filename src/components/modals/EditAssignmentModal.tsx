@@ -200,11 +200,10 @@ export default function EditAssignmentModal({ isOpen, onClose, assignment }: Edi
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onClick={() => fileInputRef.current?.click()}
-                            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${
-                                isDragging
+                            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${isDragging
                                     ? 'border-[#F37022] bg-orange-50'
                                     : 'border-gray-300 hover:border-[#F37022] hover:bg-gray-50'
-                            }`}
+                                }`}
                         >
                             <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-[#F37022]' : 'text-gray-400'}`} />
                             <p className="text-sm font-medium text-gray-700">

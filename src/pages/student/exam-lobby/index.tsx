@@ -16,7 +16,7 @@ function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '---';
   const date = new Date(iso);
   if (isNaN(date.getTime())) return '---';
-  return date.toLocaleString('vi-VN', {
+  return date.toLocaleString('en-US', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   });
@@ -61,21 +61,23 @@ export default function ExamLobby() {
 
   const status = exam ? getExamStatus(exam.startTime, exam.endTime) : 'upcoming';
   const requiresCode = exam ? (exam.securityMode === SecurityMode.StaticCode || exam.securityMode === SecurityMode.DynamicCode) : false;
-  const securityLabel = exam?.securityMode === SecurityMode.DynamicCode ? 'Mã động (TOTP)' : exam?.securityMode === SecurityMode.StaticCode ? 'Mã tĩnh' : 'Không yêu cầu';
+  const securityLabel = exam?.securityMode === SecurityMode.DynamicCode ? 'Dynamic Code' : exam?.securityMode === SecurityMode.StaticCode ? 'Static Code' : 'None';
 
   // Auto-refresh countdown
   const [, setTick] = useState(0);
   useEffect(() => {
     const timer = setInterval(() => setTick(t => t + 1), 1000);
+    // Clear any previous authorization for this exam when entering the lobby
+    if (examId) sessionStorage.removeItem(`quiz_authorized_${examId}`);
     return () => clearInterval(timer);
-  }, []);
+  }, [examId]);
 
   const handleStart = async () => {
     if (!examId) return;
     setErrorMsg('');
 
     if (requiresCode && !accessCode.trim()) {
-      setErrorMsg('Vui lòng nhập mã truy cập.');
+      setErrorMsg('Please enter the access code.');
       return;
     }
 
@@ -85,10 +87,13 @@ export default function ExamLobby() {
         accessCode: (requiresCode && !exam?.isSubmitted) ? accessCode.trim() : undefined,
       }).unwrap();
 
-      navigate(`/student/quiz?studentExamId=${response.studentExamId}&examId=${response.examId}`);
+      // Authorized for this session
+      sessionStorage.setItem(`quiz_authorized_${examId}`, 'true');
+
+      navigate(`/student/quiz?studentExamId=${response.studentExamId}&examId=${response.examId}&classSubjectId=${classSubjectId}`);
     } catch (error: any) {
       console.error('Failed to start exam', error);
-      const msg = error?.data?.message || error?.data?.result || error?.message || 'Không thể bắt đầu bài thi.';
+      const msg = error?.data?.message || error?.data?.result || error?.message || 'Could not start the exam.';
       setErrorMsg(msg);
     }
   };
@@ -108,10 +113,10 @@ export default function ExamLobby() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center bg-white rounded-xl border border-gray-200 p-8 max-w-md">
           <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-[#0A1B3C] mb-2">Không tìm thấy bài thi</h2>
-          <p className="text-gray-600 mb-6">Bài thi này không tồn tại hoặc đã bị xóa.</p>
+          <h2 className="text-xl font-bold text-[#0A1B3C] mb-2">Exam Not Found</h2>
+          <p className="text-gray-600 mb-6">This exam doesn't exist or has been deleted.</p>
           <button onClick={() => navigate(-1)} className="px-6 py-3 bg-[#F37022] text-white rounded-lg font-semibold hover:bg-[#D96419] transition-colors">
-            Quay lại
+            Go Back
           </button>
         </div>
       </div>
@@ -126,7 +131,7 @@ export default function ExamLobby() {
         className="flex items-center gap-2 text-gray-600 hover:text-[#0A1B3C] mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span className="text-sm font-medium">Quay lại khóa học</span>
+        <span className="text-sm font-medium">Back to Course</span>
       </button>
 
       {/* Exam Info Card */}
@@ -150,28 +155,28 @@ export default function ExamLobby() {
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <Calendar className="w-5 h-5 text-blue-500 flex-shrink-0" />
               <div>
-                <p className="text-xs text-gray-500 font-medium">Bắt đầu</p>
+                <p className="text-xs text-gray-500 font-medium">Start</p>
                 <p className="text-sm font-semibold text-[#0A1B3C]">{formatDateTime(exam.startTime)}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <Clock className="w-5 h-5 text-orange-500 flex-shrink-0" />
               <div>
-                <p className="text-xs text-gray-500 font-medium">Kết thúc</p>
+                <p className="text-xs text-gray-500 font-medium">End</p>
                 <p className="text-sm font-semibold text-[#0A1B3C]">{formatDateTime(exam.endTime)}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <Shield className="w-5 h-5 text-purple-500 flex-shrink-0" />
               <div>
-                <p className="text-xs text-gray-500 font-medium">Bảo mật</p>
+                <p className="text-xs text-gray-500 font-medium">Security</p>
                 <p className="text-sm font-semibold text-[#0A1B3C]">{securityLabel}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <FileText className="w-5 h-5 text-green-500 flex-shrink-0" />
               <div>
-                <p className="text-xs text-gray-500 font-medium">Thể loại</p>
+                <p className="text-xs text-gray-500 font-medium">Category</p>
                 <p className="text-sm font-semibold text-[#0A1B3C]">{exam.category || '-'} - {exam.tag || ''}</p>
               </div>
             </div>
@@ -183,9 +188,9 @@ export default function ExamLobby() {
               <div className="flex items-center gap-3">
                 <Clock className="w-5 h-5 text-blue-600 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-blue-800">Bài thi chưa bắt đầu</p>
+                  <p className="text-sm font-semibold text-blue-800">Exam hasn't started yet</p>
                   <p className="text-sm text-blue-600 font-mono mt-1">
-                    Bắt đầu sau: {getCountdown(exam.startTime)}
+                    Starting in: {getCountdown(exam.startTime)}
                   </p>
                 </div>
               </div>
@@ -196,7 +201,7 @@ export default function ExamLobby() {
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
               <div className="flex items-center gap-3">
                 <Lock className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                <p className="text-sm font-semibold text-gray-600">Bài thi đã kết thúc</p>
+                <p className="text-sm font-semibold text-gray-600">Exam has ended</p>
               </div>
             </div>
           )}
@@ -208,14 +213,20 @@ export default function ExamLobby() {
                   <div className="flex items-center gap-3">
                     <Shield className="w-5 h-5 text-blue-600 flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-semibold text-blue-800">Bạn đã hoàn thành bài thi này</p>
-                      <p className="text-sm text-blue-600 mt-0.5">Thời gian nộp bài: {formatDateTime(exam.submittedAt)}</p>
+                      <p className="text-sm font-semibold text-blue-800">You have completed this exam</p>
+                      <p className="text-sm text-blue-600 mt-0.5">Submitted at: {formatDateTime(exam.submittedAt)}</p>
+                      {!exam.isPublicGrade && (
+                        <p className="text-xs text-blue-500 font-medium mt-2 flex items-center gap-1.5 bg-blue-100/50 w-fit px-2 py-1 rounded-md">
+                          <Lock className="w-3 h-3" />
+                          Results are currently set to private by the teacher.
+                        </p>
+                      )}
                     </div>
                   </div>
                   {exam.grade !== null && (
                     <div className="text-right">
-                      <p className="text-xs text-blue-500 font-medium uppercase tracking-wider">Điểm số</p>
-                      <p className="text-2xl font-black text-blue-700">{exam.grade.toFixed(1)} <span className="text-sm font-normal text-blue-400">/ 10</span></p>
+                      <p className="text-xs text-blue-500 font-medium uppercase tracking-wider">Score</p>
+                      <p className="text-2xl font-bold text-blue-700">{exam.grade.toFixed(1)} <span className="text-sm font-normal text-blue-400">/ 10</span></p>
                     </div>
                   )}
                 </div>
@@ -225,9 +236,9 @@ export default function ExamLobby() {
                 <div className="flex items-center gap-3">
                   <Play className="w-5 h-5 text-green-600 flex-shrink-0" />
                   <div>
-                    <p className="text-sm font-semibold text-green-800">Bài thi đang mở</p>
+                    <p className="text-sm font-semibold text-green-800">Exam is open</p>
                     <p className="text-sm text-green-600 font-mono mt-1">
-                      Còn lại: {getCountdown(exam.endTime)}
+                      Time remaining: {getCountdown(exam.endTime)}
                     </p>
                   </div>
                 </div>
@@ -240,13 +251,13 @@ export default function ExamLobby() {
             <div className="mb-6">
               <label className="block text-sm font-semibold text-[#0A1B3C] mb-2">
                 <Lock className="w-4 h-4 inline mr-1.5 -mt-0.5" />
-                Mã truy cập bài thi
+                Access Code
               </label>
               <input
                 type="text"
                 value={accessCode}
                 onChange={(e) => { setAccessCode(e.target.value); setErrorMsg(''); }}
-                placeholder={exam.securityMode === SecurityMode.DynamicCode ? 'Nhập mã TOTP từ giáo viên...' : 'Nhập mã truy cập...'}
+                placeholder={exam.securityMode === SecurityMode.DynamicCode ? 'Enter code from teacher...' : 'Enter access code...'}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-[#F37022] focus:outline-none text-lg font-mono tracking-wider text-center transition-colors"
                 maxLength={50}
                 autoFocus
@@ -271,23 +282,29 @@ export default function ExamLobby() {
               className="w-full py-4 bg-[#F37022] text-white rounded-lg font-bold text-lg hover:bg-[#D96419] disabled:opacity-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-orange-200"
             >
               {isStarting ? (
-                <><Loader2 className="w-5 h-5 animate-spin" /> Đang mở bài thi...</>
+                <><Loader2 className="w-5 h-5 animate-spin" /> Opening exam...</>
               ) : (
-                <><Play className="w-5 h-5" /> Vào làm bài</>
+                <><Play className="w-5 h-5" /> Start Exam</>
               )}
             </button>
           )}
 
           {/* View Result Button for submitted exams */}
           {exam.isSubmitted && (
-            <button
-              onClick={() => {
-                navigate(`/student/quiz?studentExamId=${exam.studentExamId}&examId=${exam.id}`);
-              }}
-              className="w-full py-4 bg-[#0A1B3C] text-white rounded-lg font-bold text-lg hover:bg-[#1a3a6c] transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-200"
-            >
-              <FileText className="w-5 h-5" /> Xem kết quả bài làm
-            </button>
+            exam.isPublicGrade ? (
+              <button
+                onClick={() => {
+                  navigate(`/student/quiz?studentExamId=${exam.studentExamId}&examId=${exam.id}`);
+                }}
+                className="w-full py-4 bg-[#0A1B3C] text-white rounded-lg font-bold text-lg hover:bg-[#1a3a6c] transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-200"
+              >
+                <FileText className="w-5 h-5" /> View Results
+              </button>
+            ) : (
+              <div className="w-full py-4 bg-gray-100 text-gray-500 rounded-lg font-bold text-lg flex items-center justify-center gap-3 border-2 border-dashed border-gray-200">
+                <Lock className="w-5 h-5" /> Results Hidden
+              </div>
+            )
           )}
 
           {/* Disabled button for non-available states */}
@@ -296,29 +313,29 @@ export default function ExamLobby() {
               disabled
               className="w-full py-4 bg-gray-200 text-gray-500 rounded-lg font-bold text-lg cursor-not-allowed"
             >
-              {status === 'upcoming' ? 'Chưa đến giờ thi' : 'Bài thi đã kết thúc'}
+              {status === 'upcoming' ? 'Not started yet' : 'Exam has ended'}
             </button>
           )}
 
           {/* Instructions */}
           <div className="mt-6 pt-6 border-t border-gray-100">
-            <h3 className="text-sm font-semibold text-[#0A1B3C] mb-3">Lưu ý:</h3>
+            <h3 className="text-sm font-semibold text-[#0A1B3C] mb-3">Notes:</h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li className="flex items-start gap-2">
                 <span className="text-orange-500 mt-0.5">•</span>
-                Sau khi bắt đầu, bài thi sẽ được đếm ngược thời gian.
+                Once started, the timer will begin counting down.
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-500 mt-0.5">•</span>
-                Đáp án sẽ được lưu tự động mỗi khi bạn chọn.
+                Your answers are saved automatically as you select them.
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-500 mt-0.5">•</span>
-                Bạn có thể quay lại làm tiếp nếu bị thoát khỏi trang.
+                You can resume your progress if you refresh or exit.
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-orange-500 mt-0.5">•</span>
-                Hệ thống sẽ tự động nộp bài khi hết thời gian.
+                The exam will auto-submit when the timer reaches zero.
               </li>
             </ul>
           </div>

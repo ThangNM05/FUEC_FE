@@ -53,7 +53,7 @@ export default function ImportResultModal({ isOpen, onClose, result, entityName 
                             <CheckCircle className="w-14 h-14 text-green-600" />
                         </div>
                         <div>
-                            <h4 className="text-2xl font-black text-gray-900">Import Completed!</h4>
+                            <h4 className="text-2xl font-bold text-gray-900">Import Completed!</h4>
                             <p className="text-lg text-gray-600 mt-2">
                                 Successfully processed <strong className="text-green-600 font-bold">{successCount}</strong> {entityName}.
                             </p>
@@ -95,7 +95,7 @@ export default function ImportResultModal({ isOpen, onClose, result, entityName 
                                 <div className="mb-3 p-3 bg-green-100 rounded-full">
                                     <CheckCircle className="w-6 h-6 text-green-600" />
                                 </div>
-                                <span className="text-4xl font-black text-green-700">{successCount}</span>
+                                <span className="text-4xl font-bold text-green-700">{successCount}</span>
                                 <span className="text-sm font-bold text-green-600 uppercase tracking-widest mt-1">Succeeded</span>
                             </div>
 
@@ -103,7 +103,7 @@ export default function ImportResultModal({ isOpen, onClose, result, entityName 
                                 <div className="mb-3 p-3 bg-red-100 rounded-full">
                                     <AlertTriangle className="w-6 h-6 text-red-600" />
                                 </div>
-                                <span className="text-4xl font-black text-red-700">{failureCount}</span>
+                                <span className="text-4xl font-bold text-red-700">{failureCount}</span>
                                 <span className="text-sm font-bold text-red-600 uppercase tracking-widest mt-1">Failed</span>
                             </div>
                         </div>

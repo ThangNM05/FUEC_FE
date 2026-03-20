@@ -28,6 +28,7 @@ export interface StudentExam {
     endTime: string;
     questions: QuizQuestion[];
     grade?: number;
+    isPublicGrade: boolean;
     isSubmitted: boolean;
     studentCode?: string;
     studentName?: string;
@@ -48,6 +49,7 @@ const normalizeStudentExam = (data: any): StudentExam => {
         remainingTime: raw.remainingTime || raw.RemainingTime,
         endTime: raw.endTime || raw.ExamEndTime || raw.EndTime,
         isSubmitted: raw.isSubmitted || raw.IsSubmitted || (raw.grade !== null && raw.grade !== undefined),
+        isPublicGrade: raw.isPublicGrade !== undefined ? raw.isPublicGrade : (raw.IsPublicGrade ?? true),
         grade: raw.grade !== undefined ? raw.grade : raw.Grade,
         studentCode: raw.studentCode || raw.StudentCode,
         studentName: raw.studentName || raw.StudentName,
@@ -98,6 +100,24 @@ export const studentExamsApi = baseApi.injectEndpoints({
             },
             providesTags: ['StudentExams'],
         }),
+        getAllStudentExams: builder.query<any, { studentClassesId?: string; examId?: string; page?: number; pageSize?: number }>({
+            query: ({ studentClassesId, examId, page = 1, pageSize = 100 }) => {
+                const params = new URLSearchParams();
+                if (studentClassesId) params.append('StudentClassesId', studentClassesId);
+                if (examId) params.append('ExamId', examId);
+                params.append('PageNumber', (page - 1).toString());
+                params.append('PageSize', pageSize.toString());
+                return `/StudentExams?${params.toString()}`;
+            },
+            transformResponse: (response: any) => {
+                const raw = response.result || response;
+                return {
+                    ...raw,
+                    items: (raw.items || raw.Items || []).map(normalizeStudentExam)
+                };
+            },
+            providesTags: ['StudentExams'],
+        }),
         submitStudentExam: builder.mutation<any, string>({
             query: (id) => ({
                 url: `/StudentExams/${id}/submit`,
@@ -113,5 +133,6 @@ export const {
     useStartStudentExamMutation,
     useGetStudentExamByIdQuery,
     useGetStudentExamsByExamIdQuery,
+    useGetAllStudentExamsQuery,
     useSubmitStudentExamMutation,
 } = studentExamsApi;

@@ -419,7 +419,7 @@ function TeacherCourseDetails() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
+                                className={`flex items-center gap-2 px-6 py-4 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
                                     ? 'border-[#F37022] text-[#F37022]'
                                     : 'border-transparent text-gray-600 hover:text-gray-900'
                                     }`}
@@ -862,11 +862,11 @@ function TeacherCourseDetails() {
                                         <table className="w-full border-collapse">
                                             <thead className="bg-gray-50/80 border-b border-gray-200">
                                                 <tr>
-                                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tên kỳ thi</th>
-                                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Thời gian</th>
-                                                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Số người tham gia</th>
-                                                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Trạng thái</th>
-                                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Hành động</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Exam Name</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Time</th>
+                                                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Participants</th>
+                                                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100">
@@ -875,13 +875,13 @@ function TeacherCourseDetails() {
                                                     const start = new Date(exam.startTime);
                                                     const end = new Date(exam.endTime);
 
-                                                    let status = { label: 'Sắp diễn ra', color: 'bg-blue-50 text-blue-700 border-blue-100' };
+                                                    let status = { label: 'Upcoming', color: 'bg-blue-50 text-blue-700 border-blue-100' };
                                                     if (!exam.isActive) {
-                                                        status = { label: 'Tạm hoãn', color: 'bg-orange-50 text-orange-700 border-orange-100' };
+                                                        status = { label: 'Suspended', color: 'bg-orange-50 text-orange-700 border-orange-100' };
                                                     } else if (now > end) {
-                                                        status = { label: 'Đã kết thúc', color: 'bg-red-50 text-red-700 border-red-100' };
+                                                        status = { label: 'Ended', color: 'bg-red-50 text-red-700 border-red-100' };
                                                     } else if (now >= start && now <= end) {
-                                                        status = { label: 'Đang diễn ra', color: 'bg-green-600 text-white border-transparent' };
+                                                        status = { label: 'Ongoing', color: 'bg-green-600 text-white border-transparent' };
                                                     }
 
                                                     return (
@@ -895,7 +895,7 @@ function TeacherCourseDetails() {
                                                         >
                                                             <td className="px-6 py-4 whitespace-nowrap">
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-sm font-bold text-[#0A1B3C] group-hover:text-[#F37022] transition-colors">
+                                                                    <span className="text-sm font-semibold text-[#0A1B3C] group-hover:text-[#F37022] transition-colors">
                                                                         {exam.displayName || (exam.category ? `${exam.category} ${exam.instanceNumber}` : `PT ${exam.instanceNumber}`)}
                                                                     </span>
                                                                     <span className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider font-medium">{exam.syllabusName}</span>
@@ -904,17 +904,17 @@ function TeacherCourseDetails() {
                                                             <td className="px-6 py-4 whitespace-nowrap">
                                                                 <div className="flex flex-col text-xs text-gray-600">
                                                                     <span className="font-medium text-gray-900">{start.toLocaleDateString('en-GB')} {start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
-                                                                    <span className="text-gray-400 mt-0.5">đến {end.toLocaleDateString('en-GB')} {end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                    <span className="text-gray-400 mt-0.5">to {end.toLocaleDateString('en-GB')} {end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-center">
                                                                 <div className="flex flex-col items-center">
-                                                                    <span className="text-sm font-bold text-gray-800">{exam.participationCount || 0}</span>
-                                                                    <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">/ {course.enrolledStudents} sinh viên</span>
+                                                                    <span className="text-sm font-semibold text-gray-800">{exam.participationCount || 0}</span>
+                                                                    <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">/ {course.enrolledStudents} students</span>
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                                <span className={`px-3 py-1 text-[11px] font-bold rounded-full border inline-block min-w-[100px] ${status.color}`}>
+                                                                <span className={`px-3 py-1 text-[11px] font-semibold rounded-full border inline-block min-w-[100px] ${status.color}`}>
                                                                     {status.label}
                                                                 </span>
                                                             </td>
@@ -927,21 +927,21 @@ function TeacherCourseDetails() {
                                                                             setIsParticipantsModalOpen(true);
                                                                         }}
                                                                         className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all"
-                                                                        title="Xem kết quả"
+                                                                        title="View results"
                                                                     >
                                                                         <Users className="w-5 h-5" />
                                                                     </button>
                                                                     <button
                                                                         onClick={(e) => handleEditExam(e, exam)}
                                                                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                                                        title="Chỉnh sửa"
+                                                                        title="Edit"
                                                                     >
                                                                         <Pencil className="w-4 h-4" />
                                                                     </button>
                                                                     <button
                                                                         onClick={(e) => handleDeleteExam(e, exam)}
                                                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                                        title="Xóa"
+                                                                        title="Delete"
                                                                     >
                                                                         <Trash2 className="w-4 h-4" />
                                                                     </button>

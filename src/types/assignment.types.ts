@@ -102,3 +102,21 @@ export interface StudentAssignmentPaginatedResponse {
     itemFrom: number;
     itemTo: number;
 }
+
+export interface AssignmentFeedback {
+    id: string;
+    studentAssignmentId: string;
+    teacherId: string;
+    teacherName?: string;
+    comment: string;
+    grade?: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateAssignmentFeedbackRequest {
+    studentAssignmentId: string;
+    teacherId: string;
+    comment: string;
+    grade?: number;
+}
