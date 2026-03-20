@@ -9,7 +9,11 @@ import { useSelector } from 'react-redux';
 import FileUploader from '@/components/FileUploader';
 import FileTreeView from '@/components/FileTreeView';
 import { useGetAssignmentByIdQuery } from '@/api/assignmentsApi';
-import { useGetStudentAssignmentsByAssignmentIdQuery, useSubmitAssignmentMutation } from '@/api/studentAssignmentsApi';
+import {
+    useGetStudentAssignmentsByAssignmentIdQuery,
+    useSubmitAssignmentMutation,
+    useDeleteStudentAssignmentMutation
+} from '@/api/studentAssignmentsApi';
 import { useGetAssignmentFeedbacksQuery } from '@/api/assignmentFeedbacksApi';
 import { useUploadFileMutation } from '@/api/filesApi';
 import { selectCurrentUser } from '@/redux/authSlice';
@@ -39,15 +43,20 @@ function AssignmentSubmission() {
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
     const [fileTree, setFileTree] = useState<FileNode[]>([]);
     const [showSuccess, setShowSuccess] = useState(false);
-    const [submitError, setSubmitError] = useState<string | null>(null);
     const [uploadProgress, setUploadProgress] = useState<string | null>(null);
-
+    const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+    const [showUnsubmitConfirm, setShowUnsubmitConfirm] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     // Fetch assignment data from API
     const {
         data: assignment,
         isLoading: isLoadingAssignment,
         isError: isAssignmentError,
     } = useGetAssignmentByIdQuery(id!, { skip: !id });
+
+    const now = new Date();
+    const dueDate = assignment?.dueDate ? new Date(assignment.dueDate) : null;
+    const isBeforeDeadline = !dueDate || now < dueDate;
 
     // Fetch submission history for this assignment (filtered by current student)
     const {
@@ -67,6 +76,9 @@ function AssignmentSubmission() {
     // Submit mutation
     const [submitAssignment, { isLoading: isSubmitting }] = useSubmitAssignmentMutation();
     const [uploadFile] = useUploadFileMutation();
+    const [deleteStudentAssignment, { isLoading: isUnsubmitting }] = useDeleteStudentAssignmentMutation();
+
+    const canUnsubmit = isSubmitted && isBeforeDeadline && latestSubmission?.grade === null;
 
     // Build file tree from uploaded files
     const buildFileTree = (files: UploadedFile[]): FileNode[] => {
@@ -116,6 +128,7 @@ function AssignmentSubmission() {
     };
 
     const handleSubmit = async () => {
+        setShowSubmitConfirm(false);
         if (uploadedFiles.length === 0) {
             alert('Please upload files before submitting');
             return;
@@ -160,6 +173,20 @@ function AssignmentSubmission() {
                 err?.error ||
                 'Submission failed. Please try again.'
             );
+        }
+    };
+
+    const handleUnsubmit = async () => {
+        if (!latestSubmission) return;
+        setSubmitError(null);
+        try {
+            await deleteStudentAssignment(latestSubmission.id).unwrap();
+            setShowUnsubmitConfirm(false);
+            setUploadedFiles([]);
+            setFileTree([]);
+        } catch (err: any) {
+            console.error('Unsubmit failed:', err);
+            setSubmitError('Failed to unsubmit assignment. Please try again.');
         }
     };
 
@@ -270,16 +297,6 @@ function AssignmentSubmission() {
                 {/* ── LEFT: Upload + Class Comments ── */}
                 <div className="lg:col-span-2 space-y-5">
 
-                    {/* File Upload area */}
-                    <FileUploader onFilesChange={handleFilesChange} />
-
-                    {fileTree.length > 0 && (
-                        <div>
-                            <h3 className="text-base font-bold text-[#0A1B3C] mb-3">File Structure Preview</h3>
-                            <FileTreeView files={fileTree} />
-                        </div>
-                    )}
-
                     {/* Instructor Feedback History */}
                     {feedbacks && feedbacks.length > 0 && (
                         <div className="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden animate-slideIn">
@@ -326,18 +343,23 @@ function AssignmentSubmission() {
                 <div className="space-y-4 sticky top-6">
 
                     {/* Your Work Card */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                            <h2 className="font-semibold text-[#0A1B3C]">Your work</h2>
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden transition-all hover:shadow-lg">
+                        <div className={`px-5 py-4 border-b flex items-center justify-between ${latestSubmission?.grade !== null ? 'bg-green-50/50 border-green-100' : 'bg-gray-50/50 border-gray-100'}`}>
+                            <h2 className="font-bold text-[#0A1B3C]">Your work</h2>
                             {isLoadingSubmissions ? (
                                 <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                             ) : isSubmitted ? (
-                                <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600">
-                                    <CheckCircle className="w-3.5 h-3.5" />
-                                    Turned in
-                                </span>
+                                <div className="flex flex-col items-end">
+                                    <span className="flex items-center gap-1.5 text-xs font-bold text-green-600">
+                                        <CheckCircle className="w-3.5 h-3.5" />
+                                        Turned in
+                                    </span>
+                                    {latestSubmission.status === 3 && (
+                                        <span className="text-[10px] font-bold text-red-500">Late</span>
+                                    )}
+                                </div>
                             ) : (
-                                <span className="text-xs font-semibold text-orange-500">Assigned</span>
+                                <span className="text-xs font-bold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">Assigned</span>
                             )}
                         </div>
 
@@ -376,21 +398,35 @@ function AssignmentSubmission() {
                                 </div>
                             )}
 
-                            {/* Status badge for all submissions */}
-                            {mySubmissions.map((sub) => (
-                                <div key={sub.id} className="flex items-center justify-between text-xs text-gray-500 px-1">
-                                    <span>{new Date(sub.createdAt).toLocaleDateString()} {new Date(sub.createdAt).toLocaleTimeString()}</span>
-                                    <span className={`px-2 py-0.5 font-semibold rounded-full ${AssignmentStatusColor[sub.status]}`}>
-                                        {AssignmentStatusLabel[sub.status]}
-                                    </span>
-                                </div>
-                            ))}
+                            {/* Submission status for all history */}
+                            <div className="space-y-2 pt-2">
+                                {mySubmissions.map((sub) => (
+                                    <div key={sub.id} className="flex items-center justify-between text-[10px] text-gray-500 px-1 border-t border-gray-50 pt-2 first:border-0 first:pt-0">
+                                        <span>{new Date(sub.createdAt).toLocaleDateString()} {new Date(sub.createdAt).toLocaleTimeString()}</span>
+                                        <span className={`px-2 py-0.5 font-bold rounded-full scale-90 ${AssignmentStatusColor[sub.status]}`}>
+                                            {AssignmentStatusLabel[sub.status]}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
 
                             {/* Action buttons */}
-                            <div className="pt-1 space-y-2">
+                            <div className="pt-2 space-y-3">
+                                {!isSubmitted && (
+                                    <>
+                                        <FileUploader onFilesChange={handleFilesChange} isCompact />
+                                        {fileTree.length > 0 && (
+                                            <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Structure Preview</h3>
+                                                <FileTreeView files={fileTree} />
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
                                 {/* Upload / submit progress */}
                                 {uploadProgress && (
-                                    <div className="flex items-center gap-2 text-[#F37022] text-xs justify-center py-1 animate-pulse">
+                                    <div className="flex items-center gap-2 text-[#F37022] text-xs justify-center py-1 animate-pulse font-bold">
                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                         {uploadProgress}
                                     </div>
@@ -398,7 +434,7 @@ function AssignmentSubmission() {
 
                                 {/* Success message */}
                                 {showSuccess && (
-                                    <div className="flex items-center gap-2 text-green-600 text-sm justify-center py-1">
+                                    <div className="flex items-center gap-2 text-green-600 text-sm justify-center py-1 font-bold">
                                         <CheckCircle className="w-4 h-4" />
                                         Submitted successfully!
                                     </div>
@@ -406,39 +442,141 @@ function AssignmentSubmission() {
 
                                 {/* Error message */}
                                 {submitError && (
-                                    <div className="flex items-center gap-2 text-red-500 text-xs px-1 py-1">
+                                    <div className="flex items-center gap-2 text-red-500 text-xs px-1 py-1 bg-red-50 rounded-lg">
                                         <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                                        <span>{submitError}</span>
+                                        <span className="font-semibold">{submitError}</span>
                                     </div>
                                 )}
 
                                 {!isSubmitted ? (
                                     <button
-                                        onClick={handleSubmit}
+                                        onClick={() => setShowSubmitConfirm(true)}
                                         disabled={uploadedFiles.length === 0 || isSubmitting}
-                                        className="w-full py-2.5 rounded-xl bg-[#F37022] hover:bg-[#d96419] text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                        className="w-full py-3 rounded-xl bg-[#F37022] hover:bg-[#d96419] text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-100 active:scale-[0.98]"
                                     >
                                         {isSubmitting ? (
-                                            <><Loader2 className="w-4 h-4 animate-spin" /> {uploadProgress ?? 'Turning in...'}</>
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
                                         ) : (
                                             <><Send className="w-4 h-4" /> Turn in</>
                                         )}
                                     </button>
                                 ) : (
                                     <button
-                                        disabled
-                                        className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-400 text-sm font-semibold flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
+                                        onClick={() => setShowUnsubmitConfirm(true)}
+                                        disabled={!canUnsubmit || isUnsubmitting}
+                                        className={`w-full py-3 rounded-xl border-2 text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${canUnsubmit
+                                            ? 'border-[#F37022] text-[#F37022] hover:bg-orange-50 cursor-pointer shadow-sm'
+                                            : 'border-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                                            }`}
                                     >
-                                        <RotateCcw className="w-4 h-4" />
-                                        Unsubmit
+                                        {isUnsubmitting ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                                        ) : (
+                                            <><RotateCcw className="w-4 h-4" /> Unsubmit</>
+                                        )}
                                     </button>
                                 )}
                             </div>
                         </div>
                     </div>
 
+                    {/* Reference Material – Moved here */}
+                    {assignment.fileName && (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                            <h3 className="text-sm font-bold text-[#0A1B3C] flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-[#F37022]" />
+                                Reference Material
+                            </h3>
+                            <div className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-all group">
+                                <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                                    <FileText className="w-5 h-5 text-[#F37022]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-[#0A1B3C] truncate">{assignment.fileName}</p>
+                                    <p className="text-[10px] text-gray-400 font-medium">Assignment Template/Guide</p>
+                                </div>
+                                {assignment.fileUrl && (
+                                    <a
+                                        href={assignment.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2 hover:bg-white rounded-lg transition-all shadow-sm"
+                                        title="Download/View File"
+                                    >
+                                        <ExternalLink className="w-4 h-4 text-gray-400 hover:text-[#F37022]" />
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                 </div>
             </div>
+            {/* Modals */}
+            {showSubmitConfirm && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Send className="w-8 h-8 text-[#F37022]" />
+                            </div>
+                            <h2 className="text-xl font-bold text-[#0A1B3C] mb-2">Ready to turn in?</h2>
+                            <p className="text-gray-600">
+                                You are about to submit your assignment. You can unsubmit and change your files anytime before the deadline.
+                            </p>
+                        </div>
+                        <div className="flex border-t border-gray-100">
+                            <button
+                                onClick={() => setShowSubmitConfirm(false)}
+                                className="flex-1 py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSubmit}
+                                className="flex-1 py-4 text-sm font-bold text-[#F37022] hover:bg-orange-50 transition-colors"
+                            >
+                                Turn in
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showUnsubmitConfirm && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <RotateCcw className="w-8 h-8 text-red-500" />
+                            </div>
+                            <h2 className="text-xl font-bold text-[#0A1B3C] mb-2">Unsubmit assignment?</h2>
+                            <p className="text-gray-600">
+                                Unsubmit to add or change attachments. Don't forget to resubmit once you're done.
+                                {latestSubmission?.grade !== null && (
+                                    <span className="block mt-2 font-bold text-red-500">
+                                        Warning: This assignment has already been graded.
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                        <div className="flex border-t border-gray-100">
+                            <button
+                                onClick={() => setShowUnsubmitConfirm(false)}
+                                className="flex-1 py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleUnsubmit}
+                                className="flex-1 py-4 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                                Unsubmit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
