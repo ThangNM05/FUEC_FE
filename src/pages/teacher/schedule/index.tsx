@@ -131,18 +131,18 @@ export default function TeacherSchedule() {
     };
 
     return (
-        <div className="space-y-6 max-w-6xl mx-auto w-full">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="space-y-6 max-w-6xl mx-auto w-full pb-24 px-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Teaching Schedule</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-[#0A1B3C]">Teaching Schedule</h1>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-white rounded-lg border p-1 border-gray-200/60 shadow-sm">
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 bg-white rounded-lg border p-1 border-gray-200/60 shadow-sm w-full sm:w-auto">
                         <Button variant="ghost" size="icon" onClick={previousWeek} className="h-8 w-8 text-gray-500 hover:text-gray-900 border border-transparent hover:border-gray-200">
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <div className="flex items-center gap-2 px-3 text-sm font-medium text-gray-700 justify-center bg-gray-50 rounded-md py-1 border border-gray-200">
+                        <div className="flex-1 flex items-center gap-2 px-3 text-sm font-medium text-gray-700 justify-center bg-gray-50 rounded-md py-1 border border-gray-200">
                             <ConfigProvider
                                 theme={{
                                     token: {
@@ -165,7 +165,7 @@ export default function TeacherSchedule() {
                                             setCurrentDate(date.toDate());
                                         }
                                     }}
-                                    className="w-32 cursor-pointer font-medium text-gray-700 bg-transparent p-0"
+                                    className="w-full cursor-pointer font-medium text-gray-700 bg-transparent p-0 text-center"
                                     format="MMM D, YYYY"
                                 />
                             </ConfigProvider>
@@ -177,28 +177,28 @@ export default function TeacherSchedule() {
                 </div>
             </div>
 
-            <Card className="glass-card overflow-hidden rounded-xl border-orange-100/50 shadow-sm">
+            <Card className="glass-card overflow-hidden rounded-xl shadow-sm border-orange-100/50">
                 <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                        <table className="w-full table-fixed border-collapse">
+                    <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200">
+                        <table className="w-full min-w-[800px] border-collapse">
                             <thead>
                                 <tr>
-                                    <th className="w-24 min-w-[6rem] border-b border-r bg-gray-50/50 p-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider backdrop-blur-sm whitespace-nowrap">
+                                    <th className="sticky left-0 z-20 w-24 border-b border-r bg-gray-50 p-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-widest backdrop-blur-sm shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                                         Time
                                     </th>
                                     {dates.map((date, index) => (
                                         <th
                                             key={index}
-                                            className={`border-b border-r p-2 text-center w-[13.1%] ${isToday(date) ? 'bg-orange-50/50 backdrop-blur-sm relative overflow-hidden' : 'bg-gray-50/50 backdrop-blur-sm'
+                                            className={`border-b border-r p-3 text-center transition-colors ${isToday(date) ? 'bg-orange-50/50 backdrop-blur-sm relative overflow-hidden' : 'bg-gray-50/30'
                                                 }`}
                                         >
                                             {isToday(date) && (
                                                 <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500" />
                                             )}
-                                            <div className={`text-sm font-bold ${isToday(date) ? 'text-orange-700' : 'text-gray-900'}`}>
+                                            <div className={`text-[10px] uppercase tracking-widest font-bold ${isToday(date) ? 'text-orange-600' : 'text-gray-400'}`}>
                                                 {days[index]}
                                             </div>
-                                            <div className={`text-xs mt-1 ${isToday(date) ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
+                                            <div className={`text-sm font-bold mt-1 ${isToday(date) ? 'text-orange-900' : 'text-gray-700'}`}>
                                                 {formatDate(date)}
                                             </div>
                                         </th>
@@ -207,41 +207,41 @@ export default function TeacherSchedule() {
                             </thead>
                             <tbody>
                                 {isFetching ? (
-                                    Array.from({ length: 6 }).map((_, index) => (
-                                        <tr key={`loading-${index}`}>
-                                            <td className="border-b border-r bg-gray-50/50 p-2 text-center h-12">
-                                                <div className="h-4 bg-gray-200 rounded animate-pulse w-12 mx-auto mb-1"></div>
-                                                <div className="h-3 bg-gray-100 rounded animate-pulse w-16 mx-auto"></div>
+                                    Array.from({ length: 6 }).map((_, r) => (
+                                        <tr key={`loading-${r}`}>
+                                            <td className="sticky left-0 z-10 border-b border-r bg-gray-50/50 p-2 text-center h-20 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+                                                <div className="h-4 bg-gray-200 rounded animate-pulse w-10 mx-auto mb-1"></div>
+                                                <div className="h-3 bg-gray-100 rounded animate-pulse w-14 mx-auto"></div>
                                             </td>
-                                            {Array.from({ length: 7 }).map((_, colIndex) => (
-                                                <td key={`loading-col-${colIndex}`} className="border-b border-r p-1 align-top h-10">
-                                                    <div className="h-full w-full bg-gray-50/50 rounded animate-pulse"></div>
+                                            {Array.from({ length: 7 }).map((_, c) => (
+                                                <td key={`loading-col-${c}`} className="border-b border-r p-2 align-top h-20">
+                                                    <div className="h-full w-full bg-gray-100/30 rounded-lg animate-pulse"></div>
                                                 </td>
                                             ))}
                                         </tr>
                                     ))
                                 ) : error ? (
                                     <tr>
-                                        <td colSpan={8} className="p-8 text-center text-red-500">
+                                        <td colSpan={8} className="p-12 text-center text-red-500">
                                             Error loading schedule. Please check your connection or contact support.
                                         </td>
                                     </tr>
                                 ) : slots.map((slot) => (
                                     <tr key={slot.index}>
-                                        <td className="border-b border-r bg-gray-50/50 p-2 text-center text-xs font-medium text-gray-700 backdrop-blur-sm h-12 whitespace-nowrap">
+                                        <td className="sticky left-0 z-10 border-b border-r bg-gray-50 p-3 text-center text-xs font-semibold text-[#0A1B3C] backdrop-blur-sm h-24 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                                             <div className="font-semibold">{slot.period}</div>
-                                            <div className="text-gray-500 mt-1">{slot.time}</div>
+                                            <div className="text-[10px] text-gray-400 mt-1 font-medium">{slot.time}</div>
                                         </td>
                                         {dates.map((date, dateIndex) => {
                                             const scheduleItem = getScheduleItem(date, slot.index);
                                             return (
-                                                <td key={dateIndex} className="border-b border-r p-1 align-top h-10">
+                                                <td key={dateIndex} className={`border-b border-r p-2 align-top h-24 transition-colors ${isToday(date) ? 'bg-orange-50/30' : ''}`}>
                                                     {scheduleItem ? (
                                                         <div
                                                             className="h-full w-full animate-in fade-in duration-300 cursor-pointer"
                                                             onClick={() => navigate(`/teacher/course-details/${scheduleItem.classSubjectId}`)}
                                                         >
-                                                            <div className="h-full rounded border border-orange-200 bg-orange-50/80 p-1.5 hover:bg-orange-100 hover:border-orange-300 transition-all shadow-sm">
+                                                            <div className="h-full rounded-xl border border-orange-200 bg-orange-50/80 p-2.5 hover:bg-orange-100 hover:border-orange-300 transition-all shadow-sm">
                                                                 <div className="font-bold text-sm text-orange-900 mb-1 leading-tight flex justify-between items-start">
                                                                     <span>{scheduleItem.subjectCode}</span>
                                                                     <span className="text-[10px] bg-orange-200 text-orange-800 px-1 py-0.5 rounded font-medium">Slot {scheduleItem.slotIndex}</span>
@@ -252,11 +252,17 @@ export default function TeacherSchedule() {
                                                                         <User className="mr-1 h-3 w-3 shrink-0 text-orange-600" />
                                                                         <span className="flex-1 truncate"><span className="font-semibold">{scheduleItem.classCode}</span></span>
                                                                     </div>
+                                                                    <div className="flex items-center gap-1 text-[10px] text-orange-700">
+                                                                        <MapPin className="h-3 w-3 shrink-0" />
+                                                                        <span className="truncate">{scheduleItem.room || 'Room'}</span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="text-center text-gray-300 text-xs">-</div>
+                                                        <div className="h-full w-full flex items-center justify-center opacity-10">
+                                                            <Calendar className="w-5 h-5 text-gray-300" />
+                                                        </div>
                                                     )}
                                                 </td>
                                             );

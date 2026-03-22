@@ -1,20 +1,31 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search, Calendar, Clock, MapPin, AlertCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useGetCurrentUserQuery } from '@/api/authApi';
 import { useGetAllExamsQuery } from '@/api/examsApi';
+import { useGetSemestersQuery } from '@/api/semestersApi';
 
 function StudentExams() {
   const navigate = useNavigate();
-  const [semester, setSemester] = useState('SPRING2025');
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data: profile } = useGetCurrentUserQuery();
   const studentId = profile?.result?.id || profile?.id;
 
+  const { data: semestersData } = useGetSemestersQuery({ pageSize: 100 });
+  const semesters = semestersData?.items || [];
+
+  useEffect(() => {
+    if (semesters.length > 0 && !selectedSemesterId) {
+      const defaultSem = semesters.find(s => s.isDefault) || semesters[0];
+      setSelectedSemesterId(defaultSem.id);
+    }
+  }, [semesters, selectedSemesterId]);
+
   const { data: examsData, isLoading } = useGetAllExamsQuery(
-    { studentId },
-    { skip: !studentId }
+    { studentId, semesterId: selectedSemesterId },
+    { skip: !studentId || !selectedSemesterId }
   );
 
   const exams = examsData?.items || [];
@@ -25,17 +36,22 @@ function StudentExams() {
     const now = Date.now();
 
     exams.forEach(exam => {
-      const isPast = exam.isSubmitted || (new Date(exam.endTime).getTime() < now);
+      const startTime = new Date(exam.startTime).getTime();
+      const endTime = new Date(exam.endTime).getTime();
+      const isPast = exam.isSubmitted || (endTime < now);
+      const isOngoing = now >= startTime && now <= endTime;
+      const daysLeft = Math.ceil((endTime - now) / (1000 * 60 * 60 * 24));
 
       const examItem = {
         ...exam,
         course: exam.displayName || exam.subjectName || exam.category,
         code: exam.subjectCode || '-',
         type: exam.tag || 'Exam',
-        date: exam.startTime,
+        dueDate: exam.endTime,
         time: `${new Date(exam.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(exam.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
-        duration: Math.round((new Date(exam.endTime).getTime() - new Date(exam.startTime).getTime()) / 60000) + ' minutes',
-        daysLeft: Math.ceil((new Date(exam.startTime).getTime() - now) / (1000 * 60 * 60 * 24)),
+        duration: Math.round((endTime - startTime) / 60000) + ' minutes',
+        daysLeft: daysLeft,
+        isOngoing: isOngoing,
         score: exam.grade !== null && exam.grade !== undefined ? exam.grade : null,
         grade: exam.grade !== null && exam.grade !== undefined ? (exam.grade >= 5 ? 'Pass' : 'Fail') : '-',
       };
@@ -47,9 +63,9 @@ function StudentExams() {
       }
     });
 
-    // Sort upcoming by daysLeft ascending, past by date descending
-    upcoming.sort((a, b) => a.daysLeft - b.daysLeft);
-    past.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Sort upcoming by endTime ascending, past by endTime descending
+    upcoming.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+    past.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
 
     return { upcomingExams: upcoming, pastExams: past };
   }, [exams]);
@@ -73,13 +89,15 @@ function StudentExams() {
         <div className="flex items-center gap-4">
           <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Exam Schedule</h1>
           <select
-            value={semester}
-            onChange={(e) => setSemester(e.target.value)}
+            value={selectedSemesterId}
+            onChange={(e) => setSelectedSemesterId(e.target.value)}
             className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-[#0A1B3C] focus:border-[#F37022] outline-none"
           >
-            <option value="SPRING2025">Spring 2025</option>
-            <option value="FALL2024">Fall 2024</option>
-            <option value="SUMMER2024">Summer 2024</option>
+            {semesters.map(s => (
+              <option key={s.id} value={s.id}>
+                {s.semesterCode}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-lg border border-gray-200">
@@ -101,13 +119,18 @@ function StudentExams() {
       ) : (
         <>
           {/* Alert Banner */}
-          {nearestExam && nearestExam.daysLeft <= 3 && (
+          {nearestExam && (nearestExam.isOngoing || (nearestExam.daysLeft > 0 && nearestExam.daysLeft <= 3)) && (
             <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-300 rounded-xl mb-6 shadow-sm">
               <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0" />
               <div>
-                <div className="font-semibold text-yellow-800">Upcoming Exam</div>
+                <div className="font-semibold text-yellow-800">
+                  {nearestExam.isOngoing ? 'Ongoing Exam' : 'Upcoming Exam'}
+                </div>
                 <div className="text-sm text-yellow-700">
-                  You have an exam for {nearestExam.course} in {nearestExam.daysLeft} days. Get ready!
+                  {nearestExam.isOngoing
+                    ? `You have an on going exam for ${nearestExam.course}. Please complete it before the deadline!`
+                    : `You have an exam for ${nearestExam.course} due in ${nearestExam.daysLeft <= 0 ? 'less than a day' : `${nearestExam.daysLeft} days`}. Get ready!`
+                  }
                 </div>
               </div>
             </div>
@@ -147,9 +170,9 @@ function StudentExams() {
                           <div className="flex items-center gap-2">
                             <Calendar className="w-4 h-4 text-gray-400" />
                             <div>
-                              <div className="text-xs text-gray-500">Date</div>
+                              <div className="text-xs text-gray-500">Due Date</div>
                               <div className="text-sm font-medium text-[#0A1B3C]">
-                                {new Date(exam.date).toLocaleDateString('en-US')}
+                                {new Date(exam.dueDate).toLocaleDateString('en-GB')}
                               </div>
                             </div>
                           </div>
@@ -164,8 +187,8 @@ function StudentExams() {
                       </div>
 
                       <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
-                        <div className={`px-4 py-2 rounded-lg font-semibold text-sm ${exam.daysLeft <= 0 ? 'bg-green-100 text-green-700' : exam.daysLeft <= 3 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}`}>
-                          {exam.daysLeft <= 0 ? 'Ongoing' : `${exam.daysLeft} days left`}
+                        <div className={`px-4 py-2 rounded-lg font-semibold text-sm ${exam.isOngoing ? 'bg-green-100 text-green-700' : exam.daysLeft <= 3 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'}`}>
+                          {exam.isOngoing ? 'Ongoing' : `${exam.daysLeft} days left`}
                         </div>
                         <button
                           onClick={() => navigate(`/student/exam-lobby/${exam.id}?classSubjectId=${exam.classSubjectId}`)}
@@ -198,7 +221,7 @@ function StudentExams() {
                     <tr className="border-b-2 border-gray-200">
                       <th className="p-3 text-left text-sm font-semibold text-gray-700">Course</th>
                       <th className="p-3 text-left text-sm font-semibold text-gray-700">Type</th>
-                      <th className="p-3 text-center text-sm font-semibold text-gray-700">Time</th>
+                      <th className="p-3 text-center text-sm font-semibold text-gray-700">Due Date</th>
                       <th className="p-3 text-center text-sm font-semibold text-gray-700">Grade (10-pt)</th>
                       <th className="p-3 text-center text-sm font-semibold text-gray-700">Status</th>
                       <th className="p-3 text-right text-sm font-semibold text-gray-700">Action</th>
@@ -210,7 +233,7 @@ function StudentExams() {
                         <td className="p-4 font-medium text-[#0A1B3C]">{exam.course}</td>
                         <td className="p-4 text-gray-600">{exam.type}</td>
                         <td className="p-4 text-center text-gray-600 text-sm">
-                          {new Date(exam.date).toLocaleDateString('en-US')}
+                          {new Date(exam.dueDate).toLocaleDateString('en-GB')}
                         </td>
                         <td className="p-4 text-center font-bold text-orange-600 text-lg">
                           {exam.score !== null ? Number(exam.score).toFixed(1) : '-'}
