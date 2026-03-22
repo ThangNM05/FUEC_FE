@@ -9,7 +9,12 @@ import { useSelector } from 'react-redux';
 import FileUploader from '@/components/FileUploader';
 import FileTreeView from '@/components/FileTreeView';
 import { useGetAssignmentByIdQuery } from '@/api/assignmentsApi';
-import { useGetStudentAssignmentsByAssignmentIdQuery, useSubmitAssignmentMutation } from '@/api/studentAssignmentsApi';
+import {
+    useGetStudentAssignmentsByAssignmentIdQuery,
+    useSubmitAssignmentMutation,
+    useDeleteStudentAssignmentMutation
+} from '@/api/studentAssignmentsApi';
+import { useGetAssignmentFeedbacksQuery } from '@/api/assignmentFeedbacksApi';
 import { useUploadFileMutation } from '@/api/filesApi';
 import { selectCurrentUser } from '@/redux/authSlice';
 import { AssignmentStatusLabel, AssignmentStatusColor } from '@/types/assignment.types';
@@ -38,16 +43,10 @@ function AssignmentSubmission() {
     const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
     const [fileTree, setFileTree] = useState<FileNode[]>([]);
     const [showSuccess, setShowSuccess] = useState(false);
-    const [submitError, setSubmitError] = useState<string | null>(null);
     const [uploadProgress, setUploadProgress] = useState<string | null>(null);
-    const [classComment, setClassComment] = useState('');
-    const [privateComment, setPrivateComment] = useState('');
-    const [isAddingClassComment, setIsAddingClassComment] = useState(false);
-    const [isAddingPrivateComment, setIsAddingPrivateComment] = useState(false);
-    // Comments – replace with API hooks when backend is ready
-    const [classComments] = useState<{ id: string; author: string; text: string; time: string }[]>([]);
-    const [privateComments] = useState<{ id: string; author: string; text: string; time: string }[]>([]);
-
+    const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+    const [showUnsubmitConfirm, setShowUnsubmitConfirm] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     // Fetch assignment data from API
     const {
         data: assignment,
@@ -55,22 +54,31 @@ function AssignmentSubmission() {
         isError: isAssignmentError,
     } = useGetAssignmentByIdQuery(id!, { skip: !id });
 
+    const now = new Date();
+    const dueDate = assignment?.dueDate ? new Date(assignment.dueDate) : null;
+    const isBeforeDeadline = !dueDate || now < dueDate;
+
     // Fetch submission history for this assignment (filtered by current student)
     const {
         data: submissionsData,
         isLoading: isLoadingSubmissions,
     } = useGetStudentAssignmentsByAssignmentIdQuery(id!, { skip: !id });
 
-    // Filter by current student
     const mySubmissions = (submissionsData?.items ?? []).filter(
         (s) => s.studentId === currentUser?.entityId
     );
     const latestSubmission = mySubmissions[0] ?? null;
     const isSubmitted = !!latestSubmission;
 
+    // Fetch instructor feedback for the latest submission
+    const { data: feedbacks } = useGetAssignmentFeedbacksQuery(latestSubmission?.id ?? '', { skip: !latestSubmission?.id });
+
     // Submit mutation
     const [submitAssignment, { isLoading: isSubmitting }] = useSubmitAssignmentMutation();
     const [uploadFile] = useUploadFileMutation();
+    const [deleteStudentAssignment, { isLoading: isUnsubmitting }] = useDeleteStudentAssignmentMutation();
+
+    const canUnsubmit = isSubmitted && isBeforeDeadline && latestSubmission?.grade === null;
 
     // Build file tree from uploaded files
     const buildFileTree = (files: UploadedFile[]): FileNode[] => {
@@ -120,6 +128,7 @@ function AssignmentSubmission() {
     };
 
     const handleSubmit = async () => {
+        setShowSubmitConfirm(false);
         if (uploadedFiles.length === 0) {
             alert('Please upload files before submitting');
             return;
@@ -164,6 +173,20 @@ function AssignmentSubmission() {
                 err?.error ||
                 'Submission failed. Please try again.'
             );
+        }
+    };
+
+    const handleUnsubmit = async () => {
+        if (!latestSubmission) return;
+        setSubmitError(null);
+        try {
+            await deleteStudentAssignment(latestSubmission.id).unwrap();
+            setShowUnsubmitConfirm(false);
+            setUploadedFiles([]);
+            setFileTree([]);
+        } catch (err: any) {
+            console.error('Unsubmit failed:', err);
+            setSubmitError('Failed to unsubmit assignment. Please try again.');
         }
     };
 
@@ -274,100 +297,69 @@ function AssignmentSubmission() {
                 {/* ── LEFT: Upload + Class Comments ── */}
                 <div className="lg:col-span-2 space-y-5">
 
-                    {/* File Upload area */}
-                    <FileUploader onFilesChange={handleFilesChange} />
-
-                    {fileTree.length > 0 && (
-                        <div>
-                            <h3 className="text-base font-bold text-[#0A1B3C] mb-3">File Structure Preview</h3>
-                            <FileTreeView files={fileTree} />
+                    {/* Instructor Feedback History */}
+                    {feedbacks && feedbacks.length > 0 && (
+                        <div className="bg-white rounded-2xl border border-orange-100 shadow-sm overflow-hidden animate-slideIn">
+                            <div className="px-6 py-4 border-b border-orange-50 bg-orange-50/30">
+                                <div className="flex items-center gap-2">
+                                    <MessageSquare className="w-5 h-5 text-[#F37022]" />
+                                    <h2 className="font-bold text-[#0A1B3C]">Instructor Feedback History</h2>
+                                </div>
+                            </div>
+                            <div className="p-6 space-y-6">
+                                {feedbacks.slice().reverse().map((fb, idx) => (
+                                    <div key={fb.id || idx} className="flex gap-4">
+                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0A1B3C] to-[#1a2d5a] flex items-center justify-center text-white text-sm font-bold flex-shrink-0 shadow-sm">
+                                            {fb.teacherName?.charAt(0) ?? 'T'}
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-bold text-[#0A1B3C]">
+                                                        {fb.teacherName ?? 'Instructor'}
+                                                    </p>
+                                                    {fb.grade !== null && (
+                                                        <span className="text-[10px] font-bold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded border border-orange-100">
+                                                            Grade: {fb.grade}/100
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px] text-gray-400 font-medium">
+                                                    {new Date(fb.createdAt).toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-100 italic text-gray-700 text-sm leading-relaxed">
+                                                "{fb.comment}"
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
-
-                    {/* Class Comments */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                        <div className="flex items-center gap-2 mb-5">
-                            <Users className="w-5 h-5 text-gray-500" />
-                            <h2 className="font-semibold text-gray-700">Class comments</h2>
-                        </div>
-
-                        {classComments.length === 0 && (
-                            <p className="text-sm text-gray-400 mb-4">No class comments yet.</p>
-                        )}
-
-                        {classComments.map((c) => (
-                            <div key={c.id} className="flex gap-3 mb-4">
-                                <div className="w-8 h-8 rounded-full bg-[#F37022] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                    {c.author.charAt(0)}
-                                </div>
-                                <div className="flex-1 bg-gray-50 rounded-xl px-4 py-3">
-                                    <p className="text-xs font-semibold text-gray-700">
-                                        {c.author}{' '}
-                                        <span className="font-normal text-gray-400">{c.time}</span>
-                                    </p>
-                                    <p className="text-sm text-gray-700 mt-0.5">{c.text}</p>
-                                </div>
-                            </div>
-                        ))}
-
-                        {isAddingClassComment ? (
-                            <div className="flex gap-3 items-start">
-                                <div className="w-8 h-8 rounded-full bg-[#F37022] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                    {currentUser?.fullName?.charAt(0) ?? 'S'}
-                                </div>
-                                <div className="flex-1">
-                                    <textarea
-                                        autoFocus
-                                        rows={3}
-                                        value={classComment}
-                                        onChange={(e) => setClassComment(e.target.value)}
-                                        placeholder="Add a class comment..."
-                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-[#F37022]/30 focus:border-[#F37022] transition-all"
-                                    />
-                                    <div className="flex justify-end gap-2 mt-2">
-                                        <button
-                                            onClick={() => { setIsAddingClassComment(false); setClassComment(''); }}
-                                            className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            disabled={!classComment.trim()}
-                                            className="px-4 py-1.5 text-xs font-semibold text-white bg-[#F37022] rounded-lg hover:bg-[#d96419] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            Post
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => setIsAddingClassComment(true)}
-                                className="flex items-center gap-2 text-sm text-[#F37022] hover:text-[#d96419] font-medium transition-colors"
-                            >
-                                <MessageSquare className="w-4 h-4" />
-                                Add class comment
-                            </button>
-                        )}
-                    </div>
                 </div>
 
                 {/* ── RIGHT: Your Work + Private Comments ── */}
                 <div className="space-y-4 sticky top-6">
 
                     {/* Your Work Card */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                            <h2 className="font-semibold text-[#0A1B3C]">Your work</h2>
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-md overflow-hidden transition-all hover:shadow-lg">
+                        <div className={`px-5 py-4 border-b flex items-center justify-between ${latestSubmission?.grade !== null ? 'bg-green-50/50 border-green-100' : 'bg-gray-50/50 border-gray-100'}`}>
+                            <h2 className="font-bold text-[#0A1B3C]">Your work</h2>
                             {isLoadingSubmissions ? (
                                 <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                             ) : isSubmitted ? (
-                                <span className="flex items-center gap-1.5 text-xs font-semibold text-green-600">
-                                    <CheckCircle className="w-3.5 h-3.5" />
-                                    Turned in
-                                </span>
+                                <div className="flex flex-col items-end">
+                                    <span className="flex items-center gap-1.5 text-xs font-bold text-green-600">
+                                        <CheckCircle className="w-3.5 h-3.5" />
+                                        Turned in
+                                    </span>
+                                    {latestSubmission.status === 3 && (
+                                        <span className="text-[10px] font-bold text-red-500">Late</span>
+                                    )}
+                                </div>
                             ) : (
-                                <span className="text-xs font-semibold text-orange-500">Assigned</span>
+                                <span className="text-xs font-bold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">Assigned</span>
                             )}
                         </div>
 
@@ -406,21 +398,35 @@ function AssignmentSubmission() {
                                 </div>
                             )}
 
-                            {/* Status badge for all submissions */}
-                            {mySubmissions.map((sub) => (
-                                <div key={sub.id} className="flex items-center justify-between text-xs text-gray-500 px-1">
-                                    <span>{new Date(sub.createdAt).toLocaleDateString()} {new Date(sub.createdAt).toLocaleTimeString()}</span>
-                                    <span className={`px-2 py-0.5 font-semibold rounded-full ${AssignmentStatusColor[sub.status]}`}>
-                                        {AssignmentStatusLabel[sub.status]}
-                                    </span>
-                                </div>
-                            ))}
+                            {/* Submission status for all history */}
+                            <div className="space-y-2 pt-2">
+                                {mySubmissions.map((sub) => (
+                                    <div key={sub.id} className="flex items-center justify-between text-[10px] text-gray-500 px-1 border-t border-gray-50 pt-2 first:border-0 first:pt-0">
+                                        <span>{new Date(sub.createdAt).toLocaleDateString()} {new Date(sub.createdAt).toLocaleTimeString()}</span>
+                                        <span className={`px-2 py-0.5 font-bold rounded-full scale-90 ${AssignmentStatusColor[sub.status]}`}>
+                                            {AssignmentStatusLabel[sub.status]}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
 
                             {/* Action buttons */}
-                            <div className="pt-1 space-y-2">
+                            <div className="pt-2 space-y-3">
+                                {!isSubmitted && (
+                                    <>
+                                        <FileUploader onFilesChange={handleFilesChange} isCompact />
+                                        {fileTree.length > 0 && (
+                                            <div className="mt-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Structure Preview</h3>
+                                                <FileTreeView files={fileTree} />
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
                                 {/* Upload / submit progress */}
                                 {uploadProgress && (
-                                    <div className="flex items-center gap-2 text-[#F37022] text-xs justify-center py-1 animate-pulse">
+                                    <div className="flex items-center gap-2 text-[#F37022] text-xs justify-center py-1 animate-pulse font-bold">
                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                         {uploadProgress}
                                     </div>
@@ -428,7 +434,7 @@ function AssignmentSubmission() {
 
                                 {/* Success message */}
                                 {showSuccess && (
-                                    <div className="flex items-center gap-2 text-green-600 text-sm justify-center py-1">
+                                    <div className="flex items-center gap-2 text-green-600 text-sm justify-center py-1 font-bold">
                                         <CheckCircle className="w-4 h-4" />
                                         Submitted successfully!
                                     </div>
@@ -436,99 +442,141 @@ function AssignmentSubmission() {
 
                                 {/* Error message */}
                                 {submitError && (
-                                    <div className="flex items-center gap-2 text-red-500 text-xs px-1 py-1">
+                                    <div className="flex items-center gap-2 text-red-500 text-xs px-1 py-1 bg-red-50 rounded-lg">
                                         <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                                        <span>{submitError}</span>
+                                        <span className="font-semibold">{submitError}</span>
                                     </div>
                                 )}
 
                                 {!isSubmitted ? (
                                     <button
-                                        onClick={handleSubmit}
+                                        onClick={() => setShowSubmitConfirm(true)}
                                         disabled={uploadedFiles.length === 0 || isSubmitting}
-                                        className="w-full py-2.5 rounded-xl bg-[#F37022] hover:bg-[#d96419] text-white text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                        className="w-full py-3 rounded-xl bg-[#F37022] hover:bg-[#d96419] text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-100 active:scale-[0.98]"
                                     >
                                         {isSubmitting ? (
-                                            <><Loader2 className="w-4 h-4 animate-spin" /> {uploadProgress ?? 'Turning in...'}</>
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
                                         ) : (
                                             <><Send className="w-4 h-4" /> Turn in</>
                                         )}
                                     </button>
                                 ) : (
                                     <button
-                                        disabled
-                                        className="w-full py-2.5 rounded-xl border border-gray-200 text-gray-400 text-sm font-semibold flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
+                                        onClick={() => setShowUnsubmitConfirm(true)}
+                                        disabled={!canUnsubmit || isUnsubmitting}
+                                        className={`w-full py-3 rounded-xl border-2 text-sm font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${canUnsubmit
+                                            ? 'border-[#F37022] text-[#F37022] hover:bg-orange-50 cursor-pointer shadow-sm'
+                                            : 'border-gray-100 text-gray-400 cursor-not-allowed opacity-60'
+                                            }`}
                                     >
-                                        <RotateCcw className="w-4 h-4" />
-                                        Unsubmit
+                                        {isUnsubmitting ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                                        ) : (
+                                            <><RotateCcw className="w-4 h-4" /> Unsubmit</>
+                                        )}
                                     </button>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Private Comments Card */}
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Lock className="w-4 h-4 text-gray-500" />
-                            <h2 className="font-semibold text-gray-700 text-sm">Private comments</h2>
+                    {/* Reference Material – Moved here */}
+                    {assignment.fileName && (
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                            <h3 className="text-sm font-bold text-[#0A1B3C] flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-[#F37022]" />
+                                Reference Material
+                            </h3>
+                            <div className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-all group">
+                                <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                                    <FileText className="w-5 h-5 text-[#F37022]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-[#0A1B3C] truncate">{assignment.fileName}</p>
+                                    <p className="text-[10px] text-gray-400 font-medium">Assignment Template/Guide</p>
+                                </div>
+                                {assignment.fileUrl && (
+                                    <a
+                                        href={assignment.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-2 hover:bg-white rounded-lg transition-all shadow-sm"
+                                        title="Download/View File"
+                                    >
+                                        <ExternalLink className="w-4 h-4 text-gray-400 hover:text-[#F37022]" />
+                                    </a>
+                                )}
+                            </div>
                         </div>
+                    )}
 
-                        {privateComments.length === 0 && (
-                            <p className="text-xs text-gray-400 mb-3">Only visible to you and your instructor.</p>
-                        )}
-
-                        {privateComments.map((c) => (
-                            <div key={c.id} className="flex gap-2.5 mb-3">
-                                <div className="w-7 h-7 rounded-full bg-[#0A1B3C] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                    {c.author.charAt(0)}
-                                </div>
-                                <div className="flex-1 bg-gray-50 rounded-xl px-3 py-2">
-                                    <p className="text-xs font-semibold text-gray-700">
-                                        {c.author} <span className="font-normal text-gray-400">{c.time}</span>
-                                    </p>
-                                    <p className="text-xs text-gray-700 mt-0.5">{c.text}</p>
-                                </div>
-                            </div>
-                        ))}
-
-                        {isAddingPrivateComment ? (
-                            <div>
-                                <textarea
-                                    autoFocus
-                                    rows={3}
-                                    value={privateComment}
-                                    onChange={(e) => setPrivateComment(e.target.value)}
-                                    placeholder="Add a private comment to your instructor..."
-                                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-[#F37022]/30 focus:border-[#F37022] transition-all"
-                                />
-                                <div className="flex justify-end gap-2 mt-2">
-                                    <button
-                                        onClick={() => { setIsAddingPrivateComment(false); setPrivateComment(''); }}
-                                        className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        disabled={!privateComment.trim()}
-                                        className="px-4 py-1.5 text-xs font-semibold text-white bg-[#0A1B3C] rounded-lg hover:bg-[#1a2d5a] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        Post
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => setIsAddingPrivateComment(true)}
-                                className="flex items-center gap-2 text-xs text-[#0A1B3C] hover:text-[#F37022] font-medium transition-colors"
-                            >
-                                <MessageSquare className="w-3.5 h-3.5" />
-                                Add comment to instructor
-                            </button>
-                        )}
-                    </div>
                 </div>
             </div>
+            {/* Modals */}
+            {showSubmitConfirm && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Send className="w-8 h-8 text-[#F37022]" />
+                            </div>
+                            <h2 className="text-xl font-bold text-[#0A1B3C] mb-2">Ready to turn in?</h2>
+                            <p className="text-gray-600">
+                                You are about to submit your assignment. You can unsubmit and change your files anytime before the deadline.
+                            </p>
+                        </div>
+                        <div className="flex border-t border-gray-100">
+                            <button
+                                onClick={() => setShowSubmitConfirm(false)}
+                                className="flex-1 py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleSubmit}
+                                className="flex-1 py-4 text-sm font-bold text-[#F37022] hover:bg-orange-50 transition-colors"
+                            >
+                                Turn in
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showUnsubmitConfirm && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scaleIn">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <RotateCcw className="w-8 h-8 text-red-500" />
+                            </div>
+                            <h2 className="text-xl font-bold text-[#0A1B3C] mb-2">Unsubmit assignment?</h2>
+                            <p className="text-gray-600">
+                                Unsubmit to add or change attachments. Don't forget to resubmit once you're done.
+                                {latestSubmission?.grade !== null && (
+                                    <span className="block mt-2 font-bold text-red-500">
+                                        Warning: This assignment has already been graded.
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                        <div className="flex border-t border-gray-100">
+                            <button
+                                onClick={() => setShowUnsubmitConfirm(false)}
+                                className="flex-1 py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors border-r border-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleUnsubmit}
+                                className="flex-1 py-4 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+                            >
+                                Unsubmit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

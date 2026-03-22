@@ -4,7 +4,50 @@ import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/redux/store';
 import { useGetDefaultSemesterQuery, useGetSemestersQuery } from '@/api/semestersApi';
-import { useGetTeachingSubjectsQuery } from '@/api/teachersApi';
+import { useGetTeachingSubjectsQuery, useGetTeacherScheduleQuery } from '@/api/teachersApi';
+import { useGetStudentClassesByClassIdQuery } from '@/api/classDetailsApi';
+
+function ClassCardItem({ cls, onClick }: { cls: any, onClick: () => void }) {
+    const { data: studentsData } = useGetStudentClassesByClassIdQuery(
+        { classSubjectId: cls.id, pageSize: 1 },
+        { skip: !cls.id }
+    );
+    const realStudentCount = studentsData?.totalItemCount ?? cls.students;
+
+    return (
+        <div
+            className="px-5 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+            onClick={onClick}
+        >
+            <div>
+                <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
+                <p className="text-xs text-gray-500">{realStudentCount} students • {cls.room}</p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+        </div>
+    );
+}
+
+function ClassListItem({ cls, onClick }: { cls: any, onClick: () => void }) {
+    const { data: studentsData } = useGetStudentClassesByClassIdQuery(
+        { classSubjectId: cls.id, pageSize: 1 },
+        { skip: !cls.id }
+    );
+    const realStudentCount = studentsData?.totalItemCount ?? cls.students;
+
+    return (
+        <div
+            className="flex items-center px-4 py-3 pl-8 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+            onClick={onClick}
+        >
+            <div className="flex-1">
+                <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
+                <p className="text-xs text-gray-500">{realStudentCount} students • {cls.room} • {cls.schedule}</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-[#F37022]" />
+        </div>
+    );
+}
 
 interface ClassItem {
     id: string;
@@ -52,16 +95,19 @@ function TeacherDashboard() {
         code: sub.subjectCode,
         name: sub.subjectName,
         term: teachingData.semesterCode,
-        totalStudents: sub.totalStudents,
+        totalStudents: sub.totalStudents, // We will calculate this dynamically in the UI
         pendingGrading: 0,
         classes: sub.classes?.map((cls: any) => ({
             id: cls.classSubjectId || cls.classId,
             name: cls.classCode,
             students: cls.studentCount,
-            room: 'TBA', // or maybe from API if available
-            schedule: 'TBA',
         })) || []
     })) || [];
+
+    const { data: scheduleData } = useGetTeacherScheduleQuery(
+        {},
+        { skip: !user?.entityId }
+    );
 
 
     const todoItems = [
@@ -152,24 +198,18 @@ function TeacherDashboard() {
                                     </h3>
                                     <p className="text-sm text-gray-500 flex items-center gap-2">
                                         <Users className="w-4 h-4" />
-                                        {course.totalStudents} students • {course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'}
+                                        {course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'}
                                     </p>
                                 </div>
 
                                 {/* Classes List */}
                                 <div className="divide-y divide-gray-100">
                                     {course.classes.map((cls) => (
-                                        <div
+                                        <ClassCardItem
                                             key={cls.id}
-                                            className="px-5 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+                                            cls={cls}
                                             onClick={() => navigate(`/teacher/course-details/${cls.id}`)}
-                                        >
-                                            <div>
-                                                <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
-                                                <p className="text-xs text-gray-500">{cls.students} students • {cls.room}</p>
-                                            </div>
-                                            <ChevronRight className="w-4 h-4 text-gray-400" />
-                                        </div>
+                                        />
                                     ))}
                                 </div>
                             </div>
@@ -196,8 +236,8 @@ function TeacherDashboard() {
                                                 <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">{course.code}</span>
                                                 <h3 className="font-medium text-[#0A1B3C]">{course.name}</h3>
                                             </div>
-                                            <p className="text-sm text-gray-500">
-                                                {course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'} • {course.totalStudents} students
+                                            <p className="text-sm text-gray-500 mt-1">
+                                                {course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'}
                                                 {course.pendingGrading > 0 && (
                                                     <span className="ml-2 text-[#F37022]">• {course.pendingGrading} to grade</span>
                                                 )}
@@ -214,17 +254,11 @@ function TeacherDashboard() {
                                     {expandedCourse === course.code && (
                                         <div className="bg-gray-50 border-t border-gray-100">
                                             {course.classes.map((cls) => (
-                                                <div
+                                                <ClassListItem
                                                     key={cls.id}
-                                                    className="flex items-center px-4 py-3 pl-8 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                                    cls={cls}
                                                     onClick={() => navigate(`/teacher/course-details/${cls.id}`)}
-                                                >
-                                                    <div className="flex-1">
-                                                        <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
-                                                        <p className="text-xs text-gray-500">{cls.students} students • {cls.room} • {cls.schedule}</p>
-                                                    </div>
-                                                    <ArrowRight className="w-4 h-4 text-[#F37022]" />
-                                                </div>
+                                                />
                                             ))}
                                         </div>
                                     )}
@@ -244,20 +278,9 @@ function TeacherDashboard() {
                         Needs Grading
                     </h2>
                     <div className="space-y-3">
-                        {todoItems.map((item) => (
-                            <div key={item.id} className="group cursor-pointer hover:bg-gray-50 p-2 rounded-lg -mx-2">
-                                <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 rounded bg-orange-100 flex items-center justify-center flex-shrink-0 text-[#F37022] text-sm font-bold">
-                                        {item.submissions}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-[#1a1f36] truncate">{item.title}</p>
-                                        <p className="text-xs text-gray-500">{item.course}</p>
-                                        <p className="text-xs text-[#F37022]">Due: {item.dueDate}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                        <div className="text-sm text-gray-500 text-center py-4">
+                            All caught up! No active tasks to grade.
+                        </div>
                     </div>
                 </div>
 
@@ -268,15 +291,21 @@ function TeacherDashboard() {
                         Upcoming Classes
                     </h2>
                     <div className="space-y-3">
-                        {upcomingClasses.map((cls) => (
-                            <div key={cls.id} className="p-2 hover:bg-gray-50 rounded-lg -mx-2 cursor-pointer">
-                                <p className="text-sm font-semibold text-[#1a1f36]">{cls.course} - {cls.className}</p>
-                                <p className="text-xs text-gray-500 flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    {cls.time} • {cls.room}
-                                </p>
+                        {scheduleData && scheduleData.length > 0 ? (
+                            scheduleData.slice(0, 5).map((slot: any) => (
+                                <div key={slot.id} className="p-2 hover:bg-gray-50 rounded-lg -mx-2 cursor-pointer" onClick={() => navigate(`/teacher/course-details/${slot.classSubjectId}`)}>
+                                    <p className="text-sm font-semibold text-[#1a1f36]">{slot.subjectCode} - {slot.classCode}</p>
+                                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {new Date(slot.date).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })} • Room {slot.room || 'TBA'}
+                                    </p>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-sm text-gray-500 text-center py-4">
+                                No upcoming classes scheduled.
                             </div>
-                        ))}
+                        )}
                     </div>
                 </div>
 
@@ -284,17 +313,21 @@ function TeacherDashboard() {
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
                     <h2 className="text-xl font-bold text-[#1a1f36] mb-4">This Week</h2>
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-[#F37022]">23</p>
+                        <div className="text-center p-2 bg-gray-50 rounded-lg">
+                            <p className="text-2xl font-bold text-[#F37022]">{scheduleData?.length || 0}</p>
+                            <p className="text-xs text-gray-500 mt-1">Classes</p>
                         </div>
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-[#0A1B3C]">156</p>
+                        <div className="text-center p-2 bg-gray-50 rounded-lg">
+                            <p className="text-2xl font-bold text-[#0A1B3C]">{courses.length}</p>
+                            <p className="text-xs text-gray-500 mt-1">Courses</p>
                         </div>
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-[#0A1B3C]">8</p>
+                        <div className="text-center p-2 bg-gray-50 rounded-lg">
+                            <p className="text-2xl font-bold text-[#0A1B3C]">{courses.reduce((acc, c) => acc + c.classes.length, 0)}</p>
+                            <p className="text-xs text-gray-500 mt-1">Sections</p>
                         </div>
-                        <div className="text-center">
-                            <p className="text-2xl font-bold text-[#0A1B3C]">247</p>
+                        <div className="text-center p-2 bg-gray-50 rounded-lg">
+                            <p className="text-2xl font-bold text-[#0A1B3C]">0</p>
+                            <p className="text-xs text-gray-500 mt-1">To Grade</p>
                         </div>
                     </div>
                 </div>

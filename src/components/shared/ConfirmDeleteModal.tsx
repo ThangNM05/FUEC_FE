@@ -52,7 +52,7 @@ function ConfirmDeleteModal({
                 </div>
 
                 {/* Title */}
-                <h2 className="text-2xl font-black text-[#0A1B3C] text-center mb-4 leading-tight">
+                <h2 className="text-2xl font-bold text-[#0A1B3C] text-center mb-4 leading-tight">
                     {title}
                 </h2>
 
@@ -76,7 +76,7 @@ function ConfirmDeleteModal({
                         onClick={handleConfirm}
                         size="large"
                         type="primary"
-                        className={`flex-1 h-12 rounded-xl font-black shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] border-none ${confirmButtonVariant === 'danger'
+                        className={`flex-1 h-12 rounded-xl font-bold shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] border-none ${confirmButtonVariant === 'danger'
                             ? 'bg-red-500 hover:bg-red-600 shadow-red-200'
                             : 'bg-green-500 hover:bg-green-600 shadow-green-200'
                             }`}

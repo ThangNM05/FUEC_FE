@@ -22,11 +22,11 @@ function AssignmentSubmissionsList() {
     const [filterStatus, setFilterStatus] = useState<'all' | 'submitted' | 'graded' | 'not_submitted'>('all');
 
     // API Queries
-    const { data: assignmentData, isLoading: isLoadingAssignment } = useGetAssignmentByIdQuery(assignmentId || '', {
+    const { data: assignmentData, isLoading: isLoadingAssignment, isFetching: isFetchingAssignment } = useGetAssignmentByIdQuery(assignmentId || '', {
         skip: !assignmentId,
     });
 
-    const { data: submissionsData, isLoading: isLoadingSubmissions } = useGetStudentAssignmentsByAssignmentIdQuery(assignmentId || '', {
+    const { data: submissionsData, isLoading: isLoadingSubmissions, isFetching: isFetchingSubmissions } = useGetStudentAssignmentsByAssignmentIdQuery(assignmentId || '', {
         skip: !assignmentId,
     });
 
@@ -34,7 +34,7 @@ function AssignmentSubmissionsList() {
         skip: !assignmentData?.classSubjectId,
     });
 
-    const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentClassesByClassIdQuery(
+    const { data: studentsData, isLoading: isLoadingStudents, isFetching: isFetchingStudents } = useGetStudentClassesByClassIdQuery(
         { classSubjectId: assignmentData?.classSubjectId || '', pageSize: 200 },
         { skip: !assignmentData?.classSubjectId }
     );
@@ -110,7 +110,7 @@ function AssignmentSubmissionsList() {
         }
     };
 
-    if (isLoadingAssignment || isLoadingSubmissions || isLoadingStudents) {
+    if (isLoadingAssignment || isLoadingSubmissions || isLoadingStudents || isFetchingSubmissions || isFetchingStudents || isFetchingAssignment) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                 <Loader2 className="w-10 h-10 text-[#F37022] animate-spin" />

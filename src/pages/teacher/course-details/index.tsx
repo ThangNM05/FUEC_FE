@@ -21,10 +21,12 @@ import EditExamModal from '@/components/modals/EditExamModal';
 import CreateAssignmentModal from '@/components/modals/CreateAssignmentModal';
 import EditAssignmentModal from '@/components/modals/EditAssignmentModal';
 import SlotQuestionList from './SlotQuestionList';
+import AssignmentSubmissionCount from './AssignmentSubmissionCount';
 import type { Exam } from '@/types/exam.types';
 import type { Assignment } from '@/types/assignment.types';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentModal';
+import ExamParticipantsModal from '@/components/modals/ExamParticipantsModal';
 
 type SlotAssignment = Assignment;
 
@@ -70,6 +72,8 @@ function TeacherCourseDetails() {
     const [examToDelete, setExamToDelete] = useState<Exam | null>(null);
 
     const [isStudentListModalOpen, setIsStudentListModalOpen] = useState(false);
+    const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
+    const [selectedParticipantsExam, setSelectedParticipantsExam] = useState<Exam | null>(null);
 
     const handleOpenCreateAssignment = (slotInfo: any) => {
         setCreateAssignmentSlotInfo(slotInfo);
@@ -153,8 +157,8 @@ function TeacherCourseDetails() {
     });
 
     const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentClassesByClassIdQuery(
-        { classId: classSubject?.classId || '', pageSize: 200 },
-        { skip: !classSubject?.classId }
+        { classSubjectId: classSubject?.id || '', pageSize: 200 },
+        { skip: !classSubject?.id }
     );
 
     const { data: assignmentsData, isLoading: isLoadingAssignments } = useGetAssignmentsByClassSubjectIdQuery(
@@ -415,7 +419,7 @@ function TeacherCourseDetails() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
+                                className={`flex items-center gap-2 px-6 py-4 text-sm font-semibold border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
                                     ? 'border-[#F37022] text-[#F37022]'
                                     : 'border-transparent text-gray-600 hover:text-gray-900'
                                     }`}
@@ -603,11 +607,15 @@ function TeacherCourseDetails() {
                                                                                     </div>
                                                                                     <div className="flex items-center gap-2 flex-shrink-0 ml-11 sm:ml-2">
                                                                                         <span className="text-xs font-semibold text-orange-600 whitespace-nowrap">
-                                                                                            0/{course.enrolledStudents} participated
+                                                                                            {exam.participationCount || 0}/{course.enrolledStudents} participated
                                                                                         </span>
                                                                                         <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                                                             <button
-                                                                                                onClick={(e) => { e.stopPropagation(); navigate(`/teacher/exam/${exam.id}/participants`); }}
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    setSelectedParticipantsExam(exam);
+                                                                                                    setIsParticipantsModalOpen(true);
+                                                                                                }}
                                                                                                 className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                                                                                                 title="Participants"
                                                                                             >
@@ -796,10 +804,10 @@ function TeacherCourseDetails() {
                                                         <Calendar className="w-4 h-4" />
                                                         Due: {assignment.dueDate ? new Date(assignment.dueDate).toLocaleDateString() : 'No due date'}
                                                     </span>
-                                                    <span className="font-semibold text-orange-600">
-                                                        0/{course.enrolledStudents} submitted
-                                                    </span>
-                                                    <span className="font-semibold text-blue-600">Pending Grading</span>
+                                                    <AssignmentSubmissionCount
+                                                        assignmentId={assignment.id}
+                                                        totalStudents={course.enrolledStudents}
+                                                    />
                                                 </div>
                                                 {assignment.description && (
                                                     <div className="mt-2 text-sm font-medium text-gray-500 max-w-lg truncate">
@@ -849,73 +857,102 @@ function TeacherCourseDetails() {
                                     <p className="text-sm text-gray-400 mt-1">Create a new test to get started</p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                                    {exams.map((exam) => (
-                                        <div
-                                            key={exam.id}
-                                            className="border border-gray-200 rounded-xl p-5 hover:border-[#F37022] hover:shadow-md transition-all bg-white relative overflow-hidden group cursor-pointer"
-                                            onClick={() => {
-                                                setSelectedExam(exam);
-                                                setIsExamDetailModalOpen(true);
-                                            }}
-                                        >
-                                            <div className="absolute top-0 left-0 w-1 h-full bg-[#F37022]"></div>
-                                            <div className="flex justify-between items-start mb-4">
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-[#0A1B3C] group-hover:text-[#F37022] transition-colors leading-tight">
-                                                        {exam.displayName || (exam.category ? `${exam.category} ${exam.instanceNumber}` : `Progress Test ${exam.instanceNumber}`)}
-                                                    </h3>
-                                                    <p className="text-sm text-gray-500 mt-1.5 line-clamp-1">{exam.syllabusName}</p>
-                                                </div>
-                                                <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-blue-100 whitespace-nowrap ml-4 shrink-0">
-                                                    Wt: {exam.weight || '0'}%
-                                                </span>
-                                            </div>
+                                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full border-collapse">
+                                            <thead className="bg-gray-50/80 border-b border-gray-200">
+                                                <tr>
+                                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Exam Name</th>
+                                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Time</th>
+                                                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Participants</th>
+                                                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {exams.map((exam) => {
+                                                    const now = new Date();
+                                                    const start = new Date(exam.startTime);
+                                                    const end = new Date(exam.endTime);
 
-                                            <div className="space-y-2 mt-5">
-                                                <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50/80 p-2 rounded-lg border border-gray-100">
-                                                    <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-                                                    <span className="font-medium">Starts:</span>
-                                                    <span className="text-gray-900">{new Date(exam.startTime).toLocaleString()}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50/80 p-2 rounded-lg border border-gray-100">
-                                                    <ClipboardCheck className="w-4 h-4 text-gray-400 shrink-0" />
-                                                    <span className="font-medium">Ends:</span>
-                                                    <span className="text-gray-900">{new Date(exam.endTime).toLocaleString()}</span>
-                                                </div>
-                                            </div>
+                                                    let status = { label: 'Upcoming', color: 'bg-blue-50 text-blue-700 border-blue-100' };
+                                                    if (!exam.isActive) {
+                                                        status = { label: 'Suspended', color: 'bg-orange-50 text-orange-700 border-orange-100' };
+                                                    } else if (now > end) {
+                                                        status = { label: 'Ended', color: 'bg-red-50 text-red-700 border-red-100' };
+                                                    } else if (now >= start && now <= end) {
+                                                        status = { label: 'Ongoing', color: 'bg-green-600 text-white border-transparent' };
+                                                    }
 
-                                            <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className={`px-2.5 py-1.5 text-xs font-medium rounded-lg ${exam.securityMode === 2 ? 'bg-purple-50 text-purple-700 border border-purple-100' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}>
-                                                        {exam.securityMode === 2 ? `Dynamic Code (${exam.codeDuration || 60}s)` : 'Static Code'}
-                                                    </span>
-                                                    {exam.requireIpCheck && (
-                                                        <span className="px-2.5 py-1.5 bg-orange-50 text-orange-700 border border-orange-100 text-xs font-medium rounded-lg flex items-center gap-1.5">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
-                                                            IP Checked
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button
-                                                        onClick={(e) => handleEditExam(e, exam)}
-                                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                        title="Edit Exam"
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </button>
-                                                    <button
-                                                        onClick={(e) => handleDeleteExam(e, exam)}
-                                                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Delete Exam"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                                    return (
+                                                        <tr
+                                                            key={exam.id}
+                                                            className="hover:bg-gray-50/50 transition-colors cursor-pointer group"
+                                                            onClick={() => {
+                                                                setSelectedExam(exam);
+                                                                setIsExamDetailModalOpen(true);
+                                                            }}
+                                                        >
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-sm font-semibold text-[#0A1B3C] group-hover:text-[#F37022] transition-colors">
+                                                                        {exam.displayName || (exam.category ? `${exam.category} ${exam.instanceNumber}` : `PT ${exam.instanceNumber}`)}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wider font-medium">{exam.syllabusName}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                                <div className="flex flex-col text-xs text-gray-600">
+                                                                    <span className="font-medium text-gray-900">{start.toLocaleDateString('en-GB')} {start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                    <span className="text-gray-400 mt-0.5">to {end.toLocaleDateString('en-GB')} {end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                                <div className="flex flex-col items-center">
+                                                                    <span className="text-sm font-semibold text-gray-800">{exam.participationCount || 0}</span>
+                                                                    <span className="text-[10px] text-gray-400 font-medium whitespace-nowrap">/ {course.enrolledStudents} students</span>
+                                                                </div>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                                <span className={`px-3 py-1 text-[11px] font-semibold rounded-full border inline-block min-w-[100px] ${status.color}`}>
+                                                                    {status.label}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-right">
+                                                                <div className="flex items-center justify-end gap-1">
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedParticipantsExam(exam);
+                                                                            setIsParticipantsModalOpen(true);
+                                                                        }}
+                                                                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                                                                        title="View results"
+                                                                    >
+                                                                        <Users className="w-5 h-5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={(e) => handleEditExam(e, exam)}
+                                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                                                        title="Edit"
+                                                                    >
+                                                                        <Pencil className="w-4 h-4" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={(e) => handleDeleteExam(e, exam)}
+                                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                                                        title="Delete"
+                                                                    >
+                                                                        <Trash2 className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -1210,6 +1247,13 @@ function TeacherCourseDetails() {
                 title="Delete Assignment?"
                 message={`Are you sure you want to delete "${assignmentToDelete?.displayName || `Assignment ${assignmentToDelete?.instanceNumber}`}"?`}
                 confirmButtonLabel="Delete"
+            />
+
+            <ExamParticipantsModal
+                isOpen={isParticipantsModalOpen}
+                onClose={() => setIsParticipantsModalOpen(false)}
+                exam={selectedParticipantsExam}
+                classSubjectId={classSubject?.id || ''}
             />
         </div>
     );
