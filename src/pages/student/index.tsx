@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import {
-  ChevronRight, FileText, MessageSquare,
-  Bell, CheckCircle, Clock, Calendar, ArrowRight, Search
+  ChevronRight,
+  Search
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/redux/authSlice';
 
 function StudentDashboard() {
   const navigate = useNavigate();
-  const [viewMode, setViewMode] = useState<'card' | 'list' | 'activity'>('card');
-  const [semester, setSemester] = useState('SPRING2025');
   const [checkedItems, setCheckedItems] = useState<{ [key: number]: boolean }>({});
 
   const toggleCheckbox = (id: number) => {
@@ -18,14 +18,7 @@ function StudentDashboard() {
     }));
   };
 
-  const courses = [
-    { id: 1, code: 'SWE101', name: 'Software Engineering', term: 'Spring 2025', instructor: 'Prof. Nguyen Van A', newItems: 3 },
-    { id: 2, code: 'DBS202', name: 'Database Systems', term: 'Spring 2025', instructor: 'Prof. Tran Thi B', newItems: 1 },
-    { id: 3, code: 'WEB301', name: 'Web Development', term: 'Spring 2025', instructor: 'Prof. Le Van C', newItems: 0 },
-    { id: 4, code: 'MAD401', name: 'Mobile App Development', term: 'Spring 2025', instructor: 'Prof. Pham Thi D', newItems: 5 },
-    { id: 5, code: 'DSA201', name: 'Data Structures', term: 'Spring 2025', instructor: 'Prof. Hoang Van E', newItems: 0 },
-    { id: 6, code: 'NET301', name: 'Computer Networks', term: 'Spring 2025', instructor: 'Prof. Vu Thi F', newItems: 2 },
-  ];
+  const user = useSelector(selectCurrentUser);
 
   const todoItems = [
     { id: 1, title: 'Assignment 2: Database Design', course: 'DBS202', dueDate: 'Jan 11 at 11:59pm', points: 100 },
@@ -39,214 +32,120 @@ function StudentDashboard() {
     { id: 2, title: 'Midterm Exam', course: 'DBS202', grade: '88/100', date: '5 days ago' },
   ];
 
+  const recentActivity = [
+    { courseId: '1', courseCode: 'SWE101', title: 'Important: Project deadline extended', time: '2 hours ago' },
+    { courseId: '2', courseCode: 'DBS202', title: 'Assignment 2 has been submitted', time: '5 hours ago' },
+    { courseId: '3', courseCode: 'WEB301', title: 'Quiz 2 has been graded: 45/50', time: '1 day ago' },
+    { courseId: '4', courseCode: 'MAD401', title: 'New reply in "Flutter vs React Native"', time: '2 days ago' },
+  ];
+
   return (
     <div className="flex animate-fadeIn">
       {/* Main Content */}
       <div className="flex-1 p-4 md:p-6">
-        {/* Title and Semester */}
-        <div className="mb-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-2">
-            <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Dashboard</h1>
-            <select
-              value={semester}
-              onChange={(e) => setSemester(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-[#0A1B3C] focus:border-[#F37022] outline-none"
-            >
-              <option value="SPRING2025">Spring 2025</option>
-              <option value="FALL2024">Fall 2024</option>
-              <option value="SUMMER2024">Summer 2024</option>
-            </select>
+        {/* Title */}
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Welcome back, {user?.fullName || 'Student'}!</h1>
+          <p className="text-gray-500 mt-1">Here's what's happening with your courses.</p>
+        </div>
+
+        {/* Quick Links Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+          <div
+            onClick={() => navigate('/student/courses')}
+            className="p-6 bg-gradient-to-br from-[#F37022] to-[#ff9b5e] rounded-xl text-white cursor-pointer hover:shadow-lg transition-all group"
+          >
+            <h3 className="text-xl font-bold mb-2">My Courses</h3>
+            <p className="text-white/80 text-sm">View all your enrolled subjects and their details.</p>
+            <div className="mt-4 flex items-center text-sm font-semibold group-hover:translate-x-1 transition-transform">
+              Go to Courses <ChevronRight className="w-4 h-4 ml-1" />
+            </div>
           </div>
-
+          <div
+            onClick={() => navigate('/student/schedule')}
+            className="p-6 bg-gradient-to-br from-[#0066b3] to-[#0092ff] rounded-xl text-white cursor-pointer hover:shadow-lg transition-all group"
+          >
+            <h3 className="text-xl font-bold mb-2">My Schedule</h3>
+            <p className="text-white/80 text-sm">Check your upcoming classes and exam slots.</p>
+            <div className="mt-4 flex items-center text-sm font-semibold group-hover:translate-x-1 transition-transform">
+              View Schedule <ChevronRight className="w-4 h-4 ml-1" />
+            </div>
+          </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-lg border border-gray-200 mb-6">
-          <Search className="w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search courses..."
-            className="flex-1 outline-none text-sm md:text-base text-[#0A1B3C]"
-          />
-        </div>
-
-        {/* View Options */}
-        <div className="flex flex-wrap items-center gap-2 mb-6">
-          <button
-            onClick={() => setViewMode('card')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'card'
-              ? 'bg-[#F37022] text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-          >
-            Card View
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'list'
-              ? 'bg-[#F37022] text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-          >
-            List View
-          </button>
-          <button
-            onClick={() => setViewMode('activity')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${viewMode === 'activity'
-              ? 'bg-[#F37022] text-white'
-              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-          >
-            Recent Activity
-          </button>
-        </div>
-
-        {/* Card View - Simple Style */}
-        {viewMode === 'card' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {courses.map((course) => (
-              <div
-                key={course.id}
-                className="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-lg hover:border-[#F37022] hover:-translate-y-1 transition-all duration-300 cursor-pointer group animate-slideUp"
-                onClick={() => navigate('/student/course-details')}
-              >
-                <div className="mb-3">
-                  <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2.5 py-1 rounded">
-                    {course.code}
-                  </span>
+        {/* Recent Activity View */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+            <h2 className="font-bold text-[#0A1B3C]">Recent Activity</h2>
+            <button className="text-xs text-[#F37022] font-semibold hover:underline">View All</button>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {recentActivity.map((activity, index) => (
+              <div key={index} className="flex items-start px-4 py-4 hover:bg-gray-50 cursor-pointer transition-colors">
+                <div className="flex-1">
+                  <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{activity.courseCode}</span>
+                  <p className="text-sm text-gray-700 font-medium">{activity.title}</p>
+                  <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
                 </div>
-                <h3 className="font-bold text-[#0A1B3C] text-lg mb-2">
-                  {course.name}
-                </h3>
-                <p className="text-sm text-gray-500 mb-3">{course.instructor}</p>
-                <button className="text-[#0066CC] text-sm font-medium hover:underline">
-                  View course
-                </button>
+                <ChevronRight className="w-4 h-4 text-gray-300 self-center" />
               </div>
             ))}
           </div>
-        )}
-
-        {/* List View */}
-        {viewMode === 'list' && (
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="font-semibold text-[#0A1B3C]">My Courses</h2>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {courses.map((course) => (
-                <div
-                  key={course.id}
-                  className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer group"
-                  onClick={() => navigate('/student/course-details')}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">{course.code}</span>
-                      <h3 className="font-medium text-[#0A1B3C] group-hover:text-[#F37022] transition-colors">
-                        {course.name}
-                      </h3>
-                    </div>
-                    <p className="text-sm text-gray-500">{course.instructor} • {course.term}</p>
-                  </div>
-                  {course.newItems > 0 && (
-                    <span className="mr-3 text-xs text-[#F37022] font-medium">
-                      {course.newItems} new
-                    </span>
-                  )}
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recent Activity View */}
-        {viewMode === 'activity' && (
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="font-semibold text-[#0A1B3C]">Recent Activity</h2>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {[
-                { course: 'SWE101', title: 'Important: Project deadline extended', time: '2 hours ago' },
-                { course: 'DBS202', title: 'Assignment 2 has been submitted', time: '5 hours ago' },
-                { course: 'WEB301', title: 'Quiz 2 has been graded: 45/50', time: '1 day ago' },
-                { course: 'MAD401', title: 'New reply in "Flutter vs React Native"', time: '2 days ago' },
-              ].map((activity, index) => (
-                <div key={index} className="flex items-start px-4 py-4 hover:bg-gray-50 cursor-pointer">
-                  <div className="flex-1">
-                    <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{activity.course}</span>
-                    <p className="text-sm text-gray-600">{activity.title}</p>
-                    <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Right Sidebar */}
-      <div className="w-[300px] border-l border-gray-200 bg-gray-50 p-4 hidden lg:block space-y-3">
+      <div className="w-[320px] border-l border-gray-200 bg-gray-50/50 p-4 hidden lg:block space-y-4">
         {/* To Do Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-xl font-bold text-[#1a1f36] mb-4">To Do</h2>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <h2 className="text-lg font-bold text-[#1a1f36] mb-4">To Do</h2>
           <div className="space-y-4">
             {todoItems.map((item) => {
               const isChecked = checkedItems[item.id] || false;
               return (
-                <div key={item.id} className="flex items-start gap-3">
+                <div key={item.id} className="flex items-start gap-3 group">
                   <button
                     onClick={() => toggleCheckbox(item.id)}
-                    className={`w-4 h-4 rounded flex-shrink-0 mt-1 flex items-center justify-center transition-colors ${isChecked
+                    className={`w-5 h-5 rounded flex-shrink-0 mt-0.5 flex items-center justify-center transition-all ${isChecked
                       ? 'bg-[#F37022] border-[#F37022]'
-                      : 'border border-gray-300 hover:border-gray-400'
+                      : 'border-2 border-gray-200 group-hover:border-gray-300'
                       }`}
                   >
                     {isChecked && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                       </svg>
                     )}
                   </button>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
-                    <p className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
-                    <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-semibold text-[#1a1f36] truncate ${isChecked ? 'line-through text-gray-400' : ''}`}>{item.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-bold text-[#0066b3] bg-blue-50 px-1.5 py-0.5 rounded uppercase">{item.course}</span>
+                      <p className="text-[10px] text-gray-400">{item.dueDate}</p>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-
-        {/* Coming Up Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-xl font-bold text-[#1a1f36] mb-4">Coming Up</h2>
-          <div className="space-y-4">
-            {todoItems.slice(0, 2).map((item) => (
-              <div key={item.id} className="flex items-start gap-0">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
-                  <p className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
-                  <p className="text-xs text-gray-400">{item.points} pts    {item.dueDate}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <button className="w-full mt-4 py-2 text-xs font-semibold text-[#F37022] bg-[#F37022]/5 hover:bg-[#F37022]/10 rounded-lg transition-colors">
+            Show more
+          </button>
         </div>
 
         {/* Recent Feedback Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <h2 className="text-xl font-bold text-[#1a1f36] mb-4">Recent Feedback</h2>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+          <h2 className="text-lg font-bold text-[#1a1f36] mb-4">Recent Feedback</h2>
           <div className="space-y-4">
             {recentFeedback.map((item) => (
-              <div key={item.id} className="flex items-start gap-0">
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-[#1a1f36] mb-1">{item.title}</p>
-                  <p className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block mb-1">{item.course}</p>
-                  <p className="text-xs text-gray-400">{item.grade}    {item.date}</p>
+              <div key={item.id} className="flex flex-col gap-1 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                <div className="flex justify-between items-start">
+                  <p className="text-sm font-bold text-[#1a1f36] truncate flex-1">{item.title}</p>
+                  <span className="text-xs font-bold text-[#27ae60] bg-green-50 px-2 py-0.5 rounded ml-2">{item.grade}</span>
+                </div>
+                <div className="flex justify-between items-center mt-1">
+                  <span className="text-[10px] font-bold text-[#0066b3] uppercase">{item.course}</span>
+                  <p className="text-[10px] text-gray-400">{item.date}</p>
                 </div>
               </div>
             ))}

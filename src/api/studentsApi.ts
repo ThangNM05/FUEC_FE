@@ -8,6 +8,7 @@ import type {
     UpdateStudentRequest,
     AutoAssignClassRequest,
     AutoAssignClassResult,
+    StudentSubject,
 } from '../types/student.types';
 
 /**
@@ -169,6 +170,59 @@ export const studentsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['Classes', 'Students', 'ClassSubjectTeachers', 'StudentClasses']
         }),
+
+        // GET: Fetch student schedule
+        getStudentSchedule: builder.query<any[], { startDate?: string; endDate?: string }>({
+            query: ({ startDate, endDate }) => {
+                let url = '/students/schedule';
+                const params = new URLSearchParams();
+                if (startDate) params.append('startDate', startDate);
+                if (endDate) params.append('endDate', endDate);
+
+                const queryString = params.toString();
+                if (queryString) {
+                    url += `?${queryString}`;
+                }
+                return url;
+            },
+            transformResponse: (response: any) => {
+                return response?.result || response || [];
+            },
+            providesTags: ['Students', 'Classes'], // Invalidate if classes change
+        }),
+        // GET: Fetch student subjects by student ID
+        getStudentSubjects: builder.query<StudentSubject[], { studentId: string, semesterId?: string }>({
+            query: ({ studentId, semesterId }) => {
+                let url = `/students/${studentId}/subjects`;
+                if (semesterId) {
+                    url += `?semesterId=${semesterId}`;
+                }
+                return url;
+            },
+            transformResponse: (response: any) => response?.result || response || [],
+            providesTags: (_result, _error, { studentId }) => [{ type: 'Students', id: studentId }, 'StudentClasses'],
+        }),
+
+        // GET: Fetch student classes
+        getStudentClasses: builder.query<PaginatedResponse<any>, {
+            page?: number;
+            pageSize?: number;
+            studentId?: string;
+            classId?: string;
+        }>({
+            query: ({ page = 1, pageSize = 10, studentId, classId }) => {
+                const pageIndex = page - 1;
+                let url = `/StudentClasses?PageSize=${pageSize}&PageNumber=${pageIndex}`;
+                if (studentId) url += `&StudentId=${studentId}`;
+                if (classId) url += `&ClassId=${classId}`;
+                return url;
+            },
+            transformResponse: (response: any) => {
+                if (response?.result?.items) return response.result;
+                return { items: response?.result || response || [], totalItemCount: 0 };
+            },
+            providesTags: ['StudentClasses'],
+        }),
     }),
 });
 
@@ -181,5 +235,8 @@ export const {
     useDeleteStudentMutation,
     useImportStudentsMutation,
     useAutoAssignClassMutation,
+    useGetStudentScheduleQuery,
+    useGetStudentSubjectsQuery,
+    useGetStudentClassesQuery,
 } = studentsApi;
 

@@ -12,9 +12,10 @@ interface UploadedFile {
 interface FileUploaderProps {
     onFilesChange: (files: UploadedFile[]) => void;
     accept?: string;
+    isCompact?: boolean;
 }
 
-function FileUploader({ onFilesChange, accept }: FileUploaderProps) {
+function FileUploader({ onFilesChange, accept, isCompact }: FileUploaderProps) {
     const [files, setFiles] = useState<UploadedFile[]>([]);
     const [isDragging, setIsDragging] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,30 +85,30 @@ function FileUploader({ onFilesChange, accept }: FileUploaderProps) {
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
-                className={`border-2 border-dashed rounded-lg p-8 md:p-12 text-center transition-all ${isDragging
-                        ? 'border-[#F37022] bg-orange-50'
-                        : 'border-gray-300 hover:border-gray-400 bg-gray-50'
+                className={`border-2 border-dashed rounded-lg text-center transition-all ${isCompact ? 'p-4 md:p-6' : 'p-8 md:p-12'} ${isDragging
+                    ? 'border-[#F37022] bg-orange-50'
+                    : 'border-gray-300 hover:border-gray-400 bg-gray-50'
                     }`}
             >
-                <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragging ? 'text-[#F37022]' : 'text-gray-400'}`} />
-                <h3 className="text-lg font-semibold text-[#0A1B3C] mb-2">
-                    {isDragging ? 'Drop files here' : 'Drag & Drop Files or Folders'}
+                <Upload className={`${isCompact ? 'w-8 h-8' : 'w-12 h-12'} mx-auto mb-3 ${isDragging ? 'text-[#F37022]' : 'text-gray-400'}`} />
+                <h3 className={`${isCompact ? 'text-sm font-bold' : 'text-lg font-semibold'} text-[#0A1B3C] mb-1`}>
+                    {isDragging ? 'Drop here' : 'Drag & Drop Files'}
                 </h3>
-                <p className="text-sm text-gray-600 mb-4">or</p>
-                <div className="flex items-center justify-center gap-3">
+                <p className="text-[10px] text-gray-500 mb-3 uppercase tracking-wider font-semibold">or</p>
+                <div className={`flex flex-wrap items-center justify-center gap-2 ${isCompact ? 'px-2' : ''}`}>
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#D96419] transition-colors text-sm font-medium"
+                        className={`flex-1 min-w-[100px] ${isCompact ? 'py-2' : 'px-4 py-2'} bg-orange-50 text-[#F37022] border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors text-xs font-bold flex items-center justify-center gap-1.5`}
                     >
-                        <File className="w-4 h-4 inline mr-2" />
-                        Browse Files
+                        <File className="w-3.5 h-3.5" />
+                        Files
                     </button>
                     <button
                         onClick={() => folderInputRef.current?.click()}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        className={`flex-1 min-w-[100px] ${isCompact ? 'py-2' : 'px-4 py-2'} bg-blue-50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors text-xs font-bold flex items-center justify-center gap-1.5`}
                     >
-                        <FolderOpen className="w-4 h-4 inline mr-2" />
-                        Browse Folder
+                        <FolderOpen className="w-3.5 h-3.5" />
+                        Folder
                     </button>
                 </div>
                 <input
@@ -130,40 +131,40 @@ function FileUploader({ onFilesChange, accept }: FileUploaderProps) {
 
             {/* File List */}
             {files.length > 0 && (
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                    <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-semibold text-[#0A1B3C]">
-                            Uploaded Files ({files.length})
+                <div className="bg-white rounded-lg border border-gray-200 p-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-xs font-bold text-[#0A1B3C]">
+                            Files ({files.length})
                         </h4>
                         <button
                             onClick={removeAll}
-                            className="text-sm text-red-600 hover:text-red-700 font-medium"
+                            className="text-[10px] text-red-600 hover:text-red-700 font-bold"
                         >
-                            Remove All
+                            Clear
                         </button>
                     </div>
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
                         {files.map((file, index) => (
                             <div
                                 key={index}
-                                className="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100 transition-colors"
+                                className="flex items-center justify-between p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                             >
                                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <File className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                                    <File className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
                                     <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                        <p className="text-xs font-bold text-gray-700 truncate">
                                             {file.path}
                                         </p>
-                                        <p className="text-xs text-gray-500">
+                                        <p className="text-[10px] text-gray-400">
                                             {formatFileSize(file.size)}
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => removeFile(index)}
-                                    className="p-1 hover:bg-red-100 rounded transition-colors flex-shrink-0"
+                                    className="p-1 hover:bg-red-100 rounded-md transition-colors flex-shrink-0"
                                 >
-                                    <X className="w-4 h-4 text-red-600" />
+                                    <X className="w-3.5 h-3.5 text-red-500" />
                                 </button>
                             </div>
                         ))}

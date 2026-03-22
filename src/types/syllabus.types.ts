@@ -71,3 +71,12 @@ export type ImportSyllabusesResponse = {
     failureCount: number;
     errors: string[];
 };
+
+export interface ImportSyllabusSessionsResponse {
+    totalRowsProcessed: number;
+    insertedCount: number;
+    updatedCount: number;
+    errorCount: number;
+    errors: string[];
+    message: string;
+}

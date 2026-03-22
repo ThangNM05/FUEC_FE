@@ -1,13 +1,23 @@
 import { useState, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router';
 import {
-    ChevronRight, Search, Plus, Upload, Filter, Download,
-    FileQuestion, Edit2, Trash2, ClipboardList
+    ChevronRight,
+    ChevronDown,
+    Search,
+    Plus,
+    Upload,
+    FileQuestion,
+    FileSpreadsheet,
+    FileText,
+    BookOpen,
+    Edit2,
+    Trash2,
+    Download,
 } from 'lucide-react';
 import QuestionModal, { type QuestionData } from '../../../components/modals/QuestionModal';
 import ImportPreviewModal from '../../../components/modals/ImportPreviewModal';
-import ImportExcelModal from '../../../components/shared/ImportExcelModal';
+import ImportQuestionBankModal from '../../../components/shared/ImportQuestionBankModal';
+import ConfirmDeleteModal from '../../../components/shared/ConfirmDeleteModal';
 import {
     useGetQuestionsQuery,
     useCreateQuestionMutation,
@@ -15,9 +25,10 @@ import {
     useDeleteQuestionMutation,
     useDeleteQuestionsMutation,
     usePreviewImportQuestionsMutation,
+    usePreviewImportGiftMutation,
     useImportQuestionsMutation,
     type ImportPreviewResult,
-    type ImportPreviewQuestion
+    type ImportPreviewQuestion,
 } from '../../../api/questionsApi';
 import { toast } from 'sonner';
 import { useGetSubjectByCodeQuery } from '../../../api/subjectsApi';
@@ -31,6 +42,7 @@ interface Question {
     options?: string[];
     correctAnswer?: number;
     createdAt: string;
+    chapter: number;
 }
 
 const subjectNames: Record<string, string> = {
@@ -38,104 +50,76 @@ const subjectNames: Record<string, string> = {
     CS201: 'Data Structures and Algorithms',
     DB301: 'Database Systems',
     AI101: 'Introduction to AI',
-    MKT101: 'Marketing Principles'
+    MKT101: 'Marketing Principles',
 };
 
-const initialQuestions: Question[] = [
-    {
-        id: 'q1',
-        content: 'Which of the following describes the waterfall model?',
-        type: 'multiple_choice',
-        difficulty: 'easy',
-        tags: ['PT1', 'SDLC'],
-        options: ['A linear sequential approach', 'An iterative approach', 'A prototype-based approach', 'A random approach'],
-        correctAnswer: 0,
-        createdAt: '2025-02-15',
-    },
-    {
-        id: 'q2',
-        content: 'Agile manifesto prioritizes comprehensive documentation over working software.',
-        type: 'true_false',
-        difficulty: 'easy',
-        tags: ['PT1', 'Agile'],
-        options: ['True', 'False'],
-        correctAnswer: 1,
-        createdAt: '2025-02-16',
-    },
-    {
-        id: 'q3',
-        content: 'Explain the difference between functional and non-functional requirements with examples.',
-        type: 'essay',
-        difficulty: 'medium',
-        tags: ['PT2', 'Requirements'],
-        createdAt: '2025-02-20',
-    },
-    {
-        id: 'q4',
-        content: 'What design pattern should be used when you want a single instance of a class?',
-        type: 'multiple_choice',
-        difficulty: 'medium',
-        tags: ['PT2', 'Design Patterns'],
-        options: ['Singleton', 'Factory', 'Observer', 'Strategy'],
-        correctAnswer: 0,
-        createdAt: '2025-02-22',
-    },
-    {
-        id: 'q5',
-        content: 'The Open/Closed Principle states that software entities should be open for modification.',
-        type: 'true_false',
-        difficulty: 'hard',
-        tags: ['PT3', 'SOLID'],
-        options: ['True', 'False'],
-        correctAnswer: 1,
-        createdAt: '2025-02-24',
-    },
-];
+function isGiftFile(file: File): boolean {
+    const name = file.name.toLowerCase();
+    return name.endsWith('.gift') || name.endsWith('.txt');
+}
 
 function AdminQuestionBankDetail() {
     const navigate = useNavigate();
     const { subjectId } = useParams();
     const subjectName = subjectNames[subjectId || ''] || 'Subject Details';
 
-    // RTK Query Hooks – exact code lookup so we always get the right subject GUID
     const { data: subjectData } = useGetSubjectByCodeQuery(subjectId || '', { skip: !subjectId });
     const actualSubjectId = subjectData?.id || '';
 
-    // Import Excel – 2-step: preview then confirm
+    // ── Import: single modal, two possible API calls ──────────────────────────
     const [previewImport, { isLoading: isPreviewing }] = usePreviewImportQuestionsMutation();
+    const [previewImportGift, { isLoading: isPreviewingGift }] = usePreviewImportGiftMutation();
     const [importQuestions, { isLoading: isImporting }] = useImportQuestionsMutation();
-    const [isImportExcelModalOpen, setIsImportExcelModalOpen] = useState(false);
+
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isTemplateDropdownOpen, setIsTemplateDropdownOpen] = useState(false);
     const [importPreviewData, setImportPreviewData] = useState<ImportPreviewResult | null>(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
-    const handleConfirmFile = async (file: File) => {
+    const isBusy = isPreviewing || isPreviewingGift || isImporting;
+
+    /** Called by ImportQuestionBankModal with the chosen file (+ optional defaultChapter for GIFT) */
+    const handleConfirmFile = async (file: File, defaultChapter?: number) => {
         const formData = new FormData();
         formData.append('file', file);
-        if (subjectId) {
-            formData.append('expectedSubjectCode', subjectId);
-        }
+        if (subjectId) formData.append('expectedSubjectCode', subjectId);
+
         try {
-            const result = await previewImport(formData).unwrap();
-            if (result.errors && result.errors.length > 0 && result.questions.length === 0) {
+            let result: ImportPreviewResult;
+
+            if (isGiftFile(file)) {
+                if (defaultChapter !== undefined) {
+                    formData.append('defaultChapter', String(defaultChapter));
+                }
+                result = await previewImportGift(formData).unwrap();
+            } else {
+                result = await previewImport(formData).unwrap();
+            }
+
+            if (result.errors?.length > 0 && result.questions.length === 0) {
                 toast.error(result.errors[0]);
                 return;
             }
+
             setImportPreviewData(result);
-            setIsImportExcelModalOpen(false);
+            setIsImportModalOpen(false);
             setIsPreviewModalOpen(true);
         } catch {
             toast.error('Failed to parse file. Please check the format.');
         }
     };
 
+    /** Called by ImportPreviewModal after the user selects which questions to save */
     const handleConfirmImport = async (selectedQuestions: ImportPreviewQuestion[]) => {
         if (!importPreviewData) return;
         try {
             const result = await importQuestions({
                 subjectCode: importPreviewData.subjectCode,
-                selectedQuestions
+                selectedQuestions,
             }).unwrap();
-            toast.success(`Imported ${result.questionsCreated} question${result.questionsCreated !== 1 ? 's' : ''} successfully!`);
+            toast.success(
+                `Imported ${result.questionsCreated} question${result.questionsCreated !== 1 ? 's' : ''} successfully!`,
+            );
             setIsPreviewModalOpen(false);
             setImportPreviewData(null);
             refetch();
@@ -144,26 +128,24 @@ function AdminQuestionBankDetail() {
         }
     };
 
-    const { data: questionsData, isLoading, refetch } = useGetQuestionsQuery({
+    // ── Questions data ────────────────────────────────────────────────────────
+    const {
+        data: questionsData,
+        isLoading,
+        refetch,
+    } = useGetQuestionsQuery({
         subjectCode: subjectId,
-        pageSize: 1000 // Get all for now, since we filter locally in the UI
+        pageSize: 1000,
     });
     const [createQuestion] = useCreateQuestionMutation();
     const [updateQuestion] = useUpdateQuestionMutation();
     const [deleteQuestion] = useDeleteQuestionMutation();
     const [deleteQuestions] = useDeleteQuestionsMutation();
 
-    const questions: Question[] = (questionsData?.items || []).map(q => {
-        // Map backend Dto to frontend Question shape
+    const questions: Question[] = (questionsData?.items || []).map((q) => {
         const options = q.options || [];
-
-        // Map Tags from single comma-separated string if needed, or assume it's one tag. 
-        // The UI handles an array of tags, so we split by comma just in case.
         const tags = q.tag ? q.tag.split(',').map((t: string) => t.trim()) : [];
-
-        // Find index of first correct answer
         const correctIndex = options.findIndex((o: any) => o.isCorrect);
-
         return {
             id: q.id,
             content: q.questionContent,
@@ -171,35 +153,36 @@ function AdminQuestionBankDetail() {
             options: options.map((o: any) => o.choiceContent || ''),
             correctAnswer: correctIndex >= 0 ? correctIndex : undefined,
             createdAt: q.createdAt,
-            rawOptions: options // Keep track of ids for updating
+            chapter: q.chapter || 1,
+            rawOptions: options,
         } as any;
     });
 
+    // ── Local UI state ────────────────────────────────────────────────────────
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPT, setSelectedPT] = useState('All');
-
-    // Selection State
+    const [selectedChapter, setSelectedChapter] = useState<number | 'All'>('All');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-    // Extract all unique PT tags from all questions
     const allPTs = Array.from(
         new Set(
-            questions.flatMap((q: any) => q.tags.filter((t: string) => t.toUpperCase().startsWith('PT')))
-        )
+            questions.flatMap((q: any) => q.tags.filter((t: string) => t.toUpperCase().startsWith('PT'))),
+        ),
     ).sort();
-
     const ptTabs = ['All', ...allPTs];
+    const allChapters = Array.from(new Set(questions.map((q: any) => q.chapter as number))).sort(
+        (a, b) => a - b,
+    );
 
-    // Modal State
     const [modalOpen, setModalOpen] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState<QuestionData | null>(null);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
 
-    // ─── CRUD Operations ───
+    // ── CRUD ─────────────────────────────────────────────────────────────────
     const handleAddQuestion = () => {
         setEditingQuestion(null);
-        console.log("Add Question clicked"); setModalOpen(true);
+        setModalOpen(true);
     };
 
     const handleEditQuestion = (q: any) => {
@@ -209,51 +192,51 @@ function AdminQuestionBankDetail() {
             tags: q.tags,
             options: q.options,
             correctAnswer: q.correctAnswer,
-            rawOptions: q.rawOptions // Pass raw options to keep their IDs
+            chapter: q.chapter,
+            rawOptions: q.rawOptions,
         } as any);
-        console.log("Add Question clicked"); setModalOpen(true);
+        setModalOpen(true);
     };
 
     const handleSaveQuestion = async (data: any) => {
         try {
-            const mappedOptions = data.options?.map((optContent: string, index: number) => {
-                const isCorrect = data.correctAnswer === index;
-                const existingOpt = data.rawOptions?.[index];
-                if (existingOpt) {
-                    return { id: existingOpt.id, choiceContent: optContent, isCorrect }; // Update
-                }
-                return { choiceContent: optContent, isCorrect }; // Create
-            }) || [];
+            const mappedOptions =
+                data.options?.map((optContent: string, index: number) => {
+                    const isCorrect = data.correctAnswer === index;
+                    const existingOpt = data.rawOptions?.[index];
+                    if (existingOpt) return { id: existingOpt.id, choiceContent: optContent, isCorrect };
+                    return { choiceContent: optContent, isCorrect };
+                }) || [];
 
             if (data.id) {
-                // Update
                 await updateQuestion({
                     id: data.id,
                     body: {
                         questionContent: data.content,
-                        questionType: 0, // Single
+                        questionType: 0,
                         tag: data.tags.join(','),
                         points: 1.0,
-                        options: mappedOptions
-                    }
+                        chapter: data.chapter,
+                        options: mappedOptions,
+                    },
                 }).unwrap();
             } else {
-                if (!actualSubjectId) return; // Cant create without subject guid
+                if (!actualSubjectId) return;
                 await createQuestion({
                     questionContent: data.content,
                     questionType: 0,
                     subjectId: actualSubjectId,
                     tag: data.tags.join(','),
                     points: 1.0,
-                    options: mappedOptions
+                    chapter: data.chapter,
+                    options: mappedOptions,
                 }).unwrap();
             }
             setModalOpen(false);
             setEditingQuestion(null);
-            refetch(); // Ensure latest data
+            refetch();
         } catch (error) {
-            console.error("Failed to save question:", error);
-            // Optionally show error toast
+            console.error('Failed to save question:', error);
         }
     };
 
@@ -261,23 +244,25 @@ function AdminQuestionBankDetail() {
         try {
             await deleteQuestion(id).unwrap();
             setDeleteId(null);
-            refetch(); // Ensure latest data
+            refetch();
             if (selectedIds.has(id)) {
-                setSelectedIds(prev => {
+                setSelectedIds((prev) => {
                     const next = new Set(prev);
                     next.delete(id);
                     return next;
                 });
             }
         } catch (error) {
-            console.error("Failed to delete question", error);
+            console.error('Failed to delete question', error);
         }
     };
 
     const handleBulkDelete = async () => {
         try {
             await deleteQuestions(Array.from(selectedIds)).unwrap();
-            toast.success(`${selectedIds.size} question${selectedIds.size !== 1 ? 's' : ''} deleted successfully!`);
+            toast.success(
+                `${selectedIds.size} question${selectedIds.size !== 1 ? 's' : ''} deleted successfully!`,
+            );
             setSelectedIds(new Set());
             setBulkDeleteConfirmOpen(false);
             refetch();
@@ -286,22 +271,21 @@ function AdminQuestionBankDetail() {
         }
     };
 
-    // ─── Filtering ───
+    // ── Filtering ─────────────────────────────────────────────────────────────
     const filteredQuestions = questions.filter((q: any) => {
-        const matchesSearch = !searchQuery ||
+        const matchesSearch =
+            !searchQuery ||
             q.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
             q.tags.some((t: string) => t.toLowerCase().includes(searchQuery.toLowerCase()));
-
         const matchesPT = selectedPT === 'All' || q.tags.includes(selectedPT);
-
-        return matchesSearch && matchesPT;
+        const matchesChapter = selectedChapter === 'All' || q.chapter === selectedChapter;
+        return matchesSearch && matchesPT && matchesChapter;
     });
 
     const toggleSelect = (id: string) => {
-        setSelectedIds(prev => {
+        setSelectedIds((prev) => {
             const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
+            next.has(id) ? next.delete(id) : next.add(id);
             return next;
         });
     };
@@ -314,28 +298,10 @@ function AdminQuestionBankDetail() {
         }
     };
 
-    const isAllSelected = filteredQuestions.length > 0 && selectedIds.size === filteredQuestions.length;
+    const isAllSelected =
+        filteredQuestions.length > 0 && selectedIds.size === filteredQuestions.length;
 
-    // ─── Helpers ───
-    const getDifficultyColor = (d: string) => {
-        if (d === 'easy') return 'bg-green-100 text-green-700';
-        if (d === 'medium') return 'bg-yellow-100 text-yellow-700';
-        if (d === 'hard') return 'bg-red-100 text-red-700';
-        return 'bg-gray-100 text-gray-700';
-    };
-
-    const getTypeDisplay = (t: string) => {
-        if (t === 'multiple_choice') return 'Multiple Choice';
-        if (t === 'true_false') return 'True/False';
-        return 'Essay';
-    };
-
-    const getTypeColor = (t: string) => {
-        if (t === 'multiple_choice') return 'bg-blue-50 text-blue-700';
-        if (t === 'true_false') return 'bg-purple-50 text-purple-700';
-        return 'bg-orange-50 text-orange-700';
-    };
-
+    // ── Render ────────────────────────────────────────────────────────────────
     if (isLoading) {
         return (
             <div className="p-4 md:p-6 flex flex-col items-center justify-center h-64 gap-4">
@@ -346,12 +312,19 @@ function AdminQuestionBankDetail() {
 
     return (
         <div className="p-4 md:p-6 animate-fadeIn">
+            {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-                <button onClick={() => navigate('/admin')} className="hover:text-[#F37022] transition-colors">
+                <button
+                    onClick={() => navigate('/admin')}
+                    className="hover:text-[#F37022] transition-colors"
+                >
                     Home
                 </button>
                 <ChevronRight className="w-4 h-4" />
-                <button onClick={() => navigate('/admin/question-banks')} className="hover:text-[#F37022] transition-colors">
+                <button
+                    onClick={() => navigate('/admin/question-banks')}
+                    className="hover:text-[#F37022] transition-colors"
+                >
                     Question Banks
                 </button>
                 <ChevronRight className="w-4 h-4" />
@@ -367,26 +340,76 @@ function AdminQuestionBankDetail() {
                     <p className="text-gray-500 text-sm mt-1">{questions.length} total questions in bank</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    {/* Download Template */}
-                    <a
-                        href="/templates/question_bank_template.xlsx"
-                        download
-                        className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors bg-white"
+                    {/* Download Template Dropdown */}
+                    <div
+                        className="relative"
+                        onBlur={(e) => {
+                            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                                setIsTemplateDropdownOpen(false);
+                            }
+                        }}
                     >
-                        <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        <span className="hidden sm:inline">Download Template</span>
-                    </a>
-                    {/* Import Excel */}
+                        <button
+                            onClick={() => setIsTemplateDropdownOpen(!isTemplateDropdownOpen)}
+                            className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50 transition-colors bg-white"
+                        >
+                            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <span className="hidden sm:inline">Download Template</span>
+                            <ChevronDown
+                                className={`w-3.5 h-3.5 transition-transform duration-200 ${isTemplateDropdownOpen ? 'rotate-180' : ''}`}
+                            />
+                        </button>
+                        {isTemplateDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-1.5 w-52 bg-white rounded-xl border border-gray-200 shadow-lg z-20 py-1.5 overflow-hidden">
+                                <a
+                                    href="/templates/question_bank_template.xlsx"
+                                    download
+                                    onClick={() => setIsTemplateDropdownOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
+                                >
+                                    <FileSpreadsheet className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                    <div>
+                                        <div className="font-medium">Excel Format</div>
+                                        <div className="text-xs text-gray-400">.xlsx template</div>
+                                    </div>
+                                </a>
+                                <a
+                                    href="/templates/question_bank.gift"
+                                    download
+                                    onClick={() => setIsTemplateDropdownOpen(false)}
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                >
+                                    <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                    <div>
+                                        <div className="font-medium">GIFT Format</div>
+                                        <div className="text-xs text-gray-400">.gift template</div>
+                                    </div>
+                                </a>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Single Import button */}
                     <button
                         className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border-2 border-[#F37022] text-[#F37022] rounded-lg text-xs sm:text-sm font-medium hover:bg-orange-50 transition-colors bg-white disabled:opacity-60"
-                        onClick={() => setIsImportExcelModalOpen(true)}
-                        disabled={isPreviewing || isImporting}
+                        onClick={() => setIsImportModalOpen(true)}
+                        disabled={isBusy}
                     >
-                        {(isPreviewing || isImporting)
-                            ? <div className="w-3.5 h-3.5 border-2 border-[#F37022] border-t-transparent rounded-full animate-spin" />
-                            : <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                        <span className="hidden sm:inline">{isPreviewing ? 'Parsing...' : isImporting ? 'Importing...' : 'Import Excel'}</span>
+                        {isBusy ? (
+                            <div className="w-3.5 h-3.5 border-2 border-[#F37022] border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <Upload className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        )}
+                        <span className="hidden sm:inline">
+                            {isPreviewing || isPreviewingGift
+                                ? 'Parsing...'
+                                : isImporting
+                                    ? 'Importing...'
+                                    : 'Import'}
+                        </span>
                     </button>
+
+                    {/* Add Question */}
                     <button
                         onClick={handleAddQuestion}
                         className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-[#F37022] text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-[#d95f19] transition-all active:scale-95 shadow-md shadow-orange-200"
@@ -399,23 +422,22 @@ function AdminQuestionBankDetail() {
 
             {/* PT Tabs */}
             <div className="flex overflow-x-auto pb-2 mb-6 gap-2 hide-scrollbar">
-                {ptTabs.map(pt => {
-                    const count = pt === 'All'
-                        ? questions.length
-                        : questions.filter(q => q.tags.includes(pt)).length;
-
+                {ptTabs.map((pt) => {
+                    const count =
+                        pt === 'All' ? questions.length : questions.filter((q) => q.tags.includes(pt)).length;
                     return (
                         <button
                             key={pt}
                             onClick={() => setSelectedPT(pt)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2 ${selectedPT === pt
-                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                                 }`}
                         >
                             {pt}
-                            <span className={`px-1.5 py-0.5 rounded-full text-xs ${selectedPT === pt ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-500'
-                                }`}>
+                            <span
+                                className={`px-1.5 py-0.5 rounded-full text-xs ${selectedPT === pt ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-500'}`}
+                            >
                                 {count}
                             </span>
                         </button>
@@ -423,7 +445,7 @@ function AdminQuestionBankDetail() {
                 })}
             </div>
 
-            {/* Filters & Search */}
+            {/* Search */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -435,9 +457,27 @@ function AdminQuestionBankDetail() {
                         className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
                     />
                 </div>
+                <div className="relative">
+                    <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <select
+                        value={selectedChapter === 'All' ? 'All' : String(selectedChapter)}
+                        onChange={(e) =>
+                            setSelectedChapter(e.target.value === 'All' ? 'All' : Number(e.target.value))
+                        }
+                        className="pl-9 pr-8 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm text-gray-700 appearance-none cursor-pointer min-w-[150px]"
+                    >
+                        <option value="All">All Chapters</option>
+                        {allChapters.map((ch) => (
+                            <option key={ch} value={ch}>
+                                Chapter {ch}
+                            </option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
+                </div>
             </div>
 
-            {/* Questions List */}
+            {/* Questions Table */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                 {selectedIds.size > 0 && (
                     <div className="bg-orange-50 px-6 py-3 border-b border-orange-100 flex items-center justify-between">
@@ -466,13 +506,17 @@ function AdminQuestionBankDetail() {
                                     />
                                 </th>
                                 <th className="px-6 py-4">Question Content</th>
+                                <th className="px-6 py-4 text-center">Chapter</th>
                                 <th className="px-6 py-4 hidden lg:table-cell">Tags</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {filteredQuestions.map((q) => (
-                                <tr key={q.id} className={`hover:bg-gray-50/50 transition-colors group ${selectedIds.has(q.id) ? 'bg-orange-50/30' : ''}`}>
+                                <tr
+                                    key={q.id}
+                                    className={`hover:bg-gray-50/50 transition-colors group ${selectedIds.has(q.id) ? 'bg-orange-50/30' : ''}`}
+                                >
                                     <td className="px-6 py-4 text-center">
                                         <input
                                             type="checkbox"
@@ -481,12 +525,8 @@ function AdminQuestionBankDetail() {
                                             className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer"
                                         />
                                     </td>
-                                    <td className="px-6 py-4" onClick={(e) => {
-                                        // Make clicking the cell toggle selection as well, but ignore if clicking inside file icon (minor UX tweak)
-                                        if ((e.target as HTMLElement).closest('.action-btn')) return;
-                                        toggleSelect(q.id);
-                                    }}>
-                                        <div className="flex items-start gap-3 cursor-pointer">
+                                    <td className="px-6 py-4 cursor-pointer" onClick={() => toggleSelect(q.id)}>
+                                        <div className="flex items-start gap-3">
                                             <FileQuestion className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
                                             <div className="min-w-0">
                                                 <p className="text-[#0A1B3C] font-medium line-clamp-2">{q.content}</p>
@@ -496,13 +536,21 @@ function AdminQuestionBankDetail() {
                                             </div>
                                         </div>
                                     </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg border border-gray-200">
+                                            Ch. {q.chapter}
+                                        </span>
+                                    </td>
                                     <td className="px-6 py-4 hidden lg:table-cell">
                                         <div className="flex flex-wrap gap-1">
-                                            {q.tags.map(tag => (
-                                                <span key={tag} className={`px-2 py-0.5 text-xs rounded border ${tag.toUpperCase().startsWith('PT')
-                                                    ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium'
-                                                    : 'bg-gray-100 text-gray-600 border-gray-200'
-                                                    }`}>
+                                            {q.tags.map((tag: string) => (
+                                                <span
+                                                    key={tag}
+                                                    className={`px-2 py-0.5 text-xs rounded border ${tag.toUpperCase().startsWith('PT')
+                                                            ? 'bg-blue-50 text-blue-700 border-blue-200 font-medium'
+                                                            : 'bg-gray-100 text-gray-600 border-gray-200'
+                                                        }`}
+                                                >
                                                     {tag}
                                                 </span>
                                             ))}
@@ -540,7 +588,7 @@ function AdminQuestionBankDetail() {
                         </h3>
                         <p className="text-sm text-gray-400 mb-4">
                             {questions.length === 0
-                                ? 'Get started by creating a new question.'
+                                ? 'Get started by creating a new question or importing a file.'
                                 : 'Try adjusting your search or filters.'}
                         </p>
                         {questions.length === 0 && (
@@ -555,93 +603,60 @@ function AdminQuestionBankDetail() {
                 )}
             </div>
 
-            {/* Question Modal */}
+            {/* ── Modals ────────────────────────────────────────────────────── */}
+
+            {/* Question create/edit modal */}
             <QuestionModal
                 isOpen={modalOpen}
-                onClose={() => { setModalOpen(false); setEditingQuestion(null); }}
+                onClose={() => {
+                    setModalOpen(false);
+                    setEditingQuestion(null);
+                }}
                 onSave={handleSaveQuestion}
                 editData={editingQuestion}
             />
 
-            {/* Import Excel Modal */}
-            <ImportExcelModal
-                isOpen={isImportExcelModalOpen}
-                onClose={() => setIsImportExcelModalOpen(false)}
+            {/* Unified import modal (Excel + GIFT) */}
+            <ImportQuestionBankModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
                 onConfirm={handleConfirmFile}
-                title="Import Questions"
-                description={`Please use the standard template to import questions for ${subjectId}`}
-                templateUrl="/templates/question_bank_template.xlsx"
+                subjectCode={subjectId}
+                isPreviewing={isPreviewing || isPreviewingGift}
             />
 
-            {/* Import Preview Modal */}
+            {/* Preview → confirm import */}
             <ImportPreviewModal
                 isOpen={isPreviewModalOpen}
-                onClose={() => { setIsPreviewModalOpen(false); setImportPreviewData(null); }}
+                onClose={() => {
+                    setIsPreviewModalOpen(false);
+                    setImportPreviewData(null);
+                }}
                 previewData={importPreviewData}
                 onConfirm={handleConfirmImport}
                 isImporting={isImporting}
             />
 
-            {/* Delete Confirmation */}
-            {
-                deleteId && createPortal(
-                    <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDeleteId(null)} />
-                        <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 text-center">
-                            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-7 h-7 text-red-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Question?</h3>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setDeleteId(null)}
-                                    className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteQuestion(deleteId)}
-                                    className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
-                                >
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>,
-                    document.body
-                )
-            }
+            {/* Single-delete confirmation */}
+            <ConfirmDeleteModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={() => deleteId && handleDeleteQuestion(deleteId)}
+                title="Delete Question?"
+                message="This action cannot be undone. This will permanently delete this question from the bank."
+                confirmButtonLabel="Delete"
+            />
 
-            {/* Bulk Delete Confirmation */}
-            {
-                bulkDeleteConfirmOpen && createPortal(
-                    <div className="fixed inset-0 z-50 flex items-center justify-center">
-                        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setBulkDeleteConfirmOpen(false)} />
-                        <div className="relative bg-white rounded-2xl shadow-2xl p-6 max-w-sm mx-4 text-center">
-                            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-7 h-7 text-red-600" />
-                            </div>
-                            <h3 className="text-lg font-bold text-[#0A1B3C] mb-2">Delete Selected?</h3>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setBulkDeleteConfirmOpen(false)}
-                                    className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleBulkDelete}
-                                    className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700"
-                                >
-                                    Delete All
-                                </button>
-                            </div>
-                        </div>
-                    </div>,
-                    document.body
-                )
-            }
-        </div >
+            {/* Bulk-delete confirmation */}
+            <ConfirmDeleteModal
+                isOpen={bulkDeleteConfirmOpen}
+                onClose={() => setBulkDeleteConfirmOpen(false)}
+                onConfirm={handleBulkDelete}
+                title="Delete Selected Questions?"
+                message={`Are you sure you want to delete ${selectedIds.size} selected questions? This action cannot be undone.`}
+                confirmButtonLabel="Delete All"
+            />
+        </div>
     );
 }
 

@@ -32,6 +32,7 @@ import StudentForums from './pages/student/forums';
 import StudentGrades from './pages/student/grades';
 import StudentProfile from './pages/student/profile';
 import QuizTest from './pages/student/quiz';
+import ExamLobby from './pages/student/exam-lobby';
 import StudentSchedule from './pages/student/schedule';
 // Teacher Components
 import TeacherLayout from './components/layouts/teacher/TeacherLayout';
@@ -50,6 +51,7 @@ import AssignmentSubmissionsList from './pages/teacher/assignment-submissions';
 import TeacherQuestionBanks from './pages/teacher/question-banks';
 import TeacherQuestionBankDetail from './pages/teacher/question-banks/detail';
 import CreateExam from './pages/teacher/create-exam';
+import TeacherExamReview from './pages/teacher/exam-review';
 import ProfilePage from './pages/common/ProfilePage';
 import AdminMajors from './pages/admin/settings/majors';
 import NotFoundPage from './pages/not-found';
@@ -85,8 +87,9 @@ function Router() {
       <Route element={<StudentLayout />}>
         <Route path="/student" element={<StudentDashboard />} />
         <Route path="/student/courses" element={<StudentCourses />} />
-        <Route path="/student/course-details" element={<CourseDetails />} />
+        <Route path="/student/course-details/:classSubjectId" element={<CourseDetails />} />
         <Route path="/student/assignment" element={<AssignmentDetails />} />
+        <Route path="/student/exam-lobby/:examId" element={<ExamLobby />} />
         <Route path="/student/quiz" element={<QuizTest />} />
         <Route path="/student/forums" element={<StudentForums />} />
         <Route path="/student/exams" element={<StudentExamsPage />} />
@@ -108,6 +111,7 @@ function Router() {
         <Route path="/teacher/question-banks/:subjectId" element={<TeacherQuestionBankDetail />} />
         <Route path="/teacher/create-exam" element={<CreateExam />} />
         <Route path="/teacher/course-details/:courseId" element={<TeacherCourseDetails />} />
+        <Route path="/teacher/exam-review/:studentExamId" element={<TeacherExamReview />} />
         <Route path="/teacher/assignment/:assignmentId/submissions" element={<AssignmentSubmissionsList />} />
         <Route path="/teacher/assignment-review/:submissionId" element={<TeacherAssignmentReview />} />
         <Route path="/teacher/reports" element={<TeacherReports />} />

@@ -74,3 +74,12 @@ export interface PaginatedResponse<T> {
     itemTo: number;
 }
 
+export interface StudentSubject {
+    classSubjectId: string;
+    classId: string;
+    classCode: string;
+    subjectId: string;
+    subjectCode: string;
+    subjectName: string;
+    examCount: number;
+}

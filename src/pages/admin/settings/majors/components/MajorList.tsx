@@ -11,9 +11,12 @@ import SubMajorDrawer from './SubMajorDrawer';
 import {
     useGetMajorsQuery,
     useDeleteMajorMutation,
+    useImportMajorsMutation,
 } from '@/api/majorsApi';
-import type { Major } from '@/types/major.types';
+import type { Major, ImportMajorsResponse } from '@/types/major.types';
 import { useState } from 'react';
+import ImportExcelModal from '@/components/shared/ImportExcelModal';
+import ImportResultModal from '@/components/shared/ImportResultModal';
 
 export default function MajorList() {
     // Pagination State
@@ -31,6 +34,11 @@ export default function MajorList() {
     const [selectedMajor, setSelectedMajor] = useState<Major | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    
+    // Import Modal State
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isImportResultModalOpen, setIsImportResultModalOpen] = useState(false);
+    const [importResult, setImportResult] = useState<ImportMajorsResponse | null>(null);
 
     // RTK Query hooks
     const { data: majorsData, isLoading, error } = useGetMajorsQuery({
@@ -42,6 +50,7 @@ export default function MajorList() {
     });
 
     const [deleteMajor, { isLoading: isDeleting }] = useDeleteMajorMutation();
+    const [importMajors, { isLoading: isImporting }] = useImportMajorsMutation();
 
     // Extract data from PaginatedResponse
     const majors = majorsData?.items || [];
@@ -87,6 +96,25 @@ export default function MajorList() {
     // Handle Search Change
     const handleSearchChange = (term: string) => {
         setSearchTerm(term);
+    };
+
+    // Handle Import
+    const handleImportClick = () => {
+        setIsImportModalOpen(true);
+    };
+
+    const handleConfirmImport = async (file: File) => {
+        toast.info('Processing import...');
+
+        try {
+            const result = await importMajors(file).unwrap();
+            setImportResult(result);
+            setIsImportModalOpen(false);
+            setIsImportResultModalOpen(true);
+            toast.success('Import completed. Please check the results.');
+        } catch (err: any) {
+            toast.error('Import failed! ' + (err?.data?.message || 'Please check the file or try again later.'));
+        }
     };
 
     const handleRowClick = (major: Major) => {
@@ -180,6 +208,8 @@ export default function MajorList() {
                 onSearchChange={handleSearchChange}
                 searchTerm={searchTerm}
                 onRowClick={handleRowClick}
+                onImport={handleImportClick}
+                importLabel={isImporting ? 'Importing...' : 'Import Excel'}
             />
 
             <SubMajorDrawer
@@ -201,6 +231,22 @@ export default function MajorList() {
                 title="Confirm Deletion"
                 message={`Are you sure you want to delete major "${majorToDelete?.name}"?`}
                 itemName={majorToDelete?.name}
+            />
+
+            <ImportExcelModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onConfirm={handleConfirmImport}
+                title="Import Majors from Excel"
+                description="Please ensure the Excel file contains columns: MajorCode, MajorName, Description"
+                templateUrl="/templates/major_import_template.xlsx"
+            />
+
+            <ImportResultModal
+                isOpen={isImportResultModalOpen}
+                onClose={() => setIsImportResultModalOpen(false)}
+                result={importResult}
+                entityName="majors"
             />
 
         </div>

@@ -15,6 +15,7 @@ export default function ImportResultModal({ isOpen, onClose, result, entityName 
     const successCount = result.successCount ?? result.SuccessCount ?? 0;
     const failureCount = result.failureCount ?? result.FailureCount ?? 0;
     const errors = result.errors ?? result.Errors ?? [];
+    const message = result.message ?? result.Message ?? null;
 
     // Treat 0 success as a failure if there are no other stats (empty import) or just general failure
     const hasFailures = failureCount > 0 || errors.length > 0 || successCount === 0;
@@ -52,10 +53,13 @@ export default function ImportResultModal({ isOpen, onClose, result, entityName 
                             <CheckCircle className="w-14 h-14 text-green-600" />
                         </div>
                         <div>
-                            <h4 className="text-2xl font-black text-gray-900">Import Completed!</h4>
+                            <h4 className="text-2xl font-bold text-gray-900">Import Completed!</h4>
                             <p className="text-lg text-gray-600 mt-2">
                                 Successfully processed <strong className="text-green-600 font-bold">{successCount}</strong> {entityName}.
                             </p>
+                            {message && (
+                                <p className="text-sm text-gray-500 mt-3 italic font-medium">"{message}"</p>
+                            )}
                         </div>
                     </div>
                 ) : isCriticalError ? (
@@ -91,7 +95,7 @@ export default function ImportResultModal({ isOpen, onClose, result, entityName 
                                 <div className="mb-3 p-3 bg-green-100 rounded-full">
                                     <CheckCircle className="w-6 h-6 text-green-600" />
                                 </div>
-                                <span className="text-4xl font-black text-green-700">{successCount}</span>
+                                <span className="text-4xl font-bold text-green-700">{successCount}</span>
                                 <span className="text-sm font-bold text-green-600 uppercase tracking-widest mt-1">Succeeded</span>
                             </div>
 
@@ -99,7 +103,7 @@ export default function ImportResultModal({ isOpen, onClose, result, entityName 
                                 <div className="mb-3 p-3 bg-red-100 rounded-full">
                                     <AlertTriangle className="w-6 h-6 text-red-600" />
                                 </div>
-                                <span className="text-4xl font-black text-red-700">{failureCount}</span>
+                                <span className="text-4xl font-bold text-red-700">{failureCount}</span>
                                 <span className="text-sm font-bold text-red-600 uppercase tracking-widest mt-1">Failed</span>
                             </div>
                         </div>
@@ -136,6 +140,13 @@ export default function ImportResultModal({ isOpen, onClose, result, entityName 
                                 )}
                             </div>
                         </div>
+
+                        {message && (
+                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mt-6">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">Server Message</span>
+                                <p className="text-gray-700 italic">"{message}"</p>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

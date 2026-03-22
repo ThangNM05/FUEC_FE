@@ -1,6 +1,15 @@
-import { useState } from 'react';
-import { ArrowLeft, FileText, Calendar, ChevronDown, ChevronUp, Download, BookOpen, Play, Lock, CheckCircle, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useState, useMemo } from 'react';
+import { ArrowLeft, FileText, Calendar, ChevronDown, ChevronUp, Download, BookOpen, Lock, CheckCircle, Clock, Loader2, Play } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/redux/authSlice';
+import { useGetClassSubjectSlotsQuery, useGetClassSubjectByIdQuery } from '@/api/classDetailsApi';
+import { useGetAssignmentsByClassSubjectIdQuery } from '@/api/assignmentsApi';
+import { useGetStudentAssignmentsByStudentIdQuery } from '@/api/studentAssignmentsApi';
+import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
+import { useGetStudentClassesQuery } from '@/api/studentsApi';
+import type { Assignment, StudentAssignment } from '@/types/assignment.types';
+import StudentSlotContent from './StudentSlotContent';
 
 interface Question {
   id: number;
@@ -8,19 +17,21 @@ interface Question {
   status: 'custom' | 'finished';
 }
 
-interface Assignment {
-  id: number;
-  title: string;
-}
+export type ExtendedAssignment = Assignment & {
+  submitted: boolean;
+  timeRemaining: string | null;
+  isOverdue: boolean;
+  studentSubmission?: StudentAssignment;
+};
 
 interface Slot {
-  id: number;
+  id: string;
   title: string;
   startTime: string;
   endTime: string;
   topics: string[];
   questions: Question[];
-  assignments: Assignment[];
+  assignments: ExtendedAssignment[];
   expanded: boolean;
   status: 'locked' | 'completed' | 'pending' | 'urgent' | 'overdue';
   remaining?: string;
@@ -45,25 +56,103 @@ interface Material {
 
 function CourseDetails() {
   const navigate = useNavigate();
+  const { classSubjectId } = useParams<{ classSubjectId: string }>();
   const [activeSection, setActiveSection] = useState('assignments');
   const [currentPage, setCurrentPage] = useState(1);
   const [slotContentsExpanded, setSlotContentsExpanded] = useState(false);
   const SLOTS_PER_PAGE = 10;
 
+  const user = useSelector(selectCurrentUser);
+
+  const { data: slotsData, isLoading: isSlotsLoading, isError } = useGetClassSubjectSlotsQuery(classSubjectId || '', {
+    skip: !classSubjectId
+  });
+
+  const { data: classSubjectData, isLoading: isClassLoading } = useGetClassSubjectByIdQuery(classSubjectId || '', {
+    skip: !classSubjectId
+  });
+
+  const { data: assignmentsData, isLoading: isAssignmentsLoading } = useGetAssignmentsByClassSubjectIdQuery(classSubjectId || '', {
+    skip: !classSubjectId
+  });
+
+  const { data: studentAssignmentsData, isLoading: isStudentAssignmentsLoading } = useGetStudentAssignmentsByStudentIdQuery(user?.entityId ?? user?.id ?? '', {
+    skip: !user?.id
+  });
+
+  const { data: examsData, isLoading: isLoadingExams } = useGetExamsByClassSubjectIdQuery(classSubjectId || '', {
+    skip: !classSubjectId
+  });
+
+  // Need user's StudentClasses to know their ID for this course
+  // We use studentId: user?.entityId ?? user?.id
+  const { data: studentClassesData } = useGetStudentClassesQuery({
+    studentId: user?.entityId ?? user?.id,
+    pageSize: 100
+  }, { skip: !user?.id });
+
+  // Find the exact StudentClass object for this classSubject's classId
+  const currentStudentClassId = useMemo(() => {
+    if (!classSubjectData?.classId || !studentClassesData?.items) return null;
+    const match = studentClassesData.items.find((sc: any) => sc.classId === classSubjectData.classId);
+    return match?.id || null;
+  }, [classSubjectData, studentClassesData]);
+
+
+  const isLoading = isSlotsLoading || isClassLoading || isAssignmentsLoading || isStudentAssignmentsLoading || isLoadingExams;
+
   const course = {
-    name: 'Mobile App Development',
-    code: 'MAD401',
-    instructor: 'Prof. Nguyen Van A',
-    schedule: 'Mon, Wed 8:00 AM - 10:00 AM',
-    room: 'Room 301',
-    credits: 3
+    name: classSubjectData?.subjectName || slotsData?.subjectName || 'Loading...',
+    code: classSubjectData?.subjectCode || slotsData?.subjectCode || '...',
+    instructor: classSubjectData?.teacherName || 'N/A',
+    schedule: classSubjectData?.classCode ? `${classSubjectData.classCode}` : 'N/A',
+    room: 'N/A',
+    credits: classSubjectData?.subjectCredits || 0
   };
 
-  const courseAssignments = [
-    { id: 1, title: 'Assignment 1: Requirements Analysis', due: '2024-05-10', submitted: true, timeRemaining: null },
-    { id: 2, title: 'Assignment 2: Design Patterns', due: '2024-05-17', submitted: false, timeRemaining: '3hr remaining' },
-    { id: 3, title: 'Final Project: Software Development', due: '2024-06-01', submitted: false, timeRemaining: '5 days remaining' }
-  ];
+  const courseAssignments = useMemo(() => {
+    if (!assignmentsData?.items) return [];
+
+    const submissions = studentAssignmentsData?.items || [];
+
+    return assignmentsData.items.map((assignment: Assignment) => {
+      const submission = submissions.find((sub: StudentAssignment) => sub.assignmentId === assignment.id);
+
+      let timeRemaining = null;
+      let isOverdue = false;
+
+      if (assignment.dueDate) {
+        const due = new Date(assignment.dueDate).getTime();
+        const now = new Date().getTime();
+        const diff = due - now;
+
+        if (diff < 0) {
+          timeRemaining = 'Overdue';
+          isOverdue = true;
+        } else {
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+          let parts = [];
+          if (days > 0) parts.push(`${days}d`);
+          if (hours > 0) parts.push(`${hours}h`);
+          if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+
+          timeRemaining = `${parts.join(' ')} left`;
+        }
+      }
+
+      return {
+        ...assignment,
+        submitted: !!submission,
+        timeRemaining: !submission ? timeRemaining : null,
+        isOverdue: !submission && isOverdue,
+        studentSubmission: submission
+      };
+    }).sort((a: ExtendedAssignment, b: ExtendedAssignment) => a.instanceNumber - b.instanceNumber);
+  }, [assignmentsData, studentAssignmentsData]);
+
 
   const learningMaterials: Material[] = [
     { id: 1, title: 'Week 1: Introduction to Mobile Development', type: 'Lecture', date: '2024-05-01', downloadable: true },
@@ -72,58 +161,79 @@ function CourseDetails() {
     { id: 4, title: 'Lab 2: Building First App', type: 'Lab', date: '2024-05-10', downloadable: true }
   ];
 
-  const progressTests: ProgressTest[] = [
-    { id: 1, title: 'Quiz 1: OOP Fundamentals', questions: 20, duration: 30, status: 'completed', score: 85 },
-    { id: 2, title: 'Midterm Exam', questions: 50, duration: 90, status: 'available', score: null },
-    { id: 3, title: 'Quiz 2: Design Patterns', questions: 15, duration: 20, status: 'locked', score: null }
-  ];
+  const progressTests = useMemo(() => {
+    return (examsData?.items || []).map((exam: any) => {
+      const now = new Date();
+      const start = new Date(exam.startTime);
+      const end = new Date(exam.endTime);
 
-  // Generate 20 slots with realistic data and status
-  const getSlotStatus = (slotId: number): 'locked' | 'completed' | 'pending' | 'urgent' | 'overdue' => {
-    if (slotId <= 5) return 'completed';
-    if (slotId === 6) return 'overdue';
-    if (slotId <= 8) return 'urgent';
-    if (slotId <= 10) return 'pending';
-    return 'locked';
+      let status: 'completed' | 'available' | 'locked' = 'locked';
+      if (now >= start && now <= end) {
+        status = 'available';
+      } else if (now > end) {
+        status = 'completed';
+      }
+
+      return {
+        id: exam.id,
+        title: exam.displayName || (exam.category ? `${exam.category} ${exam.instanceNumber}` : `Progress Test ${exam.instanceNumber}`),
+        startTime: exam.startTime,
+        endTime: exam.endTime,
+        questions: exam.questions?.length || 0,
+        duration: 0, // Duration could be derived from endTime - startTime if needed
+        status: status,
+        slotId: exam.slotId,
+        isSubmitted: exam.isSubmitted,
+        score: exam.grade !== null && exam.grade !== undefined ? exam.grade : null
+      };
+    });
+  }, [examsData]);
+
+  const [expandedSlots, setExpandedSlots] = useState<{ [key: string]: boolean }>({});
+
+  const toggleSlot = (slotId: string) => {
+    setExpandedSlots(prev => ({
+      ...prev,
+      [slotId]: !prev[slotId]
+    }));
   };
 
-  const getRemaining = (slotId: number): string | undefined => {
-    if (slotId === 6) return 'Overdue 2 days';
-    if (slotId === 7) return '23 hours';
-    if (slotId === 8) return '4 hours 30 min';
-    if (slotId === 9) return '2 days';
-    if (slotId === 10) return '5 days';
-    return undefined;
+  const slots: Slot[] = slotsData?.slots.map(slot => ({
+    id: slot.id,
+    title: `Slot ${slot.slotIndex}`,
+    startTime: new Date(slot.date).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+    endTime: new Date(slot.endDate).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+    topics: slot.sessions.map((s: any) => s.topic),
+    questions: [], // Mocking for now as not in this API
+    assignments: [], // Mocking for now as not in this API
+    expanded: !!expandedSlots[slot.id],
+    status: 'pending' as const, // Defaulting for now
+    remaining: undefined
+  })) || [];
+
+  const handleSlotClick = (slotId: string) => {
+    const index = slots.findIndex(s => s.id === slotId);
+    if (index === -1) return;
+
+    const slotPage = Math.ceil((index + 1) / SLOTS_PER_PAGE);
+    setCurrentPage(slotPage);
+
+    // Ensure it's expanded
+    setExpandedSlots(prev => ({ ...prev, [slotId]: true }));
+
+    // Small timeout to allow state changes to propagate
+    setTimeout(() => {
+      scrollToSection(`slot-${slotId}`);
+    }, 150);
   };
 
-  const [slots, setSlots] = useState<Slot[]>(
-    Array.from({ length: 20 }, (_, i) => ({
-      id: i + 1,
-      title: `Slot ${i + 1}`,
-      startTime: '12:30 10/09/2025',
-      endTime: '14:45 10/09/2025',
-      topics: i === 0
-        ? ['Mobile Development Overview', 'Android Introduction', 'Android Studio', 'Android Application Structure']
-        : [`Topic ${i * 3 + 1}`, `Topic ${i * 3 + 2}`, `Topic ${i * 3 + 3}`],
-      questions: [
-        { id: 1, title: 'What is android?', status: 'finished' as const },
-        { id: 2, title: 'What is Android Structure?', status: 'finished' as const },
-        { id: 3, title: 'Explain android activity life cycle?', status: 'custom' as const }
-      ],
-      assignments: [
-        { id: 1, title: 'Submit Demo Hello World!' }
-      ],
-      expanded: false, // All slots collapsed by default
-      status: getSlotStatus(i + 1),
-      remaining: getRemaining(i + 1)
-    }))
-  );
-
-  const toggleSlot = (slotId: number) => {
-    setSlots(slots.map(slot =>
-      slot.id === slotId ? { ...slot, expanded: !slot.expanded } : slot
-    ));
-  };
+  const slotMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    slotsData?.slots.forEach(slot => {
+      map[slot.id] = `Slot ${slot.slotIndex}`;
+    });
+    return map;
+  }, [slotsData]);
 
   const scrollToSection = (sectionId: string) => {
     setActiveSection(sectionId);
@@ -155,13 +265,11 @@ function CourseDetails() {
             <span>{course.instructor}</span>
             <span>•</span>
             <span>{course.schedule}</span>
-            <span>•</span>
-            <span>{course.room}</span>
           </div>
         </div>
 
         {/* Assignments Section */}
-        <div id="assignments" className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 scroll-mt-6">
+        <div id="assignments" className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 md:pb-8 mb-6 scroll-mt-6">
           <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Assignments</h2>
           <div className="space-y-3">
             {courseAssignments.map(assignment => (
@@ -171,12 +279,26 @@ function CourseDetails() {
                     <FileText className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-[#0A1B3C] text-sm">{assignment.title}</h4>
+                    <h4 className="font-medium text-[#0A1B3C] text-sm">
+                      {assignment.displayName || `ASM${assignment.instanceNumber}`}
+                      {assignment.slotId && slotMap[assignment.slotId] && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSlotClick(assignment.slotId!);
+                          }}
+                          className="ml-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase tracking-tight hover:bg-blue-100 hover:border-blue-200 transition-all cursor-pointer"
+                          title={`Go to ${slotMap[assignment.slotId]}`}
+                        >
+                          {slotMap[assignment.slotId]}
+                        </button>
+                      )}
+                    </h4>
                     <div className="flex items-center gap-2 mt-1">
                       {assignment.timeRemaining && (
                         <>
                           <span className="text-xs text-gray-400">•</span>
-                          <span className="text-xs text-orange-600 font-medium flex items-center gap-1">
+                          <span className={`text-xs font-semibold flex items-center gap-1 ${assignment.isOverdue ? 'text-red-600' : 'text-blue-600'}`}>
                             <Clock className="w-3 h-3" />
                             {assignment.timeRemaining}
                           </span>
@@ -186,13 +308,80 @@ function CourseDetails() {
                   </div>
                 </div>
                 <button
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${assignment.submitted
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-[#F37022] text-white hover:bg-[#D96419]'
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${assignment.studentSubmission?.grade !== null && assignment.studentSubmission?.grade !== undefined
+                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                    : assignment.submitted
+                      ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      : 'bg-[#F37022] text-white hover:bg-[#D96419]'
                     }`}
                   onClick={() => navigate(`/student/assignment-submission/${assignment.id}`)}
                 >
-                  {assignment.submitted ? 'View Submission' : 'Submit'}
+                  {assignment.submitted || (assignment.studentSubmission?.grade !== null && assignment.studentSubmission?.grade !== undefined)
+                    ? 'Review'
+                    : 'Submit'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Progress Tests */}
+        <div id="progress-tests" className="bg-white rounded-xl border border-gray-200 p-6 pb-8 mb-6 scroll-mt-6">
+          <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Progress Tests</h2>
+          <div className="space-y-3">
+            {progressTests.length === 0 ? (
+              <p className="text-gray-500 italic">No progress tests available for this course.</p>
+            ) : progressTests.map(test => (
+              <div key={test.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${test.isSubmitted || test.status === 'completed' ? 'bg-green-100' :
+                    test.status === 'available' ? 'bg-blue-100' :
+                      'bg-gray-200'
+                    }`}>
+                    {test.isSubmitted || test.status === 'completed' ? <CheckCircle className="w-5 h-5 text-green-600" /> :
+                      test.status === 'available' ? <Play className="w-5 h-5 text-blue-600" /> :
+                        <Lock className="w-5 h-5 text-gray-500" />}
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-[#0A1B3C] text-sm">
+                      {test.title}
+                      {test.slotId && slotMap[test.slotId] && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSlotClick(test.slotId!);
+                          }}
+                          className="ml-2 text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 uppercase tracking-tight hover:bg-blue-100 hover:border-blue-200 transition-all cursor-pointer"
+                          title={`Go to ${slotMap[test.slotId]}`}
+                        >
+                          {slotMap[test.slotId]}
+                        </button>
+                      )}
+                    </h4>
+                    <div className="flex items-center gap-3 mt-1">
+                      {/* <span className="text-xs text-gray-500">{test.questions} questions</span> */}
+                      <span className="text-xs text-gray-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        End: {new Date(test.endTime).toLocaleString('en-GB')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 ${test.isSubmitted || test.status === 'completed' ? 'bg-green-100 text-green-700' :
+                    test.status === 'available' ? 'bg-[#F37022] text-white hover:bg-[#D96419]' :
+                      'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    }`}
+                  disabled={test.status === 'locked'}
+                  onClick={() => {
+                    if (test.status === 'available' || test.status === 'completed' || test.isSubmitted) {
+                      navigate(`/student/exam-lobby/${test.id}?classSubjectId=${classSubjectId}`);
+                    }
+                  }}
+                >
+                  {test.isSubmitted || test.status === 'completed' ? 'Review' :
+                    test.status === 'available' ? 'Start Test' :
+                      'Locked'}
                 </button>
               </div>
             ))}
@@ -200,7 +389,7 @@ function CourseDetails() {
         </div>
 
         {/* Learning Materials - PDFs/Files */}
-        <div id="learning-materials" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-6">
+        <div id="learning-materials" className="bg-white rounded-xl border border-gray-200 p-6 pb-8 mb-6 scroll-mt-6">
           <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Learning Materials</h2>
           <div className="space-y-3">
             {learningMaterials.map(material => (
@@ -230,18 +419,28 @@ function CourseDetails() {
         </div>
 
         {/* Slot Contents */}
-        <div id="slot-contents" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-6">
+        <div id="slot-contents" className="bg-white rounded-xl border border-gray-200 p-6 pb-8 mb-6 scroll-mt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-[#0A1B3C]">Slot Contents</h2>
-            <div className="text-sm text-gray-500">
-              Page {currentPage} of {Math.ceil(slots.length / SLOTS_PER_PAGE)}
-            </div>
+            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-[#F37022]" />}
+            {!isLoading && (
+              <div className="text-sm text-gray-500">
+                Page {currentPage} of {Math.ceil(slots.length / SLOTS_PER_PAGE) || 1}
+              </div>
+            )}
           </div>
+
+          {isError && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center mb-4">
+              Failed to load slots data. Please try again.
+            </div>
+          )}
+
           <div className="space-y-4">
             {slots
               .slice((currentPage - 1) * SLOTS_PER_PAGE, currentPage * SLOTS_PER_PAGE)
               .map(slot => (
-                <div key={slot.id} id={`slot-${slot.id}`} className={`border rounded-lg overflow-hidden scroll-mt-6 ${slot.status === 'locked' ? 'border-gray-300 opacity-60' :
+                <div key={slot.id} id={`slot-${slot.id}`} className={`border rounded-lg overflow-hidden scroll-mt-6 mb-4 ${slot.status === 'locked' ? 'border-gray-300 opacity-60' :
                   slot.status === 'overdue' ? 'border-red-400' :
                     slot.status === 'urgent' ? 'border-orange-300' :
                       slot.status === 'completed' ? 'border-green-300' :
@@ -318,56 +517,15 @@ function CourseDetails() {
 
                   {/* Slot Content (Expandable) */}
                   {slot.expanded && (
-                    <div className="p-4 bg-white">
-                      {/* Questions Section */}
-                      <div className="mb-6">
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">QUESTION</h4>
-                        <div className="space-y-2">
-                          {slot.questions.map(question => (
-                            <div
-                              key={question.id}
-                              onClick={() => navigate(`/student/course-details/questions/${slot.id}-${question.id}`)}
-                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-orange-50 hover:border-[#F37022] border border-transparent transition-all cursor-pointer group"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                                  <FileText className="w-4 h-4 text-orange-600" />
-                                </div>
-                                <span className="text-sm text-[#0A1B3C] group-hover:text-[#F37022] font-medium transition-colors">{question.title}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`px-3 py-1 text-xs font-semibold rounded ${question.status === 'custom'
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'bg-green-100 text-green-700'
-                                  }`}>
-                                  {question.status === 'custom' ? 'Custom' : 'Finished'}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Assignments Section */}
-                      {slot.assignments.length > 0 && (
-                        <div>
-                          <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">ASSIGNMENT</h4>
-                          <div className="space-y-2">
-                            {slot.assignments.map(assignment => (
-                              <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-                                    <FileText className="w-4 h-4 text-pink-600" />
-                                  </div>
-                                  <span className="text-sm text-[#0A1B3C]">{assignment.title}</span>
-                                </div>
-                                <span className="text-sm text-gray-500">N/A</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <StudentSlotContent
+                      slotId={slot.id}
+                      slotAssignments={courseAssignments.filter(a => {
+                        // Strict filtering: only show assignments that explicitly belong to this slot
+                        return a.slotId === slot.id;
+                      })}
+                      slotExams={(examsData?.items || []).filter(e => e.slotId === slot.id)}
+                      studentClassesId={currentStudentClassId}
+                    />
                   )}
                 </div>
               ))}
@@ -383,7 +541,7 @@ function CourseDetails() {
               Previous
             </button>
             <div className="flex items-center gap-1">
-              {Array.from({ length: Math.ceil(slots.length / SLOTS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+              {Array.from({ length: Math.ceil(slots.length / SLOTS_PER_PAGE) || 1 }, (_, i) => i + 1).map(page => (
                 <button
                   key={page}
                   onClick={() => setCurrentPage(page)}
@@ -397,8 +555,8 @@ function CourseDetails() {
               ))}
             </div>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(slots.length / SLOTS_PER_PAGE), prev + 1))}
-              disabled={currentPage === Math.ceil(slots.length / SLOTS_PER_PAGE)}
+              onClick={() => setCurrentPage(prev => Math.min(Math.ceil(slots.length / SLOTS_PER_PAGE) || 1, prev + 1))}
+              disabled={currentPage === (Math.ceil(slots.length / SLOTS_PER_PAGE) || 1)}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
@@ -406,55 +564,6 @@ function CourseDetails() {
           </div>
         </div>
 
-        {/* Progress Tests */}
-        <div id="progress-tests" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-6">
-          <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Progress Tests</h2>
-          <div className="space-y-3">
-            {progressTests.map(test => (
-              <div key={test.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${test.status === 'completed' ? 'bg-green-100' :
-                    test.status === 'available' ? 'bg-blue-100' :
-                      'bg-gray-200'
-                    }`}>
-                    {test.status === 'completed' ? <CheckCircle className="w-5 h-5 text-green-600" /> :
-                      test.status === 'available' ? <Play className="w-5 h-5 text-blue-600" /> :
-                        <Lock className="w-5 h-5 text-gray-500" />}
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-[#0A1B3C] text-sm">{test.title}</h4>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-gray-500">{test.questions} questions</span>
-                      <span className="text-xs text-gray-500">•</span>
-                      <span className="text-xs text-gray-500 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {test.duration} mins
-                      </span>
-                      {test.score !== null && (
-                        <>
-                          <span className="text-xs text-gray-500">•</span>
-                          <span className="text-xs font-semibold text-green-600">Score: {test.score}%</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <button
-                  className={`px-4 py-2 rounded-lg text-sm font-medium ${test.status === 'completed' ? 'bg-green-100 text-green-700' :
-                    test.status === 'available' ? 'bg-[#F37022] text-white hover:bg-[#D96419]' :
-                      'bg-gray-200 text-gray-500 cursor-not-allowed'
-                    }`}
-                  disabled={test.status === 'locked'}
-                  onClick={() => test.status === 'available' && navigate('/student/quiz')}
-                >
-                  {test.status === 'completed' ? 'Review' :
-                    test.status === 'available' ? 'Start Test' :
-                      'Locked'}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* Right Sidebar Navigation */}
@@ -471,6 +580,16 @@ function CourseDetails() {
                   }`}
               >
                 Assignments
+              </button>
+
+              <button
+                onClick={() => scrollToSection('progress-tests')}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === 'progress-tests'
+                  ? 'bg-orange-50 text-[#F37022]'
+                  : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+              >
+                Progress Tests
               </button>
 
               <button
@@ -510,7 +629,8 @@ function CourseDetails() {
                         key={slot.id}
                         onClick={() => {
                           if (slot.status !== 'locked') {
-                            const slotPage = Math.ceil(slot.id / SLOTS_PER_PAGE);
+                            const index = slots.findIndex(s => s.id === slot.id);
+                            const slotPage = Math.ceil((index + 1) / SLOTS_PER_PAGE);
                             setCurrentPage(slotPage);
                             setTimeout(() => scrollToSection(`slot-${slot.id}`), 100);
                           }
@@ -547,16 +667,6 @@ function CourseDetails() {
                   </div>
                 )}
               </div>
-
-              <button
-                onClick={() => scrollToSection('progress-tests')}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === 'progress-tests'
-                  ? 'bg-orange-50 text-[#F37022]'
-                  : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-              >
-                Progress Tests
-              </button>
             </div>
           </div>
         </div>
