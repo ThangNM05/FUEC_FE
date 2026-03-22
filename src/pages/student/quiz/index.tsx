@@ -1,11 +1,16 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/redux/authSlice';
 import { Clock, ChevronLeft, ChevronRight, CheckCircle, Loader2, Cloud, CloudOff, Send, AlertTriangle, Check, BookOpen, LogOut, ArrowLeft, Star, GraduationCap } from 'lucide-react';
 import ExamDetailModal from '@/components/modals/ExamDetailModal';
 import ExamReviewList from '@/components/quiz/ExamReviewList';
 import { useGetStudentExamByIdQuery, useSubmitStudentExamMutation } from '@/api/studentExamsApi';
 import { useCreateStudentAnswerMutation } from '@/api/studentAnswersApi';
 import type { QuizQuestion } from '@/api/studentExamsApi';
+import { HeadPoseEstimator } from '@/lib/ExamProctoring';
+import type { AttentionState } from '@/lib/ExamProctoring';
+import { uploadCheatSnapshot } from '@/lib/uploadCheatSnapshot';
 
 // ─── Helpers ───────────────────────────────────────────
 const STORAGE_KEY = 'fuec_active_exam';
@@ -17,6 +22,106 @@ interface SavedExamState {
   savedAt: number;
   starred: Record<string, boolean>; // Added starred to saved state
 }
+
+/* =====================
+   Drawing helpers for proctoring preview
+===================== */
+
+function draw(
+  ctx: CanvasRenderingContext2D,
+  state?: AttentionState,
+  faces: Array<{ x: number; y: number; width: number; height: number }> = []
+) {
+  if (!state) return;
+
+  /* ---- Face box ---- */
+  ctx.strokeStyle = '#00ff88';
+  ctx.lineWidth = 2;
+  for (const f of faces) {
+    ctx.strokeRect(f.x, f.y, f.width, f.height);
+  }
+
+  /* ---- Gaze arrow ---- */
+  if (state.gaze && faces[0]) {
+    const face = faces[0];
+    const cx = face.x + face.width / 2;
+    const cy = face.y + face.height / 2;
+
+    const maxLen = Math.min(face.width, face.height) * 0.8;
+
+    const yawRad = (state.gaze.yaw * Math.PI) / 180;
+    const pitchRad = (state.gaze.pitch * Math.PI) / 180;
+
+    const dx = -Math.sin(yawRad) * maxLen;
+    const dy = -Math.sin(pitchRad) * maxLen;
+
+    const conf = Math.max(0, Math.min(1, state.gaze.confidence));
+    ctx.globalAlpha = 0.25 + 0.75 * conf;
+    drawArrow(ctx, cx, cy, dx, dy, '#ffcc00');
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---- HUD ---- */
+  ctx.save();
+  ctx.scale(-1, 1);
+  ctx.fillStyle = '#fff';
+  ctx.font = '13px monospace';
+  ctx.fillText(`Faces: ${state.facesCount}`, -ctx.canvas.width + 10, 20);
+
+  if (state.gaze) {
+    ctx.fillText(`Yaw: ${state.gaze.yaw.toFixed(1)}°`, -ctx.canvas.width + 10, 40);
+    ctx.fillText(`Pitch: ${state.gaze.pitch.toFixed(1)}°`, -ctx.canvas.width + 10, 60);
+    ctx.fillText(`Conf: ${state.gaze.confidence.toFixed(2)}`, -ctx.canvas.width + 10, 80);
+  }
+  ctx.fillText(`Suspicion: ${(state.suspicionScore * 100).toFixed(0)}%`, -ctx.canvas.width + 10, state.gaze ? 100 : 40);
+  ctx.restore();
+
+  /* ---- Alerts ---- */
+  if (state.status === 'suspicious') {
+    ctx.strokeStyle = '#ffaa00';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  } else if (state.status && state.status !== 'safe') {
+    ctx.strokeStyle = '#ff3333';
+    ctx.lineWidth = 10;
+    ctx.strokeRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  }
+}
+
+function drawArrow(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  dx: number,
+  dy: number,
+  color: string
+) {
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 3;
+
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + dx, y + dy);
+  ctx.stroke();
+
+  const angle = Math.atan2(dy, dx);
+  const size = 8;
+
+  ctx.beginPath();
+  ctx.moveTo(x + dx, y + dy);
+  ctx.lineTo(
+    x + dx - size * Math.cos(angle - Math.PI / 6),
+    y + dy - size * Math.sin(angle - Math.PI / 6)
+  );
+  ctx.lineTo(
+    x + dx - size * Math.cos(angle + Math.PI / 6),
+    y + dy - size * Math.sin(angle + Math.PI / 6)
+  );
+  ctx.closePath();
+  ctx.fill();
+}
+
 
 function saveExamState(state: SavedExamState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -71,6 +176,7 @@ export default function QuizTest() {
   const studentExamId = searchParams.get('studentExamId') || '';
   const examId = searchParams.get('examId') || '';
   const classSubjectId = searchParams.get('classSubjectId') || '';
+  const user = useSelector(selectCurrentUser);
 
   // ── API Hooks ──
   const { data: examData, isLoading: isLoadingExam, error: examError } = useGetStudentExamByIdQuery(studentExamId, {
@@ -91,6 +197,180 @@ export default function QuizTest() {
   const [initialized, setInitialized] = useState(false);
 
   const questions: QuizQuestion[] = useMemo(() => examData?.questions || [], [examData]);
+
+  // --- Proctoring / Head-pose estimator refs & state (from test.tsx) ---
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const engineRef = useRef<HeadPoseEstimator | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const lastStateRef = useRef<AttentionState | undefined>(undefined);
+  const lastFacesRef = useRef<Array<{ x: number; y: number; width: number; height: number }>>([]);
+  const displayedGazeRef = useRef<{ yaw: number; pitch: number } | null>(null);
+  const displayedFacesRef = useRef<Array<{ x: number; y: number; width: number; height: number }>>([]);
+
+  const [proctoringStarted, setProctoringStarted] = useState(false);
+  const [proctorReady, setProctorReady] = useState(false);
+
+  const startProctoring = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+      streamRef.current = stream;
+
+      if (!videoRef.current) return;
+      videoRef.current.srcObject = stream;
+      await videoRef.current.play();
+
+      const engine = new HeadPoseEstimator();
+      await engine.init();
+
+      engineRef.current = engine;
+      setProctorReady(true);
+      setProctoringStarted(true);
+    } catch (err) {
+      console.error('Proctoring start failed', err);
+    }
+  };
+
+  // Auto-start proctoring when exam data is loaded
+  useEffect(() => {
+    if (!examData) return;
+    // start only once
+    if (!proctoringStarted) startProctoring();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [examData]);
+
+  // Main proctoring loop: draw + inference
+  useEffect(() => {
+    if (!proctorReady) return;
+
+    let rafId = 0;
+    let inferenceTimer: number | null = null;
+    let stopped = false;
+    let inFlight = false;
+
+    const video = videoRef.current!;
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext('2d')!;
+
+    const ensureCanvasSize = () => {
+      if (video.videoWidth === 0 || video.videoHeight === 0) return false;
+      if (canvas.width !== video.videoWidth) canvas.width = video.videoWidth;
+      if (canvas.height !== video.videoHeight) canvas.height = video.videoHeight;
+      return true;
+    };
+
+    const drawLoop = () => {
+      rafId = requestAnimationFrame(drawLoop);
+      if (!ensureCanvasSize()) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const a = 0.18;
+      const state = lastStateRef.current;
+      let faces = lastFacesRef.current;
+
+      if (faces.length) {
+        const curFaces = displayedFacesRef.current;
+        if (!curFaces.length) displayedFacesRef.current = faces;
+        else if (faces[0] && curFaces[0]) {
+          const f0 = faces[0];
+          const c0 = curFaces[0];
+          displayedFacesRef.current = [
+            {
+              x: c0.x + a * (f0.x - c0.x),
+              y: c0.y + a * (f0.y - c0.y),
+              width: c0.width + a * (f0.width - c0.width),
+              height: c0.height + a * (f0.height - c0.height),
+            },
+          ];
+        }
+        faces = displayedFacesRef.current;
+      }
+
+      let smoothedState = state;
+      if (state?.gaze) {
+        const cur = displayedGazeRef.current ?? { yaw: state.gaze.yaw, pitch: state.gaze.pitch };
+        displayedGazeRef.current = {
+          yaw: cur.yaw + a * (state.gaze.yaw - cur.yaw),
+          pitch: cur.pitch + a * (state.gaze.pitch - cur.pitch),
+        };
+        smoothedState = {
+          ...state,
+          gaze: {
+            ...state.gaze,
+            yaw: displayedGazeRef.current.yaw,
+            pitch: displayedGazeRef.current.pitch,
+          },
+        };
+      }
+
+      // call helper draw below
+      draw(ctx, smoothedState, faces);
+    };
+
+    const INFERENCE_FPS = 5;
+    const INFERENCE_INTERVAL_MS = Math.round(1000 / INFERENCE_FPS);
+
+    const inferenceLoop = async () => {
+      if (stopped) return;
+      if (!engineRef.current || video.videoWidth === 0) {
+        inferenceTimer = window.setTimeout(inferenceLoop, 250);
+        return;
+      }
+      if (inFlight) {
+        inferenceTimer = window.setTimeout(inferenceLoop, INFERENCE_INTERVAL_MS);
+        return;
+      }
+
+      inFlight = true;
+      try {
+        const ts = performance.now();
+        const result = await engineRef.current.estimate(video, ts);
+        lastStateRef.current = result.state;
+        lastFacesRef.current = result.faces;
+
+        const st = result.state?.status;
+        if (st && st !== 'safe' && st !== 'suspicious') {
+          try {
+            uploadCheatSnapshot(
+              video, 
+              st, 
+              examData?.studentCode || user?.entityId || 'unknown',
+              classSubjectId || 'unknown',
+              studentExamId
+            );
+          } catch (err) {
+            console.warn('upload snapshot failed', err);
+          }
+        }
+      } finally {
+        inFlight = false;
+        inferenceTimer = window.setTimeout(inferenceLoop, INFERENCE_INTERVAL_MS);
+      }
+    };
+
+    drawLoop();
+    inferenceLoop();
+
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(rafId);
+      if (inferenceTimer) window.clearTimeout(inferenceTimer);
+    };
+  }, [proctorReady]);
+
+  // Cleanup on unmount: stop media tracks
+  useEffect(() => {
+    return () => {
+      try {
+        streamRef.current?.getTracks().forEach(t => t.stop());
+        streamRef.current = null;
+      } catch (err) {
+        // ignore
+      }
+    };
+  }, []);
 
   // ── Security Guard: Block unauthorized re-entry ──
   useEffect(() => {
@@ -145,7 +425,8 @@ export default function QuizTest() {
 
   // ── Countdown Timer ──
   useEffect(() => {
-    if (timeLeft === null || timeLeft <= 0 || showResults) return;
+    // Timer is paused if AI Proctoring hasn't fully initialized yet
+    if (timeLeft === null || timeLeft <= 0 || showResults || !proctorReady) return;
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -429,6 +710,25 @@ export default function QuizTest() {
       )}
 
       <div className="min-h-screen bg-gray-50/50 animate-fadeIn">
+        {/* Fullscreen Proctoring Initialization Overlay */}
+        {!proctorReady && (
+          <div className="fixed inset-0 z-[90] bg-white/70 backdrop-blur-md flex flex-col items-center justify-center p-4">
+            <div className="bg-white p-10 rounded-[2rem] shadow-2xl flex flex-col items-center text-center max-w-sm border border-orange-100">
+              <div className="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mb-6 shadow-inner ring-4 ring-white">
+                <Loader2 className="w-12 h-12 animate-spin text-[#F37022]" />
+              </div>
+              <h2 className="text-2xl font-black text-[#0A1B3C] mb-3 tracking-tight">Proctoring Setup</h2>
+              <p className="text-gray-500 font-medium mb-8 text-sm leading-relaxed">
+                Please allow camera access and position your face visibly in the frame. The exam timer is paused.
+              </p>
+              <div className="flex items-center gap-3 text-xs font-bold text-[#F37022] bg-[#F37022]/10 px-5 py-2.5 rounded-xl uppercase tracking-widest shadow-sm">
+                <div className="w-2.5 h-2.5 rounded-full bg-[#F37022] animate-pulse" />
+                Connecting Camera...
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── Main Layout Container ── */}
         <div className="max-w-[1600px] mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -625,6 +925,42 @@ export default function QuizTest() {
                 {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 <span>SUBMIT EXAM</span>
               </button>
+
+              {/* AI Proctoring Camera Preview Window */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                    <span className="text-xs font-bold text-[#0A1B3C] uppercase tracking-wider">AI Proctoring</span>
+                  </div>
+                  {proctorReady ? (
+                    <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full uppercase">Active</span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full uppercase">Starting</span>
+                  )}
+                </div>
+                <div className="relative aspect-video bg-black w-full flex items-center justify-center">
+                  {!proctorReady && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-white/80">
+                      <Loader2 className="w-6 h-6 animate-spin mb-2 text-[#F37022]" />
+                      <span className="text-xs font-semibold">Accessing Camera</span>
+                    </div>
+                  )}
+                  <video
+                    ref={videoRef}
+                    playsInline
+                    muted
+                    autoPlay
+                    className="w-full h-full object-cover"
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
+                  <canvas
+                    ref={canvasRef}
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
