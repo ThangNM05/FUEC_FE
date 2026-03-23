@@ -37,6 +37,7 @@ function StudentSidebar() {
   const location = useLocation();
   const dispatch = useDispatch();
   const [isMobile, setIsMobile] = useState(false);
+  const [isDockVisible, setIsDockVisible] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
@@ -46,6 +47,27 @@ function StudentSidebar() {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
+  // Auto-hide dock logic for desktop
+  useEffect(() => {
+    if (isMobile) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const windowHeight = window.innerHeight;
+      const mouseY = e.clientY;
+      const distanceFromBottom = windowHeight - mouseY;
+
+      // Show dock if mouse is near bottom (20px) or if dock is already visible and mouse is over it (120px)
+      if (distanceFromBottom <= (isDockVisible ? 120 : 20)) {
+        setIsDockVisible(true);
+      } else {
+        setIsDockVisible(false);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [isMobile, isDockVisible]);
 
   // Close "More" menu on outside click
   useEffect(() => {
@@ -176,7 +198,8 @@ function StudentSidebar() {
 
   // ─── macOS Dock (desktop ≥ 640px) ───
   return (
-    <div className="fixed bottom-4 left-1/2 max-w-full -translate-x-1/2 z-50 pointer-events-none px-4">
+    <div className={`fixed bottom-4 left-1/2 max-w-full -translate-x-1/2 z-50 transition-all duration-300 ease-in-out pointer-events-none px-4 ${isDockVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'
+      }`}>
       <Dock className="pointer-events-auto">
         {allMenuItems.map(item => {
           const Icon = item.icon;

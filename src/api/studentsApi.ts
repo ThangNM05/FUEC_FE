@@ -199,10 +199,16 @@ export const studentsApi = baseApi.injectEndpoints({
             providesTags: ['Students', 'Classes'], // Invalidate if classes change
         }),
         // GET: Fetch student subjects by student ID
-        getStudentSubjects: builder.query<StudentSubject[], string>({
-            query: (studentId) => `/students/${studentId}/subjects`,
+        getStudentSubjects: builder.query<StudentSubject[], { studentId: string, semesterId?: string }>({
+            query: ({ studentId, semesterId }) => {
+                let url = `/students/${studentId}/subjects`;
+                if (semesterId) {
+                    url += `?semesterId=${semesterId}`;
+                }
+                return url;
+            },
             transformResponse: (response: any) => response?.result || response || [],
-            providesTags: (_result, _error, id) => [{ type: 'Students', id }, 'StudentClasses'],
+            providesTags: (_result, _error, { studentId }) => [{ type: 'Students', id: studentId }, 'StudentClasses'],
         }),
 
         // GET: Fetch student classes

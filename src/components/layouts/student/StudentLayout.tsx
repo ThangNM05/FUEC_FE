@@ -19,7 +19,11 @@ function StudentLayout() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  if (!user || user.role !== 'Student') {
+  if (!user) {
+    return <Navigate to="/sign-in" replace />;
+  }
+
+  if (user.role !== 'Student') {
     return <Navigate to="/not-found" replace />;
   }
 
@@ -35,7 +39,7 @@ function StudentLayout() {
         {/* Main Content */}
         <div className="transition-all duration-200">
           <StudentHeader />
-          <div className="pt-4 h-[calc(100vh-56px)] overflow-y-auto">
+          <div className="pt-4 h-[calc(100vh-56px)] overflow-y-auto pb-24">
             <Outlet />
           </div>
         </div>

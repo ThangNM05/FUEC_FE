@@ -269,7 +269,7 @@ function CourseDetails() {
         </div>
 
         {/* Assignments Section */}
-        <div id="assignments" className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 scroll-mt-6">
+        <div id="assignments" className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 md:pb-8 mb-6 scroll-mt-6">
           <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Assignments</h2>
           <div className="space-y-3">
             {courseAssignments.map(assignment => (
@@ -326,7 +326,7 @@ function CourseDetails() {
         </div>
 
         {/* Progress Tests */}
-        <div id="progress-tests" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-6">
+        <div id="progress-tests" className="bg-white rounded-xl border border-gray-200 p-6 pb-8 mb-6 scroll-mt-6">
           <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Progress Tests</h2>
           <div className="space-y-3">
             {progressTests.length === 0 ? (
@@ -389,7 +389,7 @@ function CourseDetails() {
         </div>
 
         {/* Learning Materials - PDFs/Files */}
-        <div id="learning-materials" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-6">
+        <div id="learning-materials" className="bg-white rounded-xl border border-gray-200 p-6 pb-8 mb-6 scroll-mt-6">
           <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Learning Materials</h2>
           <div className="space-y-3">
             {learningMaterials.map(material => (
@@ -419,7 +419,7 @@ function CourseDetails() {
         </div>
 
         {/* Slot Contents */}
-        <div id="slot-contents" className="bg-white rounded-xl border border-gray-200 p-6 scroll-mt-6">
+        <div id="slot-contents" className="bg-white rounded-xl border border-gray-200 p-6 pb-8 mb-6 scroll-mt-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-[#0A1B3C]">Slot Contents</h2>
             {isLoading && <Loader2 className="w-5 h-5 animate-spin text-[#F37022]" />}
@@ -440,7 +440,7 @@ function CourseDetails() {
             {slots
               .slice((currentPage - 1) * SLOTS_PER_PAGE, currentPage * SLOTS_PER_PAGE)
               .map(slot => (
-                <div key={slot.id} id={`slot-${slot.id}`} className={`border rounded-lg overflow-hidden scroll-mt-6 ${slot.status === 'locked' ? 'border-gray-300 opacity-60' :
+                <div key={slot.id} id={`slot-${slot.id}`} className={`border rounded-lg overflow-hidden scroll-mt-6 mb-4 ${slot.status === 'locked' ? 'border-gray-300 opacity-60' :
                   slot.status === 'overdue' ? 'border-red-400' :
                     slot.status === 'urgent' ? 'border-orange-300' :
                       slot.status === 'completed' ? 'border-green-300' :

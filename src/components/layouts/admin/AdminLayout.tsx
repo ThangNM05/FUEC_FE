@@ -11,7 +11,11 @@ function AdminLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const user = useSelector(selectCurrentUser);
 
-  if (!user || user.role !== 'Admin') {
+  if (!user) {
+    return <Navigate to="/sign-in" replace />;
+  }
+
+  if (user.role !== 'Admin') {
     return <Navigate to="/not-found" replace />;
   }
 
