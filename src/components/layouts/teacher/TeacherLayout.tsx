@@ -9,7 +9,11 @@ function TeacherLayout() {
     const [isMobile, setIsMobile] = useState(false);
     const user = useSelector(selectCurrentUser);
 
-    if (!user || user.role !== 'Teacher') {
+    if (!user) {
+        return <Navigate to="/sign-in" replace />;
+    }
+
+    if (user.role !== 'Teacher') {
         return <Navigate to="/not-found" replace />;
     }
 
@@ -35,7 +39,7 @@ function TeacherLayout() {
                 {/* Main Content */}
                 <div className="transition-all duration-200">
                     <TeacherHeader />
-                    <div className="pt-4 h-[calc(100vh-56px)] overflow-y-auto px-0">
+                    <div className="pt-4 h-[calc(100vh-56px)] overflow-y-auto px-0 pb-24">
                         <Outlet />
                     </div>
                 </div>

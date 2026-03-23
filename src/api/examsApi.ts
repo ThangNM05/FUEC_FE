@@ -11,11 +11,12 @@ export const examsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['Exams'],
         }),
-        getAllExams: builder.query<PaginatedExamsResponse, { classSubjectId?: string; studentId?: string }>({
+        getAllExams: builder.query<PaginatedExamsResponse, { classSubjectId?: string; studentId?: string; semesterId?: string }>({
             query: (params) => {
                 const searchParams = new URLSearchParams();
                 if (params.classSubjectId) searchParams.append('ClassSubjectId', params.classSubjectId);
                 if (params.studentId) searchParams.append('StudentId', params.studentId);
+                if (params.semesterId) searchParams.append('SemesterId', params.semesterId);
                 return `/Exams?${searchParams.toString()}`;
             },
             transformResponse: (response: any) => {
