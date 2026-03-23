@@ -8,6 +8,7 @@ import { useGetAssignmentsByClassSubjectIdQuery } from '@/api/assignmentsApi';
 import { useGetStudentAssignmentsByStudentIdQuery } from '@/api/studentAssignmentsApi';
 import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
 import { useGetStudentClassesQuery } from '@/api/studentsApi';
+import { useGetCourseMaterialsByClassSubjectIdQuery } from '@/api/courseMaterialsApi';
 import type { Assignment, StudentAssignment } from '@/types/assignment.types';
 import StudentSlotContent from './StudentSlotContent';
 
@@ -47,11 +48,12 @@ interface ProgressTest {
 }
 
 interface Material {
-  id: number;
+  id: string;
   title: string;
-  type: 'Lecture' | 'Lab';
+  type: string;
   date: string;
   downloadable: boolean;
+  fileUrl?: string;
 }
 
 function CourseDetails() {
@@ -84,6 +86,10 @@ function CourseDetails() {
     skip: !classSubjectId
   });
 
+  const { data: materialsData, isLoading: isMaterialsLoading } = useGetCourseMaterialsByClassSubjectIdQuery(classSubjectId || '', {
+    skip: !classSubjectId
+  });
+
   // Need user's StudentClasses to know their ID for this course
   // We use studentId: user?.entityId ?? user?.id
   const { data: studentClassesData } = useGetStudentClassesQuery({
@@ -99,7 +105,7 @@ function CourseDetails() {
   }, [classSubjectData, studentClassesData]);
 
 
-  const isLoading = isSlotsLoading || isClassLoading || isAssignmentsLoading || isStudentAssignmentsLoading || isLoadingExams;
+  const isLoading = isSlotsLoading || isClassLoading || isAssignmentsLoading || isStudentAssignmentsLoading || isLoadingExams || isMaterialsLoading;
 
   const course = {
     name: classSubjectData?.subjectName || slotsData?.subjectName || 'Loading...',
@@ -154,12 +160,17 @@ function CourseDetails() {
   }, [assignmentsData, studentAssignmentsData]);
 
 
-  const learningMaterials: Material[] = [
-    { id: 1, title: 'Week 1: Introduction to Mobile Development', type: 'Lecture', date: '2024-05-01', downloadable: true },
-    { id: 2, title: 'Lab 1: Android Studio Setup', type: 'Lab', date: '2024-05-03', downloadable: true },
-    { id: 3, title: 'Week 2: UI Components', type: 'Lecture', date: '2024-05-08', downloadable: true },
-    { id: 4, title: 'Lab 2: Building First App', type: 'Lab', date: '2024-05-10', downloadable: true }
-  ];
+  const learningMaterials = useMemo<Material[]>(() => {
+    if (!materialsData?.items) return [];
+    return materialsData.items.map((m: any) => ({
+      id: m.id,
+      title: m.fileName || m.displayName || 'Unnamed Material',
+      type: m.materialType || 'Material',
+      date: new Date(m.createdDate || m.uploadedAt || Date.now()).toISOString().split('T')[0],
+      downloadable: !!(m.fileUrl || m.filePath),
+      fileUrl: m.fileUrl || m.filePath
+    }));
+  }, [materialsData]);
 
   const progressTests = useMemo(() => {
     return (examsData?.items || []).map((exam: any) => {
@@ -272,7 +283,9 @@ function CourseDetails() {
         <div id="assignments" className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 md:pb-8 mb-6 scroll-mt-6">
           <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Assignments</h2>
           <div className="space-y-3">
-            {courseAssignments.map(assignment => (
+            {courseAssignments.length === 0 ? (
+              <p className="text-gray-500 italic">No assignments available for this course.</p>
+            ) : courseAssignments.map(assignment => (
               <div key={assignment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -392,7 +405,9 @@ function CourseDetails() {
         <div id="learning-materials" className="bg-white rounded-xl border border-gray-200 p-6 pb-8 mb-6 scroll-mt-6">
           <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Learning Materials</h2>
           <div className="space-y-3">
-            {learningMaterials.map(material => (
+            {learningMaterials.length === 0 ? (
+              <p className="text-gray-500 italic">No learning materials available for this course.</p>
+            ) : learningMaterials.map(material => (
               <div key={material.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
@@ -408,8 +423,12 @@ function CourseDetails() {
                     </div>
                   </div>
                 </div>
-                {material.downloadable && (
-                  <button className="p-2 hover:bg-white rounded-lg transition-colors">
+                {material.downloadable && material.fileUrl && (
+                  <button
+                    onClick={() => window.open(material.fileUrl, '_blank')}
+                    className="p-2 hover:bg-white rounded-lg transition-colors cursor-pointer"
+                    title="Download/Open"
+                  >
                     <Download className="w-4 h-4 text-gray-600" />
                   </button>
                 )}
