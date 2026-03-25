@@ -75,3 +75,23 @@ export interface TeachingSubjectsResponse {
     semesterCode: string | null;
     subjects: TeachingSubject[];
 }
+
+export interface ClassProgress {
+    classSubjectId: string;
+    classCode: string;
+    subjectCode: string;
+    totalSlots: number;
+    completedSlots: number;
+    progressPercentage: number;
+}
+
+export interface TeacherDashboardResponse {
+    activeClassesCount: number;
+    activeSubjectsCount: number;
+    totalStudentsCount: number;
+    assignmentsToGradeCount: number;
+    upcomingExams: any[];
+    todaySchedule: any[];
+    recentNotifications: any[];
+    classProgress: ClassProgress[];
+}

@@ -45,3 +45,28 @@ export interface PaginatedResponse<T> {
     itemFrom: number;
     itemTo: number;
 }
+
+export interface SubjectReportItem {
+    subjectId: string;
+    subjectCode: string;
+    subjectName: string;
+    studentCount: number;
+    classCount: number;
+}
+
+export interface SemesterReport {
+    semesterId: string;
+    semesterCode: string;
+    startDate: string;
+    endDate: string;
+    totalSubjects: number;
+    totalClasses: number;
+    totalStudents: number;
+    totalTeachers: number;
+    totalMaterialsUploaded: number;
+    totalAssignmentsCreated: number;
+    totalExamsCreated: number;
+    averageGpa: number;
+    passingRate: number;
+    topSubjectsByStudentCount: SubjectReportItem[];
+}

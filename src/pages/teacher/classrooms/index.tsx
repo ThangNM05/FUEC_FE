@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { Select } from 'antd';
 import { ChevronRight, ChevronDown, Users, Search, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/redux/store';
 import { useGetDefaultSemesterQuery, useGetSemestersQuery } from '@/api/semestersApi';
 import { useGetTeachingSubjectsQuery } from '@/api/teachersApi';
+import { useGetStudentClassesByClassIdQuery } from '@/api/classDetailsApi';
 
 interface ClassItem {
     id: string;
@@ -22,6 +24,58 @@ interface CourseItem {
     totalStudents: number;
     pendingGrading: number;
     classes: ClassItem[];
+}
+
+function ClassCardItem({ cls, onClick }: { cls: any, onClick: () => void }) {
+    const { data: studentsData } = useGetStudentClassesByClassIdQuery(
+        { classSubjectId: cls.id, pageSize: 1 },
+        { skip: !cls.id }
+    );
+    const realStudentCount = studentsData?.totalItemCount ?? 0;
+    const isLoading = !studentsData;
+
+    return (
+        <div
+            className="px-5 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+            onClick={onClick}
+        >
+            <div>
+                <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
+                <p className="text-xs text-gray-500">
+                    {isLoading ? 'Loading students...' : `${realStudentCount} students`} • {cls.room}
+                </p>
+            </div>
+            <ChevronRight className="w-4 h-4 text-gray-400" />
+        </div>
+    );
+}
+
+function ClassListItem({ cls, onClick }: { cls: any, onClick: () => void }) {
+    const { data: studentsData } = useGetStudentClassesByClassIdQuery(
+        { classSubjectId: cls.id, pageSize: 1 },
+        { skip: !cls.id }
+    );
+    const realStudentCount = studentsData?.totalItemCount ?? 0;
+    const isLoading = !studentsData;
+
+    return (
+        <div
+            className="flex items-center px-4 py-3 pl-8 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+            onClick={onClick}
+        >
+            <div className="flex-1">
+                <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
+                <p className="text-xs text-gray-500">
+                    {isLoading ? 'Loading students...' : `${realStudentCount} students`} • {cls.room} • {cls.schedule}
+                </p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-[#F37022]" />
+        </div>
+    );
+}
+
+function SubjectStudentCount({ classes }: { classes: any[] }) {
+    return <span>{classes.length} {classes.length > 1 ? 'classes' : 'class'}</span>;
 }
 
 function TeacherClassrooms() {
@@ -72,18 +126,22 @@ function TeacherClassrooms() {
                 <div className="mb-4">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-2">
                         <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">My Classes</h1>
-                        <select
+                        <Select
                             value={semester}
-                            onChange={(e) => setSemester(e.target.value)}
-                            className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-[#0A1B3C] focus:border-[#F37022] outline-none"
-                        >
-                            {semestersList.map((sem) => (
-                                <option key={sem.id} value={sem.id}>{sem.semesterCode}</option>
-                            ))}
-                            {semestersList.length === 0 && defaultSemester && (
-                                <option value={defaultSemester.id}>{defaultSemester.semesterCode}</option>
-                            )}
-                        </select>
+                            onChange={(value) => setSemester(value)}
+                            className="w-40"
+                            placeholder="Select semester"
+                            options={[
+                                ...semestersList.map((sem) => ({
+                                    label: sem.semesterCode,
+                                    value: sem.id,
+                                })),
+                                ...(semestersList.length === 0 && defaultSemester ? [{
+                                    label: defaultSemester.semesterCode,
+                                    value: defaultSemester.id,
+                                }] : [])
+                            ]}
+                        />
                     </div>
                 </div>
 
@@ -139,24 +197,18 @@ function TeacherClassrooms() {
                                     </h3>
                                     <p className="text-sm text-gray-500 flex items-center gap-2">
                                         <Users className="w-4 h-4" />
-                                        {course.totalStudents} students • {course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'}
+                                        <SubjectStudentCount classes={course.classes} />
                                     </p>
                                 </div>
 
                                 {/* Classes List */}
                                 <div className="divide-y divide-gray-100">
                                     {course.classes.map((cls) => (
-                                        <div
+                                        <ClassCardItem
                                             key={cls.id}
-                                            className="px-5 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+                                            cls={cls}
                                             onClick={() => navigate(`/teacher/course-details/${cls.id}`)}
-                                        >
-                                            <div>
-                                                <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
-                                                <p className="text-xs text-gray-500">{cls.students} students • {cls.room}</p>
-                                            </div>
-                                            <ChevronRight className="w-4 h-4 text-gray-400" />
-                                        </div>
+                                        />
                                     ))}
                                 </div>
                             </div>
@@ -184,7 +236,7 @@ function TeacherClassrooms() {
                                                 <h3 className="font-medium text-[#0A1B3C]">{course.name}</h3>
                                             </div>
                                             <p className="text-sm text-gray-500">
-                                                {course.classes.length} {course.classes.length > 1 ? 'classes' : 'class'} • {course.totalStudents} students
+                                                <SubjectStudentCount classes={course.classes} />
                                                 {course.pendingGrading > 0 && (
                                                     <span className="ml-2 text-[#F37022]">• {course.pendingGrading} to grade</span>
                                                 )}
@@ -201,17 +253,11 @@ function TeacherClassrooms() {
                                     {expandedCourse === course.code && (
                                         <div className="bg-gray-50 border-t border-gray-100">
                                             {course.classes.map((cls) => (
-                                                <div
+                                                <ClassListItem
                                                     key={cls.id}
-                                                    className="flex items-center px-4 py-3 pl-8 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                                                    cls={cls}
                                                     onClick={() => navigate(`/teacher/course-details/${cls.id}`)}
-                                                >
-                                                    <div className="flex-1">
-                                                        <p className="text-sm font-medium text-[#0A1B3C]">{cls.name}</p>
-                                                        <p className="text-xs text-gray-500">{cls.students} students • {cls.room} • {cls.schedule}</p>
-                                                    </div>
-                                                    <ArrowRight className="w-4 h-4 text-[#F37022]" />
-                                                </div>
+                                                />
                                             ))}
                                         </div>
                                     )}

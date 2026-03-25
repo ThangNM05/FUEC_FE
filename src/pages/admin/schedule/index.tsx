@@ -1,5 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Download, Filter, Calendar } from 'lucide-react';
+import {
+    useGetSemestersQuery,
+    useGetDefaultSemesterQuery,
+} from '@/api/semestersApi';
 
 interface ScheduleBlock {
     id: string;
@@ -17,6 +21,17 @@ function AdminSchedule() {
     const [viewMode, setViewMode] = useState<'today' | 'week' | 'day'>('day');
     const [selectedBuilding, setSelectedBuilding] = useState<string>('All');
     const [selectedFloor, setSelectedFloor] = useState<string>('All');
+    const [semesterId, setSemesterId] = useState<string>('');
+
+    const { data: semestersData } = useGetSemestersQuery({ page: 1, pageSize: 100 });
+    const { data: defaultSemester } = useGetDefaultSemesterQuery();
+    const semestersList = semestersData?.items || [];
+
+    useEffect(() => {
+        if (defaultSemester?.id && !semesterId) {
+            setSemesterId(defaultSemester.id);
+        }
+    }, [defaultSemester, semesterId]);
 
     const buildings = ['All', 'Gamma', 'Alpha', 'Beta'];
     const floors = ['All', '1', '2', '3', '4'];
@@ -145,8 +160,20 @@ function AdminSchedule() {
         <div className="p-4 md:p-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-6">
-                <div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                     <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Schedule Management</h1>
+                    <select
+                        value={semesterId}
+                        onChange={(e) => setSemesterId(e.target.value)}
+                        className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-[#0A1B3C] focus:border-[#F37022] outline-none shadow-sm"
+                    >
+                        {semestersList.map((sem) => (
+                            <option key={sem.id} value={sem.id}>{sem.semesterCode}</option>
+                        ))}
+                        {semestersList.length === 0 && defaultSemester && (
+                            <option value={defaultSemester.id}>{defaultSemester.semesterCode}</option>
+                        )}
+                    </select>
                 </div>
                 <div className="flex gap-2">
                     <button className="flex items-center gap-2 px-4 py-2 bg-[#F37022] text-white rounded-lg text-sm font-medium">
