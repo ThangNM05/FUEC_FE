@@ -4,7 +4,8 @@ import type {
     GetSemestersParams,
     CreateSemesterRequest,
     UpdateSemesterRequest,
-    PaginatedResponse
+    PaginatedResponse,
+    SemesterReport
 } from '@/types/semester.types';
 
 export const semestersApi = baseApi.injectEndpoints({
@@ -84,6 +85,18 @@ export const semestersApi = baseApi.injectEndpoints({
                 return response;
             }
         }),
+        setDefaultSemester: builder.mutation<void, string>({
+            query: (id) => ({
+                url: `/Semesters/${id}/set-default`,
+                method: 'PUT',
+            }),
+            invalidatesTags: ['Semesters'],
+        }),
+        getSemesterReport: builder.query<SemesterReport, string>({
+            query: (id) => `/Semesters/${id}/report`,
+            providesTags: (_result, _error, id) => [{ type: 'Semesters', id }],
+            transformResponse: (response: any) => response.result,
+        }),
     }),
 });
 
@@ -94,4 +107,6 @@ export const {
     useUpdateSemesterMutation,
     useDeleteSemesterMutation,
     useGetDefaultSemesterQuery,
+    useSetDefaultSemesterMutation,
+    useGetSemesterReportQuery,
 } = semestersApi;

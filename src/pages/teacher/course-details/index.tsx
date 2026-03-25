@@ -29,6 +29,7 @@ import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentMod
 import ExamParticipantsModal from '@/components/modals/ExamParticipantsModal';
 import ZipFolderBrowser from '@/components/ZipFolderBrowser';
 import MaterialFilePreview from '@/components/MaterialFilePreview';
+import CloneConfigModal from '@/components/modals/CloneConfigModal';
 
 type SlotAssignment = Assignment;
 
@@ -76,6 +77,7 @@ function TeacherCourseDetails() {
     const [isStudentListModalOpen, setIsStudentListModalOpen] = useState(false);
     const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
     const [selectedParticipantsExam, setSelectedParticipantsExam] = useState<Exam | null>(null);
+    const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
 
     const handleOpenCreateAssignment = (slotInfo: any) => {
         setCreateAssignmentSlotInfo(slotInfo);
@@ -405,8 +407,27 @@ function TeacherCourseDetails() {
                             </span>
                         </div>
                     </div>
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button
+                            onClick={() => setIsCloneModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#F37022] bg-orange-50 border border-orange-100 rounded-lg hover:bg-orange-100 transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Clone Configuration
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            <CloneConfigModal
+                isOpen={isCloneModalOpen}
+                onClose={() => setIsCloneModalOpen(false)}
+                sourceClassSubjectId={courseId || ''}
+                subjectId={classSubject?.subjectId || ''}
+                courseCode={classSubject?.subjectCode || ''}
+                courseName={classSubject?.subjectName || ''}
+            />
 
             {/* Tabs ... */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

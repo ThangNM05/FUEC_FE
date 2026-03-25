@@ -6,7 +6,8 @@ import type {
     PaginatedResponse,
     Teacher,
     UpdateTeacherRequest,
-    TeachingSubjectsResponse
+    TeachingSubjectsResponse,
+    TeacherDashboardResponse
 } from '../types/teacher.types';
 
 /**
@@ -205,6 +206,11 @@ export const teachersApi = baseApi.injectEndpoints({
             },
             providesTags: ['Teachers', 'TeachingSubjects'],
         }),
+        getTeacherDashboard: builder.query<TeacherDashboardResponse, { semesterId: string }>({
+            query: ({ semesterId }) => `/Teachers/dashboard?semesterId=${semesterId}`,
+            transformResponse: (response: any) => response?.result || response,
+            providesTags: ['Teachers'],
+        }),
     }),
 });
 
@@ -218,4 +224,5 @@ export const {
     useImportTeachersMutation,
     useGetAuthTeacherTeachingSubjectsQuery,
     useGetTeacherScheduleQuery,
+    useGetTeacherDashboardQuery,
 } = teachersApi;
