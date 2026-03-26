@@ -1,14 +1,13 @@
-import { useState } from 'react';
-import { Bell } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../redux/authSlice';
+import NotificationBell from '../../shared/NotificationBell';
 
 interface StudentHeaderProps {
     className?: string;
 }
 
 function StudentHeader({ className = '' }: StudentHeaderProps) {
-    const [notificationCount] = useState(4);
+
     const user = useSelector(selectCurrentUser);
 
     const displayName = user?.fullName || 'Student';
@@ -17,14 +16,7 @@ function StudentHeader({ className = '' }: StudentHeaderProps) {
     return (
         <div className={`h-14 bg-white/40 backdrop-blur-xl border-b border-white/40 flex items-center justify-end px-4 md:px-6 gap-4 shadow-sm z-40 relative ${className}`}>
             {/* Notification Bell */}
-            <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-gray-600" />
-                {notificationCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                        {notificationCount}
-                    </span>
-                )}
-            </button>
+            <NotificationBell />
 
             {/* User Avatar */}
             <button className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-2 py-1.5 transition-colors">

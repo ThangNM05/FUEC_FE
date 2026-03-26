@@ -25,6 +25,7 @@ import {
 import { selectCurrentUser } from '@/redux/authSlice';
 import {
   useGetUserConversationsQuery,
+  useGetConversationByIdQuery,
   useGetConversationMessagesQuery,
   useCreateConversationMutation,
   useUpdateConversationMutation,
@@ -33,6 +34,7 @@ import {
   useCreateMessageMutation,
   useMarkMessagesAsReadMutation,
 } from '@/api/messengerApi';
+import { useSearchParams } from 'react-router-dom';
 import { useLazyGetAccountsQuery } from '@/api/accountsApi';
 import type { Account } from '@/types/account.types';
 import { useChatHub } from '@/hooks/useChatHub';
@@ -170,6 +172,10 @@ function Messenger() {
   }, []);
 
   // ── SignalR ──
+  const [searchParams] = useSearchParams();
+  const conversationIdFromParams = searchParams.get('conversationId') ?? '';
+  const { data: conversationFromParam } = useGetConversationByIdQuery(conversationIdFromParams, { skip: !conversationIdFromParams });
+
   const handleReceiveMessage = useCallback(
     (msg: SignalRMessageDto) => {
       // Convert SignalR DTO to local MessageDto format
@@ -274,6 +280,14 @@ function Messenger() {
     }
     prevConvIdRef.current = newId;
   }, [selectedConversation?.id, isConnected, joinConversation, leaveConversation]);
+
+  // ── If URL contains conversationId, open that conversation automatically ──
+  useEffect(() => {
+    if (conversationFromParam && conversationIdFromParams) {
+      setSelectedConversation(conversationFromParam);
+      setMobileView('chat');
+    }
+  }, [conversationFromParam, conversationIdFromParams]);
 
   // ── Typing indicator (debounced) ──
   const handleInputChange = useCallback(

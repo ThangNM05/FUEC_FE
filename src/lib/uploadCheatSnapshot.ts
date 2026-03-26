@@ -3,12 +3,13 @@ const UPLOAD_COOLDOWN_MS = 5_000
 
 let lastUploadTime = 0
 
+
+import { filesApi } from '@/api/filesApi';
+import { store } from '@/redux/store';
+
 /**
- * Capture the current video frame as a JPEG blob and upload it to the
- * backend's `/Files/upload` endpoint which stores it in S3.
- *
- * Returns the URL string from the server on success, or `null` when
- * skipped (cooldown) or on failure.
+ * Capture the current video frame as a JPEG blob and upload it to S3 using filesApi (with JWT).
+ * Returns the URL string from the server on success, or `null` when skipped (cooldown) or on failure.
  */
 export async function uploadCheatSnapshot(
   video: HTMLVideoElement,
@@ -17,37 +18,27 @@ export async function uploadCheatSnapshot(
   classSubject: string = 'unknown',
   studentExamId: string = ''
 ): Promise<string | null> {
-  const now = Date.now()
-  if (now - lastUploadTime < UPLOAD_COOLDOWN_MS) return null
-  lastUploadTime = now
+  const now = Date.now();
+  if (now - lastUploadTime < UPLOAD_COOLDOWN_MS) return null;
+  lastUploadTime = now;
 
-  const blob = await captureFrame(video)
-  if (!blob) return null
+  const blob = await captureFrame(video);
+  if (!blob) return null;
 
-  const fileName = `cheat_${status}_${now}.jpg`
-  const formData = new FormData()
-  formData.append('file', blob, fileName)
-
-  const baseUrl = import.meta.env.VITE_API_URL ?? ''
-  const folderPath = `cheating-evidence/${studentCode}/${classSubject}`
+  const fileName = `cheat_${status}_${now}.jpg`;
+  const folderPath = `cheating-evidence/${studentCode}/${classSubject}`;
 
   try {
-    const res = await fetch(`${baseUrl}/Files/upload?folder=${encodeURIComponent(folderPath)}`, {
-      method: 'POST',
-      body: formData,
-    })
-
-    if (!res.ok) {
-      console.error('Cheat snapshot upload failed:', res.status)
-      return null
-    }
-
-    const data = await res.json()
-    const url = data?.url ?? data?.fileUrl ?? null
+    // Use filesApi uploadFile mutation directly
+    const uploadFile = filesApi.endpoints.uploadFile.initiate;
+    // @ts-ignore: store is typed for RTK
+    const result = await store.dispatch(uploadFile({ file: new File([blob], fileName, { type: 'image/jpeg' }), folder: folderPath })).unwrap();
+    const url = result?.fileUrl || null;
 
     // Register evidence in the backend
     if (url && studentExamId) {
       try {
+        const baseUrl = import.meta.env.VITE_API_URL ?? '';
         const token = localStorage.getItem('token') || '';
         await fetch(`${baseUrl}/v1/StudentExams/${studentExamId}/cheat-logs`, {
           method: 'POST',
@@ -61,14 +52,14 @@ export async function uploadCheatSnapshot(
           })
         });
       } catch (logErr) {
-        console.error('Failed to register cheat log:', logErr)
+        console.error('Failed to register cheat log:', logErr);
       }
     }
 
-    return url
+    return url;
   } catch (err) {
-    console.error('Cheat snapshot upload error:', err)
-    return null
+    console.error('Cheat snapshot upload error:', err);
+    return null;
   }
 }
 

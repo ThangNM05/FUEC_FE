@@ -211,6 +211,19 @@ export default function QuizTest() {
 
   const [proctoringStarted, setProctoringStarted] = useState(false);
   const [proctorReady, setProctorReady] = useState(false);
+  const [violationCount, setViolationCount] = useState(0);
+  const violationCountRef = useRef(0);
+  const lastViolationTimeRef = useRef(0);
+  const [showTabWarning, setShowTabWarning] = useState(false);
+  const maxViolations = 5;
+  const fullscreenRequestedRef = useRef(false);
+  // Cheating detection helpers
+  const cheatStartRef = useRef<number | null>(null);
+  const cheatCapturedRef = useRef(false);
+  const [cheatingPaused, setCheatingPaused] = useState(false);
+  // Track latest attention status to drive resume logic
+  const [attentionStatus, setAttentionStatus] = useState<AttentionState['status'] | null>(null);
+  const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
 
   const startProctoring = async () => {
     try {
@@ -232,6 +245,42 @@ export default function QuizTest() {
     }
   };
 
+  // Shared punishment function for violations
+  const handleViolation = useCallback(async (reason: string) => {
+    // 1. Clear local state immediately
+    setAnswers({});
+    setStarred({});
+    clearExamState(); // clear localStorage cache
+
+    // 2. Perform auto-submission regardless of how many were answered
+    try {
+      await submitExam(studentExamId).unwrap();
+      setShowResults(true);
+      alert(reason);
+    } catch (err) {
+      console.error('Auto-submit violation failed', err);
+    }
+  }, [studentExamId, submitExam]);
+
+  const incrementViolation = useCallback((msg: string) => {
+    const now = Date.now();
+    // Debounce to prevent multiple alerts for the same event (e.g. blur + visibilitychange)
+    // or from the alert box itself causing a focus change.
+    if (now - lastViolationTimeRef.current < 2000) return;
+    lastViolationTimeRef.current = now;
+
+    violationCountRef.current += 1;
+    const currentCount = violationCountRef.current;
+    setViolationCount(currentCount);
+
+    const combinedMsg = `Violation ${currentCount} / ${maxViolations}: ${msg}`;
+    if (currentCount >= maxViolations) {
+      handleViolation(`${combinedMsg}. The exam is being auto-submitted.`);
+    } else {
+      alert(combinedMsg);
+    }
+  }, [maxViolations, handleViolation]);
+
   // Auto-start proctoring when exam data is loaded
   useEffect(() => {
     if (!examData) return;
@@ -239,6 +288,63 @@ export default function QuizTest() {
     if (!proctoringStarted) startProctoring();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examData]);
+
+  // Request fullscreen once proctoring is ready/started (best-effort)
+  useEffect(() => {
+    if (!proctorReady || fullscreenRequestedRef.current) return;
+    fullscreenRequestedRef.current = true;
+    try {
+      // Best-effort: browsers may block if not a user gesture
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {
+          // ignore failures
+        });
+      }
+    } catch (err) {
+      // ignore
+    }
+
+    const onFullscreenChange = () => {
+      // If user exits fullscreen during exam, show mandatory prompt
+      if (!document.fullscreenElement) {
+        setShowFullscreenPrompt(true);
+        incrementViolation('Fullscreen exited. Please return to fullscreen mode immediately.');
+      } else {
+        setShowFullscreenPrompt(false);
+      }
+    };
+
+    // Also check initial state when proctoring starts
+    if (!document.fullscreenElement) {
+      setShowFullscreenPrompt(true);
+    }
+
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, [proctorReady, incrementViolation]);
+
+  // Tab-change / visibility detection
+  useEffect(() => {
+    if (!examData) return;
+
+    const handleVisibility = () => {
+      if (!examData || examData.isSubmitted || showResults) return;
+      // Count when user navigates away (tab hidden) or window loses focus
+      if (document.visibilityState === 'hidden') {
+        setShowTabWarning(true);
+        setTimeout(() => setShowTabWarning(false), 3000);
+        incrementViolation('You left the exam tab.');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('blur', handleVisibility);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('blur', handleVisibility);
+    };
+  }, [examData, showResults, incrementViolation]);
 
   // Main proctoring loop: draw + inference
   useEffect(() => {
@@ -331,18 +437,40 @@ export default function QuizTest() {
         lastFacesRef.current = result.faces;
 
         const st = result.state?.status;
+        // update public attentionStatus for resume logic
+        setAttentionStatus(st ?? null);
+        // Treat anything other than 'safe'/'suspicious' as a confirmed cheating state
         if (st && st !== 'safe' && st !== 'suspicious') {
-          try {
-            uploadCheatSnapshot(
-              video, 
-              st, 
-              examData?.studentCode || user?.entityId || 'unknown',
-              classSubjectId || 'unknown',
-              studentExamId
-            );
-          } catch (err) {
-            console.warn('upload snapshot failed', err);
+          // Start cheating timer if not already started
+          if (!cheatStartRef.current) {
+            cheatStartRef.current = performance.now();
+            // Capture snapshot once at the start of cheating
+            if (!cheatCapturedRef.current) {
+              try {
+                uploadCheatSnapshot(
+                  video,
+                  st,
+                  examData?.studentCode || user?.entityId || 'unknown',
+                  classSubjectId || 'unknown',
+                  studentExamId
+                );
+                cheatCapturedRef.current = true;
+              } catch (err) {
+                console.warn('upload snapshot failed', err);
+              }
+            }
+          } else {
+            const elapsedMs = performance.now() - (cheatStartRef.current ?? 0);
+            // If cheating lasted more than 3 seconds, pause the exam UI
+            if (elapsedMs >= 3000 && !cheatingPaused) {
+              setCheatingPaused(true);
+            }
           }
+        } else {
+          // Reset cheating timers/flags when user returns to safe/suspicious
+          cheatStartRef.current = null;
+          cheatCapturedRef.current = false;
+          if (cheatingPaused) setCheatingPaused(false);
         }
       } finally {
         inFlight = false;
@@ -359,6 +487,15 @@ export default function QuizTest() {
       if (inferenceTimer) window.clearTimeout(inferenceTimer);
     };
   }, [proctorReady]);
+
+  // Resume exam when attention becomes safe
+  useEffect(() => {
+    if (attentionStatus === 'safe' && cheatingPaused) {
+      cheatStartRef.current = null;
+      cheatCapturedRef.current = false;
+      setCheatingPaused(false);
+    }
+  }, [attentionStatus, cheatingPaused]);
 
   // Cleanup on unmount: stop media tracks
   useEffect(() => {
@@ -425,8 +562,8 @@ export default function QuizTest() {
 
   // ── Countdown Timer ──
   useEffect(() => {
-    // Timer is paused if AI Proctoring hasn't fully initialized yet
-    if (timeLeft === null || timeLeft <= 0 || showResults || !proctorReady) return;
+    // Timer is paused if AI Proctoring hasn't fully initialized yet, cheating pause active, or not in fullscreen
+    if (timeLeft === null || timeLeft <= 0 || showResults || !proctorReady || cheatingPaused || showFullscreenPrompt) return;
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
@@ -441,7 +578,7 @@ export default function QuizTest() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft, showResults]);
+  }, [timeLeft, showResults, proctorReady, cheatingPaused, showFullscreenPrompt]);
 
   // ── Persist to localStorage every 5 seconds ──
   useEffect(() => {
@@ -485,6 +622,31 @@ export default function QuizTest() {
   const toggleStar = useCallback((questionId: string) => {
     setStarred(prev => ({ ...prev, [questionId]: !prev[questionId] }));
   }, []);
+
+  // Attempt fullscreen (user click should allow requestFullscreen; fallback tries F11 key events)
+  const attemptFullscreen = useCallback(() => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        // This should succeed when invoked from a user gesture (button click)
+        document.documentElement.requestFullscreen().catch(() => { });
+        return;
+      }
+    } catch (err) {
+      // ignore
+    }
+
+    // Fallback: try to synthesize F11 key events (browsers usually block this)
+    try {
+      const down = new KeyboardEvent('keydown', { key: 'F11', code: 'F11', keyCode: 122, which: 122, bubbles: true, cancelable: true });
+      window.dispatchEvent(down);
+      const up = new KeyboardEvent('keyup', { key: 'F11', code: 'F11', keyCode: 122, which: 122, bubbles: true, cancelable: true });
+      window.dispatchEvent(up);
+    } catch (err) {
+      // ignore
+    }
+  }, []);
+
+
 
   // ── Submit Exam ──
   const handleSubmit = useCallback(async (autoSubmit = false) => {
@@ -672,6 +834,23 @@ export default function QuizTest() {
   return (
     <>
       {/* Confirm Submit Modal */}
+      {/* Fullscreen Prompt Modal */}
+      {showFullscreenPrompt && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-4 p-safe animate-fadeIn">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
+            <h3 className="text-lg font-bold text-[#0A1B3C] mb-3">Please go fullscreen</h3>
+            <p className="text-sm text-gray-600 mb-5">For the best exam experience, please switch to fullscreen mode.</p>
+            <button
+              onClick={() => {
+                attemptFullscreen();
+              }}
+              className="w-full px-4 py-3 bg-[#F37022] text-white rounded-xl font-bold hover:bg-[#D96419] transition-all"
+            >
+              Go Fullscreen (F11)
+            </button>
+          </div>
+        </div>
+      )}
       {showConfirmSubmit && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-4 p-safe animate-fadeIn overflow-hidden">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative">
@@ -705,6 +884,19 @@ export default function QuizTest() {
                 Submit
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cheating Pause Overlay */}
+      {cheatingPaused && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border border-red-100">
+            <div className="flex items-center justify-center mb-3">
+              <AlertTriangle className="w-12 h-12 text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-[#0A1B3C]">Suspicious Behavior Detected</h3>
+            <p className="text-sm text-gray-600 mt-2">The exam has been paused because suspicious behavior was detected for over 3 seconds. Please return to the exam frame.</p>
           </div>
         </div>
       )}
@@ -754,6 +946,14 @@ export default function QuizTest() {
                         {formatTime(timeLeft)}
                       </div>
                     )}
+                    <div className="mt-3">
+                      <button
+                        onClick={() => attemptFullscreen()}
+                        className="w-full px-3 py-2 bg-gray-100 text-sm font-bold rounded-lg hover:bg-gray-200 transition"
+                      >
+                        Go Fullscreen (F11)
+                      </button>
+                    </div>
                   </div>
 
                   {/* Navigator moved to Left */}
