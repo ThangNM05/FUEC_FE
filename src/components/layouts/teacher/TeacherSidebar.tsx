@@ -20,7 +20,7 @@ const allMenuItems: MenuItem[] = [
     { id: 'classes', label: 'Classes', icon: BookOpen, path: '/teacher/classrooms' },
     { id: 'question-banks', label: 'Q-Banks', icon: Database, path: '/teacher/question-banks' },
     { id: 'schedule', label: 'Schedule', icon: Calendar, path: '/teacher/schedule' },
-    { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/teacher/messages' },
+    { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/messenger' },
     { id: 'reports', label: 'Reports', icon: BarChart3, path: '/teacher/reports' }
 ];
 

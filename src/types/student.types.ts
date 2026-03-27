@@ -47,6 +47,7 @@ export interface AutoAssignClassRequest {
     subMajorId?: string;
     cohort?: string;
     maxStudentsPerClass?: number;
+    file?: File;
 }
 
 export interface ClassAssignmentSummary {

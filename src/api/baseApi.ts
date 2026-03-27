@@ -66,7 +66,10 @@ export const baseApi = createApi({
     'SlotQuestionContents',
     'CourseMaterials',
     'StudentExams',
+    'Conversations',
+    'Messages',
     'AssignmentFeedbacks',
+    'StudentCheatLogs',
   ],
   endpoints: () => ({}),
 });

@@ -41,8 +41,7 @@ import TeacherDashboard from './pages/teacher';
 import TeacherClassrooms from './pages/teacher/classrooms';
 import TeacherSchedule from './pages/teacher/schedule';
 import TeacherReports from './pages/teacher/reports';
-import TeacherMessages from './pages/teacher/messages';
-import StudentMessages from './pages/student/messages';
+import Messenger from './pages/messenger';
 import QuestionDetail from './pages/student/questions/detail';
 import AssignmentSubmission from './pages/student/assignment-submission';
 import TeacherAssignmentReview from './pages/teacher/assignment-review';
@@ -96,7 +95,7 @@ function Router() {
         <Route path="/student/grades" element={<StudentGrades />} />
         <Route path="/student/schedule" element={<StudentSchedule />} />
         <Route path="/student/profile" element={<ProfilePage />} />
-        <Route path="/student/messages" element={<StudentMessages />} />
+        <Route path="/student/messages" element={<Navigate to="/messenger" replace />} />
         <Route path="/student/course-details/questions/:id" element={<QuestionDetail />} />
         <Route path="/student/assignment-submission/:id" element={<AssignmentSubmission />} />
       </Route>
@@ -106,7 +105,7 @@ function Router() {
         <Route path="/teacher" element={<TeacherDashboard />} />
         <Route path="/teacher/classrooms" element={<TeacherClassrooms />} />
         <Route path="/teacher/schedule" element={<TeacherSchedule />} />
-        <Route path="/teacher/messages" element={<TeacherMessages />} />
+        <Route path="/teacher/messages" element={<Navigate to="/messenger" replace />} />
         <Route path="/teacher/question-banks" element={<TeacherQuestionBanks />} />
         <Route path="/teacher/question-banks/:subjectId" element={<TeacherQuestionBankDetail />} />
         <Route path="/teacher/create-exam" element={<CreateExam />} />
@@ -117,6 +116,9 @@ function Router() {
         <Route path="/teacher/reports" element={<TeacherReports />} />
         <Route path="/teacher/profile" element={<ProfilePage />} />
       </Route>
+
+      {/* Messenger - standalone route outside layouts to prevent double API calls */}
+      <Route path="/messenger" element={<Messenger />} />
 
       <Route path="/sign-in" element={<SignInPage />} />
 

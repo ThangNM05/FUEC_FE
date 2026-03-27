@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Modal, Form, Input, InputNumber, Button, Alert, List, Tag } from 'antd';
-import { Wand2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Modal, Form, Input, InputNumber, Button, Alert, List, Tag, Upload } from 'antd';
+import { Wand2, AlertTriangle, CheckCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGetSubMajorsQuery } from '@/api/subMajorsApi';
 import { useAutoAssignClassMutation } from '@/api/studentsApi';
@@ -20,6 +20,7 @@ const AutoAssignClassModal = ({ isOpen, onClose, onSuccess }: AutoAssignClassMod
     
     // Search state for SubMajor (custom list logic)
     const [selectedSubMajorId, setSelectedSubMajorId] = useState<string | null>(null);
+    const [file, setFile] = useState<File | null>(null);
 
     // APIs
     const { data: subMajorsData, isLoading: isLoadingSubMajors } = useGetSubMajorsQuery({ page: 1, pageSize: 100 });
@@ -33,9 +34,15 @@ const AutoAssignClassModal = ({ isOpen, onClose, onSuccess }: AutoAssignClassMod
                 return;
             }
 
+            if (!file) {
+                toast.error('Please upload a schedule Excel file');
+                return;
+            }
+
             setPreviewData({
                 ...values,
-                subMajorId: selectedSubMajorId
+                subMajorId: selectedSubMajorId,
+                file: file
             });
             setStep('confirm');
         } catch (error) {
@@ -51,7 +58,8 @@ const AutoAssignClassModal = ({ isOpen, onClose, onSuccess }: AutoAssignClassMod
             const result = await autoAssign({
                 subMajorId: previewData.subMajorId,
                 cohort: previewData.cohort,
-                maxStudentsPerClass: previewData.maxStudentsPerClass
+                maxStudentsPerClass: previewData.maxStudentsPerClass,
+                file: previewData.file
             }).unwrap();
 
             setResultData(result);
@@ -70,6 +78,7 @@ const AutoAssignClassModal = ({ isOpen, onClose, onSuccess }: AutoAssignClassMod
         setPreviewData(null);
         setResultData(null);
         setSelectedSubMajorId(null);
+        setFile(null);
         onClose();
     };
 
@@ -154,6 +163,30 @@ const AutoAssignClassModal = ({ isOpen, onClose, onSuccess }: AutoAssignClassMod
                         <InputNumber min={10} max={100} className="w-full" />
                     </Form.Item>
 
+                    <Form.Item
+                        label="Schedule Excel File"
+                        required
+                        tooltip="Upload the Excel file containing Class, Subject, and Slot assignments"
+                    >
+                        <Upload
+                            beforeUpload={(file) => {
+                                setFile(file);
+                                return false; // Prevent automatic upload
+                            }}
+                            onRemove={() => setFile(null)}
+                            fileList={file ? [{ uid: '-1', name: file.name, status: 'done' } as any] : []}
+                            accept=".xlsx,.xls"
+                            maxCount={1}
+                        >
+                            <Button icon={<FileText size={16} />} className="w-full text-left flex items-center gap-2">
+                                {file ? 'Change File' : 'Select Excel File'}
+                            </Button>
+                        </Upload>
+                        {file && (
+                            <p className="text-xs text-green-600 mt-1 font-medium">Selected: {file.name}</p>
+                        )}
+                    </Form.Item>
+
                     <div className="flex justify-end gap-2 mt-6">
                         <Button onClick={handleClose}>Cancel</Button>
                         <Button type="primary" onClick={handleNext} className="bg-orange-500 hover:bg-orange-600">
@@ -189,10 +222,17 @@ const AutoAssignClassModal = ({ isOpen, onClose, onSuccess }: AutoAssignClassMod
                             <span className="text-gray-600">Max Students:</span>
                             <span className="font-medium">{previewData.maxStudentsPerClass}</span>
                         </div>
+                        <div className="flex justify-between">
+                            <span className="text-gray-600">Schedule File:</span>
+                            <span className="font-medium text-blue-600">{previewData.file?.name}</span>
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-2 mt-6">
-                        <Button onClick={() => setStep('input')}>Back</Button>
+                        <Button onClick={() => {
+                            setStep('input');
+                            // Keep the file in state so user doesn't have to re-upload if they just want to change a field
+                        }}>Back</Button>
                         <Button 
                             type="primary" 
                             danger 

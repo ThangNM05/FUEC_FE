@@ -161,13 +161,21 @@ export const studentsApi = baseApi.injectEndpoints({
             },
             invalidatesTags: ['Students'],
         }),
-        // POST: Auto-assign students to classes
+        // POST: Auto-assign students to classes with schedule file support
         autoAssignClass: builder.mutation<AutoAssignClassResult, AutoAssignClassRequest>({
-            query: (data) => ({
-                url: '/students/auto-assign-class',
-                method: 'POST',
-                body: data
-            }),
+            query: (data) => {
+                const formData = new FormData();
+                if (data.subMajorId) formData.append('SubMajorId', data.subMajorId);
+                if (data.cohort) formData.append('Cohort', data.cohort);
+                if (data.maxStudentsPerClass) formData.append('MaxStudentsPerClass', data.maxStudentsPerClass.toString());
+                if (data.file) formData.append('File', data.file);
+
+                return {
+                    url: '/students/auto-assign-class',
+                    method: 'POST',
+                    body: formData
+                };
+            },
             invalidatesTags: ['Classes', 'Students', 'ClassSubjectTeachers', 'StudentClasses']
         }),
 

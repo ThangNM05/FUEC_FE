@@ -104,6 +104,7 @@ export const accountsApi = baseApi.injectEndpoints({
 
 export const {
     useGetAccountsQuery,
+    useLazyGetAccountsQuery,
     useGetAccountByIdQuery,
     useCreateAccountMutation,
     useUpdateAccountMutation,
