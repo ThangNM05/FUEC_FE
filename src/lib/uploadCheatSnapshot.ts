@@ -5,6 +5,7 @@ let lastUploadTime = 0
 
 
 import { filesApi } from '@/api/filesApi';
+import { studentCheatLogsApi } from '@/api/studentCheatLogsApi';
 import { store } from '@/redux/store';
 
 /**
@@ -38,19 +39,13 @@ export async function uploadCheatSnapshot(
     // Register evidence in the backend
     if (url && studentExamId) {
       try {
-        const baseUrl = import.meta.env.VITE_API_URL ?? '';
-        const token = localStorage.getItem('token') || '';
-        await fetch(`${baseUrl}/v1/StudentExams/${studentExamId}/cheat-logs`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-          body: JSON.stringify({
-            status: status,
-            capturedImageUrl: url
-          })
-        });
+        const createCheatLog = studentCheatLogsApi.endpoints.createStudentCheatLog.initiate;
+        // @ts-ignore: store is typed for RTK
+        await store.dispatch(createCheatLog({
+          studentExamId,
+          status,
+          capturedImageUrl: url
+        })).unwrap();
       } catch (logErr) {
         console.error('Failed to register cheat log:', logErr);
       }

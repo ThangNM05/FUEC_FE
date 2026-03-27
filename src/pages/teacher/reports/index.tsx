@@ -1,12 +1,36 @@
-import { useState } from 'react';
-import { AlertTriangle, Calendar, Clock, FileVideo, Image as ImageIcon, Eye, Download } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import {
+    AlertTriangle,
+    Calendar,
+    Clock,
+    FileVideo,
+    Image as ImageIcon,
+    Eye,
+    Download,
+    ChevronRight,
+    Users,
+    FileText,
+    ArrowLeft,
+    Search,
+    Filter,
+    BarChart3,
+    GraduationCap,
+    BookOpen
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import dayjs from 'dayjs';
+import { useGetAuthTeacherTeachingSubjectsQuery } from '@/api/teachersApi';
+import { useGetSemestersQuery, useGetDefaultSemesterQuery } from '@/api/semestersApi';
+import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
+import { useGetAllStudentExamsQuery } from '@/api/studentExamsApi';
+import { useGetStudentCheatLogsQuery } from '@/api/studentCheatLogsApi';
+import { Loader2 } from 'lucide-react';
 
-interface ProctoringReport {
+// --- Types ---
+interface StudentEvidence {
     id: number;
     studentName: string;
     studentCode: string;
-    examName: string;
-    examCode: string;
     suspiciousActivity: string;
     severity: 'high' | 'medium' | 'low';
     timestamp: string;
@@ -20,295 +44,615 @@ interface ProctoringReport {
     description: string;
 }
 
+interface ExamReport {
+    id: string;
+    name: string;
+    code: string;
+    date: string;
+    totalStudents: number;
+    flaggedCount: number;
+    students: StudentEvidence[];
+}
+
+interface ClassSubject {
+    id: string;
+    className: string;
+    subjectCode: string;
+    subjectName: string;
+    semester: string;
+    exams: ExamReport[];
+}
+
+// --- Views ---
+type ViewState = 'CLASSES' | 'EXAMS' | 'STUDENTS' | 'DETAIL';
+
 function TeacherReports() {
-    const [semester, setSemester] = useState('SPRING2025');
-    const [filterSeverity, setFilterSeverity] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+    // --- State ---
+    const [view, setView] = useState<ViewState>('CLASSES');
+    const [semester, setSemester] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
-    const proctoringReports: ProctoringReport[] = [
-        {
-            id: 1,
-            studentName: 'Nguyen Van A',
-            studentCode: 'SE140001',
-            examName: 'Database Systems Midterm',
-            examCode: 'DBS202',
-            suspiciousActivity: 'Multiple face detection',
-            severity: 'high',
-            timestamp: '2024-05-15 14:23:45',
-            duration: '3 minutes',
-            attachments: [
-                { type: 'image', url: '/evidence/face1.jpg', timestamp: '14:23:45' },
-                { type: 'image', url: '/evidence/face2.jpg', timestamp: '14:24:12' },
-                { type: 'image', url: '/evidence/face3.jpg', timestamp: '14:25:30' },
-                { type: 'video', url: '/evidence/session1.mp4', thumbnail: '/evidence/video1-thumb.jpg', timestamp: '14:23:00' }
-            ],
-            description: 'System detected multiple different faces during the exam session. Student may have had unauthorized assistance.'
-        },
-        {
-            id: 2,
-            studentName: 'Tran Thi B',
-            studentCode: 'SE140002',
-            examName: 'Web Development Final',
-            examCode: 'WEB301',
-            suspiciousActivity: 'Tab switching detected',
-            severity: 'medium',
-            timestamp: '2024-05-14 10:15:22',
-            duration: '45 seconds',
-            attachments: [
-                { type: 'image', url: '/evidence/screen1.jpg', timestamp: '10:15:22' },
-                { type: 'image', url: '/evidence/screen2.jpg', timestamp: '10:15:45' },
-                { type: 'video', url: '/evidence/session2.mp4', thumbnail: '/evidence/video2-thumb.jpg', timestamp: '10:15:00' }
-            ],
-            description: 'Student switched browser tabs 5 times during question 3. Screen captures show external resources being accessed.'
-        },
-        {
-            id: 3,
-            studentName: 'Le Van C',
-            studentCode: 'SE140003',
-            examName: 'Data Structures Quiz',
-            examCode: 'DSA201',
-            suspiciousActivity: 'No face detected',
-            severity: 'high',
-            timestamp: '2024-05-13 15:42:18',
-            duration: '8 minutes',
-            attachments: [
-                { type: 'image', url: '/evidence/noface1.jpg', timestamp: '15:42:18' },
-                { type: 'image', url: '/evidence/noface2.jpg', timestamp: '15:45:30' },
-                { type: 'image', url: '/evidence/noface3.jpg', timestamp: '15:48:12' }
-            ],
-            description: 'Camera feed showed empty seat for extended period. Student may have left the exam area without permission.'
-        },
-        {
-            id: 4,
-            studentName: 'Pham Thi D',
-            studentCode: 'SE140004',
-            examName: 'Algorithm Analysis Test',
-            examCode: 'ALG301',
-            suspiciousActivity: 'Suspicious eye movement',
-            severity: 'low',
-            timestamp: '2024-05-12 09:20:33',
-            duration: '2 minutes',
-            attachments: [
-                { type: 'image', url: '/evidence/eyes1.jpg', timestamp: '09:20:33' },
-                { type: 'image', url: '/evidence/eyes2.jpg', timestamp: '09:21:15' },
-                { type: 'video', url: '/evidence/session3.mp4', thumbnail: '/evidence/video3-thumb.jpg', timestamp: '09:20:00' }
-            ],
-            description: 'Eye tracking detected prolonged looking away from screen, possibly reading external materials.'
+    // Selection state
+    const [selectedClass, setSelectedClass] = useState<any | null>(null);
+    const [selectedExam, setSelectedExam] = useState<any | null>(null);
+    const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+
+    // --- API Queries ---
+    const { data: defaultSemester } = useGetDefaultSemesterQuery();
+    const { data: semestersData } = useGetSemestersQuery({ page: 1, pageSize: 100 });
+    const semestersList = semestersData?.items || [];
+
+    useEffect(() => {
+        if (defaultSemester?.id && !semester) {
+            setSemester(defaultSemester.id);
         }
-    ];
+    }, [defaultSemester, semester]);
 
-    const filteredReports = proctoringReports.filter(report => {
-        if (filterSeverity === 'all') return true;
-        return report.severity === filterSeverity;
-    });
+    const { data: teachingData, isLoading: loadingClasses } = useGetAuthTeacherTeachingSubjectsQuery(
+        { semesterId: semester },
+        { skip: !semester }
+    );
 
-    const getSeverityColor = (severity: string) => {
+    const { data: examsData, isLoading: loadingExams } = useGetExamsByClassSubjectIdQuery(
+        selectedClass?.classSubjectId || '',
+        { skip: !selectedClass || view !== 'EXAMS' }
+    );
+
+    // To get flagged students, we get all cheat logs for this exam
+    const { data: logsData, isLoading: loadingLogs } = useGetStudentCheatLogsQuery(
+        { examId: selectedExam?.id },
+        { skip: !selectedExam || view !== 'STUDENTS' }
+    );
+
+    // Also get all student exams to show total participants
+    const { data: studentExamsData } = useGetAllStudentExamsQuery(
+        { examId: selectedExam?.id },
+        { skip: !selectedExam || view !== 'STUDENTS' }
+    );
+
+    // Group logs by studentExamId for the STUDENTS view
+    const flaggedStudents = useMemo(() => {
+        if (!logsData?.items) return [];
+
+        const grouped = logsData.items.reduce((acc: any, log: any) => {
+            const id = log.studentExamId;
+            if (!acc[id]) {
+                acc[id] = {
+                    id,
+                    studentName: log.studentName || 'Student',
+                    studentCode: 'Unknown', // Need to find from studentExamsData
+                    suspiciousActivity: log.status,
+                    severity: 'medium', // Default to medium
+                    timestamp: log.timestamp,
+                    duration: 'N/A',
+                    attachments: [],
+                    description: `Captured proctoring log: ${log.status}`
+                };
+
+                // Try to find student info from studentExamsData
+                if (studentExamsData?.items) {
+                    const se = studentExamsData.items.find((x: any) => x.studentExamId === id);
+                    if (se) {
+                        acc[id].studentName = se.studentName || acc[id].studentName;
+                        acc[id].studentCode = se.studentCode || acc[id].studentCode;
+                    }
+                }
+            }
+            acc[id].attachments.push({
+                type: 'image',
+                url: log.capturedImageUrl,
+                timestamp: dayjs(log.timestamp).format('HH:mm:ss')
+            });
+            return acc;
+        }, {});
+
+        return Object.values(grouped) as StudentEvidence[];
+    }, [logsData, studentExamsData]);
+
+    // --- Helpers ---
+    const getSeverityStyles = (severity: string) => {
         switch (severity) {
-            case 'high': return 'bg-red-100 text-red-700 border-red-300';
-            case 'medium': return 'bg-orange-50 text-orange-700 border-orange-200';
-            case 'low': return 'bg-blue-100 text-blue-700 border-blue-300';
-            default: return 'bg-gray-100 text-gray-700 border-gray-300';
+            case 'high': return 'bg-red-50 text-red-600 border-red-100 ring-red-500';
+            case 'medium': return 'bg-orange-50 text-orange-600 border-orange-100 ring-orange-500';
+            case 'low': return 'bg-blue-50 text-blue-600 border-blue-100 ring-blue-500';
+            default: return 'bg-gray-50 text-gray-600 border-gray-100 ring-gray-500';
         }
     };
 
-    const getSeverityBadgeColor = (severity: string) => {
-        switch (severity) {
-            case 'high': return 'bg-red-500';
-            case 'medium': return 'bg-orange-500';
-            case 'low': return 'bg-blue-500';
-            default: return 'bg-gray-500';
+    // --- Search & Filtering ---
+    const filteredClasses = useMemo(() => {
+        if (!teachingData?.subjects) return [];
+        return teachingData.subjects.filter((cs: any) => {
+            const matchesSearch = cs.className?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                cs.subjectCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                cs.subjectName?.toLowerCase().includes(searchTerm.toLowerCase());
+            return matchesSearch;
+        });
+    }, [teachingData, searchTerm]);
+
+    const handleBack = () => {
+        if (view === 'DETAIL') {
+            setView('STUDENTS');
+            setSelectedStudent(null);
+        } else if (view === 'STUDENTS') {
+            setView('EXAMS');
+            setSelectedExam(null);
+        } else if (view === 'EXAMS') {
+            setView('CLASSES');
+            setSelectedClass(null);
         }
     };
 
-    return (
-        <div className="p-6">
-            {/* Header */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Proctoring Reports</h1>
-                    <select
-                        value={semester}
-                        onChange={(e) => setSemester(e.target.value)}
-                        className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-[#0A1B3C] focus:border-[#F37022] outline-none"
+    // --- Breadcrumb Navigation ---
+    const Breadcrumbs = () => (
+        <nav className="flex items-center gap-2 text-sm mb-6 text-gray-500 px-1">
+            <button
+                onClick={() => { setView('CLASSES'); setSelectedClass(null); setSelectedExam(null); setSelectedStudent(null); }}
+                className="hover:text-[#F37022] transition-colors font-medium"
+            >
+                Reports
+            </button>
+            {selectedClass && (
+                <>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <button
+                        onClick={() => { setView('EXAMS'); setSelectedExam(null); setSelectedStudent(null); }}
+                        className={`hover:text-[#F37022] transition-colors ${view === 'EXAMS' ? 'text-[#0A1B3C] font-semibold' : 'font-medium'}`}
                     >
-                        <option value="SPRING2025">Spring 2025</option>
-                        <option value="FALL2024">Fall 2024</option>
-                        <option value="SUMMER2024">Summer 2024</option>
-                    </select>
+                        {selectedClass.className}
+                    </button>
+                </>
+            )}
+            {selectedExam && (
+                <>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <button
+                        onClick={() => { setView('STUDENTS'); setSelectedStudent(null); }}
+                        className={`hover:text-[#F37022] transition-colors ${view === 'STUDENTS' ? 'text-[#0A1B3C] font-semibold' : 'font-medium'}`}
+                    >
+                        {selectedExam.displayName || selectedExam.name}
+                    </button>
+                </>
+            )}
+            {selectedStudent && (
+                <>
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <span className="text-[#0A1B3C] font-semibold">{selectedStudent.studentName}</span>
+                </>
+            )}
+        </nav>
+    );
+
+    // --- Views ---
+
+    const ClassesView = () => {
+        if (loadingClasses) {
+            return (
+                <div className="col-span-full py-20 text-center">
+                    <Loader2 className="w-12 h-12 text-[#F37022] animate-spin mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-gray-400">Loading your courses...</h3>
                 </div>
+            );
+        }
 
-                <button className="px-4 py-2 bg-white border border-gray-300 text-[#0A1B3C] font-medium text-sm rounded-lg hover:bg-gray-50 flex items-center gap-2">
-                    <Download className="w-4 h-4" />
-                    Export All Reports
-                </button>
-            </div>
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+                {filteredClasses.length > 0 ? (
+                    filteredClasses.map((cs: any) => {
+                        return (
+                            <motion.div
+                                key={cs.classSubjectId}
+                                whileHover={{ y: -4, scale: 1.02 }}
+                                onClick={() => { setSelectedClass(cs); setView('EXAMS'); setSearchTerm(''); }}
+                                className="group bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:border-[#F37022]/30 transition-all cursor-pointer relative overflow-hidden"
+                            >
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-[#F37022]/5 rounded-bl-full -mr-8 -mt-8 group-hover:bg-[#F37022]/10 transition-colors" />
 
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-2 mb-6 border-b border-gray-200">
-                <button
-                    onClick={() => setFilterSeverity('all')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${filterSeverity === 'all'
-                        ? 'border-[#F37022] text-[#F37022]'
-                        : 'border-transparent text-gray-600 hover:text-[#0A1B3C]'
-                        }`}
-                >
-                    All ({proctoringReports.length})
-                </button>
-                <button
-                    onClick={() => setFilterSeverity('high')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${filterSeverity === 'high'
-                        ? 'border-[#F37022] text-[#F37022]'
-                        : 'border-transparent text-gray-600 hover:text-[#0A1B3C]'
-                        }`}
-                >
-                    High Severity ({proctoringReports.filter(r => r.severity === 'high').length})
-                </button>
-                <button
-                    onClick={() => setFilterSeverity('medium')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${filterSeverity === 'medium'
-                        ? 'border-[#F37022] text-[#F37022]'
-                        : 'border-transparent text-gray-600 hover:text-[#0A1B3C]'
-                        }`}
-                >
-                    Medium Severity ({proctoringReports.filter(r => r.severity === 'medium').length})
-                </button>
-                <button
-                    onClick={() => setFilterSeverity('low')}
-                    className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 ${filterSeverity === 'low'
-                        ? 'border-[#F37022] text-[#F37022]'
-                        : 'border-transparent text-gray-600 hover:text-[#0A1B3C]'
-                        }`}
-                >
-                    Low Severity ({proctoringReports.filter(r => r.severity === 'low').length})
-                </button>
-            </div>
-
-            {/* Reports List */}
-            <div className="space-y-4">
-                {filteredReports.map(report => (
-                    <div key={report.id} className={`bg-white rounded-xl border-2 p-5 ${getSeverityColor(report.severity)}`}>
-                        {/* Report Header */}
-                        <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                    <span className={`w-3 h-3 rounded-full ${getSeverityBadgeColor(report.severity)}`}></span>
-                                    <h3 className="font-bold text-[#0A1B3C] text-lg">{report.suspiciousActivity}</h3>
-                                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getSeverityColor(report.severity)}`}>
-                                        {report.severity.toUpperCase()}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-4 text-sm text-gray-600">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-semibold text-[#0A1B3C]">{report.studentName}</span>
-                                        <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">
-                                            {report.studentCode}
-                                        </span>
-                                    </div>
-                                    <span>•</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded">
-                                            {report.examCode}
-                                        </span>
-                                        <span>{report.examName}</span>
+                                <div className="flex items-start justify-between mb-4 relative z-10">
+                                    <div className="bg-blue-50 p-3 rounded-xl">
+                                        <Users className="w-6 h-6 text-[#0066b3]" />
                                     </div>
                                 </div>
-                            </div>
-                            <AlertTriangle className={`w-6 h-6 ${report.severity === 'high' ? 'text-red-500' :
-                                report.severity === 'medium' ? 'text-orange-500' :
-                                    'text-blue-500'
-                                }`} />
+
+                                <h3 className="text-xl font-bold text-[#0A1B3C] mb-1 group-hover:text-[#F37022] transition-colors">{cs.className}</h3>
+                                <p className="text-sm font-semibold text-[#0066b3] mb-3">{cs.subjectCode}</p>
+                                <p className="text-sm text-gray-500 line-clamp-2 min-h-[40px] mb-4">{cs.subjectName}</p>
+
+                                <div className="flex items-center justify-between pt-4 border-t border-gray-50 text-sm text-gray-500">
+                                    <div className="flex items-center gap-2">
+                                        <GraduationCap className="w-4 h-4" />
+                                        <span>View Exams</span>
+                                    </div>
+                                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            </motion.div>
+                        );
+                    })
+                ) : (
+                    <div className="col-span-full py-20 text-center">
+                        <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-gray-400">No classes found</h3>
+                        <p className="text-gray-400">Try adjusting your search</p>
+                    </div>
+                )}
+            </motion.div>
+        );
+    };
+
+
+    const ExamsView = () => {
+        if (loadingExams) {
+            return (
+                <div className="py-20 text-center">
+                    <Loader2 className="w-12 h-12 text-[#F37022] animate-spin mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-gray-400">Fetching exams...</h3>
+                </div>
+            );
+        }
+
+        return (
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4"
+            >
+                <div className="bg-[#0A1B3C] text-white p-8 rounded-3xl mb-8 relative overflow-hidden shadow-2xl">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
+                    <div className="relative z-10 flex items-center gap-6">
+                        <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md">
+                            <BookOpen className="w-8 h-8 text-[#F37022]" />
                         </div>
-
-                        {/* Timestamp & Duration */}
-                        <div className="flex items-center gap-6 mb-4 text-sm">
-                            <div className="flex items-center gap-2 text-gray-600">
-                                <Calendar className="w-4 h-4" />
-                                <span>{new Date(report.timestamp).toLocaleDateString('en-US', {
-                                    month: 'short', day: 'numeric', year: 'numeric'
-                                })}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-600">
-                                <Clock className="w-4 h-4" />
-                                <span>{new Date(report.timestamp).toLocaleTimeString('en-US', {
-                                    hour: '2-digit', minute: '2-digit', second: '2-digit'
-                                })}</span>
-                            </div>
-                            <div className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
-                                Duration: {report.duration}
-                            </div>
-                        </div>
-
-                        {/* Description */}
-                        <p className="text-sm text-gray-700 mb-4 bg-white/50 p-3 rounded-lg">
-                            {report.description}
-                        </p>
-
-                        {/* Attachments */}
                         <div>
-                            <div className="flex items-center gap-2 mb-3">
-                                <Eye className="w-4 h-4 text-gray-500" />
-                                <span className="text-sm font-semibold text-gray-700">
-                                    Evidence ({report.attachments.length} files)
-                                </span>
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {report.attachments.map((attachment, index) => (
-                                    <div key={index} className="relative group">
-                                        <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-[#F37022] transition-colors cursor-pointer">
-                                            {attachment.type === 'image' ? (
-                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-50">
-                                                    <ImageIcon className="w-8 h-8 text-blue-400" />
-                                                </div>
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-purple-50">
-                                                    <FileVideo className="w-8 h-8 text-purple-400" />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="absolute top-1 right-1">
-                                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${attachment.type === 'image'
-                                                ? 'bg-blue-500 text-white'
-                                                : 'bg-purple-500 text-white'
-                                                }`}>
-                                                {attachment.type.toUpperCase()}
-                                            </span>
-                                        </div>
-                                        <div className="mt-1 text-xs text-gray-500 font-mono text-center">
-                                            {attachment.timestamp}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-200">
-                            <button className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4" />
-                                Confirm Cheating
-                            </button>
-                            <button className="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-lg hover:bg-gray-600">
-                                Dismiss
-                            </button>
-                            <button className="ml-auto px-4 py-2 bg-white border border-gray-300 text-[#0A1B3C] text-sm font-medium rounded-lg hover:bg-gray-50 flex items-center gap-2">
-                                <Eye className="w-4 h-4" />
-                                Review Evidence
-                            </button>
-                            <button className="px-4 py-2 bg-white border border-gray-300 text-[#0A1B3C] text-sm font-medium rounded-lg hover:bg-gray-50 flex items-center gap-2">
-                                <Download className="w-4 h-4" />
-                                Download
-                            </button>
+                            <h2 className="text-3xl font-bold mb-1">{selectedClass?.className}</h2>
+                            <p className="text-blue-100 opacity-80">{selectedClass?.subjectName}</p>
                         </div>
                     </div>
-                ))}
+                </div>
+
+                <h3 className="text-lg font-bold text-[#0A1B3C] mb-4 flex items-center gap-2">
+                    <FileText className="w-5 h-4" />
+                    Available Exams
+                </h3>
+
+                {examsData?.items && examsData.items.length > 0 ? (
+                    examsData.items.map((exam: any) => (
+                        <motion.div
+                            key={exam.id}
+                            whileHover={{ x: 8 }}
+                            onClick={() => { setSelectedExam(exam); setView('STUDENTS'); }}
+                            className="flex flex-col md:flex-row md:items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl hover:border-[#F37022]/40 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className={`p-3 rounded-xl transition-colors bg-blue-50`}>
+                                    <BarChart3 className={`w-5 h-5 text-blue-500`} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-[#0A1B3C] group-hover:text-[#F37022] transition-colors">{exam.displayName}</h4>
+                                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                                        <span className="flex items-center gap-1.5 font-mono bg-gray-50 px-2 py-0.5 rounded text-xs">
+                                            {exam.tag}
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <Calendar className="w-3.5 h-3.5" />
+                                            {dayjs(exam.startTime).format('MMM DD, YYYY')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 md:mt-0 flex items-center gap-6">
+                                <div className="text-right">
+                                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Participants</p>
+                                    <p className={`text-xl font-black text-[#0A1B3C]`}>
+                                        {exam.participationCount}
+                                    </p>
+                                </div>
+                                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[#F37022]/10 transition-colors">
+                                    <ChevronRight className="w-6 h-6 text-gray-400 group-hover:text-[#F37022]" />
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))
+                ) : (
+                    <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                        <p className="text-gray-400">No exams found for this course.</p>
+                    </div>
+                )}
+            </motion.div>
+        );
+    };
+
+    const StudentsView = () => {
+        const filteredStudents = useMemo(() => {
+            return (flaggedStudents as StudentEvidence[]).filter((s: StudentEvidence) =>
+                s.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                s.studentCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                s.suspiciousActivity.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }, [searchTerm, flaggedStudents]);
+
+        if (loadingLogs) {
+            return (
+                <div className="py-20 text-center">
+                    <Loader2 className="w-12 h-12 text-[#F37022] animate-spin mx-auto mb-4" />
+                    <h3 className="text-xl font-bold text-gray-400">Analyzing proctoring logs...</h3>
+                </div>
+            );
+        }
+
+        return (
+            <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+            >
+                <div className="flex items-center justify-between mb-2">
+                    <div>
+                        <h2 className="text-2xl font-bold text-[#0A1B3C]">{selectedExam?.displayName}</h2>
+                        <p className="text-gray-500">
+                            {searchTerm ? `Found ${filteredStudents.length} matches` : `Showing ${flaggedStudents.length} flagged students out of ${selectedExam?.participationCount || 0} total`}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                    {filteredStudents.length > 0 ? (
+                        filteredStudents.map((student: StudentEvidence) => (
+                            <motion.div
+                                key={student.id}
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className={`bg-white border rounded-2xl overflow-hidden hover:shadow-lg transition-all border-l-4 ${student.severity === 'high' ? 'border-l-red-500' :
+                                        student.severity === 'medium' ? 'border-l-orange-500' : 'border-l-blue-500'
+                                    }`}
+                            >
+                                <div className="p-6">
+                                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h3 className="text-lg font-bold text-[#0A1B3C]">{student.studentName}</h3>
+                                                <span className="text-xs font-mono font-bold bg-[#0066b3]/10 text-[#0066b3] px-2 py-0.5 rounded">
+                                                    {student.studentCode}
+                                                </span>
+                                                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${getSeverityStyles(student.severity)}`}>
+                                                    {student.severity} Risk
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-[#EF4444] font-semibold text-sm mb-4 bg-red-50 w-fit px-3 py-1 rounded-lg">
+                                                <AlertTriangle className="w-4 h-4" />
+                                                {student.suspiciousActivity}
+                                            </div>
+
+                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-sm">
+                                                <div className="flex items-center gap-2 text-gray-500">
+                                                    <Calendar className="w-4 h-4" />
+                                                    <span>{dayjs(student.timestamp).format('MMM DD, YYYY')}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-gray-500">
+                                                    <Clock className="w-4 h-4" />
+                                                    <span>{dayjs(student.timestamp).format('HH:mm:ss')}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-gray-500">
+                                                    <BarChart3 className="w-4 h-4" />
+                                                    <span>{student.attachments.length} Evidence captures</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => { setSelectedStudent(student); setView('DETAIL'); }}
+                                                className="flex-1 lg:flex-none px-6 py-2.5 bg-[#0A1B3C] text-white text-sm font-bold rounded-xl hover:bg-[#F37022] transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                                Review Evidence
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        ))
+                    ) : (
+                        <div className="text-center py-20 bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-100">
+                            {searchTerm ? (
+                                <>
+                                    <Search className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                                    <h4 className="text-xl font-bold text-gray-400">No students found matching "{searchTerm}"</h4>
+                                </>
+                            ) : (
+                                <>
+                                    <Users className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                                    <h4 className="text-xl font-bold text-gray-400">Excellent! No violations detected</h4>
+                                    <p className="text-gray-400 mt-1">All students in this exam followed the guidelines.</p>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </motion.div>
+        );
+    };
+
+
+    const DetailView = () => (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+        >
+            {/* Left: Info & Description */}
+            <div className="lg:col-span-1 space-y-6">
+                <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="w-16 h-16 bg-[#0066b3]/10 text-[#0066b3] rounded-2xl flex items-center justify-center">
+                            <GraduationCap className="w-8 h-8" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-[#0A1B3C]">{selectedStudent?.studentName}</h2>
+                            <p className="text-[#0066b3] font-mono text-sm font-bold">{selectedStudent?.studentCode}</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="p-4 bg-gray-50 rounded-2xl">
+                            <p className="text-xs text-gray-400 font-bold uppercase mb-2 tracking-wider">Detection Summary</p>
+                            <p className="text-sm font-semibold text-[#0A1B3C] flex items-center gap-2">
+                                <AlertTriangle className={`w-4 h-4 ${selectedStudent?.severity === 'high' ? 'text-red-500' : 'text-orange-500'}`} />
+                                {selectedStudent?.suspiciousActivity}
+                            </p>
+                        </div>
+
+                        <div className="p-4 bg-gray-50 rounded-2xl">
+                            <p className="text-xs text-gray-400 font-bold uppercase mb-2 tracking-wider">Detailed Findings</p>
+                            <p className="text-sm leading-relaxed text-gray-600">
+                                {selectedStudent?.description}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 space-y-3">
+                        <button className="w-full py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-colors shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+                            <AlertTriangle className="w-4 h-4" />
+                            Confirm Cheating
+                        </button>
+                        <button className="w-full py-3 bg-white text-gray-500 font-bold rounded-2xl hover:bg-gray-50 transition-colors border border-gray-200">
+                            Dismiss False Positive
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            {filteredReports.length === 0 && (
-                <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-                    <AlertTriangle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            {/* Right: Evidence Gallery */}
+            <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm min-h-[500px]">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 className="text-xl font-bold text-[#0A1B3C]">Evidence Gallery</h3>
+                            <p className="text-sm text-gray-400">{selectedStudent?.attachments.length} files captured by proctoring engine</p>
+                        </div>
+                        <button className="p-2 text-gray-400 hover:text-[#0A1B3C] transition-colors bg-gray-50 rounded-xl">
+                            <Download className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedStudent?.attachments.map((file: any, idx: number) => (
+                            <motion.div
+                                key={idx}
+                                whileHover={{ scale: 1.02 }}
+                                className="group relative aspect-video bg-gray-900 rounded-2xl overflow-hidden cursor-pointer shadow-md"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60" />
+
+                                {file.type === 'image' ? (
+                                    <img
+                                        src={file.url}
+                                        alt={`Evidence ${idx}`}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center text-white/40">
+                                        <FileVideo className="w-12 h-12 mb-2 group-hover:scale-110 transition-transform" />
+                                        <span className="text-xs font-medium bg-red-500/80 text-white px-3 py-1 rounded-full backdrop-blur-sm">Video Log</span>
+                                    </div>
+                                )}
+
+                                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="w-3.5 h-3.5 text-white/60" />
+                                        <span className="text-xs font-mono">{file.timestamp}</span>
+                                    </div>
+                                    <Eye className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
-            )}
+            </div>
+        </motion.div>
+    );
+
+    return (
+        <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8">
+            {/* Header Area */}
+            <div className="max-w-7xl mx-auto mb-8">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="bg-[#F37022] p-2 rounded-lg shadow-lg shadow-orange-200">
+                                <BarChart3 className="w-6 h-6 text-white" />
+                            </div>
+                            <h1 className="text-3xl font-black text-[#0A1B3C]">Integrity Reports</h1>
+                        </div>
+                        <p className="text-gray-500 font-medium">Monitor and review proctoring evidence across your courses</p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search student or class..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F37022]/20 focus:border-[#F37022] outline-none transition-all w-full md:w-64 shadow-sm"
+                            />
+                        </div>
+                        <select
+                            value={semester}
+                            onChange={(e) => setSemester(e.target.value)}
+                            className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-[#0A1B3C] focus:ring-2 focus:ring-[#F37022]/20 outline-none transition-all shadow-sm cursor-pointer"
+                        >
+                            {semestersList.map((sem: any) => (
+                                <option key={sem.id} value={sem.id}>{sem.semesterCode}</option>
+                            ))}
+                            {semestersList.length === 0 && defaultSemester && (
+                                <option value={defaultSemester.id}>{defaultSemester.semesterCode}</option>
+                            )}
+                        </select>
+                        <button className="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
+                            <Filter className="w-5 h-5 text-gray-500" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto">
+                {/* Navigation & Toolbar */}
+                <div className="flex items-center justify-between mb-4">
+                    <Breadcrumbs />
+                    {view !== 'CLASSES' && (
+                        <button
+                            onClick={handleBack}
+                            className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#0A1B3C] transition-colors mb-6 group"
+                        >
+                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                            Back to {view === 'DETAIL' ? 'Students' : view === 'STUDENTS' ? 'Exams' : 'Classes'}
+                        </button>
+                    )}
+                </div>
+
+                {/* Main Content Area */}
+                <div className="relative">
+                    <AnimatePresence mode="wait">
+                        {view === 'CLASSES' && <ClassesView key="classes" />}
+                        {view === 'EXAMS' && <ExamsView key="exams" />}
+                        {view === 'STUDENTS' && <StudentsView key="students" />}
+                        {view === 'DETAIL' && <DetailView key="detail" />}
+                    </AnimatePresence>
+                </div>
+            </div>
         </div>
     );
 }
 
 export default TeacherReports;
+
