@@ -46,6 +46,7 @@ import QuestionDetail from './pages/student/questions/detail';
 import AssignmentSubmission from './pages/student/assignment-submission';
 import TeacherAssignmentReview from './pages/teacher/assignment-review';
 import TeacherCourseDetails from './pages/teacher/course-details';
+import TeacherQuestionAnswers from './pages/teacher/questions/answers';
 import AssignmentSubmissionsList from './pages/teacher/assignment-submissions';
 import TeacherQuestionBanks from './pages/teacher/question-banks';
 import TeacherQuestionBankDetail from './pages/teacher/question-banks/detail';
@@ -110,6 +111,7 @@ function Router() {
         <Route path="/teacher/question-banks/:subjectId" element={<TeacherQuestionBankDetail />} />
         <Route path="/teacher/create-exam" element={<CreateExam />} />
         <Route path="/teacher/course-details/:courseId" element={<TeacherCourseDetails />} />
+        <Route path="/teacher/course-details/questions/:id/answers" element={<TeacherQuestionAnswers />} />
         <Route path="/teacher/exam-review/:studentExamId" element={<TeacherExamReview />} />
         <Route path="/teacher/assignment/:assignmentId/submissions" element={<AssignmentSubmissionsList />} />
         <Route path="/teacher/assignment-review/:submissionId" element={<TeacherAssignmentReview />} />

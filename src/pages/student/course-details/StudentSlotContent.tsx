@@ -43,7 +43,7 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams 
                             <div
                                 key={q.id}
                                 className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-orange-50 border border-transparent hover:border-orange-100 transition-all cursor-pointer group"
-                                onClick={() => navigate(`/student/questions/${q.id}`)}
+                                onClick={() => navigate(`/student/course-details/questions/${q.id}?slotId=${slotId}`)}
                             >
                                 <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-orange-200 transition-colors">
                                     <BookOpen className="w-3.5 h-3.5 text-orange-600" />
