@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { FileText, Loader2, Pencil, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     useGetSlotQuestionContentsBySlotIdQuery,
@@ -10,6 +10,8 @@ import {
 import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentModal';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 import type { SlotQuestionContentData } from '@/components/modals/SlotQuestionContentModal';
+
+import { useNavigate, useParams } from 'react-router';
 
 export default function SlotQuestionList({
     slotId,
@@ -22,6 +24,8 @@ export default function SlotQuestionList({
     onLoad?: (hasQuestions: boolean) => void,
     topics?: string[]
 }) {
+    const navigate = useNavigate();
+    const { courseId } = useParams();
     const { data: questions, isLoading } = useGetSlotQuestionContentsBySlotIdQuery(slotId);
     const [createQuestion, { isLoading: isCreating }] = useCreateSlotQuestionContentMutation();
     const [updateQuestion, { isLoading: isUpdating }] = useUpdateSlotQuestionContentMutation();
@@ -92,6 +96,13 @@ export default function SlotQuestionList({
                         </div>
                         <div className="flex items-center gap-4 flex-shrink-0 ml-2">
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={() => navigate(`/teacher/course-details/questions/${question.id}/answers?slotId=${slotId}&courseId=${courseId}`)}
+                                    className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                                    title="View Answers"
+                                >
+                                    <Eye className="w-4 h-4" />
+                                </button>
                                 <button
                                     onClick={() => {
                                         setEditingQuestion({
