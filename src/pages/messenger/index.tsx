@@ -45,7 +45,8 @@ import type {
   SignalRConversationDto,
 } from '@/types/messenger.types';
 import { ConversationType, MessageType, MessageStatus } from '@/types/messenger.types';
-
+import StudentSidebar from '@/components/layouts/student/StudentSidebar';
+import TeacherSidebar from '@/components/layouts/teacher/TeacherSidebar';
 // ─────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────
@@ -1329,6 +1330,10 @@ function Messenger() {
           </div>
         </div>
       )}
+
+      {/* Conditionally render the dock for mobile/desktop navigation based on role */}
+      {currentUser?.role === 'Student' && <StudentSidebar />}
+      {currentUser?.role === 'Teacher' && <TeacherSidebar />}
     </div>
   );
 }
