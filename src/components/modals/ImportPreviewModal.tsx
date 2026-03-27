@@ -189,13 +189,22 @@ export default function ImportPreviewModal({
                       </span>
                     ))}
                   </div>
-                  {q.chapter != null && (
-                    <div className="mt-1.5">
-                      <span
-                        className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${isDup ? 'bg-red-100 text-red-400' : 'bg-blue-100 text-blue-600'}`}
-                      >
-                        Ch. {q.chapter}
-                      </span>
+                  {(q.chapter != null || q.tag) && (
+                    <div className="mt-1.5 flex gap-2">
+                      {q.chapter != null && (
+                        <span
+                          className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${isDup ? 'bg-red-100 text-red-400' : 'bg-blue-100 text-blue-600'}`}
+                        >
+                          Ch. {q.chapter}
+                        </span>
+                      )}
+                      {q.tag && (
+                        <span
+                          className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${isDup ? 'bg-red-100 text-red-400' : 'bg-purple-100 text-purple-600'}`}
+                        >
+                          Tag: {q.tag}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>

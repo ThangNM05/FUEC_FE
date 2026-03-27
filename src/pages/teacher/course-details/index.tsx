@@ -27,6 +27,9 @@ import type { Assignment } from '@/types/assignment.types';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 import SlotQuestionContentModal from '@/components/modals/SlotQuestionContentModal';
 import ExamParticipantsModal from '@/components/modals/ExamParticipantsModal';
+import ZipFolderBrowser from '@/components/ZipFolderBrowser';
+import MaterialFilePreview from '@/components/MaterialFilePreview';
+import CloneConfigModal from '@/components/modals/CloneConfigModal';
 
 type SlotAssignment = Assignment;
 
@@ -74,6 +77,7 @@ function TeacherCourseDetails() {
     const [isStudentListModalOpen, setIsStudentListModalOpen] = useState(false);
     const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
     const [selectedParticipantsExam, setSelectedParticipantsExam] = useState<Exam | null>(null);
+    const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
 
     const handleOpenCreateAssignment = (slotInfo: any) => {
         setCreateAssignmentSlotInfo(slotInfo);
@@ -403,8 +407,27 @@ function TeacherCourseDetails() {
                             </span>
                         </div>
                     </div>
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <button
+                            onClick={() => setIsCloneModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#F37022] bg-orange-50 border border-orange-100 rounded-lg hover:bg-orange-100 transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Clone Configuration
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            <CloneConfigModal
+                isOpen={isCloneModalOpen}
+                onClose={() => setIsCloneModalOpen(false)}
+                sourceClassSubjectId={courseId || ''}
+                subjectId={classSubject?.subjectId || ''}
+                courseCode={classSubject?.subjectCode || ''}
+                courseName={classSubject?.subjectName || ''}
+            />
 
             {/* Tabs ... */}
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -1011,6 +1034,21 @@ function TeacherCourseDetails() {
                                         const isPdf = ext === 'pdf';
                                         const isDoc = ['doc', 'docx'].includes(ext);
                                         const isPpt = ['ppt', 'pptx'].includes(ext);
+                                        const isArchive = ['zip', 'rar', '7z'].includes(ext);
+
+                                        if (isArchive) {
+                                            return (
+                                                <ZipFolderBrowser
+                                                    key={material.id}
+                                                    material={material}
+                                                    onDelete={handleDeleteMaterial}
+                                                    onPreviewFile={(url, name) => {
+                                                        setPreviewFile({ url, name });
+                                                        setIsPreviewModalOpen(true);
+                                                    }}
+                                                />
+                                            );
+                                        }
 
                                         const getFileColor = () => {
                                             if (isPdf) return 'bg-red-100 text-red-600';
@@ -1053,16 +1091,37 @@ function TeacherCourseDetails() {
                                                                 <Eye className="w-4 h-4" />
                                                                 Preview
                                                             </button>
-                                                            <a
-                                                                href={material.fileUrl}
-                                                                download
+                                                            <button
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    try {
+                                                                        const s3Url = new URL(material.fileUrl!);
+                                                                        const key = s3Url.pathname.substring(1);
+                                                                        const apiBase = import.meta.env.VITE_API_URL || '';
+                                                                        const token = localStorage.getItem('token');
+                                                                        const res = await fetch(`${apiBase}/Files/download?key=${encodeURIComponent(key)}`, {
+                                                                            headers: token ? { Authorization: `Bearer ${token}` } : {},
+                                                                        });
+                                                                        if (!res.ok) throw new Error('Download failed');
+                                                                        const blob = await res.blob();
+                                                                        const url = window.URL.createObjectURL(blob);
+                                                                        const a = document.createElement('a');
+                                                                        a.href = url;
+                                                                        a.download = material.fileName || 'download';
+                                                                        document.body.appendChild(a);
+                                                                        a.click();
+                                                                        a.remove();
+                                                                        window.URL.revokeObjectURL(url);
+                                                                    } catch {
+                                                                        toast.error('Failed to download file');
+                                                                    }
+                                                                }}
                                                                 className="px-3 py-1.5 text-xs font-medium text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center gap-1.5"
                                                                 title="Download"
-                                                                onClick={(e) => e.stopPropagation()}
                                                             >
                                                                 <Download className="w-4 h-4" />
                                                                 Download
-                                                            </a>
+                                                            </button>
                                                         </>
                                                     )}
                                                     <button
@@ -1093,14 +1152,11 @@ function TeacherCourseDetails() {
                 footer={null}
                 width={800}
                 centered
-                destroyOnClose
+                destroyOnHidden
             >
                 {previewFile && (
                     <div className="mt-4">
-                        {/* Dummy preview component since filePreview isn't imported, but matches prior behavior */}
-                        <div className="w-full h-[600px] bg-gray-50 border rounded-lg flex items-center justify-center text-gray-500">
-                            <FileText className="w-8 h-8 mr-2" /> <a href={previewFile.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">View File: {previewFile.url}</a>
-                        </div>
+                        <MaterialFilePreview url={previewFile.url} name={previewFile.name} />
                     </div>
                 )}
             </Modal>
@@ -1191,7 +1247,7 @@ function TeacherCourseDetails() {
                 footer={null}
                 width={600}
                 centered
-                destroyOnClose
+                destroyOnHidden
                 className="student-list-modal"
             >
                 <div className="max-h-[60vh] overflow-y-auto pr-2 mt-4 custom-scrollbar">

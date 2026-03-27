@@ -1,3999 +1,1599 @@
-// chapter:1 Introduction to Computer Organization
-::COA_1:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_2:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_3:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_4:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_5:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_6:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_7:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_8:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_9:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_10:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_11:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_12:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:1 Introduction to Computer Organization
-::COA_13:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:1 Introduction to Cross-Platform Development
+::PT1:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT2:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT3:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT4:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT5:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT6:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT7:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT8:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT9:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT10:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT11:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT12:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT13:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_14:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:1 Introduction to Cross-Platform Development
+::PT14:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_15:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:1 Introduction to Cross-Platform Development
+::PT15:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_16:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:1 Introduction to Cross-Platform Development
+::PT16:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_17:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:1 Introduction to Cross-Platform Development
+::PT17:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_18:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:1 Introduction to Cross-Platform Development
+::PT18:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_19:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:1 Introduction to Cross-Platform Development
+::PT19:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_20:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:1 Introduction to Cross-Platform Development
+::PT20:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_21:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT1:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_22:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT2:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_23:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:2 C# Advanced Features
+::PT3:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_24:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:2 C# Advanced Features
+::PT4:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_25:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:2 C# Advanced Features
+::PT5:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_26:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT6:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_27:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:2 C# Advanced Features
+::PT7:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_28:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:2 C# Advanced Features
+::PT8:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_29:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:2 C# Advanced Features
+::PT9:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_30:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:2 C# Advanced Features
+::PT10:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_31:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT11:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_32:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT12:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_33:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT13:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_34:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT14:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_35:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT15:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_36:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT16:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_37:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT17:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_38:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:2 C# Advanced Features
+::PT18:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_39:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT19:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_40:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:2 C# Advanced Features
+::PT20:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_41:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT1:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_42:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT2:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_43:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT3:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_44:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT4:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_45:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT5:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_46:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT6:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_47:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT7:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_48:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT8:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_49:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT9:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:1 Introduction to Computer Organization
-::COA_50:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT10:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:2 Data Representation
-::COA_51:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT11:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:2 Data Representation
-::COA_52:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT12:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:2 Data Representation
-::COA_53:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT13:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:2 Data Representation
-::COA_54:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT14:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:2 Data Representation
-::COA_55:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT15:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:2 Data Representation
-::COA_56:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT16:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:2 Data Representation
-::COA_57:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT17:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:2 Data Representation
-::COA_58:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT18:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:2 Data Representation
-::COA_59:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT19:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:2 Data Representation
-::COA_60:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:3 .NET Runtime and Architecture
+::PT20:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:2 Data Representation
-::COA_61:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT1:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:2 Data Representation
-::COA_62:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT2:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:2 Data Representation
-::COA_63:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT3:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:2 Data Representation
-::COA_64:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT4:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:2 Data Representation
-::COA_65:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT5:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:2 Data Representation
-::COA_66:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT6:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:2 Data Representation
-::COA_67:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT7:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:2 Data Representation
-::COA_68:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT8:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:2 Data Representation
-::COA_69:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT9:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:2 Data Representation
-::COA_70:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT10:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:2 Data Representation
-::COA_71:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT11:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:2 Data Representation
-::COA_72:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT12:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
 }
 
-// chapter:2 Data Representation
-::COA_73:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT13:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:2 Data Representation
-::COA_74:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT14:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:2 Data Representation
-::COA_75:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT15:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:2 Data Representation
-::COA_76:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT16:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:2 Data Representation
-::COA_77:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT17:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:2 Data Representation
-::COA_78:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT18:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:2 Data Representation
-::COA_79:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT19:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:2 Data Representation
-::COA_80:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:4 Dependency Injection in .NET
+::PT20:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:2 Data Representation
-::COA_81:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT1:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:2 Data Representation
-::COA_82:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT2:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:2 Data Representation
-::COA_83:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT3:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:2 Data Representation
-::COA_84:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT4:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:2 Data Representation
-::COA_85:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT5:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:2 Data Representation
-::COA_86:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT6:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:2 Data Representation
-::COA_87:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT7:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:2 Data Representation
-::COA_88:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT8:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:2 Data Representation
-::COA_89:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT9:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:2 Data Representation
-::COA_90:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT10:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:2 Data Representation
-::COA_91:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT11:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:2 Data Representation
-::COA_92:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT12:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:2 Data Representation
-::COA_93:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT13:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:2 Data Representation
-::COA_94:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT14:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:2 Data Representation
-::COA_95:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT15:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:2 Data Representation
-::COA_96:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT16:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:2 Data Representation
-::COA_97:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT17:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:2 Data Representation
-::COA_98:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT18:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:2 Data Representation
-::COA_99:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT19:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:2 Data Representation
-::COA_100:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:5 Asynchronous Programming in .NET
+::PT20:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:3 CPU Architecture
-::COA_101:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT1:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:3 CPU Architecture
-::COA_102:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT2:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:3 CPU Architecture
-::COA_103:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT3:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:3 CPU Architecture
-::COA_104:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT4:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:3 CPU Architecture
-::COA_105:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT5:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:3 CPU Architecture
-::COA_106:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT6:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:3 CPU Architecture
-::COA_107:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT7:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:3 CPU Architecture
-::COA_108:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT8:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:3 CPU Architecture
-::COA_109:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT9:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:3 CPU Architecture
-::COA_110:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT10:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:3 CPU Architecture
-::COA_111:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT11:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:3 CPU Architecture
-::COA_112:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT12:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:3 CPU Architecture
-::COA_113:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT13:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:3 CPU Architecture
-::COA_114:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT14:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:3 CPU Architecture
-::COA_115:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT15:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:3 CPU Architecture
-::COA_116:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT16:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:3 CPU Architecture
-::COA_117:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT17:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:3 CPU Architecture
-::COA_118:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT18:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:3 CPU Architecture
-::COA_119:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT19:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:3 CPU Architecture
-::COA_120:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT20:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:3 CPU Architecture
-::COA_121:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT1:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:3 CPU Architecture
-::COA_122:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT2:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:3 CPU Architecture
-::COA_123:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT3:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:3 CPU Architecture
-::COA_124:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT4:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:3 CPU Architecture
-::COA_125:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT5:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:3 CPU Architecture
-::COA_126:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT6:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:3 CPU Architecture
-::COA_127:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT7:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:3 CPU Architecture
-::COA_128:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT8:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
 }
 
-// chapter:3 CPU Architecture
-::COA_129:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT9:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:3 CPU Architecture
-::COA_130:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT10:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:3 CPU Architecture
-::COA_131:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT11:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:3 CPU Architecture
-::COA_132:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT12:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:3 CPU Architecture
-::COA_133:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT13:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:3 CPU Architecture
-::COA_134:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT14:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
 }
 
-// chapter:3 CPU Architecture
-::COA_135:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT15:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:3 CPU Architecture
-::COA_136:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT16:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:3 CPU Architecture
-::COA_137:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT17:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:3 CPU Architecture
-::COA_138:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT18:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:3 CPU Architecture
-::COA_139:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT19:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:3 CPU Architecture
-::COA_140:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:7 Data Access with Entity Framework Core
+::PT20:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:3 CPU Architecture
-::COA_141:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT1:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:3 CPU Architecture
-::COA_142:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT2:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:3 CPU Architecture
-::COA_143:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT3:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:3 CPU Architecture
-::COA_144:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT4:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
 }
 
-// chapter:3 CPU Architecture
-::COA_145:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT5:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:3 CPU Architecture
-::COA_146:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT6:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:3 CPU Architecture
-::COA_147:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT7:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:3 CPU Architecture
-::COA_148:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT8:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:3 CPU Architecture
-::COA_149:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT9:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:3 CPU Architecture
-::COA_150:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT10:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_151:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT11:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_152:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT12:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_153:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT13:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_154:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT14:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_155:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT15:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_156:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT16:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_157:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT17:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_158:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT18:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_159:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT19:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_160:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:8 Web APIs with ASP.NET Core
+::PT20:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_161:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT1:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_162:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT2:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_163:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT3:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_164:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT4:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_165:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT5:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_166:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT6:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_167:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT7:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_168:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT8:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_169:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT9:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_170:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT10:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_171:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT11:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_172:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT12:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_173:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT13:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_174:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT14:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_175:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT15:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_176:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT16:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_177:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT17:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_178:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT18:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_179:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT19:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_180:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:9 Testing and Debugging .NET Applications
+::PT20:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_181:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:10 Deployment and Performance Optimization
+::PT1:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_182:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:10 Deployment and Performance Optimization
+::PT2:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_183:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:10 Deployment and Performance Optimization
+::PT3:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_184:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
+// chapter:10 Deployment and Performance Optimization
+::PT4:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_185:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:10 Deployment and Performance Optimization
+::PT5:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_186:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
+// chapter:10 Deployment and Performance Optimization
+::PT6:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_187:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:10 Deployment and Performance Optimization
+::PT7:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }
 
-// chapter:4 Instruction Set Architecture
-::COA_188:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_189:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_190:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_191:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_192:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_193:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_194:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_195:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_196:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_197:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_198:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_199:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:4 Instruction Set Architecture
-::COA_200:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_201:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_202:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_203:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_204:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_205:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_206:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_207:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_208:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_209:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_210:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_211:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_212:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_213:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_214:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_215:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_216:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_217:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_218:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_219:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_220:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_221:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_222:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_223:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_224:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_225:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_226:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_227:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_228:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_229:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_230:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_231:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_232:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_233:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_234:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_235:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_236:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_237:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_238:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_239:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_240:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_241:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_242:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_243:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_244:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_245:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_246:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_247:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_248:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_249:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:5 Memory Hierarchy
-::COA_250:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_251:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_252:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_253:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_254:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_255:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_256:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_257:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_258:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_259:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_260:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_261:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_262:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_263:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_264:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_265:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_266:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_267:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_268:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_269:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_270:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_271:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_272:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_273:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_274:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_275:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_276:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_277:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_278:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_279:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_280:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_281:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_282:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_283:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_284:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_285:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_286:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_287:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_288:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_289:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_290:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_291:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_292:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_293:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_294:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_295:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_296:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_297:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_298:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_299:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:6 Cache Memory
-::COA_300:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_301:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_302:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_303:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_304:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_305:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_306:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_307:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_308:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_309:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_310:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_311:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_312:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_313:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_314:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_315:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_316:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_317:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_318:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_319:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_320:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_321:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_322:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_323:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_324:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_325:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_326:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_327:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_328:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_329:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_330:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_331:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_332:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_333:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_334:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_335:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_336:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_337:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_338:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_339:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_340:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_341:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_342:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_343:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_344:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_345:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_346:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_347:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_348:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_349:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:7 Input and Output Systems
-::COA_350:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_351:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_352:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_353:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_354:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_355:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_356:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_357:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_358:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_359:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_360:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_361:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_362:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_363:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_364:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_365:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_366:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_367:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_368:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_369:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_370:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_371:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_372:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_373:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_374:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_375:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_376:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_377:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_378:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_379:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_380:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_381:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_382:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_383:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_384:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_385:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_386:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_387:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_388:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_389:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_390:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_391:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_392:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_393:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_394:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_395:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_396:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_397:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_398:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_399:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:8 Pipelining
-::COA_400:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_401:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_402:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_403:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_404:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_405:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_406:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_407:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_408:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_409:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_410:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_411:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_412:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_413:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_414:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_415:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_416:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_417:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_418:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_419:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_420:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_421:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_422:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_423:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_424:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_425:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_426:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_427:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_428:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_429:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_430:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_431:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_432:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_433:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_434:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_435:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_436:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_437:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_438:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_439:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_440:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_441:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_442:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_443:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_444:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_445:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_446:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_447:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_448:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_449:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:9 Parallel Processing
-::COA_450:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_451:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_452:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_453:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_454:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_455:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_456:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_457:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_458:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_459:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_460:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_461:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_462:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_463:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_464:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_465:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_466:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_467:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_468:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_469:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_470:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_471:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_472:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_473:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_474:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_475:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_476:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_477:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_478:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_479:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_480:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_481:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_482:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_483:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_484:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_485:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_486:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_487:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_488:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_489:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_490:: Which component is mainly responsible for executing instructions? {
-  =Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_491:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_492:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_493:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_494:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_495:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_496:: Which memory type is volatile and used for temporary storage? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  =Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_497:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_498:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_499:: Which unit coordinates operations of the CPU? {
-  ~Central Processing Unit
-  ~Arithmetic Logic Unit
-  ~Random Access Memory
-  =Control Unit
-}
-
-// chapter:10 Performance and Optimization
-::COA_500:: Which unit performs arithmetic and logical operations? {
-  ~Central Processing Unit
-  =Arithmetic Logic Unit
-  ~Random Access Memory
-  ~Control Unit
+// chapter:10 Deployment and Performance Optimization
+::PT8:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT9:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT10:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT11:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT12:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT13:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT14:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT15:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT16:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT17:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT18:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT19:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT20:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
 }

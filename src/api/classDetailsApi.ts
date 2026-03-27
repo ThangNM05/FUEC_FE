@@ -159,8 +159,33 @@ export const classDetailsApi = baseApi.injectEndpoints({
             },
             invalidatesTags: ['ClassSubjectTeachers'],
         }),
+        // Clone configuration
+        cloneConfig: builder.mutation<CloneConfigResponse, CloneConfigRequest>({
+            query: (body) => ({
+                url: '/ClassSubjects/clone-config',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['ClassSubjectTeachers', 'Slots' as any, 'Exams' as any, 'Assignments' as any, 'CourseMaterials' as any],
+        }),
     }),
 });
+
+export interface CloneConfigRequest {
+    sourceClassSubjectId: string;
+    targetClassSubjectIds: string[];
+    cloneMaterials: boolean;
+    cloneAssignments: boolean;
+    cloneExams: boolean;
+}
+
+export interface CloneConfigResponse {
+    success: boolean;
+    message: string;
+    materialsCloned: number;
+    assignmentsCloned: number;
+    examsCloned: number;
+}
 
 export interface ImportClassSubjectTeachersResponse {
     successCount: number;
@@ -178,4 +203,5 @@ export const {
     useRemoveStudentClassMutation,
     useGetIneligibleStudentIdsQuery,
     useImportClassSubjectTeachersMutation,
+    useCloneConfigMutation,
 } = classDetailsApi;
