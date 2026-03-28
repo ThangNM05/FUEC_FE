@@ -153,7 +153,7 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
                     }`}
                     onClick={() => {
                       handleMarkRead(n.id);
-                      if (n.relatedEntityId) {
+                      if (n.relatedEntityId && n.type === 'Message') {
                         // Redirect to messenger conversation
                         navigate(`/messenger?conversationId=${n.relatedEntityId}`);
                         setOpen(false);

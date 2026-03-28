@@ -37,6 +37,10 @@ export interface Slot {
     slotIndex: number;
     date: string;
     endDate: string;
+    status: string;
+    hasQuestions: boolean;
+    totalQuestions: number;
+    answeredQuestions: number;
     sessions: SlotSession[];
 }
 
@@ -67,8 +71,12 @@ export const classDetailsApi = baseApi.injectEndpoints({
             query: (id) => `/ClassSubjects/${id}`,
             transformResponse: (response: any) => response?.result || response,
         }),
-        getClassSubjectSlots: builder.query<ClassSubjectSlotsResponse, string>({
-            query: (id) => `/Slots/class-subject/${id}?sortBy=slotIndex&sortOrder=1`,
+        getClassSubjectSlots: builder.query<ClassSubjectSlotsResponse, { id: string; studentId?: string }>({  
+            query: ({ id, studentId }) => {
+                let url = `/Slots/class-subject/${id}?sortBy=slotIndex&sortOrder=1`;
+                if (studentId) url += `&studentId=${studentId}`;
+                return url;
+            },
             transformResponse: (response: any) => response?.result || response,
             providesTags: ['Slots' as any],
         }),

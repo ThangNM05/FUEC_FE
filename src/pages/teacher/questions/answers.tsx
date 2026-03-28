@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { ChevronRight, Loader2, Check, X, FileText, Users, MessageSquare, Send, Sparkles, Trash2 } from 'lucide-react';
 import { message, Select, Input } from 'antd';
 import { useGetSlotQuestionContentsBySlotIdQuery } from '@/api/slotQuestionContentsApi';
-import { useGetSlotAnswersByQuestionIdQuery, useGradeSlotAnswerMutation, useAddTeacherFeedbackMutation, useAiGradeAllMutation } from '@/api/studentSlotAnswersApi';
+import { useGetSlotAnswersByQuestionIdQuery } from '@/api/studentSlotAnswersApi';
 import { useGetStudentClassesByClassIdQuery } from '@/api/classDetailsApi';
 import type { StudentSlotAnswerDto } from '@/api/studentSlotAnswersApi';
 
@@ -26,9 +26,6 @@ export default function TeacherQuestionAnswers() {
 
     const [statusFilter, setStatusFilter] = useState<GradingStatus>('all');
     const [searchQuery, setSearchQuery] = useState('');
-    const [gradingAnswerId, setGradingAnswerId] = useState<string | null>(null);
-    const [draftGrade, setDraftGrade] = useState<boolean | null>(null);
-    const [replyText, setReplyText] = useState('');
 
     const { data: questions = [], isLoading: isLoadingQuestions } = useGetSlotQuestionContentsBySlotIdQuery(slotId, {
         skip: !slotId,
@@ -43,65 +40,6 @@ export default function TeacherQuestionAnswers() {
     const { data: answers = [], isLoading: isLoadingAnswers } = useGetSlotAnswersByQuestionIdQuery(questionId || '', {
         skip: !questionId,
     });
-
-    const [gradeAnswer, { isLoading: isGrading }] = useGradeSlotAnswerMutation();
-    const [addFeedback] = useAddTeacherFeedbackMutation();
-    const [aiGradeAll, { isLoading: isAIGrading }] = useAiGradeAllMutation();
-
-    const handleAIGradeAll = async () => {
-        if (!questionId) return;
-        try {
-            const count = await aiGradeAll(questionId).unwrap();
-            if (count === 0) {
-                message.info('No pending answers to grade');
-            } else {
-                message.success(`AI graded ${count} answer(s) successfully`);
-            }
-        } catch {
-            message.error('AI grading failed. Please try again.');
-        }
-    };
-
-    const handleOpenGrading = (answerId: string, initialGrade: boolean | null, initialFeedback: string | null) => {
-        setGradingAnswerId(answerId);
-        setDraftGrade(initialGrade);
-        setReplyText(initialFeedback || '');
-    };
-
-    const handleSubmitReview = async (answerId: string) => {
-        if (draftGrade === null && !replyText.trim()) {
-            message.warning('Please select a grade or write feedback before saving');
-            return;
-        }
-        try {
-            await Promise.all([
-                gradeAnswer({ id: answerId, isPassed: draftGrade }).unwrap(),
-                addFeedback({ answerId, feedbackText: replyText.trim() }).unwrap()
-            ]);
-            
-            message.success('Review saved perfectly!');
-            setGradingAnswerId(null);
-            setDraftGrade(null);
-            setReplyText('');
-        } catch {
-            message.error('Failed to save review');
-        }
-    };
-
-    const handleClearReview = async (answerId: string) => {
-        try {
-            await Promise.all([
-                gradeAnswer({ id: answerId, isPassed: null }).unwrap(),
-                addFeedback({ answerId, feedbackText: '' }).unwrap()
-            ]);
-            message.success('Grade & feedback cleared');
-            setGradingAnswerId(null);
-            setDraftGrade(null);
-            setReplyText('');
-        } catch {
-            message.error('Failed to clear');
-        }
-    };
 
     // Merge class roster with submitted answers
     const mergedList: MergedStudent[] = useMemo(() => {
@@ -227,19 +165,6 @@ export default function TeacherQuestionAnswers() {
                             )}
                         </div>
                     </div>
-                    {/* AI Grade ALL button */}
-                    <button
-                        onClick={handleAIGradeAll}
-                        disabled={isAIGrading || stats.pending === 0}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-sm font-bold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md shadow-purple-100 disabled:opacity-40 shrink-0 self-start"
-                        title={stats.pending === 0 ? 'No pending answers to grade' : `AI grade ${stats.pending} pending answer(s)`}
-                    >
-                        {isAIGrading ? (
-                            <><Loader2 className="w-4 h-4 animate-spin" /> Grading...</>
-                        ) : (
-                            <><Sparkles className="w-4 h-4" /> AI Grade ALL</>
-                        )}
-                    </button>
                 </div>
             </div>
 
@@ -328,13 +253,6 @@ export default function TeacherQuestionAnswers() {
                                                             <div className="text-xs font-semibold text-purple-600 mb-0.5">AI Feedback</div>
                                                             <div className="text-sm text-gray-700">{item.answer.teacherFeedback}</div>
                                                         </div>
-                                                        <button 
-                                                            onClick={() => handleClearReview(item.answer!.id)}
-                                                            className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-opacity opacity-0 group-hover:opacity-100"
-                                                            title="Delete feedback and reset grade"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
                                                     </div>
                                                 ) : (
                                                     <div className="flex items-start gap-2 bg-orange-50 border border-orange-100 rounded-lg p-3 relative group">
@@ -343,129 +261,8 @@ export default function TeacherQuestionAnswers() {
                                                             <div className="text-xs font-semibold text-[#F37022] mb-0.5">Teacher Feedback</div>
                                                             <div className="text-sm text-gray-700">{item.answer.teacherFeedback}</div>
                                                         </div>
-                                                        <button 
-                                                            onClick={() => handleClearReview(item.answer!.id)}
-                                                            className="absolute top-2 right-2 p-1.5 text-orange-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-opacity opacity-0 group-hover:opacity-100"
-                                                            title="Delete feedback and reset grade"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
                                                     </div>
                                                 )
-                                            )}
-
-                                            {gradingAnswerId === item.answer.id ? (
-                                                <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-gray-100 bg-orange-50/50 -mx-4 -mb-4 p-4 rounded-b-xl">
-                                                    <div>
-                                                        <label className="text-xs font-semibold text-gray-700 mb-1.5 block">1. Select Grade:</label>
-                                                        <div className="flex gap-2">
-                                                            <button
-                                                                onClick={() => setDraftGrade(true)}
-                                                                className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                                                                    draftGrade === true
-                                                                        ? 'bg-green-600 text-white shadow-sm'
-                                                                        : 'bg-white border text-gray-700 hover:border-green-500 hover:text-green-700 hover:bg-green-50'
-                                                                }`}
-                                                            >
-                                                                <Check className="w-4 h-4" /> Passed
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setDraftGrade(false)}
-                                                                className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-                                                                    draftGrade === false
-                                                                        ? 'bg-red-600 text-white shadow-sm'
-                                                                        : 'bg-white border text-gray-700 hover:border-red-500 hover:text-red-700 hover:bg-red-50'
-                                                                }`}
-                                                            >
-                                                                <X className="w-4 h-4" /> Not Passed
-                                                            </button>
-                                                        </div>
-                                                    </div>
-
-                                                    <div>
-                                                        <label className="text-xs font-semibold text-gray-700 mb-1.5 block">2. Add Feedback (Optional):</label>
-                                                        <Input.TextArea
-                                                            value={replyText}
-                                                            onChange={e => setReplyText(e.target.value)}
-                                                            placeholder="Type your feedback to the student..."
-                                                            rows={3}
-                                                            autoFocus
-                                                            className="text-sm shadow-sm"
-                                                        />
-                                                    </div>
-
-                                                    <div className="flex flex-wrap gap-2 mt-1">
-                                                        <button
-                                                            onClick={() => handleSubmitReview(item.answer!.id)}
-                                                            className="flex items-center gap-1.5 px-4 py-2 bg-[#F37022] text-white rounded-lg text-sm font-semibold hover:bg-orange-600 transition-colors shadow-sm"
-                                                        >
-                                                            <Send className="w-4 h-4" /> Save Review
-                                                        </button>
-                                                        
-                                                        {(item.status !== 'pending' || !!item.answer?.teacherFeedback) && (
-                                                            <button
-                                                                onClick={() => handleClearReview(item.answer!.id)}
-                                                                className="px-4 py-2 text-sm text-red-600 font-semibold hover:bg-red-50 hover:underline rounded-lg transition-colors flex items-center gap-1.5"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" /> Delete Review
-                                                            </button>
-                                                        )}
-                                                        
-                                                        <div className="flex-1" />
-                                                        
-                                                        <button
-                                                            onClick={() => { setGradingAnswerId(null); setDraftGrade(null); setReplyText(''); }}
-                                                            className="px-4 py-2 text-sm text-gray-600 font-medium border border-gray-200 bg-white rounded-lg hover:bg-gray-50 transition-colors"
-                                                        >
-                                                            Cancel
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-100 mt-2">
-                                                    {/* Idle Action row */}
-                                                    <button
-                                                        onClick={() => handleOpenGrading(item.answer!.id, true, item.answer!.teacherFeedback || null)}
-                                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                                            item.status === 'passed'
-                                                                ? 'bg-green-600 text-white shadow-sm'
-                                                                : 'bg-white border border-gray-200 text-gray-700 hover:border-green-500 hover:text-green-700 hover:bg-green-50'
-                                                        }`}
-                                                    >
-                                                        <Check className="w-3.5 h-3.5" /> Passed
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => handleOpenGrading(item.answer!.id, false, item.answer!.teacherFeedback || null)}
-                                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                                                            item.status === 'not_passed'
-                                                                ? 'bg-red-600 text-white shadow-sm'
-                                                                : 'bg-white border border-gray-200 text-gray-700 hover:border-red-500 hover:text-red-700 hover:bg-red-50'
-                                                        }`}
-                                                    >
-                                                        <X className="w-3.5 h-3.5" /> Not Passed
-                                                    </button>
-
-                                                    <div className="flex-1" />
-
-                                                    {(item.status !== 'pending' || !!item.answer!.teacherFeedback) && (
-                                                        <button
-                                                            onClick={() => handleClearReview(item.answer!.id)}
-                                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all mr-1"
-                                                            title="Clear grade and feedback"
-                                                        >
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    )}
-
-                                                    <button
-                                                        onClick={() => handleOpenGrading(item.answer!.id, item.answer!.isPassed ?? null, item.answer!.teacherFeedback || null)}
-                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600 hover:border-[#F37022] hover:text-[#F37022] hover:bg-orange-50 transition-all"
-                                                    >
-                                                        <MessageSquare className="w-3.5 h-3.5" />
-                                                        Reply
-                                                    </button>
-                                                </div>
                                             )}
                                         </>
                                     ) : (

@@ -58,33 +58,6 @@ export const studentSlotAnswersApi = baseApi.injectEndpoints({
             ],
         }),
 
-        gradeSlotAnswer: builder.mutation<string, { id: string; isPassed: boolean | null }>({
-            query: ({ id, isPassed }) => ({
-                url: `/student-slot-answers/${id}/grade`,
-                method: 'PATCH',
-                body: { isPassed },
-            }),
-            invalidatesTags: (result, error, { id }) => [{ type: 'StudentSlotAnswers', id }, { type: 'StudentSlotAnswers', id: 'LIST' }],
-        }),
-
-        addTeacherFeedback: builder.mutation<string, { answerId: string; feedbackText: string }>({
-            query: ({ answerId, feedbackText }) => ({
-                url: `/student-slot-answers/${answerId}/feedback`,
-                method: 'PATCH',
-                body: { feedbackText },
-            }),
-            invalidatesTags: (result, error, { answerId }) => [{ type: 'StudentSlotAnswers', id: answerId }, { type: 'StudentSlotAnswers', id: 'LIST' }],
-        }),
-
-        aiGradeAll: builder.mutation<number, string>({
-            query: (questionId) => ({
-                url: `/student-slot-answers/question/${questionId}/ai-grade`,
-                method: 'POST',
-            }),
-            transformResponse: (response: any) => response?.result ?? 0,
-            invalidatesTags: [{ type: 'StudentSlotAnswers', id: 'LIST' }],
-        }),
-
         deleteSlotAnswer: builder.mutation<string, string>({
             query: (id) => ({
                 url: `/student-slot-answers/${id}`,
@@ -108,9 +81,6 @@ export const {
     useSubmitSlotAnswerMutation,
     useGetSlotAnswersByStudentAndSlotQuery,
     useGetSlotAnswersByQuestionIdQuery,
-    useGradeSlotAnswerMutation,
-    useAddTeacherFeedbackMutation,
-    useAiGradeAllMutation,
     useDeleteSlotAnswerMutation,
     useEditSlotAnswerMutation,
 } = studentSlotAnswersApi;
