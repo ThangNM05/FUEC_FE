@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useSelector } from 'react-redux';
 import {
@@ -8,6 +8,8 @@ import {
     Calendar,
     FileText,
     CheckCircle,
+    XCircle,
+    Clock,
     Loader2,
     Trash2,
     Edit2
@@ -15,6 +17,7 @@ import {
 import { Button as AntButton, message } from 'antd';
 import { selectCurrentUser } from '@/redux/authSlice';
 import { useGetSlotQuestionContentsBySlotIdQuery } from '@/api/slotQuestionContentsApi';
+import { useGetClassSubjectSlotsQuery } from '@/api/classDetailsApi';
 import {
     useGetSlotAnswersByStudentAndSlotQuery,
     useGetSlotAnswersByQuestionIdQuery,
@@ -29,10 +32,23 @@ function QuestionDetail() {
     const { id: questionId } = useParams<{ id: string }>();
     const [searchParams] = useSearchParams();
     const slotId = searchParams.get('slotId') || '';
+    const classSubjectId = searchParams.get('classSubjectId') || '';
+    const readOnlyParam = searchParams.get('readOnly') ?? '';
+    const isReadOnly = readOnlyParam === 'true' || readOnlyParam === 'inactive' || readOnlyParam === 'expired';
     const user = useSelector(selectCurrentUser);
     const studentId = user?.entityId ?? user?.id ?? '';
 
     const [answer, setAnswer] = useState('');
+    const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
+    const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const myAnswerRef = useRef<HTMLDivElement | null>(null);
+
+    // Format seconds to mm:ss
+    const formatCooldown = (secs: number) => {
+        const m = Math.floor(secs / 60).toString().padStart(2, '0');
+        const s = (secs % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+    };
 
     // Fetch all questions for this slot
     const { data: questions = [], isLoading: isLoadingQuestions } = useGetSlotQuestionContentsBySlotIdQuery(slotId, {
@@ -49,14 +65,74 @@ function QuestionDetail() {
         return questions.findIndex(q => q.id === questionId);
     }, [questions, questionId]);
 
+    // Fetch slot data to get the countdown end time
+    const { data: slotsData, refetch: refetchSlotData } = useGetClassSubjectSlotsQuery(
+        { id: classSubjectId, studentId },
+        { skip: !classSubjectId || !studentId }
+    );
+
+    const currentSlot = useMemo(() => {
+        if (!slotsData?.slots || !slotId) return null;
+        const index = slotsData.slots.findIndex((s: any) => s.id === slotId);
+        if (index === -1) return null;
+
+        const s = slotsData.slots[index];
+        const nextDate = (index + 1 < slotsData.slots.length) ? slotsData.slots[index + 1].date : null;
+        const calcEndTime = nextDate || new Date(new Date(s.date).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
+
+        return { ...s, calculatedEndTime: calcEndTime };
+    }, [slotsData, slotId]);
+
+    const SlotCountdownRed = ({ endTime, onFinished }: { endTime: string, onFinished: () => void }) => {
+        const [timeLeft, setTimeLeft] = useState<number>(0);
+
+        useEffect(() => {
+            const calculateTime = () => {
+                const now = Date.now();
+                const end = new Date(endTime).getTime();
+                return Math.max(0, end - now);
+            };
+
+            setTimeLeft(calculateTime());
+            const timer = setInterval(() => {
+                const remaining = calculateTime();
+                setTimeLeft(remaining);
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    onFinished();
+                }
+            }, 1000);
+            return () => clearInterval(timer);
+        }, [endTime, onFinished]);
+
+        if (timeLeft <= 0) return null;
+
+        const d = Math.floor(timeLeft / 86400000);
+        const h = Math.floor((timeLeft % 86400000) / 3600000);
+        const m = Math.floor((timeLeft % 3600000) / 60000);
+        const s = Math.floor((timeLeft % 60000) / 1000);
+
+        return (
+            <div className="flex items-center gap-2 text-red-600 font-mono font-bold tabular-nums bg-red-50 border border-red-100 rounded-lg px-3 py-1.5 w-fit">
+                <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                <div className="flex items-baseline gap-1.5 whitespace-nowrap text-[12px]">
+                    <span>Questions end in:</span>
+                    <span>
+                        {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m.toString().padStart(2, '0')}m {s.toString().padStart(2, '0')}s
+                    </span>
+                </div>
+            </div>
+        );
+    };
+
     // Fetch existing answers for this student + slot
-    const { data: allSlotAnswers = [], isLoading: isLoadingAnswers } = useGetSlotAnswersByStudentAndSlotQuery(
+    const { data: allSlotAnswers = [], isLoading: isLoadingAnswers, refetch: refetchSlotAnswers } = useGetSlotAnswersByStudentAndSlotQuery(
         { studentId, slotId },
         { skip: !studentId || !slotId }
     );
 
     // Fetch ALL answers for this question (so student can see classmates' answers too)
-    const { data: questionAnswers = [], isLoading: isLoadingQuestionAnswers } = useGetSlotAnswersByQuestionIdQuery(questionId!, {
+    const { data: questionAnswers = [], isLoading: isLoadingQuestionAnswers, refetch: refetchQuestionAnswers } = useGetSlotAnswersByQuestionIdQuery(questionId!, {
         skip: !questionId,
     });
 
@@ -71,21 +147,50 @@ function QuestionDetail() {
         return myAnswers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
     }, [myAnswers]);
 
-    // Locked if: already has an answer AND it is graded (isPassed not null) or has teacher feedback
-    const isLocked = useMemo(() => {
-        if (!latestAnswer) return false;
-        return latestAnswer.isPassed !== null && latestAnswer.isPassed !== undefined || !!latestAnswer.teacherFeedback;
-    }, [latestAnswer]);
+    const hasPassed = useMemo(() => myAnswers.some(a => a.isPassed === true), [myAnswers]);
 
-    // Can submit: no answer yet from this student, OR was not-passed and used < 2 attempts
+    // Locked only when the student has passed
+    const isLocked = hasPassed;
+
+    // Can submit: slot is active, not passed, and no active cooldown
     const canSubmit = useMemo(() => {
-        if (myAnswers.length === 0) return true;
-        // Allow retry only after not-passed
-        if (latestAnswer?.isPassed === false && myAnswers.length < 2) return true;
-        return false;
-    }, [myAnswers, latestAnswer]);
+        if (isReadOnly) return false;
+        if (hasPassed) return false;
+        if (cooldownSeconds !== null) return false;
+        return true;
+    }, [isReadOnly, hasPassed, cooldownSeconds]);
 
-    // Check which questions in the sidebar have answers
+
+    // Status map for sidebar: { questionId: 'passed' | 'failed' | 'none' }
+    const questionStatusMap = useMemo(() => {
+        const map: Record<string, 'passed' | 'failed' | 'none'> = {};
+
+        // Group answers by question ID
+        const groupedAnswers: Record<string, StudentSlotAnswerDto[]> = {};
+        allSlotAnswers.forEach(ans => {
+            if (!groupedAnswers[ans.slotQuestionContentId]) {
+                groupedAnswers[ans.slotQuestionContentId] = [];
+            }
+            groupedAnswers[ans.slotQuestionContentId].push(ans);
+        });
+
+        questions.forEach(q => {
+            const qAnswers = groupedAnswers[q.id] || [];
+            if (qAnswers.length === 0) {
+                map[q.id] = 'none';
+            } else if (qAnswers.some(a => a.isPassed === true)) {
+                map[q.id] = 'passed';
+            } else if (qAnswers.some(a => a.isPassed === false)) {
+                // If all attempts failed (we check if there are no 'true' above)
+                map[q.id] = 'failed';
+            } else {
+                map[q.id] = 'none'; // Pending review
+            }
+        });
+
+        return map;
+    }, [allSlotAnswers, questions]);
+
     const answeredQuestionIds = useMemo(() => {
         return new Set(allSlotAnswers.map(a => a.slotQuestionContentId));
     }, [allSlotAnswers]);
@@ -95,8 +200,60 @@ function QuestionDetail() {
     const [deleteSlotAnswer] = useDeleteSlotAnswerMutation();
     const [editSlotAnswer, { isLoading: isEditing }] = useEditSlotAnswerMutation();
 
+    // ── Account-based cooldown: recalculate from DB timestamp on load ──────────
+    // When a student has exactly 2 failed answers, the cooldown end is
+    // (createdAt of the 2nd answer) + 1 hour.  We compute remaining seconds
+    // from the server data so it works across page reloads and devices.
+    const parseUTC = (dateStr: string) => new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+
+    // Cooldown: after any failed attempt, the student must wait 5 min before retrying.
+    // Computed from the latest failed answer's createdAt.
+    useEffect(() => {
+        const latestFailed = [...myAnswers]
+            .filter(a => a.isPassed === false)
+            .sort((a, b) => parseUTC(b.createdAt).getTime() - parseUTC(a.createdAt).getTime())[0];
+
+        if (latestFailed && !hasPassed) {
+            const cooldownEnd = parseUTC(latestFailed.createdAt).getTime() + 5 * 60 * 1000; // 5 min (change to 60*60*1000 for prod)
+            const remaining = Math.floor((cooldownEnd - Date.now()) / 1000);
+            if (remaining > 0) {
+                setCooldownSeconds(prev => (prev === null ? remaining : prev));
+            } else {
+                setCooldownSeconds(null);
+            }
+        } else {
+            setCooldownSeconds(null);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [myAnswers.length, questionId]);
+
+    // Tick the countdown every second while active
+    useEffect(() => {
+        if (cooldownSeconds !== null && cooldownSeconds > 0) {
+            cooldownTimerRef.current = setInterval(() => {
+                setCooldownSeconds(prev => {
+                    if (prev === null || prev <= 1) {
+                        if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+                        return null;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => { if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cooldownSeconds !== null]);
+
     const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
     const [editContent, setEditContent] = useState('');
+
+    useEffect(() => {
+        if (!isLoadingAnswers && !isLoadingQuestionAnswers && myAnswerRef.current) {
+            setTimeout(() => {
+                myAnswerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 600);
+        }
+    }, [isLoadingAnswers, isLoadingQuestionAnswers, questionId]);
 
     const handleSubmitAnswer = async () => {
         if (!answer.trim() || !questionId || !studentId) return;
@@ -111,8 +268,17 @@ function QuestionDetail() {
             message.success('Answer submitted successfully!');
             setAnswer('');
         } catch (err: any) {
-            const errorMsg = err?.data?.message || err?.data?.result || 'Failed to submit answer';
-            message.error(errorMsg);
+            const raw = err?.data?.message || err?.data?.result || '';
+            if (raw.startsWith('COOLDOWN:')) {
+                const seconds = parseInt(raw.split(':')[1], 10);
+                setCooldownSeconds(seconds);
+            } else {
+                message.error(raw || 'Failed to submit answer');
+            }
+        } finally {
+            // Always refetch so FE state stays in sync with DB
+            refetchQuestionAnswers();
+            refetchSlotAnswers();
         }
     };
 
@@ -177,7 +343,10 @@ function QuestionDetail() {
                         Home
                     </button>
                     <ChevronRight className="w-4 h-4" />
-                    <button onClick={() => navigate(-1)} className="hover:text-[#F37022] transition-colors">
+                    <button
+                        onClick={() => classSubjectId ? navigate(`/student/course-details/${classSubjectId}`) : navigate('/student')}
+                        className="hover:text-[#F37022] transition-colors"
+                    >
                         Course Details
                     </button>
                     <ChevronRight className="w-4 h-4" />
@@ -194,15 +363,26 @@ function QuestionDetail() {
                     {currentQuestion.description && (
                         <p className="text-gray-600 mt-2">{currentQuestion.description}</p>
                     )}
-                    <div className="flex flex-wrap items-center gap-3 text-sm mt-2">
-                        <div className="flex items-center gap-2 text-gray-600">
+                    <div className="space-y-3 mt-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Calendar className="w-4 h-4" />
                             <span>Created: {new Date(currentQuestion.createdAt).toLocaleDateString()}</span>
                         </div>
+
                     </div>
                 </div>
 
                 {/* Question Content */}
+                {isReadOnly && (
+                    <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-500">
+                        <XCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span>
+                            {readOnlyParam === 'inactive'
+                                ? 'This slot has not started yet. You can view questions but cannot submit answers.'
+                                : 'This slot has ended. You can view answers but cannot submit or edit.'}
+                        </span>
+                    </div>
+                )}
                 <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
                     <h2 className="text-lg font-bold text-[#0A1B3C] mb-4">Content</h2>
                     <p className="text-gray-700">{currentQuestion.content}</p>
@@ -222,41 +402,68 @@ function QuestionDetail() {
                         )}
                     </h2>
 
-                    {/* Answer Submission — only shown if student can still submit */}
-                    {canSubmit && (
-                    <div className="space-y-3 mb-6">
-                        <label className="block text-sm font-semibold text-[#0A1B3C]">
-                            {latestAnswer?.isPassed === false ? '✏️ Retry — write a new answer:' : 'Your Answer'}
-                        </label>
-                        <textarea
-                            value={answer}
-                            onChange={(e) => setAnswer(e.target.value)}
-                            placeholder="Write your answer here..."
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:border-[#F37022] focus:ring-2 focus:ring-orange-100 outline-none resize-none transition-all"
-                            rows={6}
-                            maxLength={4000}
-                        />
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs text-gray-400">{answer.length}/4000</span>
-                            <AntButton
-                                type="primary"
-                                onClick={handleSubmitAnswer}
-                                loading={isSubmitting}
-                                disabled={!answer.trim()}
-                                className="flex items-center gap-2 h-10 px-6 bg-[#F37022] hover:bg-[#D96419] border-none text-white font-semibold rounded-lg transition-all hover-lift"
-                                icon={!isSubmitting && <Send className="w-4 h-4" />}
-                            >
-                                {isSubmitting ? 'Submitting...' : 'Submit Answer'}
-                            </AntButton>
+                    {/* Answer Submission — shown when student has not passed and not permanently locked */}
+                    {!isReadOnly && !isLocked && (
+                        <div className="space-y-3 mb-6">
+                            <label className="block text-sm font-semibold text-[#0A1B3C]">
+                                {latestAnswer?.isPassed === false ? 'Retry — write a new answer:' : 'Your Answer'}
+                            </label>
+                            <div className={`relative rounded-lg transition-all ${cooldownSeconds !== null ? 'opacity-60' : ''}`}>
+                                <textarea
+                                    value={answer}
+                                    onChange={(e) => setAnswer(e.target.value)}
+                                    placeholder={cooldownSeconds !== null ? 'You are on cooldown. Please wait before retrying...' : 'Write your answer here...'}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:border-[#F37022] focus:ring-2 focus:ring-orange-100 outline-none resize-none transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                                    rows={6}
+                                    maxLength={4000}
+                                    disabled={cooldownSeconds !== null}
+                                />
+                                {cooldownSeconds !== null && (
+                                    <div className="absolute inset-0 rounded-lg cursor-not-allowed" />
+                                )}
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-400">{answer.length}/4000</span>
+                                <AntButton
+                                    type="primary"
+                                    onClick={handleSubmitAnswer}
+                                    loading={isSubmitting}
+                                    disabled={!answer.trim() || cooldownSeconds !== null}
+                                    className="flex items-center gap-2 h-10 px-6 bg-[#F37022] hover:bg-[#D96419] border-none text-white font-semibold rounded-lg transition-all hover-lift disabled:opacity-50"
+                                    icon={!isSubmitting && <Send className="w-4 h-4" />}
+                                >
+                                    {isSubmitting ? 'Submitting...' : 'Submit Answer'}
+                                </AntButton>
+                            </div>
+
+                            {/* Cooldown countdown below textarea */}
+                            {cooldownSeconds !== null && (
+                                <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <div className="flex-shrink-0 w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center">
+                                        <Clock className="w-4 h-4 text-amber-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-semibold text-amber-700">Cooldown active</p>
+                                        <p className="text-xs text-amber-600">You can retry in <span className="font-bold font-mono">{formatCooldown(cooldownSeconds)}</span></p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    </div>
                     )}
 
-                    {/* Locked notice */}
-                    {isLocked && (
-                        <div className="mb-6 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 flex items-center gap-2">
+                    {/* Permanently locked (all 3 attempts failed) */}
+                    {!isReadOnly && isLocked && !hasPassed && (
+                        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 flex items-center gap-2">
+                            <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                            You have used all 3 attempts for this question. The answer is permanently locked.
+                        </div>
+                    )}
+
+                    {/* Passed — show success */}
+                    {!isReadOnly && hasPassed && (
+                        <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2">
                             <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
-                            This answer has been reviewed. You cannot edit it anymore.
+                            You have passed this question.
                         </div>
                     )}
 
@@ -270,7 +477,11 @@ function QuestionDetail() {
                         )}
 
                         {questionAnswers.map((ans: StudentSlotAnswerDto) => (
-                            <div key={ans.id} className="animate-slideUp">
+                            <div
+                                key={ans.id}
+                                className="animate-slideUp"
+                                ref={ans.studentId === studentId ? myAnswerRef : null}
+                            >
                                 {/* Author and Timestamp */}
                                 <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center gap-2">
@@ -298,9 +509,9 @@ function QuestionDetail() {
                                                 )}
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                {new Date(ans.createdAt).toLocaleDateString()}{' '}
-                                                {new Date(ans.createdAt).toLocaleTimeString()}
-                                                {ans.updatedAt && new Date(ans.updatedAt).getTime() > new Date(ans.createdAt).getTime() + 1000 && (
+                                                {new Date(ans.createdAt.endsWith('Z') ? ans.createdAt : ans.createdAt + 'Z').toLocaleDateString()}{' '}
+                                                {new Date(ans.createdAt.endsWith('Z') ? ans.createdAt : ans.createdAt + 'Z').toLocaleTimeString()}
+                                                {ans.updatedAt && new Date(ans.updatedAt.endsWith('Z') ? ans.updatedAt : ans.updatedAt + 'Z').getTime() > new Date(ans.createdAt.endsWith('Z') ? ans.createdAt : ans.createdAt + 'Z').getTime() + 1000 && (
                                                     <span className="italic ml-1">(edited)</span>
                                                 )}
                                             </p>
@@ -311,12 +522,12 @@ function QuestionDetail() {
                                         {/* Grade badge */}
                                         {ans.isPassed === true && (
                                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
-                                                ✓ Passed
+                                                Passed ✓
                                             </span>
                                         )}
                                         {ans.isPassed === false && (
                                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
-                                                ✗ Not Passed
+                                                Not Passed ✗
                                             </span>
                                         )}
 
@@ -413,7 +624,7 @@ function QuestionDetail() {
                             {questions.map((q, idx) => (
                                 <button
                                     key={q.id}
-                                    onClick={() => navigate(`/student/course-details/questions/${q.id}?slotId=${slotId}`)}
+                                    onClick={() => navigate(`/student/course-details/questions/${q.id}?slotId=${slotId}&classSubjectId=${classSubjectId}`)}
                                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${questionId === q.id
                                         ? 'bg-orange-50 text-[#F37022] font-medium'
                                         : 'text-gray-700 hover:bg-gray-50 hover:text-[#F37022]'
@@ -421,8 +632,14 @@ function QuestionDetail() {
                                 >
                                     <FileText className="w-4 h-4 flex-shrink-0" />
                                     <span className="flex-1 truncate">{idx + 1}. {q.content}</span>
-                                    {answeredQuestionIds.has(q.id) && (
+                                    {questionStatusMap[q.id] === 'passed' && (
                                         <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                    )}
+                                    {questionStatusMap[q.id] === 'failed' && (
+                                        <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                    )}
+                                    {questionStatusMap[q.id] === 'none' && answeredQuestionIds.has(q.id) && (
+                                        <div className="w-4 h-4 rounded-full bg-gray-200" title="Answered, pending review" />
                                     )}
                                 </button>
                             ))}

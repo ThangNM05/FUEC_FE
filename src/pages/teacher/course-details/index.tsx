@@ -44,6 +44,10 @@ interface Slot {
     expanded: boolean;
     isAssessment: boolean;
     slotIndex: number;
+    status: string;
+    hasQuestions: boolean;
+    rawStartTime: string;
+    rawEndTime: string;
 }
 
 function TeacherCourseDetails() {
@@ -116,7 +120,7 @@ function TeacherCourseDetails() {
     const [currentPage, setCurrentPage] = useState(1);
     const SLOTS_PER_PAGE = 10;
 
-    const { data: slotData, isLoading: isLoadingSlots } = useGetClassSubjectSlotsQuery(courseId || '', {
+    const { data: slotData, isLoading: isLoadingSlots, refetch: refetchSlots } = useGetClassSubjectSlotsQuery({ id: courseId || '' }, {
         skip: !courseId,
     });
 
@@ -255,16 +259,15 @@ function TeacherCourseDetails() {
 
     useEffect(() => {
         if (slotData && slotData.slots) {
-            const now = new Date();
-            let targetIdx = slotData.slots.findIndex((s: any) => {
-                const start = new Date(s.date);
-                const end = new Date(s.endDate);
-                return now >= start && now <= end;
-            });
+            let targetIdx = slotData.slots.findIndex((s: any) => s.status === 'Active');
 
             if (targetIdx === -1) {
-                // Find next upcoming slot
-                targetIdx = slotData.slots.findIndex((s: any) => new Date(s.date) > now);
+                targetIdx = slotData.slots.findIndex((s: any) => s.status === 'Inactive');
+            }
+
+            if (targetIdx === -1 && slotData.slots.length > 0) {
+                // If all slots are Expired (no Active or Inactive found), select the Last slot
+                targetIdx = slotData.slots.length - 1;
             }
 
             // Fallback to first slot if everything is in the past or not found
@@ -280,7 +283,12 @@ function TeacherCourseDetails() {
                 targetSlotIdRef.current = currentTargetSlot.id;
             }
 
-            setSlots(slotData.slots.map((s: any, i: number) => ({
+            setSlots(slotData.slots.map((s: any, i: number) => {
+                const calculatedEndTime = (i + 1 < slotData.slots.length && slotData.slots[i + 1].date)
+                    ? slotData.slots[i + 1].date
+                    : new Date(new Date(s.date).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
+
+                return {
                 id: s.id,
                 title: `Slot ${s.slotIndex}`,
                 startTime: new Date(s.date).toLocaleString('en-GB', {
@@ -290,7 +298,7 @@ function TeacherCourseDetails() {
                     month: '2-digit',
                     year: 'numeric'
                 }),
-                endTime: new Date(s.endDate).toLocaleString('en-GB', {
+                endTime: new Date(calculatedEndTime).toLocaleString('en-GB', {
                     hour: '2-digit',
                     minute: '2-digit',
                     day: '2-digit',
@@ -316,10 +324,71 @@ function TeacherCourseDetails() {
                     sess.isAssessment ||
                     /\b(Progress Test|PT|Examination|Final Exam|Exam|Quiz|Test)\b/i.test(sess.topic)
                 ) || false,
-                slotIndex: s.slotIndex
-            })));
+                slotIndex: s.slotIndex,
+                status: s.status,
+                hasQuestions: !!s.hasQuestions,
+                rawStartTime: s.date,
+                rawEndTime: calculatedEndTime
+            };
+        }));
         }
     }, [slotData, assignmentsData, examsData]);
+
+    const SlotCountdown = ({ startTime, endTime, status, onFinished }: { startTime: string, endTime: string, status: string, onFinished: () => void }) => {
+        const [timeLeft, setTimeLeft] = useState<number>(0);
+
+        useEffect(() => {
+            const calculateTime = () => {
+                const now = Date.now();
+                const start = new Date(startTime).getTime();
+                const end = new Date(endTime).getTime();
+
+                // If Inactive, countdown to start
+                if (status === 'Inactive' && now < start) {
+                    return start - now;
+                }
+                // If Active, countdown to end
+                if (status === 'Active' && now < end) {
+                    return end - now;
+                }
+                return 0;
+            };
+
+            setTimeLeft(calculateTime());
+            const timer = setInterval(() => {
+                const remaining = calculateTime();
+                setTimeLeft(remaining);
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    onFinished();
+                }
+            }, 1000);
+
+            return () => clearInterval(timer);
+        }, [startTime, endTime, status, onFinished]);
+
+        if (timeLeft <= 0) return null;
+
+        const d = Math.floor(timeLeft / 86400000);
+        const h = Math.floor((timeLeft % 86400000) / 3600000);
+        const m = Math.floor((timeLeft % 3600000) / 60000);
+        const s = Math.floor((timeLeft % 60000) / 1000);
+
+        return (
+            <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded text-[11px] font-mono font-bold text-amber-700 shadow-sm tabular-nums w-fit">
+                <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                <span className="w-[100px] flex-shrink-0 whitespace-nowrap text-left pr-1">
+                    {status === 'Inactive' ? 'Starts' : 'Questions end'} in
+                </span>
+                <div className="flex items-center gap-0.5 min-w-[70px] justify-end">
+                    {d > 0 && <span className="w-5 text-right">{d}d</span>}
+                    {h > 0 && <span className="w-5 text-right">{h}h</span>}
+                    <span className="w-5 text-right">{m.toString().padStart(2, '0')}m</span>
+                    <span className="w-5 text-right">{s.toString().padStart(2, '0')}s</span>
+                </div>
+            </div>
+        );
+    };
 
     const formatStudentCode = (code?: string) => {
         if (!code) return '';
@@ -469,14 +538,47 @@ function TeacherCourseDetails() {
                                 {slots
                                     .slice((currentPage - 1) * SLOTS_PER_PAGE, currentPage * SLOTS_PER_PAGE)
                                     .map(slot => (
-                                        <div key={slot.id} id={`slot-${slot.id}`} className="border border-gray-200 rounded-lg bg-white">
+                                        <div key={slot.id} id={`slot-${slot.id}`} className={`border rounded-lg bg-white transition-colors duration-200 ${slot.hasQuestions ? 'border-green-300 shadow-sm shadow-green-100/50' : 'border-gray-200'}`}>
                                             {/* Slot Header */}
-                                            <div className={`p-4 bg-gray-50 border-b border-gray-100 ${slot.expanded ? 'rounded-t-lg' : 'rounded-lg'}`}>
+                                            <div className={`p-4 border-b ${slot.expanded ? 'rounded-t-lg' : 'rounded-lg'} ${slot.hasQuestions ? 'bg-green-50/50 border-green-100' : 'bg-gray-50 border-gray-100'}`}>
                                                 <div className="flex items-center justify-between mb-3">
                                                     <div className="flex items-center gap-2">
                                                         <span className="px-3 py-1 text-sm font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                                                             {slot.title}
                                                         </span>
+                                                        
+                                                        {slot.status === 'Active' && (
+                                                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-50 text-green-700 border border-green-100">
+                                                                Active
+                                                            </span>
+                                                        )}
+                                                        {slot.status === 'Inactive' && (
+                                                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">
+                                                                Inactive
+                                                            </span>
+                                                        )}
+                                                        {slot.status === 'Expired' && (
+                                                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-red-50 text-red-700 border border-red-100">
+                                                                Expired
+                                                            </span>
+                                                        )}
+
+                                                        <SlotCountdown
+                                                            startTime={slot.rawStartTime}
+                                                            endTime={slot.rawEndTime}
+                                                            status={slot.status}
+                                                            onFinished={() => refetchSlots()}
+                                                        />
+                                                        
+                                                        {slot.hasQuestions ? (
+                                                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-teal-50 text-teal-700 border border-teal-100">
+                                                                Has Questions
+                                                            </span>
+                                                        ) : (
+                                                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-orange-50 text-orange-700 border border-orange-100">
+                                                                No Questions
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         {/* Actions for teachers */}
@@ -520,71 +622,59 @@ function TeacherCourseDetails() {
                                                             <h4 className="text-sm font-bold text-[#0A1B3C] uppercase tracking-wider flex items-center gap-2">
                                                                 Slot Content
                                                             </h4>
-                                                            <div className="relative">
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setOpenDropdownId(openDropdownId === `${slot.id}-content` ? null : `${slot.id}-content`);
-                                                                    }}
-                                                                    className="text-xs font-semibold text-[#F37022] hover:text-[#D96419] flex items-center gap-1 transition-colors px-3 py-1.5 bg-orange-50 rounded-lg border border-orange-100"
-                                                                >
-                                                                    <Plus className="w-3 h-3" /> Create content
-                                                                </button>
+                                                            {slot.status !== 'Expired' && (
+                                                                <div className="relative">
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setOpenDropdownId(openDropdownId === `${slot.id}-content` ? null : `${slot.id}-content`);
+                                                                        }}
+                                                                        className="text-xs font-semibold text-[#F37022] hover:text-[#D96419] flex items-center gap-1 transition-colors px-3 py-1.5 bg-orange-50 rounded-lg border border-orange-100"
+                                                                    >
+                                                                        <Plus className="w-3 h-3" /> Create content
+                                                                    </button>
 
-                                                                {openDropdownId === `${slot.id}-content` && (
-                                                                    <>
-                                                                        <div
-                                                                            className="fixed inset-0 z-40"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setOpenDropdownId(null);
-                                                                            }}
-                                                                        />
-                                                                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                                                                            <button
+                                                                    {openDropdownId === `${slot.id}-content` && (
+                                                                        <>
+                                                                            <div
+                                                                                className="fixed inset-0 z-40"
                                                                                 onClick={(e) => {
                                                                                     e.stopPropagation();
                                                                                     setOpenDropdownId(null);
-                                                                                    setCreateQuestionSlotInfo({ id: slot.id, title: slot.title, topics: slot.topics });
-                                                                                    setIsCreateQuestionModalOpen(true);
                                                                                 }}
-                                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                                            >
-                                                                                <FileText className="w-4 h-4 text-gray-400" />
-                                                                                Create Question
-                                                                            </button>
+                                                                            />
+                                                                            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 z-50 py-1 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setOpenDropdownId(null);
+                                                                                        setCreateQuestionSlotInfo({ id: slot.id, title: slot.title, topics: slot.topics });
+                                                                                        setIsCreateQuestionModalOpen(true);
+                                                                                    }}
+                                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                                                >
+                                                                                    <FileText className="w-4 h-4 text-gray-400" />
+                                                                                    Create Question
+                                                                                </button>
 
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    setOpenDropdownId(null);
-                                                                                    navigate(`/teacher/create-exam?course=${courseId}&slot=${slot.id}`);
-                                                                                }}
-                                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-50"
-                                                                            >
-                                                                                <FileText className="w-4 h-4 text-gray-400" />
-                                                                                Create Progress Test
-                                                                            </button>
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setOpenDropdownId(null);
+                                                                                        navigate(`/teacher/create-exam?course=${courseId}&slot=${slot.id}`);
+                                                                                    }}
+                                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-50"
+                                                                                >
+                                                                                    <FileText className="w-4 h-4 text-gray-400" />
+                                                                                    Create Progress Test
+                                                                                </button>
 
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    setOpenDropdownId(null);
-                                                                                    handleOpenCreateAssignment({
-                                                                                        id: slot.id,
-                                                                                        title: slot.title,
-                                                                                        slotIndex: slot.slotIndex,
-                                                                                    });
-                                                                                }}
-                                                                                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-50"
-                                                                            >
-                                                                                <FileText className="w-4 h-4 text-gray-400" />
-                                                                                Create Assignment
-                                                                            </button>
-                                                                        </div>
-                                                                    </>
-                                                                )}
-                                                            </div>
+
+                                                                            </div>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         {isLoadingExams || isLoadingAssignments ? (
@@ -793,15 +883,7 @@ function TeacherCourseDetails() {
                         <div className="animate-fadeIn">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-[#0A1B3C]">Course Assignments</h2>
-                                <button
-                                    onClick={() => {
-                                        setCreateAssignmentSlotInfo(null);
-                                        setIsCreateAssignmentModalOpen(true);
-                                    }}
-                                    className="px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#d95f19] transition-colors font-medium flex items-center gap-2 shadow-sm"
-                                >
-                                    <Plus className="w-4 h-4" /> Create Assignment
-                                </button>
+
                             </div>
 
                             {isLoadingAssignments ? (

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { ArrowLeft, FileText, Calendar, ChevronDown, ChevronUp, Download, BookOpen, Lock, CheckCircle, Clock, Loader2, Play } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 import { useSelector } from 'react-redux';
@@ -36,6 +36,8 @@ interface Slot {
   expanded: boolean;
   status: 'locked' | 'completed' | 'pending' | 'urgent' | 'overdue';
   remaining?: string;
+  rawStartTime: string;
+  rawEndTime: string;
 }
 
 interface ProgressTest {
@@ -66,9 +68,12 @@ function CourseDetails() {
 
   const user = useSelector(selectCurrentUser);
 
-  const { data: slotsData, isLoading: isSlotsLoading, isError } = useGetClassSubjectSlotsQuery(classSubjectId || '', {
-    skip: !classSubjectId
-  });
+  const studentEntityId = user?.entityId ?? user?.id;
+
+  const { data: slotsData, isLoading: isSlotsLoading, isError, refetch: refetchSlots } = useGetClassSubjectSlotsQuery(
+    { id: classSubjectId || '', studentId: studentEntityId },
+    { skip: !classSubjectId }
+  );
 
   const { data: classSubjectData, isLoading: isClassLoading } = useGetClassSubjectByIdQuery(classSubjectId || '', {
     skip: !classSubjectId
@@ -209,18 +214,171 @@ function CourseDetails() {
     }));
   };
 
-  const slots: Slot[] = slotsData?.slots.map(slot => ({
-    id: slot.id,
-    title: `Slot ${slot.slotIndex}`,
-    startTime: new Date(slot.date).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
-    endTime: new Date(slot.endDate).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
-    topics: slot.sessions.map((s: any) => s.topic),
-    questions: [], // Mocking for now as not in this API
-    assignments: [], // Mocking for now as not in this API
-    expanded: !!expandedSlots[slot.id],
-    status: 'pending' as const, // Defaulting for now
-    remaining: undefined
-  })) || [];
+  const hasScrolledRef = useRef(false);
+  const targetSlotIdRef = useRef<string | null>(null);
+
+  const slots: Slot[] = slotsData?.slots.map((slot: any, i: number) => {
+    const apiStatus = slot.status || 'Inactive';
+    const totalQ = slot.totalQuestions ?? 0;
+    const answeredQ = slot.answeredQuestions ?? 0;
+    const unanswered = totalQ - answeredQ;
+
+    const calculatedEndTime = (i + 1 < slotsData.slots.length && slotsData.slots[i + 1].date)
+        ? slotsData.slots[i + 1].date
+        : new Date(new Date(slot.date).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
+
+    const now_fe = new Date();
+    const start_fe = new Date(slot.date);
+    const end_fe = new Date(calculatedEndTime);
+
+    let uiStatus: Slot['status'] = 'pending';
+    const passedQ = (slot as any).passedQuestions ?? 0;
+    const isAllPassed = totalQ > 0 && passedQ >= totalQ;
+
+    // FE-side status calculation for better TZ reliability
+    let currentApiStatus = apiStatus;
+    if (now_fe < start_fe) currentApiStatus = 'Inactive';
+    else if (now_fe >= start_fe && now_fe < end_fe) currentApiStatus = 'Active';
+    else currentApiStatus = 'Expired';
+
+    if (totalQ === 0 && (currentApiStatus === 'Expired' || currentApiStatus === 'Active')) {
+      uiStatus = 'completed'; // Treat as done if nothing to do
+    } else {
+      if (currentApiStatus === 'Expired') {
+        if (isAllPassed) uiStatus = 'completed';
+        else uiStatus = 'overdue';
+      } else if (currentApiStatus === 'Active') {
+        if (isAllPassed) uiStatus = 'completed';
+        else uiStatus = 'urgent';
+      } else {
+        uiStatus = 'locked';
+      }
+    }
+
+    return {
+      id: slot.id,
+      title: `Slot ${slot.slotIndex}`,
+      startTime: new Date(slot.date).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+      endTime: slot.endDate
+        ? new Date(slot.endDate).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })
+        : new Date(calculatedEndTime).toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }),
+      topics: slot.sessions.map((s: any) => s.topic),
+      questions: [],
+      assignments: [],
+      expanded: !!expandedSlots[slot.id],
+      status: uiStatus,
+      remaining: unanswered > 0 ? `${unanswered} unanswered` : undefined,
+      _apiStatus: apiStatus,
+      _feStatus: currentApiStatus,
+      _totalQuestions: totalQ,
+      _answeredQuestions: answeredQ,
+      _passedQuestions: passedQ,
+      rawStartTime: slot.date,
+      rawEndTime: slot.endDate || calculatedEndTime,
+      countdownEndTime: calculatedEndTime
+    } as any;
+  }) || [];
+
+  // Auto-scroll — use FE-processed slots with correct timezone status
+  useEffect(() => {
+    if (slots.length > 0 && !hasScrolledRef.current) {
+        // Find first active (urgent) slot, then first upcoming (locked), fallback to last
+        let targetIdx = slots.findIndex((s: any) => s.status === 'urgent');
+        if (targetIdx === -1) {
+            targetIdx = slots.findIndex((s: any) => s.status === 'overdue');
+        }
+        if (targetIdx === -1) {
+            targetIdx = slots.findIndex((s: any) => s.status === 'locked');
+        }
+        if (targetIdx === -1) {
+            targetIdx = slots.length - 1;
+        }
+
+        const finalIdx = targetIdx !== -1 ? targetIdx : 0;
+        const targetPage = Math.floor(finalIdx / SLOTS_PER_PAGE) + 1;
+
+        if (targetPage !== currentPage) {
+            setCurrentPage(targetPage);
+        }
+
+        const targetSlot = slots[finalIdx];
+        if (targetSlot) {
+            targetSlotIdRef.current = targetSlot.id;
+            setExpandedSlots(prev => ({ ...prev, [targetSlot.id]: true }));
+        }
+        hasScrolledRef.current = true;
+    }
+  }, [slots.length, currentPage]);
+
+  useEffect(() => {
+    if (targetSlotIdRef.current) {
+        const timer = setTimeout(() => {
+            const element = document.getElementById(`slot-${targetSlotIdRef.current}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                targetSlotIdRef.current = null;
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }
+  }, [currentPage, slots.length]);
+
+  const SlotCountdown = ({ startTime, endTime, status, onFinished }: { startTime: string, endTime: string, status: string, onFinished: () => void }) => {
+    const [timeLeft, setTimeLeft] = useState<number>(0);
+
+    useEffect(() => {
+      const calculateTime = () => {
+        const now = Date.now();
+        const start = new Date(startTime).getTime();
+        const end = new Date(endTime).getTime();
+
+        if (status === 'Inactive' && now < start) {
+          return start - now;
+        }
+        if (status === 'Active' && now < end) {
+          return end - now;
+        }
+        return 0;
+      };
+
+      setTimeLeft(calculateTime());
+      const timer = setInterval(() => {
+        const remaining = calculateTime();
+        setTimeLeft(remaining);
+        if (remaining <= 0) {
+          clearInterval(timer);
+          onFinished();
+        }
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }, [startTime, endTime, status, onFinished]);
+
+    if (timeLeft <= 0) return null;
+
+    const d = Math.floor(timeLeft / 86400000);
+    const h = Math.floor((timeLeft % 86400000) / 3600000);
+    const m = Math.floor((timeLeft % 3600000) / 60000);
+    const s = Math.floor((timeLeft % 60000) / 1000);
+
+    const label = status === 'Inactive' ? 'Starts' : 'Questions end';
+    const timeStr = `${d > 0 ? d + 'd ' : ''}${h > 0 ? h + 'h ' : ''}${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`;
+
+    return (
+      <div className="relative group flex-shrink-0">
+        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-amber-50 border border-amber-200 cursor-default hover:bg-amber-100 transition-colors">
+          <Clock className="w-3.5 h-3.5 text-amber-600" />
+        </div>
+        {/* Tooltip — below icon to avoid overflow clipping */}
+        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150 z-50">
+          <div className="w-2 h-2 bg-gray-900 rotate-45 mx-auto mb-[-4px]" />
+          <div className="bg-gray-900 text-white text-[11px] font-mono font-semibold whitespace-nowrap px-2.5 py-1.5 rounded-lg shadow-lg tabular-nums">
+            {label} in {timeStr}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const handleSlotClick = (slotId: string) => {
     const index = slots.findIndex(s => s.id === slotId);
@@ -466,51 +624,61 @@ function CourseDetails() {
                         'border-gray-200'
                   }`}>
                   {/* Slot Header */}
-                  <div className={`p-4 ${slot.status === 'locked' ? 'bg-gray-100' :
+                  <div className={`p-4 ${
                     slot.status === 'overdue' ? 'bg-red-50' :
                       slot.status === 'urgent' ? 'bg-orange-50' :
                         slot.status === 'completed' ? 'bg-green-50' :
                           'bg-gray-50'
                     }`}>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 text-sm font-semibold rounded-full ${slot.status === 'locked' ? 'bg-gray-200 text-gray-500' :
-                          slot.status === 'overdue' ? 'bg-red-100 text-red-700' :
-                            slot.status === 'urgent' ? 'bg-orange-100 text-orange-700' :
-                              slot.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                'bg-blue-100 text-blue-700'
-                          }`}>
-                          {slot.title}
-                        </span>
-                        {slot.status === 'locked' && (
-                          <Lock className="w-4 h-4 text-gray-400" />
-                        )}
-                        {slot.status === 'completed' && (
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                        )}
-                        {slot.status === 'urgent' && (
-                          <>
-                            <Clock className="w-4 h-4 text-orange-500" />
-                            {slot.remaining && (
-                              <span className="text-xs text-orange-600 font-medium">{slot.remaining} left</span>
-                            )}
-                          </>
-                        )}
-                        {slot.status === 'pending' && slot.remaining && (
-                          <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-                            {slot.remaining} left
-                          </span>
-                        )}
-                        {slot.status === 'overdue' && (
-                          <span className="text-xs text-red-600 font-bold uppercase border border-red-200 bg-red-50 px-2 py-0.5 rounded">
-                            OVERDUE
-                          </span>
-                        )}
-                      </div>
+                        <div className="flex items-center gap-2">
+                          <div className={`px-3 py-1 text-sm font-semibold rounded-full flex items-center gap-2 ${slot.status === 'locked' ? 'bg-gray-200 text-gray-500' :
+                            slot.status === 'overdue' ? 'bg-red-100 text-red-700' :
+                              slot.status === 'urgent' ? 'bg-orange-100 text-orange-700' :
+                                slot.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                  'bg-blue-100 text-blue-700'
+                            }`}>
+                            <span>{slot.title}</span>
+                          </div>
+                          {slot.status === 'locked' && (
+                             <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 uppercase tracking-tight">
+                               Upcoming
+                             </span>
+                          )}
+                           {slot.status === 'completed' && (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          )}
+                          {slot.status === 'urgent' && (
+                            <div className="flex items-center gap-2">
+                                <SlotCountdown
+                                  startTime={(slot as any).rawStartTime}
+                                  endTime={(slot as any).countdownEndTime}
+                                  status={(slot as any)._feStatus}
+                                  onFinished={() => refetchSlots()}
+                                />
+                                {((slot as any)._totalQuestions - (slot as any)._passedQuestions) > 0 && (
+                                    <span className="text-[11px] font-bold text-orange-600 bg-orange-100/50 px-2 py-0.5 rounded border border-orange-200 uppercase">
+                                       You need to answer {((slot as any)._totalQuestions - (slot as any)._passedQuestions)} more questions
+                                    </span>
+                                )}
+                            </div>
+                          )}
+                          {slot.status === 'overdue' && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-red-600 font-bold uppercase border border-red-200 bg-red-50 px-2 py-0.5 rounded">
+                                    OVERDUE
+                                </span>
+                                {((slot as any)._totalQuestions - (slot as any)._passedQuestions) > 0 && (
+                                    <span className="text-[11px] font-bold text-red-600 bg-red-100/50 px-2 py-0.5 rounded border border-red-200 uppercase">
+                                       You need to answer {((slot as any)._totalQuestions - (slot as any)._passedQuestions)} more questions
+                                    </span>
+                                )}
+                            </div>
+                          )}
+                        </div>
                       <button
                         onClick={() => toggleSlot(slot.id)}
                         className="p-1 hover:bg-gray-200 rounded transition-colors"
-                        disabled={slot.status === 'locked'}
                       >
                         {slot.expanded ? (
                           <ChevronUp className="w-5 h-5 text-gray-600" />
@@ -539,11 +707,11 @@ function CourseDetails() {
                     <StudentSlotContent
                       slotId={slot.id}
                       slotAssignments={courseAssignments.filter(a => {
-                        // Strict filtering: only show assignments that explicitly belong to this slot
                         return a.slotId === slot.id;
                       })}
                       slotExams={(examsData?.items || []).filter(e => e.slotId === slot.id)}
                       studentClassesId={currentStudentClassId}
+                      slotStatus={(slot as any)._feStatus}
                     />
                   )}
                 </div>
