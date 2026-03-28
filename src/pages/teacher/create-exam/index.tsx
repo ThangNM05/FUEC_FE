@@ -90,7 +90,7 @@ function CreateExam() {
     const [createExam, { isLoading: isCreating }] = useCreateExamMutation();
 
     // Fetch progress based on slots
-    const { data: slotData } = useGetClassSubjectSlotsQuery(courseId, {
+    const { data: slotData } = useGetClassSubjectSlotsQuery({ id: courseId }, {
         skip: !courseId,
     });
 
