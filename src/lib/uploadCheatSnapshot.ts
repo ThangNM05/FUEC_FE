@@ -6,7 +6,33 @@ import { sanitizeMime } from '@/lib/videoBuffer';
 /** Minimum interval (ms) between two consecutive uploads of the SAME type. */
 const UPLOAD_COOLDOWN_MS = 5_000;
 
+// Separate cooldowns — image upload does NOT block video upload
+let lastImageUploadTime = 0;
 let lastVideoUploadTime = 0;
+
+/**
+ * Capture the current video frame as a JPEG blob and upload it to S3 using filesApi (with JWT).
+ * Returns the URL string from the server on success, or `null` when skipped (cooldown) or on failure.
+ */
+export async function uploadCheatSnapshot(
+  video: HTMLVideoElement,
+  status: string,
+  studentCode = 'unknown',
+  classSubject = 'unknown',
+  studentExamId = ''
+): Promise<string | null> {
+  const now = Date.now();
+  if (now - lastImageUploadTime < UPLOAD_COOLDOWN_MS) return null;
+  lastImageUploadTime = now;
+
+  const blob = await captureFrame(video);
+  if (!blob) return null;
+
+  const fileName = `cheat_${status}_${now}.jpg`;
+  const folderPath = `cheating-evidence/${studentCode}/${classSubject}`;
+
+  return uploadAndLog(blob, fileName, 'image/jpeg', folderPath, status, studentExamId);
+}
 
 /**
  * Upload a video blob (short evidence clip). Uses the same folder convention as image snapshots
@@ -79,4 +105,26 @@ async function uploadAndLog(
     return null;
   }
 }
-
+
+/** Draw the current video frame onto an off-screen canvas and export as JPEG. */
+function captureFrame(video: HTMLVideoElement): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    if (!video.videoWidth || !video.videoHeight) {
+      resolve(null);
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      resolve(null);
+      return;
+    }
+
+    ctx.drawImage(video, 0, 0);
+    canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.8);
+  });
+}
