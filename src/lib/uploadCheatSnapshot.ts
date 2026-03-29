@@ -1,51 +1,73 @@
-/** Minimum interval (ms) between two consecutive snapshot uploads. */
-const UPLOAD_COOLDOWN_MS = 5_000
-
-let lastUploadTime = 0
-
-
 import { filesApi } from '@/api/filesApi';
 import { studentCheatLogsApi } from '@/api/studentCheatLogsApi';
 import { store } from '@/redux/store';
+import { sanitizeMime } from '@/lib/videoBuffer';
+
+/** Minimum interval (ms) between two consecutive uploads of the SAME type. */
+const UPLOAD_COOLDOWN_MS = 5_000;
+
+let lastVideoUploadTime = 0;
 
 /**
- * Capture the current video frame as a JPEG blob and upload it to S3 using filesApi (with JWT).
- * Returns the URL string from the server on success, or `null` when skipped (cooldown) or on failure.
+ * Upload a video blob (short evidence clip). Uses the same folder convention as image snapshots
+ * and registers the resulting URL in the student cheat log (stored in CapturedImageUrl field
+ * for backend compatibility).
  */
-export async function uploadCheatSnapshot(
-  video: HTMLVideoElement,
+export async function uploadCheatVideo(
+  blob: Blob,
   status: string,
-  studentCode: string = 'unknown',
-  classSubject: string = 'unknown',
-  studentExamId: string = ''
+  studentCode = 'unknown',
+  classSubject = 'unknown',
+  studentExamId = ''
 ): Promise<string | null> {
   const now = Date.now();
-  if (now - lastUploadTime < UPLOAD_COOLDOWN_MS) return null;
-  lastUploadTime = now;
+  if (now - lastVideoUploadTime < UPLOAD_COOLDOWN_MS) return null;
+  lastVideoUploadTime = now;
 
-  const blob = await captureFrame(video);
-  if (!blob) return null;
+  if (!blob || blob.size === 0) return null;
 
-  const fileName = `cheat_${status}_${now}.jpg`;
+  const fileName = `cheat_${status}_${now}.webm`;
   const folderPath = `cheating-evidence/${studentCode}/${classSubject}`;
 
+  return uploadAndLog(
+    blob,
+    fileName,
+    sanitizeMime(blob.type),
+    folderPath,
+    status,
+    studentExamId
+  );
+}
+
+// ── Shared internals ────────────────────────────────────────────────────────
+
+async function uploadAndLog(
+  blob: Blob,
+  fileName: string,
+  fileType: string,
+  folderPath: string,
+  status: string,
+  studentExamId: string
+): Promise<string | null> {
   try {
-    // Use filesApi uploadFile mutation directly
+    const file = new File([blob], fileName, { type: fileType });
     const uploadFile = filesApi.endpoints.uploadFile.initiate;
     // @ts-ignore: store is typed for RTK
-    const result = await store.dispatch(uploadFile({ file: new File([blob], fileName, { type: 'image/jpeg' }), folder: folderPath })).unwrap();
-    const url = result?.fileUrl || null;
+    const result = await store
+      .dispatch(uploadFile({ file, folder: folderPath }))
+      .unwrap();
+    const url: string | null = result?.fileUrl || null;
 
-    // Register evidence in the backend
     if (url && studentExamId) {
       try {
-        const createCheatLog = studentCheatLogsApi.endpoints.createStudentCheatLog.initiate;
+        const createLog =
+          studentCheatLogsApi.endpoints.createStudentCheatLog.initiate;
         // @ts-ignore: store is typed for RTK
-        await store.dispatch(createCheatLog({
-          studentExamId,
-          status,
-          capturedImageUrl: url
-        })).unwrap();
+        await store
+          .dispatch(
+            createLog({ studentExamId, status, capturedImageUrl: url })
+          )
+          .unwrap();
       } catch (logErr) {
         console.error('Failed to register cheat log:', logErr);
       }
@@ -53,34 +75,8 @@ export async function uploadCheatSnapshot(
 
     return url;
   } catch (err) {
-    console.error('Cheat snapshot upload error:', err);
+    console.error('Cheat evidence upload error:', err);
     return null;
   }
 }
-
-/** Draw the current video frame onto an off-screen canvas and export as JPEG. */
-function captureFrame(video: HTMLVideoElement): Promise<Blob | null> {
-  return new Promise((resolve) => {
-    if (video.videoWidth === 0 || video.videoHeight === 0) {
-      resolve(null)
-      return
-    }
-
-    const canvas = document.createElement('canvas')
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) {
-      resolve(null)
-      return
-    }
-
-    ctx.drawImage(video, 0, 0)
-    canvas.toBlob(
-      (blob) => resolve(blob),
-      'image/jpeg',
-      0.8,
-    )
-  })
-}
+

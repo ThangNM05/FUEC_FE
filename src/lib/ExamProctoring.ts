@@ -24,6 +24,10 @@ export type CheatStatus =
   | 'safe'
   | 'suspicious'
   | 'looking-away'
+  | 'looking-left'
+  | 'looking-right'
+  | 'looking-down'
+  | 'looking-up'
   | 'multiple-faces'
   | 'no-face'
 
@@ -47,20 +51,20 @@ export type DetectionResult = {
    Thresholds
 ======================= */
 
-const HEAD_STRAIGHT_YAW = 15
-const HEAD_STRAIGHT_PITCH = 15
+const HEAD_STRAIGHT_YAW = 16
+const HEAD_STRAIGHT_PITCH = 16
 const EYE_DISTANCE_TOO_FAR = 0.035
 const SMOOTHING_ALPHA = 0.25
 
 /* ---------- Suspicion scoring (all values in ms) ---------- */
 
 /** How fast the score rises while looking away (score += dt / RISE_MS).            *
- *  At RISE_MS = 2000 the student must look away for 2 s straight to go 0 → 1.      */
-const SUSPICION_RISE_MS = 2000
+ *  At RISE_MS = 3000 the student must look away for 3 s straight to go 0 → 1.      */
+const SUSPICION_RISE_MS = 3000
 
 /** How fast the score drops while looking at the screen (score -= dt / DECAY_MS).   *
- *  At DECAY_MS = 1000 the score drops from 1 → 0 in ~1 s of attentive behaviour.   */
-const SUSPICION_DECAY_MS = 1000
+ *  At DECAY_MS = 5000 the score drops from 1 → 0 in ~5 s of attentive behaviour.   */
+const SUSPICION_DECAY_MS = 5000
 
 /** Score rises faster for no-face / multiple-faces (multiplied by this factor).     */
 const CRITICAL_MULTIPLIER = 1.5
@@ -232,16 +236,24 @@ export class HeadPoseEstimator {
     } else {
       const current = gaze || head3d
       if (current) {
-        const y = Math.abs(current.yaw)
-        const p = Math.abs(current.pitch)
-        if (y > HEAD_STRAIGHT_YAW || p > HEAD_STRAIGHT_PITCH) {
-          rawLabel = 'looking-away'
+        const yawAbs = Math.abs(current.yaw)
+        const pitchAbs = Math.abs(current.pitch)
+        if (yawAbs > HEAD_STRAIGHT_YAW || pitchAbs > HEAD_STRAIGHT_PITCH) {
+          // Decide dominant direction: pitch (up/down) or yaw (left/right)
+          if (pitchAbs >= yawAbs) {
+            // pitch dominates -> up or down
+            rawLabel = current.pitch > 0 ? 'looking-down' : 'looking-up'
+          } else {
+            // yaw dominates -> left or right
+            rawLabel = current.yaw > 0 ? 'looking-left' : 'looking-right'
+          }
         }
       }
     }
 
     /* Accumulate or decay based on whether the student is attentive */
-    const isBad = rawLabel !== 'safe'
+    // Treat 'looking-down' as non-threatening: do not increase suspicion for it.
+    const isBad = rawLabel !== 'safe' && rawLabel !== 'looking-down'
     const isCritical = rawLabel === 'no-face' || rawLabel === 'multiple-faces'
     if (isBad) {
       this.accumulateSuspicion(dt, isCritical)
