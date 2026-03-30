@@ -10,17 +10,19 @@ import { useCreateStudentAnswerMutation } from '@/api/studentAnswersApi';
 import type { QuizQuestion } from '@/api/studentExamsApi';
 import { HeadPoseEstimator } from '@/lib/ExamProctoring';
 import type { AttentionState } from '@/lib/ExamProctoring';
-import { uploadCheatSnapshot } from '@/lib/uploadCheatSnapshot';
+import { uploadCheatVideo } from '@/lib/uploadCheatSnapshot';
+import { createEpisodeRecorder } from '@/lib/videoBuffer';
+import type { EpisodeRecorder } from '@/lib/videoBuffer';
 
 // ─── Helpers ───────────────────────────────────────────
 const STORAGE_KEY = 'fuec_active_exam';
 
 interface SavedExamState {
   studentExamId: string;
-  answers: Record<string, string>; // questionId → optionId
+  answers: Record<string, string>;
   timeLeftSeconds: number;
   savedAt: number;
-  starred: Record<string, boolean>; // Added starred to saved state
+  starred: Record<string, boolean>;
 }
 
 /* =====================
@@ -34,14 +36,12 @@ function draw(
 ) {
   if (!state) return;
 
-  /* ---- Face box ---- */
   ctx.strokeStyle = '#00ff88';
   ctx.lineWidth = 2;
   for (const f of faces) {
     ctx.strokeRect(f.x, f.y, f.width, f.height);
   }
 
-  /* ---- Gaze arrow ---- */
   if (state.gaze && faces[0]) {
     const face = faces[0];
     const cx = face.x + face.width / 2;
@@ -61,7 +61,6 @@ function draw(
     ctx.globalAlpha = 1;
   }
 
-  /* ---- HUD ---- */
   ctx.save();
   ctx.scale(-1, 1);
   ctx.fillStyle = '#fff';
@@ -76,7 +75,6 @@ function draw(
   ctx.fillText(`Suspicion: ${(state.suspicionScore * 100).toFixed(0)}%`, -ctx.canvas.width + 10, state.gaze ? 100 : 40);
   ctx.restore();
 
-  /* ---- Alerts ---- */
   if (state.status === 'suspicious') {
     ctx.strokeStyle = '#ffaa00';
     ctx.lineWidth = 6;
@@ -122,7 +120,6 @@ function drawArrow(
   ctx.fill();
 }
 
-
 function saveExamState(state: SavedExamState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
@@ -133,7 +130,6 @@ function loadExamState(studentExamId: string): SavedExamState | null {
     if (!raw) return null;
     const parsed: SavedExamState = JSON.parse(raw);
     if (parsed.studentExamId !== studentExamId) return null;
-    // Adjust time by elapsed seconds since last save
     const elapsed = Math.floor((Date.now() - parsed.savedAt) / 1000);
     parsed.timeLeftSeconds = Math.max(0, parsed.timeLeftSeconds - elapsed);
     return parsed;
@@ -148,17 +144,15 @@ function clearExamState() {
 
 function parseRemainingTime(remaining: string): number {
   if (!remaining) return 45 * 60;
-  // If it's an ISO timestamp (contains T and Z or +), treat as target end time
   if (remaining.includes('T')) {
     const end = new Date(remaining).getTime();
     return Math.max(0, Math.floor((end - Date.now()) / 1000));
   }
-  // Parse "HH:MM:SS" duration
   const parts = remaining.split(':');
   if (parts.length === 3) {
     return (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
   }
-  return 45 * 60; // fallback 45m
+  return 45 * 60;
 }
 
 function formatTime(seconds: number): string {
@@ -179,6 +173,35 @@ export default function QuizTest() {
   const user = useSelector(selectCurrentUser);
 
   // ── API Hooks ──
+
+  // ── Security: Block Ctrl, Alt, right-click, F1-F12 (except F11), PrintScreen ──
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Block Ctrl, Alt, F1-F12 (except F11), and PrtSc
+      const isFKey = e.key.startsWith("F") && e.key !== "F11" && /^[F][1-9]$|^F1[0-2]$/.test(e.key);
+      if (
+        e.ctrlKey ||
+        e.altKey ||
+        isFKey ||
+        e.key === "PrintScreen"
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("contextmenu", handleContextMenu, true);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("contextmenu", handleContextMenu, true);
+    };
+  }, []);
   const { data: examData, isLoading: isLoadingExam, error: examError } = useGetStudentExamByIdQuery(studentExamId, {
     skip: !studentExamId,
   });
@@ -187,8 +210,8 @@ export default function QuizTest() {
 
   // ── State ──
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({}); // questionId → optionId
-  const [starred, setStarred] = useState<Record<string, boolean>>({}); // questionId → isStarred
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [starred, setStarred] = useState<Record<string, boolean>>({});
   const [savingStatus, setSavingStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(false);
@@ -198,11 +221,12 @@ export default function QuizTest() {
 
   const questions: QuizQuestion[] = useMemo(() => examData?.questions || [], [examData]);
 
-  // --- Proctoring / Head-pose estimator refs & state (from test.tsx) ---
+  // --- Proctoring / Head-pose estimator refs & state ---
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<HeadPoseEstimator | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const episodeRecorderRef = useRef<EpisodeRecorder | null>(null);
 
   const lastStateRef = useRef<AttentionState | undefined>(undefined);
   const lastFacesRef = useRef<Array<{ x: number; y: number; width: number; height: number }>>([]);
@@ -217,13 +241,23 @@ export default function QuizTest() {
   const [showTabWarning, setShowTabWarning] = useState(false);
   const maxViolations = 5;
   const fullscreenRequestedRef = useRef(false);
+
   // Cheating detection helpers
   const cheatStartRef = useRef<number | null>(null);
   const cheatCapturedRef = useRef(false);
   const [cheatingPaused, setCheatingPaused] = useState(false);
-  // Track latest attention status to drive resume logic
   const [attentionStatus, setAttentionStatus] = useState<AttentionState['status'] | null>(null);
   const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
+
+  // ── Stable refs for values needed inside fire-and-forget capture ──
+  const examDataRef = useRef(examData);
+  examDataRef.current = examData;
+  const userRef = useRef(user);
+  userRef.current = user;
+  const classSubjectIdRef = useRef(classSubjectId);
+  classSubjectIdRef.current = classSubjectId;
+  const studentExamIdRef = useRef(studentExamId);
+  studentExamIdRef.current = studentExamId;
 
   const startProctoring = async () => {
     try {
@@ -233,6 +267,11 @@ export default function QuizTest() {
       if (!videoRef.current) return;
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
+
+      // Initialize episode recorder
+      const recorder = createEpisodeRecorder(stream);
+      console.log('[Proctor] EpisodeRecorder:', recorder ? 'OK' : 'NULL');
+      episodeRecorderRef.current = recorder;
 
       const engine = new HeadPoseEstimator();
       await engine.init();
@@ -247,12 +286,10 @@ export default function QuizTest() {
 
   // Shared punishment function for violations
   const handleViolation = useCallback(async (reason: string) => {
-    // 1. Clear local state immediately
     setAnswers({});
     setStarred({});
-    clearExamState(); // clear localStorage cache
+    clearExamState();
 
-    // 2. Perform auto-submission regardless of how many were answered
     try {
       await submitExam(studentExamId).unwrap();
       setShowResults(true);
@@ -264,8 +301,6 @@ export default function QuizTest() {
 
   const incrementViolation = useCallback((msg: string) => {
     const now = Date.now();
-    // Debounce to prevent multiple alerts for the same event (e.g. blur + visibilitychange)
-    // or from the alert box itself causing a focus change.
     if (now - lastViolationTimeRef.current < 2000) return;
     lastViolationTimeRef.current = now;
 
@@ -284,28 +319,23 @@ export default function QuizTest() {
   // Auto-start proctoring when exam data is loaded
   useEffect(() => {
     if (!examData) return;
-    // start only once
     if (!proctoringStarted) startProctoring();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examData]);
 
-  // Request fullscreen once proctoring is ready/started (best-effort)
+  // Request fullscreen once proctoring is ready
   useEffect(() => {
     if (!proctorReady || fullscreenRequestedRef.current) return;
     fullscreenRequestedRef.current = true;
     try {
-      // Best-effort: browsers may block if not a user gesture
       if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch(() => {
-          // ignore failures
-        });
+        document.documentElement.requestFullscreen().catch(() => { });
       }
-    } catch (err) {
+    } catch {
       // ignore
     }
 
     const onFullscreenChange = () => {
-      // If user exits fullscreen during exam, show mandatory prompt
       if (!document.fullscreenElement) {
         setShowFullscreenPrompt(true);
         incrementViolation('Fullscreen exited. Please return to fullscreen mode immediately.');
@@ -314,7 +344,6 @@ export default function QuizTest() {
       }
     };
 
-    // Also check initial state when proctoring starts
     if (!document.fullscreenElement) {
       setShowFullscreenPrompt(true);
     }
@@ -329,7 +358,6 @@ export default function QuizTest() {
 
     const handleVisibility = () => {
       if (!examData || examData.isSubmitted || showResults) return;
-      // Count when user navigates away (tab hidden) or window loses focus
       if (document.visibilityState === 'hidden') {
         setShowTabWarning(true);
         setTimeout(() => setShowTabWarning(false), 3000);
@@ -346,7 +374,9 @@ export default function QuizTest() {
     };
   }, [examData, showResults, incrementViolation]);
 
+  // ══════════════════════════════════════════════════════
   // Main proctoring loop: draw + inference
+  // ══════════════════════════════════════════════════════
   useEffect(() => {
     if (!proctorReady) return;
 
@@ -411,7 +441,6 @@ export default function QuizTest() {
         };
       }
 
-      // call helper draw below
       draw(ctx, smoothedState, faces);
     };
 
@@ -437,37 +466,78 @@ export default function QuizTest() {
         lastFacesRef.current = result.faces;
 
         const st = result.state?.status;
-        // update public attentionStatus for resume logic
         setAttentionStatus(st ?? null);
-        // Treat anything other than 'safe'/'suspicious' as a confirmed cheating state
-        if (st && st !== 'safe' && st !== 'suspicious') {
-          // Start cheating timer if not already started
-          if (!cheatStartRef.current) {
+
+        // ── Episode-based cheating detection ──
+        const allowedStatuses = ['safe', 'looking-down'];
+        const isThreat = st && !allowedStatuses.includes(st);
+        const wasRecording = episodeRecorderRef.current?.isRecording ?? false;
+
+        const PAUSE_THRESHOLDS: Record<string, number> = {
+          suspicious: 3000,
+          'looking-left': 6000,
+          'looking-right': 6000,
+          'no-face': 3000,
+          'multiple-faces': 3000,
+        };
+        const DEFAULT_PAUSE_THRESHOLD = 3000;
+
+
+        if (isThreat) {
+          // ── Threat detected — ensure we're recording ──
+          if (!wasRecording) {
             cheatStartRef.current = performance.now();
-            // Capture snapshot once at the start of cheating
-            if (!cheatCapturedRef.current) {
-              try {
-                uploadCheatSnapshot(
-                  video,
-                  st,
-                  examData?.studentCode || user?.entityId || 'unknown',
-                  classSubjectId || 'unknown',
-                  studentExamId
-                );
-                cheatCapturedRef.current = true;
-              } catch (err) {
-                console.warn('upload snapshot failed', err);
-              }
-            }
-          } else {
-            const elapsedMs = performance.now() - (cheatStartRef.current ?? 0);
-            // If cheating lasted more than 3 seconds, pause the exam UI
-            if (elapsedMs >= 3000 && !cheatingPaused) {
+            cheatCapturedRef.current = false;
+            episodeRecorderRef.current?.start();
+          }
+
+          // Confirm cheat frame for video recording
+          if (st !== 'suspicious' && !cheatCapturedRef.current) {
+            cheatCapturedRef.current = true;
+          }
+
+          // Pause exam after threshold exceeded for the current status
+          if (cheatStartRef.current) {
+            const elapsed = performance.now() - cheatStartRef.current;
+            const threshold = PAUSE_THRESHOLDS[st] ?? DEFAULT_PAUSE_THRESHOLD;
+            if (elapsed >= threshold && !cheatingPaused) {
               setCheatingPaused(true);
             }
           }
         } else {
-          // Reset cheating timers/flags when user returns to safe/suspicious
+          // ── Safe — stop recording & upload if we have footage ──
+          if (wasRecording) {
+            const recorder = episodeRecorderRef.current;
+            const hadConfirmedCheat = cheatCapturedRef.current;
+
+            if (hadConfirmedCheat) {
+              const studentCode = examDataRef.current?.studentCode || userRef.current?.entityId || 'unknown';
+              const classSubject = classSubjectIdRef.current || 'unknown';
+              const sExamId = studentExamIdRef.current;
+              const capturedStatus = lastStateRef.current?.status || 'unknown';
+
+
+            (async () => {
+              try {
+                const clip = await recorder?.stop();
+                if (clip && clip.size > 0) {
+                  console.log('[Proctor] Uploading episode clip:', clip.size, 'bytes');
+                  await uploadCheatVideo(clip, capturedStatus, studentCode, classSubject, sExamId);
+                } else {
+                  console.warn('[Proctor] Episode clip was empty or null');
+                }
+              } catch (err) {
+                console.warn('[Proctor] Episode upload failed:', err);
+              }
+            })();
+          } else {
+              // Only suspicious — discard the recording silently
+              console.log('[Proctor] Episode was only suspicious — discarding clip');
+              recorder?.stop();
+          }
+        }
+
+          // Reset state
           cheatStartRef.current = null;
           cheatCapturedRef.current = false;
           if (cheatingPaused) setCheatingPaused(false);
@@ -486,7 +556,7 @@ export default function QuizTest() {
       cancelAnimationFrame(rafId);
       if (inferenceTimer) window.clearTimeout(inferenceTimer);
     };
-  }, [proctorReady]);
+  }, [proctorReady, cheatingPaused]);
 
   // Resume exam when attention becomes safe
   useEffect(() => {
@@ -497,15 +567,17 @@ export default function QuizTest() {
     }
   }, [attentionStatus, cheatingPaused]);
 
-  // Cleanup on unmount: stop media tracks
+  // Cleanup on unmount: stop media tracks & recorder
   useEffect(() => {
     return () => {
       try {
-        streamRef.current?.getTracks().forEach(t => t.stop());
+        streamRef.current?.getTracks().forEach((t) => t.stop());
         streamRef.current = null;
-      } catch (err) {
-        // ignore
-      }
+      } catch { }
+      try {
+        episodeRecorderRef.current?.destroy();
+      } catch { }
+      episodeRecorderRef.current = null;
     };
   }, []);
 
@@ -513,8 +585,6 @@ export default function QuizTest() {
   useEffect(() => {
     if (!examData || !examId) return;
 
-    // Only check if not submitted (active quiz) and requires security
-    // We cast to any because the response might have securityMode even if not in the typing interface yet
     const requiresCode = (examData as any).securityMode !== 0;
     const isCompleted = examData.isSubmitted;
 
@@ -528,14 +598,12 @@ export default function QuizTest() {
   useEffect(() => {
     if (!examData || initialized) return;
 
-    // Try to restore from localStorage
     const saved = loadExamState(studentExamId);
     if (saved) {
       setAnswers(saved.answers);
       setStarred(saved.starred);
       setTimeLeft(saved.timeLeftSeconds);
     } else {
-      // Use remaining time from server
       let initialTime = 45 * 60;
       if (examData.remainingTime) {
         initialTime = parseRemainingTime(examData.remainingTime);
@@ -544,14 +612,12 @@ export default function QuizTest() {
       }
       setTimeLeft(initialTime);
 
-      // Restore answers from DB if they exist
       const dbAnswers: Record<string, string> = {};
-      examData.questions.forEach(q => {
+      examData.questions.forEach((q) => {
         if (q.choiceId) {
           dbAnswers[q.id] = q.choiceId;
         }
       });
-      // Only set if we have actual answers in DB
       if (Object.keys(dbAnswers).length > 0) {
         setAnswers(dbAnswers);
       }
@@ -562,15 +628,14 @@ export default function QuizTest() {
 
   // ── Countdown Timer ──
   useEffect(() => {
-    // Timer is paused if AI Proctoring hasn't fully initialized yet, cheating pause active, or not in fullscreen
     if (timeLeft === null || timeLeft <= 0 || showResults || !proctorReady || cheatingPaused || showFullscreenPrompt) return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev === null) return null;
         const next = prev - 1;
         if (next <= 0) {
-          handleSubmit(true); // auto-submit on time up
+          handleSubmit(true);
           return 0;
         }
         return next;
@@ -598,73 +663,72 @@ export default function QuizTest() {
   }, [studentExamId, answers, starred, timeLeft, showResults]);
 
   // ── Save answer to API ──
-  const handleAnswer = useCallback(async (questionId: string, optionId: string) => {
-    // Optimistic update
-    setAnswers(prev => ({ ...prev, [questionId]: optionId }));
-    setSavingStatus('saving');
+  const handleAnswer = useCallback(
+    async (questionId: string, optionId: string) => {
+      setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
+      setSavingStatus('saving');
 
-    try {
-      await createAnswer({
-        studentExamId,
-        questionId,
-        choiceId: optionId,
-      }).unwrap();
-      setSavingStatus('saved');
-      // Auto-reset status after 2s
-      setTimeout(() => setSavingStatus('idle'), 2000);
-    } catch (err) {
-      console.error('Failed to save answer', err);
-      setSavingStatus('error');
-      setTimeout(() => setSavingStatus('idle'), 3000);
-    }
-  }, [studentExamId, createAnswer]);
+      try {
+        await createAnswer({
+          studentExamId,
+          questionId,
+          choiceId: optionId,
+        }).unwrap();
+        setSavingStatus('saved');
+        setTimeout(() => setSavingStatus('idle'), 2000);
+      } catch (err) {
+        console.error('Failed to save answer', err);
+        setSavingStatus('error');
+        setTimeout(() => setSavingStatus('idle'), 3000);
+      }
+    },
+    [studentExamId, createAnswer]
+  );
 
   const toggleStar = useCallback((questionId: string) => {
-    setStarred(prev => ({ ...prev, [questionId]: !prev[questionId] }));
+    setStarred((prev) => ({ ...prev, [questionId]: !prev[questionId] }));
   }, []);
 
-  // Attempt fullscreen (user click should allow requestFullscreen; fallback tries F11 key events)
   const attemptFullscreen = useCallback(() => {
     try {
       if (document.documentElement.requestFullscreen) {
-        // This should succeed when invoked from a user gesture (button click)
         document.documentElement.requestFullscreen().catch(() => { });
         return;
       }
-    } catch (err) {
+    } catch {
       // ignore
     }
 
-    // Fallback: try to synthesize F11 key events (browsers usually block this)
     try {
       const down = new KeyboardEvent('keydown', { key: 'F11', code: 'F11', keyCode: 122, which: 122, bubbles: true, cancelable: true });
       window.dispatchEvent(down);
       const up = new KeyboardEvent('keyup', { key: 'F11', code: 'F11', keyCode: 122, which: 122, bubbles: true, cancelable: true });
       window.dispatchEvent(up);
-    } catch (err) {
+    } catch {
       // ignore
     }
   }, []);
 
-
-
   // ── Submit Exam ──
-  const handleSubmit = useCallback(async (autoSubmit = false) => {
-    if (!autoSubmit) {
-      setShowConfirmSubmit(true);
-      return;
-    }
+  const handleSubmit = useCallback(
+    async (autoSubmit = false) => {
+      if (!autoSubmit) {
+        setShowConfirmSubmit(true);
+        return;
+      }
 
-    try {
-      const result = await submitExam(studentExamId).unwrap();
-      setExamResult({ grade: result?.result?.grade ?? result?.grade ?? 0 });
-      setShowResults(true);
-      clearExamState();
-    } catch (err) {
-      console.error('Failed to submit exam', err);
-      alert('Error submitting exam. Please try again.');
-    }
-  }, [studentExamId, submitExam]);
+      try {
+        const result = await submitExam(studentExamId).unwrap();
+        setExamResult({ grade: result?.result?.grade ?? result?.grade ?? 0 });
+        setShowResults(true);
+        clearExamState();
+      } catch (err) {
+        console.error('Failed to submit exam', err);
+        alert('Error submitting exam. Please try again.');
+      }
+    },
+    [studentExamId, submitExam]
+  );
 
   const confirmSubmit = useCallback(async () => {
     setShowConfirmSubmit(false);
@@ -718,7 +782,7 @@ export default function QuizTest() {
     const isPublic = examData?.isPublicGrade ?? true;
     const grade = examResult?.grade ?? examData?.grade;
     const hasGrade = grade !== null && grade !== undefined;
-    const passed = hasGrade ? (grade >= 5) : false;
+    const passed = hasGrade ? grade >= 5 : false;
     return (
       <div className="p-4 md:p-6 max-w-4xl mx-auto animate-fadeIn">
         <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm transition-all hover:shadow-md">
@@ -735,7 +799,7 @@ export default function QuizTest() {
           </div>
 
           <div className="p-8 rounded-[2rem] border-2 border-amber-100 bg-amber-50/50 transition-all shadow-lg shadow-amber-900/5 flex flex-col md:flex-row items-center justify-between relative overflow-hidden group">
-            <div className={`absolute -top-6 -right-6 p-3 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-500`}>
+            <div className="absolute -top-6 -right-6 p-3 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-500">
               <GraduationCap className="w-40 h-40" />
             </div>
 
@@ -753,9 +817,7 @@ export default function QuizTest() {
                       <span className="text-2xl font-bold text-gray-400">/ 10.0</span>
                     </>
                   ) : (
-                    <span className="text-4xl font-black tracking-tight text-amber-700">
-                      SUBMITTED
-                    </span>
+                    <span className="text-4xl font-black tracking-tight text-amber-700">SUBMITTED</span>
                   )}
                 </div>
               </div>
@@ -773,7 +835,7 @@ export default function QuizTest() {
                     </p>
                     <p className="text-sm font-bold text-[#0A1B3C]">
                       {isPublic
-                        ? `${Object.keys(answers).length || (examData?.questions?.filter(q => q.choiceId).length ?? 0)} / ${questions.length} Questions Answered`
+                        ? `${Object.keys(answers).length || (examData?.questions?.filter((q) => q.choiceId).length ?? 0)} / ${questions.length} Questions Answered`
                         : 'Your grade will be public soon.'}
                     </p>
                   </div>
@@ -793,7 +855,6 @@ export default function QuizTest() {
           </div>
         </div>
 
-        {/* Detailed Question Review List */}
         {isPublic && (
           <div className="mt-8">
             <h2 className="text-lg font-bold text-[#0A1B3C] mb-4 px-2 flex items-center gap-2">
@@ -803,7 +864,6 @@ export default function QuizTest() {
             <ExamReviewList questions={questions} />
           </div>
         )}
-        {/* Spacer to prevent overlap with floating navigation bar in Review mode */}
         <div className="h-28" />
       </div>
     );
@@ -815,12 +875,13 @@ export default function QuizTest() {
         <div className="text-center">
           <AlertTriangle className="w-10 h-10 text-yellow-500 mx-auto mb-4" />
           <p className="text-gray-600 font-medium">No questions found for this exam.</p>
-          <button onClick={() => navigate(-1)} className="mt-4 text-[#F37022] font-medium hover:underline">Go Back</button>
+          <button onClick={() => navigate(-1)} className="mt-4 text-[#F37022] font-medium hover:underline">
+            Go Back
+          </button>
         </div>
       </div>
     );
   }
-
 
   const scrollToQuestion = (id: string, index: number) => {
     setCurrentQuestion(index);
@@ -833,7 +894,6 @@ export default function QuizTest() {
   // ── Quiz UI ──
   return (
     <>
-      {/* Confirm Submit Modal */}
       {/* Fullscreen Prompt Modal */}
       {showFullscreenPrompt && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-4 p-safe animate-fadeIn">
@@ -851,6 +911,8 @@ export default function QuizTest() {
           </div>
         </div>
       )}
+
+      {/* Confirm Submit Modal */}
       {showConfirmSubmit && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-4 p-safe animate-fadeIn overflow-hidden">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative">
@@ -863,9 +925,7 @@ export default function QuizTest() {
             <p className="text-gray-600 mb-2 font-medium">Are you sure you want to submit the exam?</p>
             {unansweredCount > 0 && (
               <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-4">
-                <p className="text-red-600 text-sm font-semibold flex items-center gap-2">
-                  ⚠ {unansweredCount} questions are unanswered!
-                </p>
+                <p className="text-red-600 text-sm font-semibold flex items-center gap-2">⚠ {unansweredCount} questions are unanswered!</p>
               </div>
             )}
             <div className="flex gap-3 mt-8">
@@ -896,7 +956,9 @@ export default function QuizTest() {
               <AlertTriangle className="w-12 h-12 text-red-500" />
             </div>
             <h3 className="text-lg font-bold text-[#0A1B3C]">Suspicious Behavior Detected</h3>
-            <p className="text-sm text-gray-600 mt-2">The exam has been paused because suspicious behavior was detected for over 3 seconds. Please return to the exam frame.</p>
+            <p className="text-sm text-gray-600 mt-2">
+              The exam has been paused because suspicious behavior was detected for over 3 seconds. Please return to the exam frame.
+            </p>
           </div>
         </div>
       )}
@@ -924,7 +986,6 @@ export default function QuizTest() {
         {/* ── Main Layout Container ── */}
         <div className="max-w-[1600px] mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
             {/* 1. LEFT SIDEBAR: Info, Timer, Navigator */}
             <div className="lg:col-span-3 space-y-6 lg:sticky lg:top-8">
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
@@ -933,7 +994,9 @@ export default function QuizTest() {
                     <GraduationCap className="w-6 h-6 text-[#F37022]" />
                   </div>
                   <div>
-                    <h1 className="text-lg font-bold text-[#0A1B3C] leading-tight line-clamp-2 uppercase">{examData.examDisplayName || 'Exam'}</h1>
+                    <h1 className="text-lg font-bold text-[#0A1B3C] leading-tight line-clamp-2 uppercase">
+                      {examData.examDisplayName || 'Exam'}
+                    </h1>
                     <p className="text-[10px] font-semibold text-gray-400 tracking-widest mt-0.5 uppercase">TEST / EXAM</p>
                   </div>
                 </div>
@@ -956,7 +1019,7 @@ export default function QuizTest() {
                     </div>
                   </div>
 
-                  {/* Navigator moved to Left */}
+                  {/* Navigator */}
                   <div className="pt-6 border-t border-gray-100">
                     <h3 className="text-sm font-bold text-[#0A1B3C] mb-4 flex items-center gap-2">
                       <div className="w-1 h-4 bg-[#F37022] rounded-full" />
@@ -983,13 +1046,14 @@ export default function QuizTest() {
                           >
                             {index + 1}
                             {isStarred && (
-                              <Star className={`absolute -top-1 -right-1 w-3 h-3 ${isAnswered ? 'text-yellow-600 fill-current' : 'text-yellow-500 fill-current'}`} />
+                              <Star
+                                className={`absolute -top-1 -right-1 w-3 h-3 ${isAnswered ? 'text-yellow-600 fill-current' : 'text-yellow-500 fill-current'}`}
+                              />
                             )}
                           </button>
                         );
                       })}
                     </div>
-
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 pt-6 border-t border-gray-100">
@@ -1024,7 +1088,8 @@ export default function QuizTest() {
                 <div
                   key={q.id}
                   id={`question-${q.id}`}
-                  className={`bg-white rounded-2xl border transition-all duration-300 ${currentQuestion === index ? 'border-[#F37022] ring-1 ring-[#F37022]/20 shadow-md scale-[1.01]' : 'border-gray-100 shadow-sm'} p-8`}
+                  className={`bg-white rounded-2xl border transition-all duration-300 ${currentQuestion === index ? 'border-[#F37022] ring-1 ring-[#F37022]/20 shadow-md scale-[1.01]' : 'border-gray-100 shadow-sm'
+                    } p-8`}
                   onClick={() => setCurrentQuestion(index)}
                 >
                   <div className="flex justify-between items-start mb-6">
@@ -1043,11 +1108,11 @@ export default function QuizTest() {
                           <Star className={`w-4 h-4 ${starred[q.id] ? 'fill-current' : ''}`} />
                         </button>
                       </div>
-                      <h3 className="text-xl font-bold text-[#0A1B3C] leading-relaxed">
-                        {q.questionContent}
-                      </h3>
+                      <h3 className="text-xl font-bold text-[#0A1B3C] leading-relaxed">{q.questionContent}</h3>
                     </div>
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1 ml-4 whitespace-nowrap">Single Choice</span>
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1 ml-4 whitespace-nowrap">
+                      Single Choice
+                    </span>
                   </div>
 
                   <div className="space-y-4">
@@ -1059,13 +1124,13 @@ export default function QuizTest() {
                           onClick={() => {
                             handleAnswer(q.id, option.id);
                           }}
-                          className={`group w-full flex items-center gap-4 p-5 text-left rounded-xl border-2 transition-all duration-200 ${isSelected
-                            ? 'border-[#F37022] bg-[#F37022]/5'
-                            : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
+                          className={`group w-full flex items-center gap-4 p-5 text-left rounded-xl border-2 transition-all duration-200 ${isSelected ? 'border-[#F37022] bg-[#F37022]/5' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
                             }`}
                         >
-                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-[#F37022] bg-[#F37022]' : 'border-gray-200 group-hover:border-gray-300'
-                            }`}>
+                          <div
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-[#F37022] bg-[#F37022]' : 'border-gray-200 group-hover:border-gray-300'
+                              }`}
+                          >
                             {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />}
                           </div>
                           <span className="text-base font-semibold text-[#0A1B3C] flex items-start gap-3">
@@ -1089,7 +1154,9 @@ export default function QuizTest() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-semibold text-gray-600 uppercase">Overall Progress</span>
-                      <span className="text-sm font-bold text-[#F37022]">{answeredCount}/{questions.length}</span>
+                      <span className="text-sm font-bold text-[#F37022]">
+                        {answeredCount}/{questions.length}
+                      </span>
                     </div>
                     <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-50">
                       <div
@@ -1099,18 +1166,24 @@ export default function QuizTest() {
                     </div>
                   </div>
 
-
                   <div className="pt-6 border-t border-gray-100">
                     {savingStatus !== 'idle' && (
-                      <div className={`flex items-center justify-center gap-2 text-[10px] font-semibold px-3 py-2 rounded-lg border ${savingStatus === 'saving' ? 'bg-yellow-50 text-yellow-600 border-yellow-100' :
-                        savingStatus === 'saved' ? 'bg-green-50 text-green-600 border-green-100' :
-                          'bg-red-50 text-red-600 border-red-100'
-                        }`}>
-                        {savingStatus === 'saving' ? <Loader2 className="w-3 h-3 animate-spin" /> :
-                          savingStatus === 'saved' ? <Cloud className="w-3.5 h-3.5" /> :
-                            <CloudOff className="w-3.5 h-3.5" />}
-                        {savingStatus === 'saving' ? 'Saving...' :
-                          savingStatus === 'saved' ? 'Synced' : 'Sync Error'}
+                      <div
+                        className={`flex items-center justify-center gap-2 text-[10px] font-semibold px-3 py-2 rounded-lg border ${savingStatus === 'saving'
+                          ? 'bg-yellow-50 text-yellow-600 border-yellow-100'
+                          : savingStatus === 'saved'
+                            ? 'bg-green-50 text-green-600 border-green-100'
+                            : 'bg-red-50 text-red-600 border-red-100'
+                          }`}
+                      >
+                        {savingStatus === 'saving' ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : savingStatus === 'saved' ? (
+                          <Cloud className="w-3.5 h-3.5" />
+                        ) : (
+                          <CloudOff className="w-3.5 h-3.5" />
+                        )}
+                        {savingStatus === 'saving' ? 'Saving...' : savingStatus === 'saved' ? 'Synced' : 'Sync Error'}
                       </div>
                     )}
                   </div>
@@ -1146,14 +1219,7 @@ export default function QuizTest() {
                       <span className="text-xs font-semibold">Accessing Camera</span>
                     </div>
                   )}
-                  <video
-                    ref={videoRef}
-                    playsInline
-                    muted
-                    autoPlay
-                    className="w-full h-full object-cover"
-                    style={{ transform: 'scaleX(-1)' }}
-                  />
+                  <video ref={videoRef} playsInline muted autoPlay className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
                   <canvas
                     ref={canvasRef}
                     className="absolute inset-0 w-full h-full pointer-events-none"
@@ -1164,7 +1230,6 @@ export default function QuizTest() {
             </div>
           </div>
         </div>
-        {/* Spacer to prevent overlap with floating navigation bar in Quiz mode */}
         <div className="h-10" />
       </div>
     </>

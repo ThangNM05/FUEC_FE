@@ -138,9 +138,12 @@ function TeacherReports() {
                     }
                 }
             }
+            const attachmentUrl = log.capturedImageUrl;
+            const isVideo = typeof attachmentUrl === 'string' && attachmentUrl.toLowerCase().includes('.webm');
             acc[id].attachments.push({
-                type: 'image',
-                url: log.capturedImageUrl,
+                type: isVideo ? 'video' : 'image',
+                url: attachmentUrl,
+                thumbnail: (log as any).thumbnailUrl || undefined,
                 timestamp: dayjs(log.timestamp).format('HH:mm:ss')
             });
             return acc;
@@ -559,10 +562,14 @@ function TeacherReports() {
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
                                 ) : (
-                                    <div className="w-full h-full flex flex-col items-center justify-center text-white/40">
-                                        <FileVideo className="w-12 h-12 mb-2 group-hover:scale-110 transition-transform" />
-                                        <span className="text-xs font-medium bg-red-500/80 text-white px-3 py-1 rounded-full backdrop-blur-sm">Video Log</span>
-                                    </div>
+                                    <video
+                                        controls
+                                        playsInline
+                                        preload="metadata"
+                                        src={file.url}
+                                        poster={file.thumbnail}
+                                        className="w-full h-full object-contain bg-black"
+                                    />
                                 )}
 
                                 <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
