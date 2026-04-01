@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { useSelector } from 'react-redux';
 import {
   Send,
@@ -21,7 +21,9 @@ import {
   MessageSquare,
   Check,
   CheckCheck,
+  Video as VideoIcon,
 } from 'lucide-react';
+import { useUploadFileMutation } from '@/api/filesApi';
 import { selectCurrentUser } from '@/redux/authSlice';
 import {
   useGetUserConversationsQuery,
@@ -75,6 +77,10 @@ function Messenger() {
   const [groupName, setGroupName] = useState('');
   const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
+  const [pendingAttachment, setPendingAttachment] = useState<{ file: File; type: MessageType; previewUrl: string } | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const [messagePage, setMessagePage] = useState(1);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
 
   // ── User search state (Teams-like) ──
   const [searchResults, setSearchResults] = useState<Account[]>([]);
@@ -85,6 +91,8 @@ function Messenger() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const prevScrollHeightRef = useRef<number>(0);
 
   // ── RTK Query hooks ──
   const {
@@ -98,8 +106,9 @@ function Messenger() {
   const {
     data: messagesData,
     isLoading: isLoadingMessages,
+    isFetching: isFetchingMessages,
   } = useGetConversationMessagesQuery(
-    { conversationId: selectedConversation?.id ?? '', pageSize: 200 },
+    { conversationId: selectedConversation?.id ?? '', page: messagePage, pageSize: 10 },
     { skip: !selectedConversation?.id }
   );
 
@@ -110,25 +119,91 @@ function Messenger() {
   const [removeMember] = useRemoveMemberMutation();
   const [markAsRead] = useMarkMessagesAsReadMutation();
   const [triggerSearchAccounts] = useLazyGetAccountsQuery();
+  const [uploadFile, { isLoading: isUploadingFile }] = useUploadFileMutation();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !userId) return;
+
+    // Optional: limit file size to 5MB
+    const limitMB = 5;
+    if (file.size > limitMB * 1024 * 1024) {
+      alert(`File size exceeds ${limitMB}MB limit`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    let mType: MessageType = MessageType.File;
+    if (file.type.startsWith('image/')) mType = MessageType.Image;
+    else if (file.type.startsWith('video/')) mType = MessageType.Video;
+
+    if (pendingAttachment) {
+      URL.revokeObjectURL(pendingAttachment.previewUrl);
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setPendingAttachment({ file, type: mType, previewUrl });
+
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const conversations = conversationsData?.items ?? [];
+
+  // ── Reset pagination when conversation changes ──
+  useEffect(() => {
+    setMessagePage(1);
+    setHasMoreMessages(true);
+    setLocalMessages([]);
+  }, [selectedConversation?.id]);
 
   // ── Sync messages from API to local state ──
   useEffect(() => {
     if (messagesData?.items) {
-      setLocalMessages(messagesData.items);
+      setLocalMessages((prev) => {
+        const combined = [...prev, ...messagesData.items];
+        const uniqueMap = new Map();
+        combined.forEach(m => uniqueMap.set(m.id, m));
+        const unique = Array.from(uniqueMap.values());
+        return unique.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+      });
+
+      if (messagesData.items.length < 10) {
+        setHasMoreMessages(false);
+      } else {
+        setHasMoreMessages(true);
+      }
     }
   }, [messagesData]);
 
-  // ── Scroll to bottom on new messages ──
+  // Restore scroll position when older messages are loaded
+  useLayoutEffect(() => {
+    if (messagePage > 1 && prevScrollHeightRef.current > 0 && chatContainerRef.current) {
+      const newScrollHeight = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = newScrollHeight - prevScrollHeightRef.current;
+      prevScrollHeightRef.current = 0;
+    }
+  }, [localMessages, messagePage]);
+
+  // ── Scroll to bottom on first load and new messages ──
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [localMessages]);
+    if (messagePage === 1) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [localMessages, messagePage]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight } = e.currentTarget;
+    if (scrollTop === 0 && !isFetchingMessages && hasMoreMessages) {
+      prevScrollHeightRef.current = scrollHeight;
+      setMessagePage((p) => p + 1);
+    }
+  };
 
   // ── Mark messages as read when opening a conversation ──
   useEffect(() => {
     if (selectedConversation?.id && userId) {
-      markAsRead({ conversationId: selectedConversation.id, userId }).catch(() => {});
+      markAsRead({ conversationId: selectedConversation.id, userId }).catch(() => { });
     }
   }, [selectedConversation?.id, userId, markAsRead]);
 
@@ -307,16 +382,23 @@ function Messenger() {
 
   // ── Send message (handles both existing conversation and pending chat) ──
   const handleSendMessage = async () => {
-    if (!messageInput.trim() || !userId) return;
+    if ((!messageInput.trim() && !pendingAttachment) || !userId) return;
 
-    const content = messageInput.trim();
+    setIsSending(true);
+    const textContent = messageInput.trim();
+    const currentAttachment = pendingAttachment;
+
     setMessageInput('');
+    setPendingAttachment(null);
+    if (currentAttachment) {
+      URL.revokeObjectURL(currentAttachment.previewUrl);
+    }
 
-    // ─── PENDING CHAT: Create conversation first, then send message ───
-    if (pendingChatUser && !selectedConversation) {
-      setIsCreatingConversation(true);
-      try {
-        // 1. Create a Private conversation with both users
+    try {
+      let activeConvId = selectedConversation?.id;
+      // ─── PENDING CHAT: Create conversation first ───
+      if (pendingChatUser && !activeConvId) {
+        setIsCreatingConversation(true);
         const newConversation = await createConversation({
           dto: {
             conversationName: pendingChatUser.fullName,
@@ -325,40 +407,45 @@ function Messenger() {
           },
           creatorUserId: userId,
         }).unwrap();
-
-        // 2. Send the first message
-        await createMessage({
-          conversationId: newConversation.id,
-          senderId: userId,
-          messageContent: content,
-          messageType: MessageType.Text,
-        }).unwrap();
-
-        // 3. Switch to the newly created conversation
         setPendingChatUser(null);
         setSelectedConversation(newConversation);
-      } catch (error) {
-        console.error('Failed to create conversation and send message:', error);
-      } finally {
+        activeConvId = newConversation.id;
         setIsCreatingConversation(false);
       }
-      return;
-    }
 
-    // ─── EXISTING CONVERSATION: Send message directly ───
-    if (!selectedConversation?.id) return;
+      if (!activeConvId) return;
 
-    if (selectedConversation?.id) stopTyping(selectedConversation.id);
+      if (activeConvId) stopTyping(activeConvId);
 
-    try {
-      await createMessage({
-        conversationId: selectedConversation.id,
-        senderId: userId,
-        messageContent: content,
-        messageType: MessageType.Text,
-      }).unwrap();
+      // Send attachment if exists
+      if (currentAttachment) {
+        const uploaded = await uploadFile({ file: currentAttachment.file, folder: 'chat-attachments' }).unwrap();
+        if (uploaded?.fileUrl) {
+          await createMessage({
+            conversationId: activeConvId,
+            senderId: userId,
+            messageContent: uploaded.fileUrl,
+            messageType: currentAttachment.type,
+          }).unwrap();
+        }
+      }
+
+      // Send text message if exists
+      if (textContent) {
+        await createMessage({
+          conversationId: activeConvId,
+          senderId: userId,
+          messageContent: textContent,
+          messageType: MessageType.Text,
+        }).unwrap();
+      }
+
     } catch (error) {
       console.error('Failed to send message:', error);
+      alert('Failed to send message');
+    } finally {
+      setIsSending(false);
+      setIsCreatingConversation(false);
     }
   };
 
@@ -496,9 +583,8 @@ function Messenger() {
       <div className="flex flex-1 min-h-0 gap-0">
         {/* ─────────────── LEFT SIDEBAR ─────────────── */}
         <div
-          className={`${
-            mobileView === 'chat' ? 'hidden md:flex' : 'flex'
-          } w-full md:w-80 lg:w-96 flex-col bg-white border-r border-gray-200/60`}
+          className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'
+            } w-full md:w-80 lg:w-96 flex-col bg-white border-r border-gray-200/60`}
         >
           {/* Search & Actions */}
           <div className="p-4 space-y-3">
@@ -639,9 +725,8 @@ function Messenger() {
 
         {/* ─────────────── MAIN CHAT AREA ─────────────── */}
         <div
-          className={`${
-            mobileView === 'list' ? 'hidden md:flex' : 'flex'
-          } flex-1 flex-col bg-white ${showInfoPanel ? 'md:mr-0' : ''}`}
+          className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'
+            } flex-1 flex-col bg-white ${showInfoPanel ? 'md:mr-0' : ''}`}
         >
           {selectedConversation || pendingChatUser ? (
             <>
@@ -708,11 +793,10 @@ function Messenger() {
                       </button>
                       <button
                         onClick={() => setShowInfoPanel(!showInfoPanel)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          showInfoPanel
-                            ? 'text-[#F37022] bg-orange-50'
-                            : 'text-gray-500 hover:text-[#F37022] hover:bg-orange-50'
-                        }`}
+                        className={`p-2 rounded-lg transition-colors ${showInfoPanel
+                          ? 'text-[#F37022] bg-orange-50'
+                          : 'text-gray-500 hover:text-[#F37022] hover:bg-orange-50'
+                          }`}
                       >
                         <MoreVertical className="w-5 h-5" />
                       </button>
@@ -722,7 +806,16 @@ function Messenger() {
               </div>
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gradient-to-b from-gray-50/50 to-white">
+              <div
+                ref={chatContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gradient-to-b from-gray-50/50 to-white"
+              >
+                {isFetchingMessages && messagePage > 1 && (
+                  <div className="flex justify-center py-2">
+                    <Loader2 className="w-5 h-5 text-[#F37022] animate-spin" />
+                  </div>
+                )}
                 {pendingChatUser && !selectedConversation ? (
                   /* ── Pending chat empty state ── */
                   <div className="flex flex-col items-center justify-center h-full text-gray-400">
@@ -781,13 +874,12 @@ function Messenger() {
                             {isMe ? 'You' : msg.senderFullName || msg.senderEmail || 'Unknown'}
                           </span>
                           <div
-                            className={`rounded-2xl shadow-sm ${
-                              isImage || isVideo
-                                ? 'overflow-hidden'
-                                : isMe
-                                  ? 'bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white px-4 py-2.5'
-                                  : 'bg-white border border-gray-100 text-gray-900 px-4 py-2.5'
-                            }`}
+                            className={`rounded-2xl shadow-sm ${isImage || isVideo
+                              ? 'overflow-hidden'
+                              : isMe
+                                ? 'bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white px-4 py-2.5'
+                                : 'bg-white border border-gray-100 text-gray-900 px-4 py-2.5'
+                              }`}
                           >
                             {isImage ? (
                               <img
@@ -820,9 +912,9 @@ function Messenger() {
                             <span className="text-[10px] text-gray-400">
                               {msg.createdAt
                                 ? new Date(msg.createdAt).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
                                 : ''}
                             </span>
                             {isMe && getStatusIcon(msg.messageStatus)}
@@ -836,17 +928,61 @@ function Messenger() {
               </div>
 
               {/* Message Input */}
-              <div className="px-5 py-3 border-t border-gray-200/60 bg-white">
-                <div className="flex items-end gap-3">
+              <div className="px-5 py-3 border-t border-gray-200/60 bg-white flex flex-col gap-3">
+                {pendingAttachment && (
+                  <div className="relative inline-flex items-center self-start p-2 bg-gray-50 border border-gray-200 rounded-xl">
+                    <button
+                      onClick={() => {
+                        URL.revokeObjectURL(pendingAttachment.previewUrl);
+                        setPendingAttachment(null);
+                      }}
+                      className="absolute -top-2 -right-2 p-1 bg-white border border-gray-200 rounded-full text-gray-500 hover:text-red-500 hover:bg-red-50 shadow-sm transition-all z-10"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    {pendingAttachment.type === MessageType.Image ? (
+                      <img src={pendingAttachment.previewUrl} alt="preview" className="h-16 w-auto rounded-lg object-contain bg-black/5" />
+                    ) : pendingAttachment.type === MessageType.Video ? (
+                      <video src={pendingAttachment.previewUrl} className="h-16 w-auto rounded-lg object-contain bg-black/5" />
+                    ) : (
+                      <div className="flex items-center gap-2 px-3 py-2">
+                        <Paperclip className="w-5 h-5 text-[#F37022]" />
+                        <span className="text-sm font-medium text-gray-700 max-w-[150px] truncate">{pendingAttachment.file.name}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-end gap-3 w-full">
                   <div className="flex gap-1">
-                    <button className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    <button
+                      onClick={() => { if (fileInputRef.current) { fileInputRef.current.accept = "*/*"; fileInputRef.current.click(); } }}
+                      disabled={isUploadingFile || isSending}
+                      className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Attach File"
+                    >
                       <Paperclip className="w-5 h-5" />
                     </button>
-                    <button className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200">
+                    <button
+                      onClick={() => { if (fileInputRef.current) { fileInputRef.current.accept = "image/*"; fileInputRef.current.click(); } }}
+                      disabled={isUploadingFile || isSending}
+                      className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Attach Image"
+                    >
                       <ImageIcon className="w-5 h-5" />
                     </button>
-                    <button className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200">
-                      <Smile className="w-5 h-5" />
+                    <button
+                      onClick={() => { if (fileInputRef.current) { fileInputRef.current.accept = "video/*"; fileInputRef.current.click(); } }}
+                      disabled={isUploadingFile || isSending}
+                      className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Attach Video"
+                    >
+                      <VideoIcon className="w-5 h-5" />
                     </button>
                   </div>
                   <div className="flex-1">
@@ -868,12 +1004,12 @@ function Messenger() {
                   </div>
                   <button
                     onClick={handleSendMessage}
-                    disabled={!messageInput.trim() || isCreatingConversation}
+                    disabled={(!messageInput.trim() && !pendingAttachment) || isCreatingConversation || isUploadingFile || isSending}
                     className="p-2.5 bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-xl
                                hover:shadow-lg hover:shadow-orange-200 disabled:opacity-40 disabled:cursor-not-allowed
                                disabled:shadow-none transition-all duration-200 active:scale-95"
                   >
-                    {isCreatingConversation ? (
+                    {isCreatingConversation || isUploadingFile || isSending ? (
                       <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <Send className="w-5 h-5" />
@@ -1013,234 +1149,234 @@ function Messenger() {
                   <ImageIcon className="w-4 h-4 text-gray-400" />
                   Change photo (upload)
                 </button>
-                      {/* Change Chat Name Modal */}
-                      {showChangeNameModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                              <h3 className="text-lg font-bold text-gray-900">Change Chat Name</h3>
-                              <button
-                                onClick={() => setShowChangeNameModal(false)}
-                                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                              >
-                                <X className="w-5 h-5 text-gray-500" />
-                              </button>
-                            </div>
-                            <div className="p-6 space-y-4">
-                              <input
-                                type="text"
-                                value={newChatName}
-                                onChange={e => setNewChatName(e.target.value)}
-                                placeholder="Enter new chat name..."
-                                className="w-full px-4 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37022]/40 focus:border-[#F37022] transition-all duration-200 placeholder-gray-400"
-                                autoFocus
-                              />
-                            </div>
-                            <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50/50 border-t border-gray-100">
-                              <button
-                                onClick={() => setShowChangeNameModal(false)}
-                                className="px-5 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  if (!selectedConversation?.id || !newChatName.trim()) return;
-                                  setIsUpdating(true);
-                                  try {
-                                    await updateConversation({
-                                      id: selectedConversation.id,
-                                      dto: { conversationName: newChatName.trim() },
-                                    });
-                                    setShowChangeNameModal(false);
-                                    setNewChatName('');
-                                    refetchConversations();
-                                  } catch (err) {
-                                    // handle error
-                                  } finally {
-                                    setIsUpdating(false);
-                                  }
-                                }}
-                                disabled={!newChatName.trim() || isUpdating}
-                                className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-xl hover:shadow-lg hover:shadow-orange-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                              >
-                                Save
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                {/* Change Chat Name Modal */}
+                {showChangeNameModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900">Change Chat Name</h3>
+                        <button
+                          onClick={() => setShowChangeNameModal(false)}
+                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                      </div>
+                      <div className="p-6 space-y-4">
+                        <input
+                          type="text"
+                          value={newChatName}
+                          onChange={e => setNewChatName(e.target.value)}
+                          placeholder="Enter new chat name..."
+                          className="w-full px-4 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37022]/40 focus:border-[#F37022] transition-all duration-200 placeholder-gray-400"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50/50 border-t border-gray-100">
+                        <button
+                          onClick={() => setShowChangeNameModal(false)}
+                          className="px-5 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!selectedConversation?.id || !newChatName.trim()) return;
+                            setIsUpdating(true);
+                            try {
+                              await updateConversation({
+                                id: selectedConversation.id,
+                                dto: { conversationName: newChatName.trim() },
+                              });
+                              setShowChangeNameModal(false);
+                              setNewChatName('');
+                              refetchConversations();
+                            } catch (err) {
+                              // handle error
+                            } finally {
+                              setIsUpdating(false);
+                            }
+                          }}
+                          disabled={!newChatName.trim() || isUpdating}
+                          className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-xl hover:shadow-lg hover:shadow-orange-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                      {/* Change Photo Modal */}
-                      {showChangePhotoModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                              <h3 className="text-lg font-bold text-gray-900">Change Group Avatar</h3>
-                              <button
-                                onClick={() => setShowChangePhotoModal(false)}
-                                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                              >
-                                <X className="w-5 h-5 text-gray-500" />
-                              </button>
-                            </div>
-                            <div className="p-6 space-y-4">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={e => setAvatarFile(e.target.files?.[0] || null)}
-                                className="w-full"
-                              />
-                              {avatarFile && (
-                                <img src={URL.createObjectURL(avatarFile)} alt="Preview" className="w-24 h-24 rounded-full mx-auto" />
-                              )}
-                            </div>
-                            <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50/50 border-t border-gray-100">
-                              <button
-                                onClick={() => { setShowChangePhotoModal(false); setAvatarFile(null); }}
-                                className="px-5 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  if (!selectedConversation?.id || !avatarFile) return;
-                                  setIsUpdating(true);
-                                  try {
-                                    // Upload to S3 or cloud (simulate with local URL for now)
-                                    // Replace with actual upload logic
-                                    const formData = new FormData();
-                                    formData.append('file', avatarFile);
-                                    // Example: const res = await fetch('/api/upload', { method: 'POST', body: formData });
-                                    // const { url } = await res.json();
-                                    // For now, use local preview
-                                    const url = URL.createObjectURL(avatarFile);
-                                    await updateConversation({
-                                      id: selectedConversation.id,
-                                      dto: { conversationAvatar: url },
-                                    });
-                                    setShowChangePhotoModal(false);
-                                    setAvatarFile(null);
-                                    refetchConversations();
-                                  } catch (err) {
-                                    // handle error
-                                  } finally {
-                                    setIsUpdating(false);
-                                  }
-                                }}
-                                disabled={!avatarFile || isUpdating}
-                                className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-xl hover:shadow-lg hover:shadow-orange-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                              >
-                                Save
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                {/* Change Photo Modal */}
+                {showChangePhotoModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900">Change Group Avatar</h3>
+                        <button
+                          onClick={() => setShowChangePhotoModal(false)}
+                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                      </div>
+                      <div className="p-6 space-y-4">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={e => setAvatarFile(e.target.files?.[0] || null)}
+                          className="w-full"
+                        />
+                        {avatarFile && (
+                          <img src={URL.createObjectURL(avatarFile)} alt="Preview" className="w-24 h-24 rounded-full mx-auto" />
+                        )}
+                      </div>
+                      <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50/50 border-t border-gray-100">
+                        <button
+                          onClick={() => { setShowChangePhotoModal(false); setAvatarFile(null); }}
+                          className="px-5 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!selectedConversation?.id || !avatarFile) return;
+                            setIsUpdating(true);
+                            try {
+                              // Upload to S3 or cloud (simulate with local URL for now)
+                              // Replace with actual upload logic
+                              const formData = new FormData();
+                              formData.append('file', avatarFile);
+                              // Example: const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                              // const { url } = await res.json();
+                              // For now, use local preview
+                              const url = URL.createObjectURL(avatarFile);
+                              await updateConversation({
+                                id: selectedConversation.id,
+                                dto: { conversationAvatar: url },
+                              });
+                              setShowChangePhotoModal(false);
+                              setAvatarFile(null);
+                              refetchConversations();
+                            } catch (err) {
+                              // handle error
+                            } finally {
+                              setIsUpdating(false);
+                            }
+                          }}
+                          disabled={!avatarFile || isUpdating}
+                          className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-xl hover:shadow-lg hover:shadow-orange-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                      {/* Add Member Modal */}
-                      {showAddMemberModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                              <h3 className="text-lg font-bold text-gray-900">Add Members</h3>
-                              <button
-                                onClick={() => setShowAddMemberModal(false)}
-                                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                              >
-                                <X className="w-5 h-5 text-gray-500" />
-                              </button>
-                            </div>
-                            <div className="p-6 space-y-4">
-                              <input
-                                type="text"
-                                value={addMemberSearch}
-                                onChange={async e => {
-                                  setAddMemberSearch(e.target.value);
-                                  if (e.target.value.trim()) {
-                                    try {
-                                      const result = await triggerSearchAccounts({ page: 0, pageSize: 10, searchTerm: e.target.value.trim() }).unwrap();
-                                      setAddMemberResults(result.items || []);
-                                    } catch {
-                                      setAddMemberResults([]);
-                                    }
-                                  } else {
-                                    setAddMemberResults([]);
-                                  }
-                                }}
-                                placeholder="Search by name or email..."
-                                className="w-full px-4 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37022]/40 focus:border-[#F37022] transition-all duration-200 placeholder-gray-400"
-                                autoFocus
-                              />
-                              <div className="max-h-40 overflow-y-auto">
-                                {addMemberResults.map(acc => (
-                                  <button
-                                    key={acc.id}
-                                    onClick={() => {
-                                      if (!addMemberSelected.some(sel => sel.id === acc.id)) {
-                                        setAddMemberSelected([...addMemberSelected, acc]);
-                                      }
-                                    }}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-orange-50/60 transition-all duration-150 text-left group"
-                                  >
-                                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F37022] to-[#ff8c42] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-sm">
-                                      {acc.fullName?.substring(0, 2).toUpperCase() || '??'}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium text-gray-900 truncate group-hover:text-[#F37022] transition-colors">
-                                        {acc.fullName}
-                                      </p>
-                                      <p className="text-xs text-gray-400 truncate">{acc.email}</p>
-                                    </div>
-                                  </button>
-                                ))}
+                {/* Add Member Modal */}
+                {showAddMemberModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                        <h3 className="text-lg font-bold text-gray-900">Add Members</h3>
+                        <button
+                          onClick={() => setShowAddMemberModal(false)}
+                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                      </div>
+                      <div className="p-6 space-y-4">
+                        <input
+                          type="text"
+                          value={addMemberSearch}
+                          onChange={async e => {
+                            setAddMemberSearch(e.target.value);
+                            if (e.target.value.trim()) {
+                              try {
+                                const result = await triggerSearchAccounts({ page: 0, pageSize: 10, searchTerm: e.target.value.trim() }).unwrap();
+                                setAddMemberResults(result.items || []);
+                              } catch {
+                                setAddMemberResults([]);
+                              }
+                            } else {
+                              setAddMemberResults([]);
+                            }
+                          }}
+                          placeholder="Search by name or email..."
+                          className="w-full px-4 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37022]/40 focus:border-[#F37022] transition-all duration-200 placeholder-gray-400"
+                          autoFocus
+                        />
+                        <div className="max-h-40 overflow-y-auto">
+                          {addMemberResults.map(acc => (
+                            <button
+                              key={acc.id}
+                              onClick={() => {
+                                if (!addMemberSelected.some(sel => sel.id === acc.id)) {
+                                  setAddMemberSelected([...addMemberSelected, acc]);
+                                }
+                              }}
+                              className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-orange-50/60 transition-all duration-150 text-left group"
+                            >
+                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F37022] to-[#ff8c42] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-sm">
+                                {acc.fullName?.substring(0, 2).toUpperCase() || '??'}
                               </div>
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {addMemberSelected.map(acc => (
-                                  <span key={acc.id} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium flex items-center gap-2">
-                                    {acc.fullName}
-                                    <button onClick={() => setAddMemberSelected(addMemberSelected.filter(sel => sel.id !== acc.id))} className="text-orange-700 hover:text-red-500 ml-2">
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  </span>
-                                ))}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate group-hover:text-[#F37022] transition-colors">
+                                  {acc.fullName}
+                                </p>
+                                <p className="text-xs text-gray-400 truncate">{acc.email}</p>
                               </div>
-                            </div>
-                            <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50/50 border-t border-gray-100">
-                              <button
-                                onClick={() => { setShowAddMemberModal(false); setAddMemberSelected([]); setAddMemberSearch(''); setAddMemberResults([]); }}
-                                className="px-5 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={async () => {
-                                  if (!selectedConversation?.id || addMemberSelected.length === 0) return;
-                                  setIsUpdating(true);
-                                  try {
-                                    for (const acc of addMemberSelected) {
-                                      await addMember({ conversationId: selectedConversation.id, dto: { userId: acc.id } });
-                                    }
-                                    setShowAddMemberModal(false);
-                                    setAddMemberSelected([]);
-                                    setAddMemberSearch('');
-                                    setAddMemberResults([]);
-                                    refetchConversations();
-                                  } catch (err) {
-                                    // handle error
-                                  } finally {
-                                    setIsUpdating(false);
-                                  }
-                                }}
-                                disabled={addMemberSelected.length === 0 || isUpdating}
-                                className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-xl hover:shadow-lg hover:shadow-orange-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                              >
-                                Add
-                              </button>
-                            </div>
-                          </div>
+                            </button>
+                          ))}
                         </div>
-                      )}
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {addMemberSelected.map(acc => (
+                            <span key={acc.id} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-medium flex items-center gap-2">
+                              {acc.fullName}
+                              <button onClick={() => setAddMemberSelected(addMemberSelected.filter(sel => sel.id !== acc.id))} className="text-orange-700 hover:text-red-500 ml-2">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50/50 border-t border-gray-100">
+                        <button
+                          onClick={() => { setShowAddMemberModal(false); setAddMemberSelected([]); setAddMemberSearch(''); setAddMemberResults([]); }}
+                          className="px-5 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!selectedConversation?.id || addMemberSelected.length === 0) return;
+                            setIsUpdating(true);
+                            try {
+                              for (const acc of addMemberSelected) {
+                                await addMember({ conversationId: selectedConversation.id, dto: { userId: acc.id } });
+                              }
+                              setShowAddMemberModal(false);
+                              setAddMemberSelected([]);
+                              setAddMemberSearch('');
+                              setAddMemberResults([]);
+                              refetchConversations();
+                            } catch (err) {
+                              // handle error
+                            } finally {
+                              setIsUpdating(false);
+                            }
+                          }}
+                          disabled={addMemberSelected.length === 0 || isUpdating}
+                          className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-xl hover:shadow-lg hover:shadow-orange-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <button
                   onClick={async () => {
                     if (window.confirm('Are you sure you want to leave this group?')) {

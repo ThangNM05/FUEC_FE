@@ -23,7 +23,7 @@ import { useGetAuthTeacherTeachingSubjectsQuery } from '@/api/teachersApi';
 import { useGetSemestersQuery, useGetDefaultSemesterQuery } from '@/api/semestersApi';
 import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
 import { useGetAllStudentExamsQuery } from '@/api/studentExamsApi';
-import { useGetStudentCheatLogsQuery } from '@/api/studentCheatLogsApi';
+import { useGetStudentCheatLogsQuery, useDeleteStudentCheatLogMutation } from '@/api/studentCheatLogsApi';
 import { Loader2 } from 'lucide-react';
 
 // --- Types ---
@@ -36,6 +36,7 @@ interface StudentEvidence {
     timestamp: string;
     duration: string;
     attachments: {
+        id: string; // The ID of the student cheat log from DB
         type: 'image' | 'video';
         url: string;
         thumbnail?: string;
@@ -78,6 +79,8 @@ function TeacherReports() {
     const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
 
     // --- API Queries ---
+    const [deleteLog, { isLoading: isDeletingLogs }] = useDeleteStudentCheatLogMutation();
+
     const { data: defaultSemester } = useGetDefaultSemesterQuery();
     const { data: semestersData } = useGetSemestersQuery({ page: 1, pageSize: 100 });
     const semestersList = semestersData?.items || [];
@@ -141,6 +144,7 @@ function TeacherReports() {
             const attachmentUrl = log.capturedImageUrl;
             const isVideo = typeof attachmentUrl === 'string' && attachmentUrl.toLowerCase().includes('.webm');
             acc[id].attachments.push({
+                id: log.id,
                 type: isVideo ? 'video' : 'image',
                 url: attachmentUrl,
                 thumbnail: (log as any).thumbnailUrl || undefined,
@@ -183,6 +187,25 @@ function TeacherReports() {
         } else if (view === 'EXAMS') {
             setView('CLASSES');
             setSelectedClass(null);
+        }
+    };
+
+    const handleDismissFalsePositive = async () => {
+        if (!selectedStudent || !selectedStudent.attachments || selectedStudent.attachments.length === 0) return;
+        if (!window.confirm("Are you sure you want to dismiss all evidence for this student? This action cannot be undone and will permanently delete the evidence from S3.")) return;
+
+        try {
+            const deletePromises = selectedStudent.attachments.map((attachment: any) =>
+                deleteLog(attachment.id).unwrap()
+            );
+            await Promise.all(deletePromises);
+            
+            setView('STUDENTS');
+            setSelectedStudent(null);
+            // In a real app we might show a toast here instead of native alert
+        } catch (error) {
+            console.error('Failed to dismiss cheating logs', error);
+            alert('Failed to dismiss false positive. Please try again.');
         }
     };
 
@@ -526,8 +549,12 @@ function TeacherReports() {
                             <AlertTriangle className="w-4 h-4" />
                             Confirm Cheating
                         </button>
-                        <button className="w-full py-3 bg-white text-gray-500 font-bold rounded-2xl hover:bg-gray-50 transition-colors border border-gray-200">
-                            Dismiss False Positive
+                        <button 
+                            onClick={handleDismissFalsePositive}
+                            disabled={isDeletingLogs}
+                            className={`w-full py-3 font-bold rounded-2xl transition-colors border ${isDeletingLogs ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200'}`}
+                        >
+                            {isDeletingLogs ? 'Dismissing & Deleting...' : 'Dismiss False Positive'}
                         </button>
                     </div>
                 </div>
