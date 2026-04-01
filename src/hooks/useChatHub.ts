@@ -6,6 +6,7 @@ import type {
   UserTypingEvent,
   MessageDeletedEvent,
   MemberRemovedEvent,
+  MemberAddedEvent,
 } from '@/types/messenger.types';
 
 /**
@@ -28,6 +29,7 @@ export interface ChatHubCallbacks {
   onAddedToConversation?: (conversation: SignalRConversationDto) => void;
   onRemovedFromConversation?: (event: { conversationId: string }) => void;
   onMemberRemoved?: (event: MemberRemovedEvent) => void;
+  onMemberAdded?: (event: MemberAddedEvent) => void;
   onUserJoined?: (event: { userId: string; conversationId: string }) => void;
   onUserLeft?: (event: { userId: string; conversationId: string }) => void;
   onUserTyping?: (event: UserTypingEvent) => void;
@@ -86,6 +88,9 @@ export function useChatHub(callbacks: ChatHubCallbacks) {
     });
     connection.on('MemberRemoved', (evt: MemberRemovedEvent) => {
       callbacksRef.current.onMemberRemoved?.(evt);
+    });
+    connection.on('MemberAdded', (evt: MemberAddedEvent) => {
+      callbacksRef.current.onMemberAdded?.(evt);
     });
     connection.on('UserJoined', (evt: { userId: string; conversationId: string }) => {
       callbacksRef.current.onUserJoined?.(evt);

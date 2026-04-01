@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Edit, Trash2, BookOpen } from 'lucide-react';
+import { Edit, Trash2, BookOpen, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spin, Tag } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 
 import DataTable from '@/components/shared/DataTable';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
+import ImportExcelModal from '@/components/shared/ImportExcelModal';
 import {
     useGetCurriculumsQuery,
     useDeleteCurriculumMutation,
+    useImportCurriculumSubjectsMutation,
 } from '@/api/curriculumsApi';
 import type { Curriculum } from '@/types/curriculum.types';
 import CreateCurriculumModal from '@/components/modals/CreateCurriculumModal';
 import EditCurriculumModal from '@/components/modals/EditCurriculumModal';
+import CloneCurriculumModal from '@/components/modals/CloneCurriculumModal';
 
 function AdminCurriculum() {
     // Modal states
@@ -21,6 +24,9 @@ function AdminCurriculum() {
     const [selectedCurriculum, setSelectedCurriculum] = useState<Curriculum | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [curriculumToDelete, setCurriculumToDelete] = useState<Curriculum | null>(null);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+    const [curriculumToClone, setCurriculumToClone] = useState<Curriculum | null>(null);
 
     // Pagination State
     const [page, setPage] = useState(1);
@@ -38,6 +44,7 @@ function AdminCurriculum() {
         searchTerm
     });
     const [deleteCurriculum, { isLoading: isDeleting }] = useDeleteCurriculumMutation();
+    const [importCurriculumSubjects, { isLoading: isImporting }] = useImportCurriculumSubjectsMutation();
 
     // Extract data
     const curriculums = curriculumsData?.items || [];
@@ -54,6 +61,22 @@ function AdminCurriculum() {
     const handleEdit = (curriculum: Curriculum) => {
         setSelectedCurriculum(curriculum);
         setIsEditModalOpen(true);
+    };
+
+    const handleClone = (curriculum: Curriculum) => {
+        setCurriculumToClone(curriculum);
+        setIsCloneModalOpen(true);
+    };
+
+    const handleConfirmImport = async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            await importCurriculumSubjects(formData).unwrap();
+            toast.success('Curriculum subjects imported successfully!');
+        } catch (err) {
+            toast.error('Failed to import: ' + ((err as any)?.data?.message || (err as any)?.message || ''));
+        }
     };
 
     const handleDeleteClick = (curriculum: Curriculum) => {
@@ -169,6 +192,13 @@ function AdminCurriculum() {
             render: (item: Curriculum) => (
                 <div className="flex gap-2 justify-center">
                     <button
+                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                        onClick={() => handleClone(item)}
+                        title="Clone Curriculum"
+                    >
+                        <Copy className="w-4 h-4 text-blue-600" />
+                    </button>
+                    <button
                         className="p-2 hover:bg-orange-50 rounded-lg transition-colors"
                         onClick={() => handleEdit(item)}
                         title="Edit Curriculum"
@@ -215,6 +245,8 @@ function AdminCurriculum() {
                 columns={columns}
                 onCreate={() => setIsCreateModalOpen(true)}
                 createLabel="Add Curriculum"
+                onImport={() => setIsImportModalOpen(true)}
+                importLabel={isImporting ? 'Importing...' : 'Import Excel'}
                 selectable={true}
 
                 // Manual Pagination
@@ -249,6 +281,20 @@ function AdminCurriculum() {
                 itemName={curriculumToDelete?.name}
                 confirmButtonLabel="Delete"
                 confirmButtonVariant="danger"
+            />
+
+            <ImportExcelModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onConfirm={handleConfirmImport}
+                title="Import Curriculum Subjects from Excel"
+                description="Excel columns: CurriculumCode | SubjectCode | Term"
+            />
+
+            <CloneCurriculumModal
+                isOpen={isCloneModalOpen}
+                onClose={() => setIsCloneModalOpen(false)}
+                curriculum={curriculumToClone}
             />
         </div>
     );

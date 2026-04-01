@@ -77,6 +77,27 @@ export const curriculumsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (_result, _error, id) => [{ type: 'Curriculums', id }, 'Curriculums'],
         }),
+
+        // POST: Clone curriculum
+        cloneCurriculum: builder.mutation<Curriculum, { id: string; code: string; startYear: number; cohort?: string; category?: string }>({
+            query: ({ id, ...body }) => ({
+                url: `/Curriculums/${id}/clone`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['Curriculums'],
+        }),
+
+        // POST: Import curriculum subjects from Excel
+        importCurriculumSubjects: builder.mutation<string, FormData>({
+            query: (formData) => ({
+                url: '/CurriculumSubjects/import',
+                method: 'POST',
+                body: formData,
+            }),
+            transformResponse: (response: any) => response?.result || response,
+            invalidatesTags: ['Curriculums'],
+        }),
     }),
 });
 
@@ -85,5 +106,7 @@ export const {
     useGetCurriculumByIdQuery,
     useCreateCurriculumMutation,
     useUpdateCurriculumMutation,
-    useDeleteCurriculumMutation
+    useDeleteCurriculumMutation,
+    useCloneCurriculumMutation,
+    useImportCurriculumSubjectsMutation,
 } = curriculumsApi;

@@ -159,6 +159,12 @@ export interface MemberRemovedEvent {
   userId: string;
 }
 
+export interface MemberAddedEvent {
+  conversationId: string;
+  userId: string;
+  userFullName?: string;
+}
+
 export interface MessagesReadEvent {
   userId: string;
   conversationId: string;

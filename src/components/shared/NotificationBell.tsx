@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, X, CheckCheck, BookOpen, ClipboardList, Award, Megaphone, Info } from 'lucide-react';
+import { Bell, CheckCheck, BookOpen, ClipboardList, Award, Megaphone, Info } from 'lucide-react';
 import type { NotificationItem } from '@/types/notification.types';
 import { useNotificationHub } from '@/hooks/useNotificationHub';
 
@@ -41,7 +41,7 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const navigate = useNavigate();
-  const { notifications, unreadCount, isConnected, markAsRead, markAllAsRead, clearNotification } =
+  const { notifications, unreadCount, isConnected, markAsRead, markAllAsRead } =
     useNotificationHub();
 
   // Close dropdown when clicking outside
@@ -149,7 +149,7 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
                   <li
                     key={n.id}
                     className={`group relative flex gap-3 px-4 py-3 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50 ${
-                      !n.isRead ? 'bg-orange-50/40' : ''
+                      !n.isRead ? 'bg-[#F37022]/5' : ''
                     }`}
                     onClick={() => {
                       handleMarkRead(n.id);
@@ -167,33 +167,25 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
                     <div className="flex-1 min-w-0">
                       <p
                         className={`text-sm leading-snug truncate ${
-                          !n.isRead ? 'font-semibold text-gray-900' : 'font-normal text-gray-700'
+                          !n.isRead ? 'font-bold text-gray-900' : 'font-normal text-gray-500'
                         }`}
                       >
                         {n.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                      <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(n.createdAt)}</p>
+                      <p className={`text-xs mt-0.5 line-clamp-2 ${
+                        !n.isRead ? 'text-gray-700 font-medium' : 'text-gray-400'
+                      }`}>{n.message}</p>
+                      <p className={`text-xs mt-1 ${
+                        !n.isRead ? 'text-[#F37022] font-medium' : 'text-gray-400'
+                      }`}>{formatRelativeTime(n.createdAt)}</p>
                     </div>
 
                     {/* Unread dot */}
                     {!n.isRead && (
                       <div className="flex-shrink-0 mt-1.5">
-                        <span className="w-2 h-2 rounded-full bg-[#F37022] block" />
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#F37022] block" />
                       </div>
                     )}
-
-                    {/* Dismiss button */}
-                    <button
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-gray-200"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        clearNotification(n.id);
-                      }}
-                      title="Dismiss"
-                    >
-                      <X className="w-3 h-3 text-gray-400" />
-                    </button>
                   </li>
                 ))}
               </ul>

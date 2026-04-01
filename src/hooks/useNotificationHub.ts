@@ -109,11 +109,11 @@ export function useNotificationHub(
       });
     });
 
-    // ── Event: NotificationRead ──
-    connection.on('NotificationRead', (evt: { NotificationId: string }) => {
-      callbacksRef.current?.onNotificationRead?.(evt);
+    // ── Event: NotificationMarkedRead ──
+    connection.on('NotificationMarkedRead', (notificationId: string) => {
+      callbacksRef.current?.onNotificationRead?.({ NotificationId: notificationId });
       setNotifications((prev) =>
-        prev.map((n) => (n.id === evt.NotificationId ? { ...n, isRead: true } : n)),
+        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
       );
     });
 
@@ -211,6 +211,10 @@ export function useNotificationHub(
   // ── Hub method invocations ──
 
   const markAsRead = useCallback(async (notificationId: string) => {
+    // Optimistic update
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
+    );
     const conn = connectionRef.current;
     if (conn?.state === signalR.HubConnectionState.Connected) {
       try {
@@ -218,15 +222,12 @@ export function useNotificationHub(
       } catch (err) {
         console.error('[NotificationHub] MarkNotificationAsRead error:', err);
       }
-    } else {
-      // Optimistic update even if disconnected
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
-      );
     }
   }, []);
 
   const markAllAsRead = useCallback(async () => {
+    // Optimistic update
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     const conn = connectionRef.current;
     if (conn?.state === signalR.HubConnectionState.Connected) {
       try {
@@ -234,8 +235,6 @@ export function useNotificationHub(
       } catch (err) {
         console.error('[NotificationHub] MarkAllNotificationsAsRead error:', err);
       }
-    } else {
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     }
   }, []);
 
