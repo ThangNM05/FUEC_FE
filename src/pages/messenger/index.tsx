@@ -45,6 +45,7 @@ import type {
   MessageDto,
   SignalRMessageDto,
   SignalRConversationDto,
+  MemberAddedEvent,
 } from '@/types/messenger.types';
 import { ConversationType, MessageType, MessageStatus } from '@/types/messenger.types';
 import StudentSidebar from '@/components/layouts/student/StudentSidebar';
@@ -79,6 +80,7 @@ function Messenger() {
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
   const [pendingAttachment, setPendingAttachment] = useState<{ file: File; type: MessageType; previewUrl: string } | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [sendingAttachment, setSendingAttachment] = useState<{ type: MessageType; previewUrl: string } | null>(null);
   const [messagePage, setMessagePage] = useState(1);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
 
@@ -150,6 +152,16 @@ function Messenger() {
 
   const conversations = conversationsData?.items ?? [];
 
+  // ── Sync selectedConversation with latest data from conversations list ──
+  useEffect(() => {
+    if (selectedConversation && conversations.length > 0) {
+      const updated = conversations.find((c) => c.id === selectedConversation.id);
+      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedConversation)) {
+        setSelectedConversation(updated);
+      }
+    }
+  }, [conversations]);
+
   // ── Reset pagination when conversation changes ──
   useEffect(() => {
     setMessagePage(1);
@@ -190,7 +202,7 @@ function Messenger() {
     if (messagePage === 1) {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [localMessages, messagePage]);
+  }, [localMessages, messagePage, sendingAttachment]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight } = e.currentTarget;
@@ -310,6 +322,24 @@ function Messenger() {
     [selectedConversation?.id, refetchConversations]
   );
 
+  const handleMemberRemoved = useCallback(
+    (evt: { conversationId: string; userId: string }) => {
+      if (evt.conversationId === selectedConversation?.id) {
+        refetchConversations();
+      }
+    },
+    [selectedConversation?.id, refetchConversations]
+  );
+
+  const handleMemberAdded = useCallback(
+    (evt: MemberAddedEvent) => {
+      if (evt.conversationId === selectedConversation?.id) {
+        refetchConversations();
+      }
+    },
+    [selectedConversation?.id, refetchConversations]
+  );
+
   const handleUserTyping = useCallback(
     (evt: { userId: string; conversationId: string; isTyping: boolean }) => {
       if (evt.conversationId === selectedConversation?.id && evt.userId !== userId) {
@@ -332,7 +362,8 @@ function Messenger() {
     onNewConversation: handleNewConversation,
     onAddedToConversation: handleAddedToConversation,
     onRemovedFromConversation: handleRemovedFromConversation,
-    onMemberRemoved: () => refetchConversations(),
+    onMemberRemoved: handleMemberRemoved,
+    onMemberAdded: handleMemberAdded,
     onUserTyping: handleUserTyping,
     onMessageDeleted: (evt) => {
       setLocalMessages((prev) => prev.filter((m) => m.id !== evt.messageId));
@@ -390,8 +421,10 @@ function Messenger() {
 
     setMessageInput('');
     setPendingAttachment(null);
+
+    // Show skeleton placeholder while uploading
     if (currentAttachment) {
-      URL.revokeObjectURL(currentAttachment.previewUrl);
+      setSendingAttachment({ type: currentAttachment.type, previewUrl: currentAttachment.previewUrl });
     }
 
     try {
@@ -444,6 +477,10 @@ function Messenger() {
       console.error('Failed to send message:', error);
       alert('Failed to send message');
     } finally {
+      if (currentAttachment) {
+        URL.revokeObjectURL(currentAttachment.previewUrl);
+      }
+      setSendingAttachment(null);
       setIsSending(false);
       setIsCreatingConversation(false);
     }
@@ -887,6 +924,7 @@ function Messenger() {
                                 alt="Shared image"
                                 className="max-w-xs rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
                                 loading="lazy"
+                                onLoad={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
                               />
                             ) : isVideo ? (
                               <video
@@ -923,6 +961,45 @@ function Messenger() {
                       </div>
                     );
                   })
+                )}
+                {/* Sending attachment skeleton */}
+                {sendingAttachment && (
+                  <div className="flex gap-2 justify-end">
+                    <div className="max-w-[70%] flex flex-col items-end">
+                      <span className="text-[11px] font-medium mb-1 px-1 text-gray-400">You</span>
+                      <div className="rounded-2xl overflow-hidden shadow-sm">
+                        {sendingAttachment.type === MessageType.Image ? (
+                          <div className="relative">
+                            <img
+                              src={sendingAttachment.previewUrl}
+                              alt="Sending..."
+                              className="max-w-xs rounded-2xl opacity-50"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-2xl">
+                              <Loader2 className="w-8 h-8 text-white animate-spin" />
+                            </div>
+                          </div>
+                        ) : sendingAttachment.type === MessageType.Video ? (
+                          <div className="relative w-64 h-36 bg-gray-200 rounded-2xl flex items-center justify-center">
+                            <VideoIcon className="w-8 h-8 text-gray-400 absolute" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-2xl">
+                              <Loader2 className="w-8 h-8 text-white animate-spin" />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-2xl opacity-70">
+                            <Paperclip className="w-4 h-4" />
+                            <span className="text-sm">Sending file...</span>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-1 px-1 justify-end">
+                        <span className="text-[10px] text-gray-400">Sending...</span>
+                        <Loader2 className="w-3 h-3 text-gray-400 animate-spin" />
+                      </div>
+                    </div>
+                  </div>
                 )}
                 <div ref={chatEndRef} />
               </div>
