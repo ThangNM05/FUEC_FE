@@ -50,6 +50,13 @@ export const studentCheatLogsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['StudentCheatLogs'],
         }),
+        deleteStudentCheatLog: builder.mutation<void, string>({
+            query: (id) => ({
+                url: `/StudentCheatLogs/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['StudentCheatLogs'],
+        })
     }),
 });
 
@@ -57,4 +64,5 @@ export const {
     useGetStudentCheatLogsQuery,
     useGetStudentCheatLogByIdQuery,
     useCreateStudentCheatLogMutation,
+    useDeleteStudentCheatLogMutation,
 } = studentCheatLogsApi;
