@@ -30,6 +30,21 @@ export interface CreateCurriculumRequest {
     description?: string;
 }
 
+export interface CurriculumSubject {
+    id: string;
+    curriculumId: string;
+    subjectId: string;
+    term: number;
+    curriculumCode?: string;
+    curriculumName?: string;
+    subjectCode?: string;
+    subjectName?: string;
+    subjectCredits?: number;
+    isActive: boolean;
+    createdAt?: string;
+    deletedAt?: string;
+}
+
 export interface UpdateCurriculumRequest {
     id: string;
     name?: string;

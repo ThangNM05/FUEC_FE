@@ -1,6 +1,7 @@
 import { baseApi } from '@/api/baseApi';
 import type {
     Curriculum,
+    CurriculumSubject,
     CreateCurriculumRequest,
     UpdateCurriculumRequest,
     PaginatedResponse
@@ -47,6 +48,14 @@ export const curriculumsApi = baseApi.injectEndpoints({
             query: (id) => `/Curriculums/${id}`,
             transformResponse: (response: any) => response?.result || response,
             providesTags: (_result, _error, id) => [{ type: 'Curriculums', id }],
+        }),
+
+        // GET: Fetch Curriculum Subjects by Curriculum ID
+        getCurriculumSubjects: builder.query<CurriculumSubject[], string>({
+            query: (curriculumId) => `/CurriculumSubjects/curriculum/${curriculumId}`,
+            transformResponse: (response: any) => response?.result || response || [],
+            // Using a new tag type for curriculum subjects tied to curriculum id
+            providesTags: (_result, _error, id) => [{ type: 'Curriculums', id: `subjects-${id}` }],
         }),
 
         // POST: Create
@@ -96,7 +105,8 @@ export const curriculumsApi = baseApi.injectEndpoints({
                 body: formData,
             }),
             transformResponse: (response: any) => response?.result || response,
-            invalidatesTags: ['Curriculums'],
+            // invalidate the specific curriculum subjects list as well
+            invalidatesTags: ['Curriculums', { type: 'Curriculums', id: 'subjects-LIST' }],
         }),
     }),
 });
@@ -104,6 +114,7 @@ export const curriculumsApi = baseApi.injectEndpoints({
 export const {
     useGetCurriculumsQuery,
     useGetCurriculumByIdQuery,
+    useGetCurriculumSubjectsQuery,
     useCreateCurriculumMutation,
     useUpdateCurriculumMutation,
     useDeleteCurriculumMutation,
