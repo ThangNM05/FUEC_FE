@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
 import { Edit, Trash2, BookOpen, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { Spin, Tag } from 'antd';
@@ -27,6 +28,8 @@ function AdminCurriculum() {
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
     const [curriculumToClone, setCurriculumToClone] = useState<Curriculum | null>(null);
+
+    const navigate = useNavigate();
 
     // Pagination State
     const [page, setPage] = useState(1);
@@ -105,6 +108,10 @@ function AdminCurriculum() {
     const handleSearchChange = (term: string) => {
         setSearchTerm(term);
         setPage(1);
+    };
+
+    const handleRowClick = (item: Curriculum) => {
+        navigate(`/admin/settings/curriculum/${item.id}`);
     };
 
     // Table columns
@@ -190,7 +197,10 @@ function AdminCurriculum() {
             align: 'center' as const,
             className: 'w-[100px]',
             render: (item: Curriculum) => (
-                <div className="flex gap-2 justify-center">
+                <div
+                    className="flex gap-2 justify-center"
+                    onClick={(e) => e.stopPropagation()} // Prevent row click when clicking actions
+                >
                     <button
                         className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
                         onClick={() => handleClone(item)}
@@ -248,6 +258,7 @@ function AdminCurriculum() {
                 onImport={() => setIsImportModalOpen(true)}
                 importLabel={isImporting ? 'Importing...' : 'Import Excel'}
                 selectable={true}
+                onRowClick={handleRowClick}
 
                 // Manual Pagination
                 manualPagination={true}

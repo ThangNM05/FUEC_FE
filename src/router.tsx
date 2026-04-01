@@ -19,6 +19,7 @@ import AdminSubjects from './pages/admin/settings/subjects';
 import AdminExamTypes from './pages/admin/settings/exam-types';
 import AdminSemesters from './pages/admin/settings/semesters';
 import AdminCurriculum from './pages/admin/settings/curriculum';
+import CurriculumDetail from './pages/admin/settings/curriculum/[id]';
 import AdminSyllabus from './pages/admin/settings/syllabus';
 // Auth
 import SignInPage from './pages/sign-in';
@@ -81,6 +82,7 @@ function Router() {
         <Route path="/admin/settings/exam-types" element={<AdminExamTypes />} />
         <Route path="/admin/settings/semesters" element={<AdminSemesters />} />
         <Route path="/admin/settings/curriculum" element={<AdminCurriculum />} />
+        <Route path="/admin/settings/curriculum/:id" element={<CurriculumDetail />} />
         <Route path="/admin/settings/syllabus" element={<AdminSyllabus />} />
       </Route>
 
