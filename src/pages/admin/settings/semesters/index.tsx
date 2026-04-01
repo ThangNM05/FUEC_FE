@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 import { Edit, Trash2, CheckCircle2, XCircle, CalendarCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { Modal, Button, Spin } from 'antd';
-import { LoadingOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Button, Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 
 import DataTable from '@/components/shared/DataTable';
 import { useGetSemestersQuery, useDeleteSemesterMutation } from '@/api/semestersApi';
