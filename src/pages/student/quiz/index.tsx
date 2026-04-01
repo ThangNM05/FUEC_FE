@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/redux/authSlice';
 import { Clock, ChevronLeft, ChevronRight, CheckCircle, Loader2, Cloud, CloudOff, Send, AlertTriangle, Check, BookOpen, LogOut, ArrowLeft, Star, GraduationCap } from 'lucide-react';
@@ -517,25 +517,25 @@ export default function QuizTest() {
               const capturedStatus = lastStateRef.current?.status || 'unknown';
 
 
-            (async () => {
-              try {
-                const clip = await recorder?.stop();
-                if (clip && clip.size > 0) {
-                  console.log('[Proctor] Uploading episode clip:', clip.size, 'bytes');
-                  await uploadCheatVideo(clip, capturedStatus, studentCode, classSubject, sExamId);
-                } else {
-                  console.warn('[Proctor] Episode clip was empty or null');
+              (async () => {
+                try {
+                  const clip = await recorder?.stop();
+                  if (clip && clip.size > 0) {
+                    console.log('[Proctor] Uploading episode clip:', clip.size, 'bytes');
+                    await uploadCheatVideo(clip, capturedStatus, studentCode, classSubject, sExamId);
+                  } else {
+                    console.warn('[Proctor] Episode clip was empty or null');
+                  }
+                } catch (err) {
+                  console.warn('[Proctor] Episode upload failed:', err);
                 }
-              } catch (err) {
-                console.warn('[Proctor] Episode upload failed:', err);
-              }
-            })();
-          } else {
+              })();
+            } else {
               // Only suspicious — discard the recording silently
               console.log('[Proctor] Episode was only suspicious — discarding clip');
               recorder?.stop();
+            }
           }
-        }
 
           // Reset state
           cheatStartRef.current = null;

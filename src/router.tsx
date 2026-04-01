@@ -34,6 +34,7 @@ import StudentProfile from './pages/student/profile';
 import QuizTest from './pages/student/quiz';
 import ExamLobby from './pages/student/exam-lobby';
 import StudentSchedule from './pages/student/schedule';
+import PracticeRunner from './pages/student/course-details/PracticeRunner';
 // Teacher Components
 import TeacherLayout from './components/layouts/teacher/TeacherLayout';
 // Teacher Pages
@@ -99,6 +100,7 @@ function Router() {
         <Route path="/student/messages" element={<Navigate to="/messenger" replace />} />
         <Route path="/student/course-details/questions/:id" element={<QuestionDetail />} />
         <Route path="/student/assignment-submission/:id" element={<AssignmentSubmission />} />
+        <Route path="/student/practice-runner/:classSubjectId" element={<PracticeRunner />} />
       </Route>
 
       {/* Teacher Routes with TeacherLayout */}

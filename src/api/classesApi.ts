@@ -12,8 +12,8 @@ export const classesApi = baseApi.injectEndpoints({
             semesterId?: string;
         }>({
             query: ({ page, pageSize, sortColumn, sortDirection, searchTerm, semesterId }) => {
-                const pageNumber = Math.max(1, page);
-                let url = `/classes?PageNumber=${pageNumber}&PageSize=${pageSize}`;
+                const pageIndex = page - 1;
+                let url = `/classes?PageNumber=${pageIndex}&PageSize=${pageSize}`;
 
                 if (semesterId) {
                     url += `&SemesterId=${semesterId}`;

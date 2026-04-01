@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { skipToken } from '@reduxjs/toolkit/query/react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     ChevronRight, ChevronLeft, Save, Plus,
     FileQuestion, Clock, Shield, Globe, Hash, Tag, Calendar, Eye, Lock, Wifi
@@ -90,9 +91,7 @@ function CreateExam() {
     const [createExam, { isLoading: isCreating }] = useCreateExamMutation();
 
     // Fetch progress based on slots
-    const { data: slotData } = useGetClassSubjectSlotsQuery({ id: courseId }, {
-        skip: !courseId,
-    });
+    const { data: slotData } = useGetClassSubjectSlotsQuery(courseId ? { id: courseId } : skipToken);
 
     const { currentChapterProgress, totalSubjectChapters } = useMemo(() => {
         if (!slotData?.slots) return { currentChapterProgress: 1, totalSubjectChapters: 1 };

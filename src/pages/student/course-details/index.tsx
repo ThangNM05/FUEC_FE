@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { ArrowLeft, FileText, Calendar, ChevronDown, ChevronUp, Download, BookOpen, Lock, CheckCircle, Clock, Loader2, Play } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/redux/authSlice';
 import { useGetClassSubjectSlotsQuery, useGetClassSubjectByIdQuery } from '@/api/classDetailsApi';
@@ -11,6 +11,7 @@ import { useGetStudentClassesQuery } from '@/api/studentsApi';
 import { useGetCourseMaterialsByClassSubjectIdQuery } from '@/api/courseMaterialsApi';
 import type { Assignment, StudentAssignment } from '@/types/assignment.types';
 import StudentSlotContent from './StudentSlotContent';
+import PracticeSection from './PracticeSection';
 
 interface Question {
   id: number;
@@ -224,8 +225,8 @@ function CourseDetails() {
     const unanswered = totalQ - answeredQ;
 
     const calculatedEndTime = (i + 1 < slotsData.slots.length && slotsData.slots[i + 1].date)
-        ? slotsData.slots[i + 1].date
-        : new Date(new Date(slot.date).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
+      ? slotsData.slots[i + 1].date
+      : new Date(new Date(slot.date).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
     const now_fe = new Date();
     const start_fe = new Date(slot.date);
@@ -282,44 +283,44 @@ function CourseDetails() {
   // Auto-scroll — use FE-processed slots with correct timezone status
   useEffect(() => {
     if (slots.length > 0 && !hasScrolledRef.current) {
-        // Find first active (urgent) slot, then first upcoming (locked), fallback to last
-        let targetIdx = slots.findIndex((s: any) => s.status === 'urgent');
-        if (targetIdx === -1) {
-            targetIdx = slots.findIndex((s: any) => s.status === 'overdue');
-        }
-        if (targetIdx === -1) {
-            targetIdx = slots.findIndex((s: any) => s.status === 'locked');
-        }
-        if (targetIdx === -1) {
-            targetIdx = slots.length - 1;
-        }
+      // Find first active (urgent) slot, then first upcoming (locked), fallback to last
+      let targetIdx = slots.findIndex((s: any) => s.status === 'urgent');
+      if (targetIdx === -1) {
+        targetIdx = slots.findIndex((s: any) => s.status === 'overdue');
+      }
+      if (targetIdx === -1) {
+        targetIdx = slots.findIndex((s: any) => s.status === 'locked');
+      }
+      if (targetIdx === -1) {
+        targetIdx = slots.length - 1;
+      }
 
-        const finalIdx = targetIdx !== -1 ? targetIdx : 0;
-        const targetPage = Math.floor(finalIdx / SLOTS_PER_PAGE) + 1;
+      const finalIdx = targetIdx !== -1 ? targetIdx : 0;
+      const targetPage = Math.floor(finalIdx / SLOTS_PER_PAGE) + 1;
 
-        if (targetPage !== currentPage) {
-            setCurrentPage(targetPage);
-        }
+      if (targetPage !== currentPage) {
+        setCurrentPage(targetPage);
+      }
 
-        const targetSlot = slots[finalIdx];
-        if (targetSlot) {
-            targetSlotIdRef.current = targetSlot.id;
-            setExpandedSlots(prev => ({ ...prev, [targetSlot.id]: true }));
-        }
-        hasScrolledRef.current = true;
+      const targetSlot = slots[finalIdx];
+      if (targetSlot) {
+        targetSlotIdRef.current = targetSlot.id;
+        setExpandedSlots(prev => ({ ...prev, [targetSlot.id]: true }));
+      }
+      hasScrolledRef.current = true;
     }
   }, [slots.length, currentPage]);
 
   useEffect(() => {
     if (targetSlotIdRef.current) {
-        const timer = setTimeout(() => {
-            const element = document.getElementById(`slot-${targetSlotIdRef.current}`);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                targetSlotIdRef.current = null;
-            }
-        }, 300);
-        return () => clearTimeout(timer);
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`slot-${targetSlotIdRef.current}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          targetSlotIdRef.current = null;
+        }
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [currentPage, slots.length]);
 
@@ -606,7 +607,6 @@ function CourseDetails() {
               </div>
             )}
           </div>
-
           {isError && (
             <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center mb-4">
               Failed to load slots data. Please try again.
@@ -624,58 +624,57 @@ function CourseDetails() {
                         'border-gray-200'
                   }`}>
                   {/* Slot Header */}
-                  <div className={`p-4 ${
-                    slot.status === 'overdue' ? 'bg-red-50' :
-                      slot.status === 'urgent' ? 'bg-orange-50' :
-                        slot.status === 'completed' ? 'bg-green-50' :
-                          'bg-gray-50'
+                  <div className={`p-4 ${slot.status === 'overdue' ? 'bg-red-50' :
+                    slot.status === 'urgent' ? 'bg-orange-50' :
+                      slot.status === 'completed' ? 'bg-green-50' :
+                        'bg-gray-50'
                     }`}>
                     <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className={`px-3 py-1 text-sm font-semibold rounded-full flex items-center gap-2 ${slot.status === 'locked' ? 'bg-gray-200 text-gray-500' :
-                            slot.status === 'overdue' ? 'bg-red-100 text-red-700' :
-                              slot.status === 'urgent' ? 'bg-orange-100 text-orange-700' :
-                                slot.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                  'bg-blue-100 text-blue-700'
-                            }`}>
-                            <span>{slot.title}</span>
-                          </div>
-                          {slot.status === 'locked' && (
-                             <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 uppercase tracking-tight">
-                               Upcoming
-                             </span>
-                          )}
-                           {slot.status === 'completed' && (
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                          )}
-                          {slot.status === 'urgent' && (
-                            <div className="flex items-center gap-2">
-                                <SlotCountdown
-                                  startTime={(slot as any).rawStartTime}
-                                  endTime={(slot as any).countdownEndTime}
-                                  status={(slot as any)._feStatus}
-                                  onFinished={() => refetchSlots()}
-                                />
-                                {((slot as any)._totalQuestions - (slot as any)._passedQuestions) > 0 && (
-                                    <span className="text-[11px] font-bold text-orange-600 bg-orange-100/50 px-2 py-0.5 rounded border border-orange-200 uppercase">
-                                       You need to answer {((slot as any)._totalQuestions - (slot as any)._passedQuestions)} more questions
-                                    </span>
-                                )}
-                            </div>
-                          )}
-                          {slot.status === 'overdue' && (
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-red-600 font-bold uppercase border border-red-200 bg-red-50 px-2 py-0.5 rounded">
-                                    OVERDUE
-                                </span>
-                                {((slot as any)._totalQuestions - (slot as any)._passedQuestions) > 0 && (
-                                    <span className="text-[11px] font-bold text-red-600 bg-red-100/50 px-2 py-0.5 rounded border border-red-200 uppercase">
-                                       You need to answer {((slot as any)._totalQuestions - (slot as any)._passedQuestions)} more questions
-                                    </span>
-                                )}
-                            </div>
-                          )}
+                      <div className="flex items-center gap-2">
+                        <div className={`px-3 py-1 text-sm font-semibold rounded-full flex items-center gap-2 ${slot.status === 'locked' ? 'bg-gray-200 text-gray-500' :
+                          slot.status === 'overdue' ? 'bg-red-100 text-red-700' :
+                            slot.status === 'urgent' ? 'bg-orange-100 text-orange-700' :
+                              slot.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                'bg-blue-100 text-blue-700'
+                          }`}>
+                          <span>{slot.title}</span>
                         </div>
+                        {slot.status === 'locked' && (
+                          <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded border border-gray-200 uppercase tracking-tight">
+                            Upcoming
+                          </span>
+                        )}
+                        {slot.status === 'completed' && (
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                        )}
+                        {slot.status === 'urgent' && (
+                          <div className="flex items-center gap-2">
+                            <SlotCountdown
+                              startTime={(slot as any).rawStartTime}
+                              endTime={(slot as any).countdownEndTime}
+                              status={(slot as any)._feStatus}
+                              onFinished={() => refetchSlots()}
+                            />
+                            {((slot as any)._totalQuestions - (slot as any)._passedQuestions) > 0 && (
+                              <span className="text-[11px] font-bold text-orange-600 bg-orange-100/50 px-2 py-0.5 rounded border border-orange-200 uppercase">
+                                You need to answer {((slot as any)._totalQuestions - (slot as any)._passedQuestions)} more questions
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {slot.status === 'overdue' && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-red-600 font-bold uppercase border border-red-200 bg-red-50 px-2 py-0.5 rounded">
+                              OVERDUE
+                            </span>
+                            {((slot as any)._totalQuestions - (slot as any)._passedQuestions) > 0 && (
+                              <span className="text-[11px] font-bold text-red-600 bg-red-100/50 px-2 py-0.5 rounded border border-red-200 uppercase">
+                                You need to answer {((slot as any)._totalQuestions - (slot as any)._passedQuestions)} more questions
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <button
                         onClick={() => toggleSlot(slot.id)}
                         className="p-1 hover:bg-gray-200 rounded transition-colors"
@@ -751,6 +750,16 @@ function CourseDetails() {
           </div>
         </div>
 
+        {/* Practice Selection */}
+        <div id="practice" className="bg-white rounded-xl border border-gray-200 p-6 pb-8 mb-6 scroll-mt-6">
+          <h2 className="text-xl font-bold text-[#0A1B3C] mb-4">Self-study Practice</h2>
+          <PracticeSection
+            classSubjectId={classSubjectId || ''}
+            subjectCode={course.code}
+            subjectId={classSubjectData?.subjectId || ''}
+          />
+        </div>
+
       </div>
 
       {/* Right Sidebar Navigation */}
@@ -787,6 +796,16 @@ function CourseDetails() {
                   }`}
               >
                 Learning Materials
+              </button>
+
+              <button
+                onClick={() => scrollToSection('practice')}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeSection === 'practice'
+                  ? 'bg-orange-50 text-[#F37022]'
+                  : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+              >
+                Subject Practice
               </button>
 
               {/* Slot Contents with Dropdown */}
