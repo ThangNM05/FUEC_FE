@@ -19,7 +19,7 @@ const STORAGE_KEY = 'fuec_active_exam';
 
 interface SavedExamState {
   studentExamId: string;
-  answers: Record<string, string>;
+  answers: Record<string, string[]>;
   timeLeftSeconds: number;
   savedAt: number;
   starred: Record<string, boolean>;
@@ -210,7 +210,7 @@ export default function QuizTest() {
 
   // ── State ──
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [starred, setStarred] = useState<Record<string, boolean>>({});
   const [savingStatus, setSavingStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -612,10 +612,12 @@ export default function QuizTest() {
       }
       setTimeLeft(initialTime);
 
-      const dbAnswers: Record<string, string> = {};
+      const dbAnswers: Record<string, string[]> = {};
       examData.questions.forEach((q) => {
-        if (q.choiceId) {
-          dbAnswers[q.id] = q.choiceId;
+        if (q.choiceIds && q.choiceIds.length > 0) {
+          dbAnswers[q.id] = q.choiceIds;
+        } else if (q.choiceId) {
+          dbAnswers[q.id] = [q.choiceId];
         }
       });
       if (Object.keys(dbAnswers).length > 0) {
@@ -664,15 +666,15 @@ export default function QuizTest() {
 
   // ── Save answer to API ──
   const handleAnswer = useCallback(
-    async (questionId: string, optionId: string) => {
-      setAnswers((prev) => ({ ...prev, [questionId]: optionId }));
+    async (questionId: string, newOptionIds: string[], questionType: number) => {
+      setAnswers((prev) => ({ ...prev, [questionId]: newOptionIds }));
       setSavingStatus('saving');
 
       try {
         await createAnswer({
           studentExamId,
           questionId,
-          choiceId: optionId,
+          ...(questionType === 1 ? { choiceIds: newOptionIds } : { choiceId: newOptionIds[0] }),
         }).unwrap();
         setSavingStatus('saved');
         setTimeout(() => setSavingStatus('idle'), 2000);
@@ -835,7 +837,7 @@ export default function QuizTest() {
                     </p>
                     <p className="text-sm font-bold text-[#0A1B3C]">
                       {isPublic
-                        ? `${Object.keys(answers).length || (examData?.questions?.filter((q) => q.choiceId).length ?? 0)} / ${questions.length} Questions Answered`
+                        ? `${Object.keys(answers).length || (examData?.questions?.filter((q) => q.choiceId || (q.choiceIds && q.choiceIds.length > 0)).length ?? 0)} / ${questions.length} Questions Answered`
                         : 'Your grade will be public soon.'}
                     </p>
                   </div>
@@ -1028,7 +1030,7 @@ export default function QuizTest() {
 
                     <div className="grid grid-cols-5 gap-2">
                       {questions.map((q, index) => {
-                        const isAnswered = answers[q.id] !== undefined;
+                        const isAnswered = answers[q.id] !== undefined && answers[q.id].length > 0;
                         const isStarred = starred[q.id];
                         const isCurrent = currentQuestion === index;
                         return (
@@ -1111,27 +1113,38 @@ export default function QuizTest() {
                       <h3 className="text-xl font-bold text-[#0A1B3C] leading-relaxed">{q.questionContent}</h3>
                     </div>
                     <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1 ml-4 whitespace-nowrap">
-                      Single Choice
+                      {q.questionType === 1 ? 'Multiple Choice' : 'Single Choice'}
                     </span>
                   </div>
 
                   <div className="space-y-4">
                     {q.options.map((option, oIdx) => {
-                      const isSelected = answers[q.id] === option.id;
+                      const isSelected = answers[q.id]?.includes(option.id);
                       return (
                         <button
                           key={option.id}
                           onClick={() => {
-                            handleAnswer(q.id, option.id);
+                            const existing = answers[q.id] || [];
+                            let newOptionIds: string[] = [];
+                            if (q.questionType === 1) {
+                              if (existing.includes(option.id)) {
+                                newOptionIds = existing.filter(id => id !== option.id);
+                              } else {
+                                newOptionIds = [...existing, option.id];
+                              }
+                            } else {
+                              newOptionIds = [option.id];
+                            }
+                            handleAnswer(q.id, newOptionIds, q.questionType);
                           }}
                           className={`group w-full flex items-center gap-4 p-5 text-left rounded-xl border-2 transition-all duration-200 ${isSelected ? 'border-[#F37022] bg-[#F37022]/5' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
                             }`}
                         >
                           <div
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-[#F37022] bg-[#F37022]' : 'border-gray-200 group-hover:border-gray-300'
+                            className={`w-6 h-6 ${q.questionType === 1 ? 'rounded-md' : 'rounded-full'} border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-[#F37022] bg-[#F37022]' : 'border-gray-200 group-hover:border-gray-300'
                               }`}
                           >
-                            {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />}
+                            {isSelected && <div className={`w-2.5 h-2.5 ${q.questionType === 1 ? 'rounded-sm' : 'rounded-full'} bg-white shadow-sm`} />}
                           </div>
                           <span className="text-base font-semibold text-[#0A1B3C] flex items-start gap-3">
                             <span className="text-gray-400 font-bold">{String.fromCharCode(65 + oIdx)}.</span>

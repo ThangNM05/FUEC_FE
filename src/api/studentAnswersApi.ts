@@ -3,7 +3,8 @@ import { baseApi } from './baseApi';
 export interface CreateStudentAnswerDto {
     studentExamId: string;
     questionId: string;
-    choiceId: string;
+    choiceId?: string;
+    choiceIds?: string[];
 }
 
 export const studentAnswersApi = baseApi.injectEndpoints({

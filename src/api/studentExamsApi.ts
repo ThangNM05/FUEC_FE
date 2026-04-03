@@ -18,6 +18,7 @@ export interface QuizQuestion {
     options: QuizOption[];
     studentAnswerId?: string;
     choiceId?: string;
+    choiceIds?: string[];
 }
 
 export interface StudentExam {
@@ -68,6 +69,7 @@ const normalizeStudentExam = (data: any): StudentExam => {
             })),
             studentAnswerId: q.studentAnswerId || q.StudentAnswerId,
             choiceId: q.choiceId || q.ChoiceId,
+            choiceIds: q.choiceIds || q.ChoiceIds,
         })),
     };
 };
