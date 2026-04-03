@@ -17,9 +17,14 @@ const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions }) => {
             </h2>
             
             {questions.map((q, index) => {
-                const studentChoiceId = q.choiceId;
-                const correctOption = q.options?.find((o: any) => o.isCorrect);
-                const isCorrect = studentChoiceId === correctOption?.id;
+                const studentChoiceIds = q.choiceIds || (q.choiceId ? [q.choiceId] : []);
+                const correctOptions = q.options?.filter((o: any) => o.isCorrect) || [];
+                const correctOptionIds = correctOptions.map((o: any) => o.id);
+                
+                const isAnswered = studentChoiceIds.length > 0;
+                const isCorrect = isAnswered && 
+                    studentChoiceIds.length === correctOptionIds.length && 
+                    studentChoiceIds.every((id: string) => correctOptionIds.includes(id));
 
                 return (
                     <div key={q.id || index} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -28,7 +33,7 @@ const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions }) => {
                                 <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full uppercase tracking-wider">
                                     Question {index + 1}
                                 </span>
-                                {studentChoiceId ? (
+                                {isAnswered ? (
                                     isCorrect ? (
                                         <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
                                             <Check className="w-3.5 h-3.5" /> Correct
@@ -52,7 +57,7 @@ const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions }) => {
 
                         <div className="space-y-3">
                             {q.options?.map((option: any, oIdx: number) => {
-                                const isSelected = studentChoiceId === option.id;
+                                const isSelected = studentChoiceIds.includes(option.id);
                                 const isCorrectOption = option.isCorrect;
                                 
                                 let borderClass = 'border-gray-100';
@@ -68,21 +73,23 @@ const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions }) => {
                                         borderClass = 'border-red-500 bg-red-50/50';
                                         icon = <X className="w-4 h-4 text-red-600" />;
                                     }
-                                } else if (isCorrectOption && studentChoiceId) {
+                                } else if (isCorrectOption && isAnswered) {
                                     // Highlight the correct answer if student chose wrong
                                     borderClass = 'border-green-200 bg-green-50/30';
                                     icon = <Check className="w-4 h-4 text-green-400" />;
                                 }
+
+                                const isMulti = correctOptionIds.length > 1;
 
                                 return (
                                     <div
                                         key={option.id}
                                         className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${borderClass} ${bgClass}`}
                                     >
-                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                        <div className={`w-6 h-6 ${isMulti ? 'rounded-md' : 'rounded-full'} border-2 flex items-center justify-center flex-shrink-0 ${
                                             isSelected ? (isCorrectOption ? 'border-green-500 bg-green-500' : 'border-red-500 bg-red-500') : 'border-gray-200'
                                         }`}>
-                                            {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                                            {isSelected && <div className={`w-2 h-2 ${isMulti ? 'rounded-sm' : 'rounded-full'} bg-white`} />}
                                         </div>
                                         <div className="flex-1 flex items-center justify-between">
                                             <span className={`text-sm font-semibold ${textClass} flex items-start gap-2`}>

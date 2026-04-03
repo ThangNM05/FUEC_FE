@@ -9,8 +9,9 @@ export interface QuestionData {
     difficulty: 'easy' | 'medium' | 'hard';
     tags: string[];
     options?: string[];
-    correctAnswer?: number; // index of correct option
+    correctAnswers?: number[]; // an array of indices of correct options
     chapter: number;
+    rawOptions?: any[];
 }
 
 interface QuestionModalProps {
@@ -26,7 +27,7 @@ const emptyQuestion: QuestionData = {
     difficulty: 'medium',
     tags: [],
     options: ['', ''],
-    correctAnswer: 0,
+    correctAnswers: [0],
     chapter: 1,
 };
 
@@ -42,7 +43,7 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
             setForm({
                 ...editData,
                 options: editData.options || ['', ''],
-                correctAnswer: editData.correctAnswer ?? 0,
+                correctAnswers: editData.correctAnswers ?? [0],
             });
         } else {
             setForm({ ...emptyQuestion, options: ['', ''] });
@@ -71,7 +72,7 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
         onSave({
             ...form,
             options: form.options,
-            correctAnswer: form.correctAnswer,
+            correctAnswers: form.correctAnswers,
         });
     };
 
@@ -83,10 +84,13 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
         setForm(f => {
             const opts = [...(f.options || [])];
             opts.splice(idx, 1);
-            let correct = f.correctAnswer ?? 0;
-            if (correct >= opts.length) correct = 0;
-            if (correct === idx) correct = 0;
-            return { ...f, options: opts, correctAnswer: correct };
+            let correct = f.correctAnswers ? [...f.correctAnswers] : [];
+            // remove this index from correctAnswers
+            correct = correct.filter(c => c !== idx);
+            // shift indices that are greater than idx
+            correct = correct.map(c => c > idx ? c - 1 : c);
+            if (correct.length === 0 && opts.length > 0) correct = [0];
+            return { ...f, options: opts, correctAnswers: correct };
         });
     };
 
@@ -167,12 +171,22 @@ export default function QuestionModal({ isOpen, onClose, onSave, editData }: Que
                                 <div key={idx} className="flex items-center gap-2">
                                     <button
                                         type="button"
-                                        onClick={() => setForm(f => ({ ...f, correctAnswer: idx }))}
-                                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold border-2 transition-all ${form.correctAnswer === idx
+                                        onClick={() => setForm(f => {
+                                            const current = f.correctAnswers || [];
+                                            let newCorrect = [];
+                                            if (current.includes(idx)) {
+                                                newCorrect = current.filter(c => c !== idx);
+                                            } else {
+                                                newCorrect = [...current, idx];
+                                            }
+                                            if (newCorrect.length === 0) newCorrect = current; // prevent unselecting all
+                                            return { ...f, correctAnswers: newCorrect };
+                                        })}
+                                        className={`w-8 h-8 ${form.correctAnswers?.includes(idx) ? 'rounded-md' : 'rounded-full'} flex items-center justify-center flex-shrink-0 text-sm font-bold border-2 transition-all ${form.correctAnswers?.includes(idx)
                                             ? 'bg-green-500 border-green-500 text-white'
                                             : 'border-gray-300 text-gray-400 hover:border-green-400'
                                             }`}
-                                        title={form.correctAnswer === idx ? 'Correct answer' : 'Mark as correct'}
+                                        title={form.correctAnswers?.includes(idx) ? 'Correct answer' : 'Mark as correct'}
                                     >
                                         {String.fromCharCode(65 + idx)}
                                     </button>

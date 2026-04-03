@@ -40,7 +40,7 @@ interface Question {
     difficulty: 'easy' | 'medium' | 'hard';
     tags: string[];
     options?: string[];
-    correctAnswer?: number;
+    correctAnswers?: number[];
     createdAt: string;
     chapter: number;
 }
@@ -145,13 +145,13 @@ function AdminQuestionBankDetail() {
     const questions: Question[] = (questionsData?.items || []).map((q) => {
         const options = q.options || [];
         const tags = q.tag ? q.tag.split(',').map((t: string) => t.trim()) : [];
-        const correctIndex = options.findIndex((o: any) => o.isCorrect);
+        const correctAnswers = options.map((o: any, idx: number) => o.isCorrect ? idx : -1).filter((i: number) => i !== -1);
         return {
             id: q.id,
             content: q.questionContent,
             tags,
             options: options.map((o: any) => o.choiceContent || ''),
-            correctAnswer: correctIndex >= 0 ? correctIndex : undefined,
+            correctAnswers: correctAnswers,
             createdAt: q.createdAt,
             chapter: q.chapter || 1,
             rawOptions: options,
@@ -191,7 +191,7 @@ function AdminQuestionBankDetail() {
             content: q.content,
             tags: q.tags,
             options: q.options,
-            correctAnswer: q.correctAnswer,
+            correctAnswers: q.correctAnswers,
             chapter: q.chapter,
             rawOptions: q.rawOptions,
         } as any);
@@ -202,18 +202,20 @@ function AdminQuestionBankDetail() {
         try {
             const mappedOptions =
                 data.options?.map((optContent: string, index: number) => {
-                    const isCorrect = data.correctAnswer === index;
+                    const isCorrect = data.correctAnswers?.includes(index) ?? false;
                     const existingOpt = data.rawOptions?.[index];
                     if (existingOpt) return { id: existingOpt.id, choiceContent: optContent, isCorrect };
                     return { choiceContent: optContent, isCorrect };
                 }) || [];
+
+            const questionType = data.correctAnswers && data.correctAnswers.length > 1 ? 1 : 0;
 
             if (data.id) {
                 await updateQuestion({
                     id: data.id,
                     body: {
                         questionContent: data.content,
-                        questionType: 0,
+                        questionType: questionType,
                         tag: data.tags.join(','),
                         points: 1.0,
                         chapter: data.chapter,
@@ -224,7 +226,7 @@ function AdminQuestionBankDetail() {
                 if (!actualSubjectId) return;
                 await createQuestion({
                     questionContent: data.content,
-                    questionType: 0,
+                    questionType: questionType,
                     subjectId: actualSubjectId,
                     tag: data.tags.join(','),
                     points: 1.0,

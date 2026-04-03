@@ -101,7 +101,7 @@ export default function PracticeRunner() {
         [classSubjectId, partIndex, subjectId]);
 
     const [currentPage, setCurrentPage] = useState(0);
-    const [userAnswers, setUserAnswers] = useState<Record<string, string>>(() => {
+    const [userAnswers, setUserAnswers] = useState<Record<string, string[]>>(() => {
         const saved = localStorage.getItem(progressKey);
         return saved ? JSON.parse(saved) : {};
     });
@@ -135,16 +135,35 @@ export default function PracticeRunner() {
     }, [questions, currentPage]);
 
     const handleSelectOption = (questionId: string, optionId: string) => {
-        if (userAnswers[questionId]) return; // Already answered
-        setUserAnswers(prev => ({ ...prev, [questionId]: optionId }));
+        const question = questions.find(q => q.id === questionId);
+        if (!question) return;
+
+        const correctOptionsCount = question.options.filter((o: any) => o.isCorrect).length;
+        const isMultipleChoice = correctOptionsCount > 1;
+
+        setUserAnswers(prev => {
+            const currentAnswers = prev[questionId] || [];
+            
+            if (isMultipleChoice) {
+                if (currentAnswers.includes(optionId)) {
+                    return { ...prev, [questionId]: currentAnswers.filter(id => id !== optionId) };
+                } else {
+                    return { ...prev, [questionId]: [...currentAnswers, optionId] };
+                }
+            } else {
+                return { ...prev, [questionId]: [optionId] };
+            }
+        });
     };
 
     const calculateScore = () => {
         let correct = 0;
         questions.forEach(q => {
-            const selected = userAnswers[q.id];
-            const correctOption = q.options.find(o => o.isCorrect);
-            if (selected === correctOption?.id) {
+            const selected = userAnswers[q.id] || [];
+            const correctOptionIds = q.options.filter((o: any) => o.isCorrect).map((o: any) => o.id);
+            
+            if (selected.length === correctOptionIds.length && 
+                selected.every(id => correctOptionIds.includes(id))) {
                 correct++;
             }
         });
@@ -276,12 +295,17 @@ export default function PracticeRunner() {
                 <div className="max-w-4xl mx-auto space-y-12 pb-24">
                     {currentQuestions.map((question, qIdx) => {
                         const globalIdx = currentPage * QUESTIONS_PER_PAGE + qIdx;
-                        const selectedOptionId = userAnswers[question.id];
-                        const isAnswered = !!selectedOptionId;
-                        const correctOption = question.options.find(o => o.isCorrect);
-                        const isCorrect = isAnswered && selectedOptionId === correctOption?.id;
+                        const selectedOptionIds = userAnswers[question.id] || [];
+                        const isAnswered = selectedOptionIds.length > 0;
+                        const correctOptionIds = question.options.filter((o: any) => o.isCorrect).map((o: any) => o.id);
+                        const isCorrect = isAnswered && 
+                            selectedOptionIds.length === correctOptionIds.length && 
+                            selectedOptionIds.every(id => correctOptionIds.includes(id));
 
-                        const studentAnswerText = question.options.find(o => o.id === selectedOptionId)?.choiceContent || '';
+                        const studentAnswerText = question.options
+                            .filter((o: any) => selectedOptionIds.includes(o.id))
+                            .map((o: any) => o.choiceContent)
+                            .join(', ');
 
                         return (
                             <div
@@ -312,8 +336,8 @@ export default function PracticeRunner() {
 
                                 {/* Options Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {question.options.map((option) => {
-                                        const isSelected = selectedOptionId === option.id;
+                                    {question.options.map((option: any) => {
+                                        const isSelected = selectedOptionIds.includes(option.id);
                                         const isThisCorrect = option.isCorrect;
 
                                         let variantClasses = "border-gray-100 bg-gray-50/50 hover:border-[#F37022] hover:bg-orange-50/30";
@@ -331,11 +355,19 @@ export default function PracticeRunner() {
                                         return (
                                             <button
                                                 key={option.id}
-                                                disabled={isAnswered}
                                                 onClick={() => handleSelectOption(question.id, option.id)}
                                                 className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center justify-between group relative overflow-hidden ${variantClasses}`}
                                             >
-                                                <span className="relative z-10">{option.choiceContent}</span>
+                                                <div className="flex items-center gap-3 relative z-10 w-full">
+                                                    <div className={`w-5 h-5 flex-shrink-0 border flex items-center justify-center transition-colors ${question.options.filter((o: any) => o.isCorrect).length > 1 ? 'rounded-md' : 'rounded-full'
+                                                        } ${isSelected
+                                                            ? isAnswered ? (isThisCorrect ? 'bg-green-500 border-green-500' : 'bg-red-500 border-red-500') : 'bg-[#F37022] border-[#F37022]'
+                                                            : 'border-gray-300 bg-white'
+                                                        }`}>
+                                                        {isSelected && <div className={`w-2 h-2 bg-white ${question.options.filter((o: any) => o.isCorrect).length > 1 ? 'rounded-sm' : 'rounded-full'}`} />}
+                                                    </div>
+                                                    <span className="flex-1">{option.choiceContent}</span>
+                                                </div>
                                                 {isAnswered && isThisCorrect && <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 relative z-10" />}
                                                 {isAnswered && isSelected && !isThisCorrect && <XCircle className="w-5 h-5 text-red-600 shrink-0 relative z-10" />}
                                             </button>
@@ -347,7 +379,7 @@ export default function PracticeRunner() {
                                 {isAnswered && (
                                     <QuestionAIExplanation
                                         question={question.questionContent}
-                                        correctAnswer={correctOption?.choiceContent || ''}
+                                        correctAnswer={question.options.filter((o: any) => o.isCorrect).map((o: any) => o.choiceContent).join(', ')}
                                         studentAnswer={studentAnswerText}
                                     />
                                 )}
