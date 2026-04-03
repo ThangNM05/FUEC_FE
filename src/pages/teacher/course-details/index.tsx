@@ -9,7 +9,8 @@ import { Modal } from 'antd';
 import {
     useGetClassSubjectByIdQuery,
     useGetClassSubjectSlotsQuery,
-    useGetStudentClassesByClassIdQuery
+    useGetStudentClassesByClassIdQuery,
+    useLazyExportGradesQuery
 } from '@/api/classDetailsApi';
 import { useGetExamsByClassSubjectIdQuery, useDeleteExamMutation } from '@/api/examsApi';
 import { useGetAssignmentsByClassSubjectIdQuery, useDeleteAssignmentMutation } from '@/api/assignmentsApi';
@@ -30,6 +31,7 @@ import ExamParticipantsModal from '@/components/modals/ExamParticipantsModal';
 import ZipFolderBrowser from '@/components/ZipFolderBrowser';
 import MaterialFilePreview from '@/components/MaterialFilePreview';
 import CloneConfigModal from '@/components/modals/CloneConfigModal';
+import UploadMaterialModal from '@/components/modals/UploadMaterialModal';
 
 type SlotAssignment = Assignment;
 
@@ -66,6 +68,27 @@ function TeacherCourseDetails() {
     const [isEditAssignmentModalOpen, setIsEditAssignmentModalOpen] = useState(false);
     const [assignmentToEdit, setAssignmentToEdit] = useState<Assignment | null>(null);
 
+    const [triggerExportGrades, { isLoading: isExporting }] = useLazyExportGradesQuery();
+
+    const handleExportGrades = async () => {
+        if (!courseId) return;
+        try {
+            const blob = await triggerExportGrades(courseId).unwrap();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Grades_${classSubject?.classCode || ''}_${classSubject?.subjectCode || ''}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success('Grades exported successfully');
+        } catch (error) {
+            console.error('Failed to export grades:', error);
+            toast.error('Failed to export grades. Please try again.');
+        }
+    };
+
     // Slot Question Create State
     const [isCreateQuestionModalOpen, setIsCreateQuestionModalOpen] = useState(false);
     const [createQuestionSlotInfo, setCreateQuestionSlotInfo] = useState<{ id: string; title: string; topics?: string[] } | null>(null);
@@ -82,6 +105,8 @@ function TeacherCourseDetails() {
     const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
     const [selectedParticipantsExam, setSelectedParticipantsExam] = useState<Exam | null>(null);
     const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+    const [isUploadMaterialModalOpen, setIsUploadMaterialModalOpen] = useState(false);
+    const [selectedMaterialFiles, setSelectedMaterialFiles] = useState<File[]>([]);
 
     const handleOpenCreateAssignment = (slotInfo: any) => {
         setCreateAssignmentSlotInfo(slotInfo);
@@ -289,48 +314,48 @@ function TeacherCourseDetails() {
                     : new Date(new Date(s.date).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
                 return {
-                id: s.id,
-                title: `Slot ${s.slotIndex}`,
-                startTime: new Date(s.date).toLocaleString('en-GB', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                }),
-                endTime: new Date(calculatedEndTime).toLocaleString('en-GB', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                }),
-                topics: s.sessions?.map((session: any) => session.topic) || [],
-                // Filter assignments matching this slotId (or falling back to instanceNumber regex logic if needed)
-                assignments: (() => {
-                    return (assignmentsData?.items || [])
-                        .filter((a: any) => a.slotId === s.id)
-                        .map((a: any) => ({
-                            ...a,
-                            fileUrl: a.fileUrl || a.filePaths?.[0] || ''
-                        }));
-                })(),
-                progressTests: (() => {
-                    return (examsData?.items || [])
-                        .filter((e: any) => e.slotId === s.id);
-                })(),
-                expanded: i === finalTargetIdx,
-                isAssessment: s.sessions?.some((sess: any) =>
-                    sess.isAssessment ||
-                    /\b(Progress Test|PT|Examination|Final Exam|Exam|Quiz|Test)\b/i.test(sess.topic)
-                ) || false,
-                slotIndex: s.slotIndex,
-                status: s.status,
-                hasQuestions: !!s.hasQuestions,
-                rawStartTime: s.date,
-                rawEndTime: calculatedEndTime
-            };
-        }));
+                    id: s.id,
+                    title: `Slot ${s.slotIndex}`,
+                    startTime: new Date(s.date).toLocaleString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    }),
+                    endTime: new Date(calculatedEndTime).toLocaleString('en-GB', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    }),
+                    topics: s.sessions?.map((session: any) => session.topic) || [],
+                    // Filter assignments matching this slotId (or falling back to instanceNumber regex logic if needed)
+                    assignments: (() => {
+                        return (assignmentsData?.items || [])
+                            .filter((a: any) => a.slotId === s.id)
+                            .map((a: any) => ({
+                                ...a,
+                                fileUrl: a.fileUrl || a.filePaths?.[0] || ''
+                            }));
+                    })(),
+                    progressTests: (() => {
+                        return (examsData?.items || [])
+                            .filter((e: any) => e.slotId === s.id);
+                    })(),
+                    expanded: i === finalTargetIdx,
+                    isAssessment: s.sessions?.some((sess: any) =>
+                        sess.isAssessment ||
+                        /\b(Progress Test|PT|Examination|Final Exam|Exam|Quiz|Test)\b/i.test(sess.topic)
+                    ) || false,
+                    slotIndex: s.slotIndex,
+                    status: s.status,
+                    hasQuestions: !!s.hasQuestions,
+                    rawStartTime: s.date,
+                    rawEndTime: calculatedEndTime
+                };
+            }));
         }
     }, [slotData, assignmentsData, examsData]);
 
@@ -485,6 +510,18 @@ function TeacherCourseDetails() {
                             <Plus className="w-4 h-4" />
                             Clone Configuration
                         </button>
+                        <button
+                            onClick={handleExportGrades}
+                            disabled={isExporting}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-[#0A1B3C] border border-[#0A1B3C] rounded-lg hover:bg-[#0A1B3C]/90 transition-colors shadow-sm disabled:opacity-50"
+                        >
+                            {isExporting ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <Download className="w-4 h-4" />
+                            )}
+                            Export Grades
+                        </button>
                     </div>
                 </div>
             </div>
@@ -496,6 +533,18 @@ function TeacherCourseDetails() {
                 subjectId={classSubject?.subjectId || ''}
                 courseCode={classSubject?.subjectCode || ''}
                 courseName={classSubject?.subjectName || ''}
+            />
+
+            <UploadMaterialModal
+                isOpen={isUploadMaterialModalOpen}
+                onClose={() => setIsUploadMaterialModalOpen(false)}
+                subjectId={classSubject?.subjectId || ''}
+                currentClassSubjectId={courseId || ''}
+                subjectName={classSubject?.subjectName || ''}
+                files={selectedMaterialFiles}
+                onSuccess={() => {
+                    // RTK Query handles refetch via invalidatesTags
+                }}
             />
 
             {/* Tabs ... */}
@@ -546,7 +595,7 @@ function TeacherCourseDetails() {
                                                         <span className="px-3 py-1 text-sm font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                                                             {slot.title}
                                                         </span>
-                                                        
+
                                                         {slot.status === 'Active' && (
                                                             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-green-50 text-green-700 border border-green-100">
                                                                 Active
@@ -569,7 +618,7 @@ function TeacherCourseDetails() {
                                                             status={slot.status}
                                                             onFinished={() => refetchSlots()}
                                                         />
-                                                        
+
                                                         {slot.hasQuestions ? (
                                                             <span className="px-3 py-1 text-xs font-semibold rounded-full bg-teal-50 text-teal-700 border border-teal-100">
                                                                 Has Questions
@@ -1076,10 +1125,9 @@ function TeacherCourseDetails() {
                                         multiple
                                         onChange={async (e) => {
                                             const files = e.target.files;
-                                            if (!files) return;
-                                            for (const file of Array.from(files)) {
-                                                await handleUploadMaterial(file);
-                                            }
+                                            if (!files || files.length === 0) return;
+                                            setSelectedMaterialFiles(Array.from(files));
+                                            setIsUploadMaterialModalOpen(true);
                                             if (materialFileInputRef.current) materialFileInputRef.current.value = '';
                                         }}
                                     />
@@ -1232,7 +1280,7 @@ function TeacherCourseDetails() {
                     setPreviewFile(null);
                 }}
                 footer={null}
-                width={800}
+                width={1800}
                 centered
                 destroyOnHidden
             >

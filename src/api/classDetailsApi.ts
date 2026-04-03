@@ -176,6 +176,14 @@ export const classDetailsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['ClassSubjectTeachers', 'Slots' as any, 'Exams' as any, 'Assignments' as any, 'CourseMaterials' as any],
         }),
+        // Export grades
+        exportGrades: builder.query<Blob, string>({
+            query: (id) => ({
+                url: `/ClassSubjects/${id}/export-grades`,
+                cache: 'no-cache',
+                responseHandler: (response) => response.blob(),
+            }),
+        }),
     }),
 });
 
@@ -212,4 +220,5 @@ export const {
     useGetIneligibleStudentIdsQuery,
     useImportClassSubjectTeachersMutation,
     useCloneConfigMutation,
+    useLazyExportGradesQuery,
 } = classDetailsApi;

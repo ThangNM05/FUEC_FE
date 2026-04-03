@@ -44,6 +44,16 @@ export const courseMaterialsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: ['CourseMaterials'],
         }),
+
+        uploadCourseMaterial: builder.mutation<CourseMaterial[], FormData>({
+            query: (formData) => ({
+                url: '/CourseMaterials/upload',
+                method: 'POST',
+                body: formData,
+            }),
+            transformResponse: (response: any) => response?.result || response,
+            invalidatesTags: ['CourseMaterials'],
+        }),
     }),
 });
 
@@ -52,4 +62,5 @@ export const {
     useGetCourseMaterialByIdQuery,
     useCreateCourseMaterialMutation,
     useDeleteCourseMaterialMutation,
+    useUploadCourseMaterialMutation,
 } = courseMaterialsApi;
