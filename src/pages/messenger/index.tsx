@@ -50,6 +50,10 @@ import type {
 import { ConversationType, MessageType, MessageStatus } from '@/types/messenger.types';
 import StudentSidebar from '@/components/layouts/student/StudentSidebar';
 import TeacherSidebar from '@/components/layouts/teacher/TeacherSidebar';
+import AdminSidebar from '@/components/layouts/admin/AdminSidebar';
+import StudentHeader from '@/components/layouts/student/StudentHeader';
+import TeacherHeader from '@/components/layouts/teacher/TeacherHeader';
+import AdminHeader from '@/components/layouts/admin/AdminHeader';
 // ─────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────
@@ -593,7 +597,13 @@ function Messenger() {
   // ═════════════════════════════════════════════════════════════
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] bg-gradient-to-br from-slate-50 to-gray-100">
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Top Header - Sycned with Layouts */}
+      {currentUser?.role === 'Student' && <StudentHeader />}
+      {currentUser?.role === 'Teacher' && <TeacherHeader />}
+      {currentUser?.role === 'Admin' && <AdminHeader />}
+
+      <div className="flex flex-col h-[calc(100vh-56px)] bg-gradient-to-br from-slate-50 to-gray-100">
       {/* Header */}
       <div className="px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-gray-200/60">
         <div className="flex items-center justify-between">
@@ -1544,9 +1554,12 @@ function Messenger() {
         </div>
       )}
 
+      </div>
+
       {/* Conditionally render the dock for mobile/desktop navigation based on role */}
       {currentUser?.role === 'Student' && <StudentSidebar />}
       {currentUser?.role === 'Teacher' && <TeacherSidebar />}
+      {currentUser?.role === 'Admin' && <AdminSidebar isOpen={true} toggleSidebar={() => { }} isMobile={false} />}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { Select } from 'antd';
 import {
     AlertTriangle,
     Calendar,
@@ -36,7 +37,7 @@ interface StudentEvidence {
     timestamp: string;
     duration: string;
     attachments: {
-        id: string; // The ID of the student cheat log from DB
+        id: string;
         type: 'image' | 'video';
         url: string;
         thumbnail?: string;
@@ -68,17 +69,14 @@ interface ClassSubject {
 type ViewState = 'CLASSES' | 'EXAMS' | 'STUDENTS' | 'DETAIL';
 
 function TeacherReports() {
-    // --- State ---
     const [view, setView] = useState<ViewState>('CLASSES');
     const [semester, setSemester] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Selection state
     const [selectedClass, setSelectedClass] = useState<any | null>(null);
     const [selectedExam, setSelectedExam] = useState<any | null>(null);
     const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
 
-    // --- API Queries ---
     const [deleteLog, { isLoading: isDeletingLogs }] = useDeleteStudentCheatLogMutation();
 
     const { data: defaultSemester } = useGetDefaultSemesterQuery();
@@ -101,19 +99,20 @@ function TeacherReports() {
         { skip: !selectedClass || view !== 'EXAMS' }
     );
 
-    // To get flagged students, we get all cheat logs for this exam
     const { data: logsData, isLoading: loadingLogs } = useGetStudentCheatLogsQuery(
-        { examId: selectedExam?.id },
+        {
+            examId: selectedExam?.id,
+            semesterId: semester,
+            classSubjectId: selectedClass?.classSubjectId
+        },
         { skip: !selectedExam || view !== 'STUDENTS' }
     );
 
-    // Also get all student exams to show total participants
     const { data: studentExamsData } = useGetAllStudentExamsQuery(
         { examId: selectedExam?.id },
         { skip: !selectedExam || view !== 'STUDENTS' }
     );
 
-    // Group logs by studentExamId for the STUDENTS view
     const flaggedStudents = useMemo(() => {
         if (!logsData?.items) return [];
 
@@ -123,16 +122,15 @@ function TeacherReports() {
                 acc[id] = {
                     id,
                     studentName: log.studentName || 'Student',
-                    studentCode: 'Unknown', // Need to find from studentExamsData
+                    studentCode: 'Unknown',
                     suspiciousActivity: log.status,
-                    severity: 'medium', // Default to medium
+                    severity: 'medium',
                     timestamp: log.timestamp,
                     duration: 'N/A',
                     attachments: [],
                     description: `Captured proctoring log: ${log.status}`
                 };
 
-                // Try to find student info from studentExamsData
                 if (studentExamsData?.items) {
                     const se = studentExamsData.items.find((x: any) => x.studentExamId === id);
                     if (se) {
@@ -166,16 +164,28 @@ function TeacherReports() {
         }
     };
 
-    // --- Search & Filtering ---
-    const filteredClasses = useMemo(() => {
+    const allAvailableClasses = useMemo(() => {
         if (!teachingData?.subjects) return [];
-        return teachingData.subjects.filter((cs: any) => {
-            const matchesSearch = cs.className?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                cs.subjectCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                cs.subjectName?.toLowerCase().includes(searchTerm.toLowerCase());
-            return matchesSearch;
+
+        return teachingData.subjects.flatMap((subject: any) =>
+            (subject.classes || []).map((cls: any) => ({
+                ...cls,
+                subjectId: subject.subjectId,
+                subjectCode: subject.subjectCode,
+                subjectName: subject.subjectName,
+                id: cls.classSubjectId
+            }))
+        );
+    }, [teachingData]);
+
+    const filteredClasses = useMemo(() => {
+        return allAvailableClasses.filter((cs: any) => {
+            const search = searchTerm.toLowerCase();
+            return cs.classCode?.toLowerCase().includes(search) ||
+                cs.subjectCode?.toLowerCase().includes(search) ||
+                cs.subjectName?.toLowerCase().includes(search);
         });
-    }, [teachingData, searchTerm]);
+    }, [allAvailableClasses, searchTerm]);
 
     const handleBack = () => {
         if (view === 'DETAIL') {
@@ -199,10 +209,9 @@ function TeacherReports() {
                 deleteLog(attachment.id).unwrap()
             );
             await Promise.all(deletePromises);
-            
+
             setView('STUDENTS');
             setSelectedStudent(null);
-            // In a real app we might show a toast here instead of native alert
         } catch (error) {
             console.error('Failed to dismiss cheating logs', error);
             alert('Failed to dismiss false positive. Please try again.');
@@ -211,30 +220,30 @@ function TeacherReports() {
 
     // --- Breadcrumb Navigation ---
     const Breadcrumbs = () => (
-        <nav className="flex items-center gap-2 text-sm mb-6 text-gray-500 px-1">
+        <nav className="flex items-center gap-2 text-sm mb-6 text-gray-500 px-1 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
             <button
                 onClick={() => { setView('CLASSES'); setSelectedClass(null); setSelectedExam(null); setSelectedStudent(null); }}
-                className="hover:text-[#F37022] transition-colors font-medium"
+                className="hover:text-[#F37022] transition-colors font-medium shrink-0"
             >
                 Reports
             </button>
             {selectedClass && (
                 <>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
                     <button
                         onClick={() => { setView('EXAMS'); setSelectedExam(null); setSelectedStudent(null); }}
-                        className={`hover:text-[#F37022] transition-colors ${view === 'EXAMS' ? 'text-[#0A1B3C] font-semibold' : 'font-medium'}`}
+                        className={`hover:text-[#F37022] transition-colors shrink-0 ${view === 'EXAMS' ? 'text-[#0A1B3C] font-semibold' : 'font-medium'}`}
                     >
-                        {selectedClass.className}
+                        {selectedClass.classCode}
                     </button>
                 </>
             )}
             {selectedExam && (
                 <>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
                     <button
                         onClick={() => { setView('STUDENTS'); setSelectedStudent(null); }}
-                        className={`hover:text-[#F37022] transition-colors ${view === 'STUDENTS' ? 'text-[#0A1B3C] font-semibold' : 'font-medium'}`}
+                        className={`hover:text-[#F37022] transition-colors shrink-0 ${view === 'STUDENTS' ? 'text-[#0A1B3C] font-semibold' : 'font-medium'}`}
                     >
                         {selectedExam.displayName || selectedExam.name}
                     </button>
@@ -242,12 +251,78 @@ function TeacherReports() {
             )}
             {selectedStudent && (
                 <>
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                    <span className="text-[#0A1B3C] font-semibold">{selectedStudent.studentName}</span>
+                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                    <span className="text-[#0A1B3C] font-semibold shrink-0">{selectedStudent.studentName}</span>
                 </>
             )}
         </nav>
     );
+
+    // --- Components ---
+    const ExamCard = ({ exam }: { exam: any }) => {
+        const { data: logStats } = useGetStudentCheatLogsQuery(
+            {
+                examId: exam.id,
+                pageSize: 1,
+                semesterId: semester,
+                classSubjectId: selectedClass?.classSubjectId
+            },
+            { skip: !exam?.id || !selectedClass }
+        );
+
+        const cheatCount = logStats?.totalCount || 0;
+
+        return (
+            <motion.div
+                whileHover={{ x: 8 }}
+                onClick={() => { setSelectedExam(exam); setView('STUDENTS'); }}
+                className="flex flex-col md:flex-row md:items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl hover:border-[#F37022]/40 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+            >
+                <div className="flex items-start gap-4 min-w-0 flex-1">
+                    <div className="p-3 rounded-xl transition-colors bg-blue-50 shrink-0">
+                        <BarChart3 className="w-5 h-5 text-blue-500" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-[#0A1B3C] group-hover:text-[#F37022] transition-colors truncate">{exam.displayName || exam.name}</h4>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs md:text-sm text-gray-500">
+                            <span className="flex items-center gap-1.5 font-mono bg-gray-50 px-2 py-0.5 rounded shrink-0">
+                                {exam.tag}
+                            </span>
+                            <span className="flex items-center gap-1.5 whitespace-nowrap">
+                                <Calendar className="w-3.5 h-3.5" />
+                                {dayjs(exam.startTime).format('MMM DD, YYYY')}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-4 md:mt-0 flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 pt-4 md:pt-0">
+                    <div className="flex items-center gap-4">
+                        {cheatCount > 0 && (
+                            <div className="flex flex-col items-start md:items-end">
+                                <span className="text-[9px] md:text-[10px] text-red-500 font-bold uppercase tracking-wider mb-1 animate-pulse">
+                                    Flagged Activity
+                                </span>
+                                <div className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-full border border-red-100 shadow-sm">
+                                    <AlertTriangle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                                    <span className="font-bold text-[11px] md:text-xs">{cheatCount} logs</span>
+                                </div>
+                            </div>
+                        )}
+                        <div className="min-w-[60px] md:min-w-[80px]">
+                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider text-left md:text-right">Students</p>
+                            <p className="text-lg md:text-xl font-black text-[#0A1B3C] text-left md:text-right">
+                                {exam.participationCount}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[#F37022]/10 transition-colors shrink-0">
+                        <ChevronRight className="w-6 h-6 text-gray-400 group-hover:text-[#F37022]" />
+                    </div>
+                </div>
+            </motion.div>
+        );
+    };
 
     // --- Views ---
 
@@ -285,7 +360,7 @@ function TeacherReports() {
                                     </div>
                                 </div>
 
-                                <h3 className="text-xl font-bold text-[#0A1B3C] mb-1 group-hover:text-[#F37022] transition-colors">{cs.className}</h3>
+                                <h3 className="text-xl font-bold text-[#0A1B3C] mb-1 group-hover:text-[#F37022] transition-colors">{cs.classCode}</h3>
                                 <p className="text-sm font-semibold text-[#0066b3] mb-3">{cs.subjectCode}</p>
                                 <p className="text-sm text-gray-500 line-clamp-2 min-h-[40px] mb-4">{cs.subjectName}</p>
 
@@ -328,15 +403,15 @@ function TeacherReports() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-4"
             >
-                <div className="bg-[#0A1B3C] text-white p-8 rounded-3xl mb-8 relative overflow-hidden shadow-2xl">
+                <div className="bg-[#0A1B3C] text-white p-6 md:p-8 rounded-3xl mb-8 relative overflow-hidden shadow-2xl">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
-                    <div className="relative z-10 flex items-center gap-6">
-                        <div className="bg-white/10 p-4 rounded-2xl backdrop-blur-md">
-                            <BookOpen className="w-8 h-8 text-[#F37022]" />
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+                        <div className="bg-white/10 p-3 md:p-4 rounded-2xl backdrop-blur-md w-fit">
+                            <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-[#F37022]" />
                         </div>
                         <div>
-                            <h2 className="text-3xl font-bold mb-1">{selectedClass?.className}</h2>
-                            <p className="text-blue-100 opacity-80">{selectedClass?.subjectName}</p>
+                            <h2 className="text-2xl md:text-3xl font-bold mb-1 truncate">{selectedClass?.classCode}</h2>
+                            <p className="text-blue-100 opacity-80 text-sm md:text-base line-clamp-1">{selectedClass?.subjectName}</p>
                         </div>
                     </div>
                 </div>
@@ -348,42 +423,7 @@ function TeacherReports() {
 
                 {examsData?.items && examsData.items.length > 0 ? (
                     examsData.items.map((exam: any) => (
-                        <motion.div
-                            key={exam.id}
-                            whileHover={{ x: 8 }}
-                            onClick={() => { setSelectedExam(exam); setView('STUDENTS'); }}
-                            className="flex flex-col md:flex-row md:items-center justify-between p-5 bg-white border border-gray-100 rounded-2xl hover:border-[#F37022]/40 shadow-sm hover:shadow-md transition-all cursor-pointer group"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className={`p-3 rounded-xl transition-colors bg-blue-50`}>
-                                    <BarChart3 className={`w-5 h-5 text-blue-500`} />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-[#0A1B3C] group-hover:text-[#F37022] transition-colors">{exam.displayName}</h4>
-                                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                                        <span className="flex items-center gap-1.5 font-mono bg-gray-50 px-2 py-0.5 rounded text-xs">
-                                            {exam.tag}
-                                        </span>
-                                        <span className="flex items-center gap-1.5">
-                                            <Calendar className="w-3.5 h-3.5" />
-                                            {dayjs(exam.startTime).format('MMM DD, YYYY')}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-4 md:mt-0 flex items-center gap-6">
-                                <div className="text-right">
-                                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Participants</p>
-                                    <p className={`text-xl font-black text-[#0A1B3C]`}>
-                                        {exam.participationCount}
-                                    </p>
-                                </div>
-                                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[#F37022]/10 transition-colors">
-                                    <ChevronRight className="w-6 h-6 text-gray-400 group-hover:text-[#F37022]" />
-                                </div>
-                            </div>
-                        </motion.div>
+                        <ExamCard key={exam.id} exam={exam} />
                     ))
                 ) : (
                     <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
@@ -436,49 +476,49 @@ function TeacherReports() {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 className={`bg-white border rounded-2xl overflow-hidden hover:shadow-lg transition-all border-l-4 ${student.severity === 'high' ? 'border-l-red-500' :
-                                        student.severity === 'medium' ? 'border-l-orange-500' : 'border-l-blue-500'
+                                    student.severity === 'medium' ? 'border-l-orange-500' : 'border-l-blue-500'
                                     }`}
                             >
-                                <div className="p-6">
-                                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-2">
-                                                <h3 className="text-lg font-bold text-[#0A1B3C]">{student.studentName}</h3>
-                                                <span className="text-xs font-mono font-bold bg-[#0066b3]/10 text-[#0066b3] px-2 py-0.5 rounded">
+                                <div className="p-4 md:p-6">
+                                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 md:gap-6">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2">
+                                                <h3 className="text-base md:text-lg font-bold text-[#0A1B3C] truncate max-w-[200px] md:max-w-none">{student.studentName}</h3>
+                                                <span className="text-[10px] md:text-xs font-mono font-bold bg-[#0066b3]/10 text-[#0066b3] px-2 py-0.5 rounded shrink-0">
                                                     {student.studentCode}
                                                 </span>
-                                                <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${getSeverityStyles(student.severity)}`}>
-                                                    {student.severity} Risk
+                                                <span className={`text-[9px] md:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border shrink-0 ${getSeverityStyles(student.severity)}`}>
+                                                    {student.severity}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-2 text-[#EF4444] font-semibold text-sm mb-4 bg-red-50 w-fit px-3 py-1 rounded-lg">
-                                                <AlertTriangle className="w-4 h-4" />
-                                                {student.suspiciousActivity}
+                                            <div className="flex items-center gap-2 text-[#EF4444] font-semibold text-xs md:text-sm mb-4 bg-red-50 w-fit px-3 py-1 rounded-lg max-w-full">
+                                                <AlertTriangle className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+                                                <span className="truncate">{student.suspiciousActivity}</span>
                                             </div>
 
-                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-sm">
-                                                <div className="flex items-center gap-2 text-gray-500">
-                                                    <Calendar className="w-4 h-4" />
-                                                    <span>{dayjs(student.timestamp).format('MMM DD, YYYY')}</span>
+                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-6 text-[11px] md:text-sm">
+                                                <div className="flex items-center gap-2 text-gray-500 truncate">
+                                                    <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+                                                    <span className="truncate">{dayjs(student.timestamp).format('MMM DD, YYYY')}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-gray-500">
-                                                    <Clock className="w-4 h-4" />
-                                                    <span>{dayjs(student.timestamp).format('HH:mm:ss')}</span>
+                                                <div className="flex items-center gap-2 text-gray-500 truncate">
+                                                    <Clock className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+                                                    <span className="truncate">{dayjs(student.timestamp).format('HH:mm:ss')}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-gray-500">
-                                                    <BarChart3 className="w-4 h-4" />
-                                                    <span>{student.attachments.length} Evidence captures</span>
+                                                <div className="flex items-center gap-2 text-gray-500 truncate">
+                                                    <BarChart3 className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+                                                    <span className="truncate">{student.attachments.length} Evidence</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 shrink-0">
                                             <button
                                                 onClick={() => { setSelectedStudent(student); setView('DETAIL'); }}
-                                                className="flex-1 lg:flex-none px-6 py-2.5 bg-[#0A1B3C] text-white text-sm font-bold rounded-xl hover:bg-[#F37022] transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                                className="w-full lg:w-auto px-6 py-2.5 bg-[#0A1B3C] text-white text-xs md:text-sm font-bold rounded-xl hover:bg-[#F37022] transition-colors flex items-center justify-center gap-2 shadow-sm"
                                             >
-                                                <Eye className="w-4 h-4" />
-                                                Review Evidence
+                                                <Eye className="w-4 h-4 shrink-0" />
+                                                Review
                                             </button>
                                         </div>
                                     </div>
@@ -549,7 +589,7 @@ function TeacherReports() {
                             <AlertTriangle className="w-4 h-4" />
                             Confirm Cheating
                         </button>
-                        <button 
+                        <button
                             onClick={handleDismissFalsePositive}
                             disabled={isDeletingLogs}
                             className={`w-full py-3 font-bold rounded-2xl transition-colors border ${isDeletingLogs ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200'}`}
@@ -629,32 +669,36 @@ function TeacherReports() {
                         <p className="text-gray-500 font-medium">Monitor and review proctoring evidence across your courses</p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="relative">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                        <div className="relative flex-1 sm:min-w-[240px]">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Search student or class..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F37022]/20 focus:border-[#F37022] outline-none transition-all w-full md:w-64 shadow-sm"
+                                className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F37022]/20 focus:border-[#F37022] outline-none transition-all w-full shadow-sm"
                             />
                         </div>
-                        <select
-                            value={semester}
-                            onChange={(e) => setSemester(e.target.value)}
-                            className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-[#0A1B3C] focus:ring-2 focus:ring-[#F37022]/20 outline-none transition-all shadow-sm cursor-pointer"
-                        >
-                            {semestersList.map((sem: any) => (
-                                <option key={sem.id} value={sem.id}>{sem.semesterCode}</option>
-                            ))}
-                            {semestersList.length === 0 && defaultSemester && (
-                                <option value={defaultSemester.id}>{defaultSemester.semesterCode}</option>
-                            )}
-                        </select>
-                        <button className="p-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-                            <Filter className="w-5 h-5 text-gray-500" />
-                        </button>
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                            <Select
+                                value={semester}
+                                onChange={(value) => setSemester(value)}
+                                className="flex-1 sm:min-w-[160px] h-[42px]"
+                                placeholder="Select Semester"
+                                dropdownStyle={{ borderRadius: '12px' }}
+                                options={[
+                                    ...semestersList.map((sem: any) => ({
+                                        label: sem.semesterCode,
+                                        value: sem.id
+                                    })),
+                                    ...(semestersList.length === 0 && defaultSemester ? [{
+                                        label: defaultSemester.semesterCode,
+                                        value: defaultSemester.id
+                                    }] : [])
+                                ]}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

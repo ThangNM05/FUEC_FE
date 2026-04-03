@@ -75,15 +75,15 @@ function MaterialFilePreview({ url, name }: MaterialFilePreviewProps) {
     // Image
     if (fileType === 'image') {
         return (
-            <div className="flex items-center justify-center bg-gray-50 border rounded-lg p-4 min-h-[300px]">
-                <img src={url} alt={name} className="max-w-full max-h-[600px] object-contain rounded" />
+            <div className="flex items-center justify-center bg-gray-50 border rounded-lg p-4 min-h-[400px]">
+                <img src={url} alt={name} className="max-w-full max-h-[800px] object-contain rounded shadow-sm" />
             </div>
         );
     }
 
     // PDF
     if (fileType === 'pdf') {
-        return <iframe src={url} className="w-full h-[600px] border rounded-lg" title={name} />;
+        return <iframe src={url} className="w-full h-[800px] border rounded-lg" title={name} />;
     }
 
     // Office (only works with public URLs, not blob URLs)
@@ -91,7 +91,7 @@ function MaterialFilePreview({ url, name }: MaterialFilePreviewProps) {
         return (
             <iframe
                 src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`}
-                className="w-full h-[600px] border rounded-lg"
+                className="w-full h-[800px] border rounded-lg"
                 title={name}
             />
         );
@@ -100,7 +100,7 @@ function MaterialFilePreview({ url, name }: MaterialFilePreviewProps) {
     // Code files
     if (fileType === 'code' && textContent) {
         return (
-            <div className="border rounded-lg overflow-hidden h-[500px]">
+            <div className="border rounded-lg overflow-hidden h-[700px]">
                 <CodeViewer code={textContent} language="" filename={name} />
             </div>
         );
@@ -109,7 +109,7 @@ function MaterialFilePreview({ url, name }: MaterialFilePreviewProps) {
     // Text files
     if (fileType === 'text' && textContent) {
         return (
-            <div className="bg-white border rounded-lg p-6 max-h-[500px] overflow-auto">
+            <div className="bg-white border rounded-lg p-6 max-h-[700px] overflow-auto">
                 <pre className="whitespace-pre-wrap font-mono text-sm text-gray-700">{textContent}</pre>
             </div>
         );
