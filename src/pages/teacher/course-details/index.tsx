@@ -718,7 +718,18 @@ function TeacherCourseDetails() {
                                                                                     Create Progress Test
                                                                                 </button>
 
-
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setOpenDropdownId(null);
+                                                                                        setCreateAssignmentSlotInfo({ id: slot.id, title: slot.title, slotIndex: slot.slotIndex });
+                                                                                        setIsCreateAssignmentModalOpen(true);
+                                                                                    }}
+                                                                                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-50"
+                                                                                >
+                                                                                    <FileText className="w-4 h-4 text-gray-400" />
+                                                                                    Create Assignment
+                                                                                </button>
                                                                             </div>
                                                                         </>
                                                                     )}
