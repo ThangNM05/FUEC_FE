@@ -23,7 +23,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                 isPublicGrade: exam.isPublicGrade,
                 requireIpCheck: exam.requireIpCheck,
                 allowedIpRanges: exam.allowedIpRanges,
-                codeDuration: exam.codeDuration,
+                codeDuration: 240,
                 securityMode: exam.securityMode,
                 displayName: exam.displayName,
             });
@@ -40,6 +40,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                 ...values,
                 startTime: values.startTime.toISOString(),
                 endTime: values.endTime.toISOString(),
+                codeDuration: 240,
             }).unwrap();
 
             toast.success('Exam updated successfully');
@@ -66,7 +67,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                 className="mt-4"
                 initialValues={{
                     securityMode: 1,
-                    codeDuration: 60,
+                    codeDuration: 240,
                     isPublicGrade: true,
                     requireIpCheck: false,
                     displayName: ''
@@ -105,18 +106,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                         ]} />
                     </Form.Item>
 
-                    <Form.Item
-                        noStyle
-                        shouldUpdate={(prev, curr) => prev.securityMode !== curr.securityMode}
-                    >
-                        {({ getFieldValue }) =>
-                            getFieldValue('securityMode') === 2 ? (
-                                <Form.Item name="codeDuration" label="Code Duration (seconds)">
-                                    <InputNumber min={10} max={300} className="w-full" />
-                                </Form.Item>
-                            ) : null
-                        }
-                    </Form.Item>
+                    {/* Code duration is hardcoded to 240s */}
                 </div>
 
                 <Form.Item name="allowedIpRanges" label="Allowed IP Ranges (comma separated)">

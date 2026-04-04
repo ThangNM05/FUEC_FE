@@ -73,7 +73,7 @@ function CreateExam() {
     const courseName = classSubject
         ? `${classSubject.subjectCode} - ${classSubject.classCode}`
         : '';
-        
+
     const { data: studentsData } = useGetStudentClassesByClassIdQuery({ classSubjectId: classSubject?.id }, {
         skip: !classSubject?.id,
     });
@@ -159,7 +159,7 @@ function CreateExam() {
         securityMode: 1,
         requireIpCheck: false,
         allowedIpRanges: '',
-        codeDuration: 60,
+        codeDuration: 240,
         enableAiProctoring: true,
         proctoringExemptStudentClassIds: [],
     });
@@ -273,6 +273,8 @@ function CreateExam() {
             slotId: targetSlotId || undefined,
             startTime: new Date(formData.startTime).toISOString(),
             endTime: new Date(formData.endTime).toISOString(),
+            // Hardcode codeDuration to 240 for Dynamic Code
+            codeDuration: 240,
         };
 
         try {
@@ -528,20 +530,17 @@ function CreateExam() {
                             </div>
                         </Field>
 
-                        {/* Code Duration (only relevant for Dynamic Code) */}
-                        {form.securityMode === 2 && (
-                            <div className="animate-fadeIn">
-                                <Field isSubmitted={isSubmitted} label="Code Duration (seconds)" icon={Clock} hint="How long each code remains valid">
-                                    <input
-                                        type="number"
-                                        value={form.codeDuration}
-                                        onChange={e => updateField('codeDuration', parseInt(e.target.value) || 60)}
-                                        min={10}
-                                        className={inputClass()}
-                                    />
-                                </Field>
-                            </div>
-                        )}
+                        <div className="hidden">
+                            <Field isSubmitted={isSubmitted} label="Code Duration (seconds)" icon={Clock} hint="How long each code remains valid">
+                                <input
+                                    type="number"
+                                    value={form.codeDuration}
+                                    onChange={e => updateField('codeDuration', parseInt(e.target.value) || 240)}
+                                    min={10}
+                                    className={inputClass()}
+                                />
+                            </Field>
+                        </div>
 
                         {/* Toggles Row */}
                         <div className="grid grid-cols-1 gap-5">
@@ -638,23 +637,23 @@ function CreateExam() {
 
                         {/* Proctoring Exemption List — only when AI Proctoring is enabled */}
                         {form.enableAiProctoring && (
-                        <div className="pt-4 border-t border-gray-100">
-                            <Field isSubmitted={isSubmitted} label="AI Proctoring Exemptions" icon={Shield} hint="Select students who cannot use webcams (will bypass AI proctoring)">
-                                <Select
-                                    mode="multiple"
-                                    allowClear
-                                    placeholder="Select students to exempt..."
-                                    style={{ width: '100%' }}
-                                    className="!rounded-xl"
-                                    value={form.proctoringExemptStudentClassIds}
-                                    onChange={(value) => updateField('proctoringExemptStudentClassIds', value)}
-                                    options={students.map((student) => ({
-                                        label: `${student.studentCode} - ${student.studentName}`,
-                                        value: student.id,
-                                    }))}
-                                />
-                            </Field>
-                        </div>
+                            <div className="pt-4 border-t border-gray-100">
+                                <Field isSubmitted={isSubmitted} label="AI Proctoring Exemptions" icon={Shield} hint="Select students who cannot use webcams (will bypass AI proctoring)">
+                                    <Select
+                                        mode="multiple"
+                                        allowClear
+                                        placeholder="Select students to exempt..."
+                                        style={{ width: '100%' }}
+                                        className="!rounded-xl"
+                                        value={form.proctoringExemptStudentClassIds}
+                                        onChange={(value) => updateField('proctoringExemptStudentClassIds', value)}
+                                        options={students.map((student) => ({
+                                            label: `${student.studentCode} - ${student.studentName}`,
+                                            value: student.id,
+                                        }))}
+                                    />
+                                </Field>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -675,7 +674,7 @@ function CreateExam() {
                         </div>
                         {form.securityMode === 2 && (
                             <div>
-                                <div className="text-2xl font-bold">{form.codeDuration}s</div>
+                                <div className="text-2xl font-bold">240s</div>
                                 <div className="text-xs text-white/60">Code Duration</div>
                             </div>
                         )}

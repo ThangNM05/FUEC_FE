@@ -88,7 +88,7 @@ function TeacherReports() {
         message: string;
         onConfirm: () => void;
         isDangerous?: boolean;
-    }>({ open: false, title: '', message: '', onConfirm: () => {} });
+    }>({ open: false, title: '', message: '', onConfirm: () => { } });
 
     const openConfirmModal = useCallback((title: string, message: string, onConfirm: () => void, isDangerous = true) => {
         setConfirmModal({ open: true, title, message, onConfirm, isDangerous });
@@ -153,6 +153,8 @@ function TeacherReports() {
                     if (se) {
                         acc[id].studentName = se.studentName || acc[id].studentName;
                         acc[id].studentCode = se.studentCode || acc[id].studentCode;
+                        acc[id].grade = se.grade;
+                        acc[id].isSubmitted = se.isSubmitted;
                     }
                 }
             }
@@ -221,22 +223,13 @@ function TeacherReports() {
         if (!selectedStudent) return;
         openConfirmModal(
             'Confirm Cheating',
-            `Are you sure you want to confirm cheating for ${selectedStudent.studentName}? This will set their exam grade to 0 and permanently delete all captured evidence.`,
+            `Are you sure you want to confirm cheating for ${selectedStudent.studentName}? This will set their exam grade to 0. The captured evidence will be preserved for record keeping.`,
             async () => {
                 closeConfirmModal();
                 try {
                     await updateStudentExam({ id: selectedStudent.id, grade: 0 }).unwrap();
 
-                    // Delete all evidence files from S3
-                    if (selectedStudent.attachments?.length > 0) {
-                        await Promise.allSettled(
-                            selectedStudent.attachments.map((attachment: any) =>
-                                deleteLog(attachment.id).unwrap()
-                            )
-                        );
-                    }
-
-                    toast.success(`Cheating confirmed for ${selectedStudent.studentName}. Grade set to 0 and evidence deleted.`);
+                    toast.success(`Cheating confirmed for ${selectedStudent.studentName}. Grade set to 0.`);
                     setView('STUDENTS');
                     setSelectedStudent(null);
                 } catch (error) {
@@ -620,6 +613,23 @@ function TeacherReports() {
                     </div>
 
                     <div className="space-y-4">
+                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 shadow-inner">
+                            <p className="text-xs text-gray-400 font-bold uppercase mb-2 tracking-wider">Current Status</p>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-2xl font-black text-[#F37022]">
+                                        {selectedStudent?.grade !== null && selectedStudent?.grade !== undefined
+                                            ? Number(selectedStudent.grade).toFixed(1)
+                                            : 'N/A'}
+                                    </span>
+                                    <span className="text-sm font-bold text-gray-400">/ 10.0</span>
+                                </div>
+                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${selectedStudent?.grade >= 5 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                    {selectedStudent?.grade >= 5 ? 'PASSED' : 'FAILED'}
+                                </span>
+                            </div>
+                        </div>
+
                         <div className="p-4 bg-gray-50 rounded-2xl">
                             <p className="text-xs text-gray-400 font-bold uppercase mb-2 tracking-wider">Detection Summary</p>
                             <p className="text-sm font-semibold text-[#0A1B3C] flex items-center gap-2">

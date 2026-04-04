@@ -21,7 +21,7 @@ function base32ToBytes(base32: string): Uint8Array {
         const char = s[i];
         const idx = ALPHABET.indexOf(char);
         if (idx === -1) throw new Error(`Invalid Base32 character: ${char}`);
-        
+
         v = (v << 5) | idx;
         b += 5;
         if (b >= 8) {
@@ -35,11 +35,11 @@ function base32ToBytes(base32: string): Uint8Array {
 /**
  * Generates a 6-digit TOTP code
  */
-export async function generateTOTP(secret: string, step = 30): Promise<string> {
+export async function generateTOTP(secret: string, step = 240): Promise<string> {
     try {
         const keyBytes = base32ToBytes(secret);
         const counter = BigInt(Math.floor(Date.now() / 1000 / step));
-        
+
         // Counter to 8-byte big-endian Uint8Array
         const counterBytes = new Uint8Array(8);
         const view = new DataView(counterBytes.buffer);

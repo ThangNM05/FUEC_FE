@@ -1,8 +1,10 @@
 import React from 'react';
 import { Modal, Table, Tag } from 'antd';
-import { useGetStudentExamsByExamIdQuery } from '@/api/studentExamsApi';
+import { useGetStudentExamsByExamIdQuery, useUpdateStudentExamMutation } from '@/api/studentExamsApi';
 import { useGetStudentClassesByClassIdQuery } from '@/api/classDetailsApi';
-import { Users, CheckCircle, Clock } from 'lucide-react';
+import { Users, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
+import { App } from 'antd';
 import type { Exam } from '@/types/exam.types';
 
 interface ExamParticipantsModalProps {
@@ -20,10 +22,13 @@ const ExamParticipantsModal: React.FC<ExamParticipantsModalProps> = ({ isOpen, o
     );
 
     // Get all student exams (attempts) for this exam
-    const { data: studentExamsData, isLoading: isLoadingExams } = useGetStudentExamsByExamIdQuery(
+    const { data: studentExamsData, isLoading: isLoadingExams, refetch: refetchStudentExams } = useGetStudentExamsByExamIdQuery(
         { examId: exam?.id || '', pageSize: 200 },
         { skip: !exam?.id || !isOpen }
     );
+
+    const [updateStudentExam] = useUpdateStudentExamMutation();
+    const { modal } = App.useApp();
 
     const allStudents = studentsData?.items || [];
     const studentExams = studentExamsData?.items || [];
@@ -64,6 +69,31 @@ const ExamParticipantsModal: React.FC<ExamParticipantsModalProps> = ({ isOpen, o
             studentExamId: attempt?.studentExamId,
         };
     });
+
+    const handleTerminate = (record: any) => {
+        modal.confirm({
+            title: 'Terminate Student Exam',
+            icon: <AlertTriangle className="text-red-500 mr-2" />,
+            content: `Are you sure you want to terminate the exam for student ${record.studentName} (${record.studentCode}) immediately? Their score will be set to 0.`,
+            okText: 'Yes, Terminate',
+            okType: 'danger',
+            cancelText: 'Cancel',
+            centered: true,
+            onOk: async () => {
+                try {
+                    await updateStudentExam({
+                        id: record.studentExamId,
+                        grade: 0
+                    }).unwrap();
+                    toast.success(`Exam for ${record.studentName} has been terminated with a score of 0.`);
+                    refetchStudentExams();
+                } catch (error) {
+                    console.error('Failed to terminate exam:', error);
+                    toast.error('Failed to terminate exam. Please try again.');
+                }
+            }
+        });
+    };
 
     const columns = [
         {
@@ -122,22 +152,31 @@ const ExamParticipantsModal: React.FC<ExamParticipantsModalProps> = ({ isOpen, o
         {
             title: 'Action',
             key: 'action',
-            width: 100,
+            width: 120,
             render: (_: any, record: any) => (
-                record.status === 'done' ? (
-                    <button
-                        onClick={() => {
-                            if (record.studentExamId) {
-                                window.open(`/teacher/exam-review/${record.studentExamId}`, '_blank');
-                            } else {
-                                alert(`Không tìm thấy ID bài làm của sinh viên ${record.studentCode}.`);
-                            }
-                        }}
-                        className="px-3 py-1 bg-[#F37022]/10 text-[#F37022] hover:bg-[#F37022] hover:text-white rounded-lg text-xs font-bold transition-all"
-                    >
-                        Review
-                    </button>
-                ) : null
+                <div className="flex gap-2">
+                    {record.status === 'done' ? (
+                        <button
+                            onClick={() => {
+                                if (record.studentExamId) {
+                                    window.open(`/teacher/exam-review/${record.studentExamId}`, '_blank');
+                                } else {
+                                    alert(`Không tìm thấy ID bài làm của sinh viên ${record.studentCode}.`);
+                                }
+                            }}
+                            className="px-3 py-1 bg-[#F37022]/10 text-[#F37022] hover:bg-[#F37022] hover:text-white rounded-lg text-xs font-bold transition-all"
+                        >
+                            Review
+                        </button>
+                    ) : record.status === 'in_progress' ? (
+                        <button
+                            onClick={() => handleTerminate(record)}
+                            className="px-3 py-1 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-red-100 flex items-center gap-1"
+                        >
+                            <AlertTriangle className="w-3 h-3" /> Terminate
+                        </button>
+                    ) : null}
+                </div>
             )
         }
     ];

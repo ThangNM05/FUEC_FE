@@ -15,7 +15,7 @@ interface ExamDetailModalProps {
 export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailModalProps) {
     const [copied, setCopied] = useState(false);
     const [otpCode, setOtpCode] = useState<string>('');
-    const [timeLeft, setTimeLeft] = useState<number>(30);
+    const [timeLeft, setTimeLeft] = useState<number>(240);
     const [progress, setProgress] = useState<number>(100);
 
     // TOTP Logic
@@ -24,19 +24,19 @@ export default function ExamDetailModal({ exam, isOpen, onClose }: ExamDetailMod
 
         const handleGenerate = async () => {
             const secret = (exam.accessCode || '').split('=')[0];
-            const code = await generateTOTP(secret);
+            const code = await generateTOTP(secret, 240);
             setOtpCode(code);
         };
 
         handleGenerate();
 
         const timer = setInterval(() => {
-            const second = Math.floor(Date.now() / 1000) % 30;
-            const remaining = 30 - second;
+            const second = Math.floor(Date.now() / 1000) % 240;
+            const remaining = 240 - second;
             setTimeLeft(remaining);
-            setProgress((remaining / 30) * 100);
+            setProgress((remaining / 240) * 100);
 
-            if (remaining === 30) {
+            if (remaining === 240) {
                 handleGenerate();
             }
         }, 1000);
