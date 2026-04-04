@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/redux/authSlice';
@@ -293,7 +294,7 @@ export default function QuizTest() {
     try {
       await submitExam(studentExamId).unwrap();
       setShowResults(true);
-      alert(reason);
+      toast.error(reason);
     } catch (err) {
       console.error('Auto-submit violation failed', err);
     }
@@ -312,7 +313,7 @@ export default function QuizTest() {
     if (currentCount >= maxViolations) {
       handleViolation(`${combinedMsg}. The exam is being auto-submitted.`);
     } else {
-      alert(combinedMsg);
+      toast.warning(combinedMsg);
     }
   }, [maxViolations, handleViolation]);
 
@@ -726,7 +727,7 @@ export default function QuizTest() {
         clearExamState();
       } catch (err) {
         console.error('Failed to submit exam', err);
-        alert('Error submitting exam. Please try again.');
+        toast.error('Error submitting exam. Please try again.');
       }
     },
     [studentExamId, submitExam]
@@ -741,7 +742,7 @@ export default function QuizTest() {
       clearExamState();
     } catch (err) {
       console.error('Failed to submit exam', err);
-      alert('Error submitting exam. Please try again.');
+      toast.error('Error submitting exam. Please try again.');
     }
   }, [studentExamId, submitExam]);
 

@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Select } from 'antd';
 import {
     AlertTriangle,
@@ -25,6 +26,7 @@ import { useGetSemestersQuery, useGetDefaultSemesterQuery } from '@/api/semester
 import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
 import { useGetAllStudentExamsQuery } from '@/api/studentExamsApi';
 import { useGetStudentCheatLogsQuery, useDeleteStudentCheatLogMutation } from '@/api/studentCheatLogsApi';
+import { useUpdateStudentExamMutation } from '@/api/studentExamsApi';
 import { Loader2 } from 'lucide-react';
 
 // --- Types ---
@@ -78,6 +80,21 @@ function TeacherReports() {
     const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
 
     const [deleteLog, { isLoading: isDeletingLogs }] = useDeleteStudentCheatLogMutation();
+    const [updateStudentExam, { isLoading: isConfirmingCheating }] = useUpdateStudentExamMutation();
+
+    const [confirmModal, setConfirmModal] = useState<{
+        open: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void;
+        isDangerous?: boolean;
+    }>({ open: false, title: '', message: '', onConfirm: () => {} });
+
+    const openConfirmModal = useCallback((title: string, message: string, onConfirm: () => void, isDangerous = true) => {
+        setConfirmModal({ open: true, title, message, onConfirm, isDangerous });
+    }, []);
+
+    const closeConfirmModal = () => setConfirmModal(prev => ({ ...prev, open: false }));
 
     const { data: defaultSemester } = useGetDefaultSemesterQuery();
     const { data: semestersData } = useGetSemestersQuery({ page: 1, pageSize: 100 });
@@ -200,22 +217,57 @@ function TeacherReports() {
         }
     };
 
-    const handleDismissFalsePositive = async () => {
+    const handleConfirmCheating = () => {
+        if (!selectedStudent) return;
+        openConfirmModal(
+            'Confirm Cheating',
+            `Are you sure you want to confirm cheating for ${selectedStudent.studentName}? This will set their exam grade to 0 and permanently delete all captured evidence.`,
+            async () => {
+                closeConfirmModal();
+                try {
+                    await updateStudentExam({ id: selectedStudent.id, grade: 0 }).unwrap();
+
+                    // Delete all evidence files from S3
+                    if (selectedStudent.attachments?.length > 0) {
+                        await Promise.allSettled(
+                            selectedStudent.attachments.map((attachment: any) =>
+                                deleteLog(attachment.id).unwrap()
+                            )
+                        );
+                    }
+
+                    toast.success(`Cheating confirmed for ${selectedStudent.studentName}. Grade set to 0 and evidence deleted.`);
+                    setView('STUDENTS');
+                    setSelectedStudent(null);
+                } catch (error) {
+                    console.error('Failed to confirm cheating', error);
+                    toast.error('Failed to confirm cheating. Please try again.');
+                }
+            }
+        );
+    };
+
+    const handleDismissFalsePositive = () => {
         if (!selectedStudent || !selectedStudent.attachments || selectedStudent.attachments.length === 0) return;
-        if (!window.confirm("Are you sure you want to dismiss all evidence for this student? This action cannot be undone and will permanently delete the evidence from S3.")) return;
-
-        try {
-            const deletePromises = selectedStudent.attachments.map((attachment: any) =>
-                deleteLog(attachment.id).unwrap()
-            );
-            await Promise.all(deletePromises);
-
-            setView('STUDENTS');
-            setSelectedStudent(null);
-        } catch (error) {
-            console.error('Failed to dismiss cheating logs', error);
-            alert('Failed to dismiss false positive. Please try again.');
-        }
+        openConfirmModal(
+            'Dismiss False Positive',
+            'Are you sure you want to dismiss all evidence for this student? This action cannot be undone and will permanently delete the evidence.',
+            async () => {
+                closeConfirmModal();
+                try {
+                    const deletePromises = selectedStudent.attachments.map((attachment: any) =>
+                        deleteLog(attachment.id).unwrap()
+                    );
+                    await Promise.all(deletePromises);
+                    toast.success('Evidence dismissed successfully.');
+                    setView('STUDENTS');
+                    setSelectedStudent(null);
+                } catch (error) {
+                    console.error('Failed to dismiss cheating logs', error);
+                    toast.error('Failed to dismiss false positive. Please try again.');
+                }
+            }
+        );
     };
 
     // --- Breadcrumb Navigation ---
@@ -585,9 +637,13 @@ function TeacherReports() {
                     </div>
 
                     <div className="mt-8 space-y-3">
-                        <button className="w-full py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-colors shadow-lg shadow-red-200 flex items-center justify-center gap-2">
+                        <button
+                            onClick={handleConfirmCheating}
+                            disabled={isConfirmingCheating}
+                            className={`w-full py-3 font-bold rounded-2xl transition-colors shadow-lg flex items-center justify-center gap-2 ${isConfirmingCheating ? 'bg-red-300 text-white cursor-not-allowed shadow-red-100' : 'bg-red-600 text-white hover:bg-red-700 shadow-red-200'}`}
+                        >
                             <AlertTriangle className="w-4 h-4" />
-                            Confirm Cheating
+                            {isConfirmingCheating ? 'Confirming...' : 'Confirm Cheating'}
                         </button>
                         <button
                             onClick={handleDismissFalsePositive}
@@ -728,6 +784,48 @@ function TeacherReports() {
                     </AnimatePresence>
                 </div>
             </div>
+
+            {/* Confirm Modal */}
+            <AnimatePresence>
+                {confirmModal.open && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+                        onClick={closeConfirmModal}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.92, opacity: 0, y: 16 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.92, opacity: 0, y: 16 }}
+                            transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full"
+                        >
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-5 mx-auto ${confirmModal.isDangerous ? 'bg-red-50' : 'bg-orange-50'}`}>
+                                <AlertTriangle className={`w-7 h-7 ${confirmModal.isDangerous ? 'text-red-500' : 'text-orange-500'}`} />
+                            </div>
+                            <h3 className="text-xl font-bold text-[#0A1B3C] text-center mb-2">{confirmModal.title}</h3>
+                            <p className="text-sm text-gray-500 text-center leading-relaxed mb-8">{confirmModal.message}</p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={closeConfirmModal}
+                                    className="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={confirmModal.onConfirm}
+                                    className={`flex-1 py-3 rounded-2xl font-bold text-white transition-colors shadow-lg ${confirmModal.isDangerous ? 'bg-red-600 hover:bg-red-700 shadow-red-200' : 'bg-orange-500 hover:bg-orange-600 shadow-orange-200'}`}
+                                >
+                                    Confirm
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

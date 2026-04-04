@@ -149,7 +149,7 @@ export class HeadPoseEstimator {
 
     this.sessions.gaze = await ort.InferenceSession.create(
       modelUrl('resnet50_gaze.onnx'),
-      { executionProviders: ['webgpu'] }
+      { executionProviders: ['webgpu', 'wasm'], graphOptimizationLevel: 'all' }
     )
     console.log('Gaze session created:', this.sessions.gaze)
 
