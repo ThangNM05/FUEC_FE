@@ -143,15 +143,10 @@ export default function PracticeRunner() {
 
         setUserAnswers(prev => {
             const currentAnswers = prev[questionId] || [];
-            
-            if (isMultipleChoice) {
-                if (currentAnswers.includes(optionId)) {
-                    return { ...prev, [questionId]: currentAnswers.filter(id => id !== optionId) };
-                } else {
-                    return { ...prev, [questionId]: [...currentAnswers, optionId] };
-                }
+            if (currentAnswers.includes(optionId)) {
+                return { ...prev, [questionId]: currentAnswers.filter(id => id !== optionId) };
             } else {
-                return { ...prev, [questionId]: [optionId] };
+                return { ...prev, [questionId]: [...currentAnswers, optionId] };
             }
         });
     };

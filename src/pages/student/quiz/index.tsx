@@ -675,7 +675,7 @@ export default function QuizTest() {
         await createAnswer({
           studentExamId,
           questionId,
-          ...(questionType === 1 ? { choiceIds: newOptionIds } : { choiceId: newOptionIds[0] }),
+          choiceIds: newOptionIds, // Always send array since they can select multiple even for single choice
         }).unwrap();
         setSavingStatus('saved');
         setTimeout(() => setSavingStatus('idle'), 2000);
@@ -1127,15 +1127,14 @@ export default function QuizTest() {
                           onClick={() => {
                             const existing = answers[q.id] || [];
                             let newOptionIds: string[] = [];
-                            if (q.questionType === 1) {
-                              if (existing.includes(option.id)) {
-                                newOptionIds = existing.filter(id => id !== option.id);
-                              } else {
-                                newOptionIds = [...existing, option.id];
-                              }
+                            
+                            // User requested that even if q.questionType === 0 (Single Choice), they can select multiple!
+                            if (existing.includes(option.id)) {
+                              newOptionIds = existing.filter(id => id !== option.id);
                             } else {
-                              newOptionIds = [option.id];
+                              newOptionIds = [...existing, option.id];
                             }
+                            
                             handleAnswer(q.id, newOptionIds, q.questionType);
                           }}
                           className={`group w-full flex items-center gap-4 p-5 text-left rounded-xl border-2 transition-all duration-200 ${isSelected ? 'border-[#F37022] bg-[#F37022]/5' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
