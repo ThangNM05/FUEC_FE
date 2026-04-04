@@ -31,6 +31,7 @@ export interface StudentExam {
     grade?: number;
     isPublicGrade: boolean;
     isSubmitted: boolean;
+    isProctoringExempt: boolean;
     studentCode?: string;
     studentName?: string;
 }
@@ -51,6 +52,7 @@ const normalizeStudentExam = (data: any): StudentExam => {
         endTime: raw.endTime || raw.ExamEndTime || raw.EndTime,
         isSubmitted: raw.isSubmitted || raw.IsSubmitted || (raw.grade !== null && raw.grade !== undefined),
         isPublicGrade: raw.isPublicGrade !== undefined ? raw.isPublicGrade : (raw.IsPublicGrade ?? true),
+        isProctoringExempt: raw.isProctoringExempt || raw.IsProctoringExempt || false,
         grade: raw.grade !== undefined ? raw.grade : raw.Grade,
         studentCode: raw.studentCode || raw.StudentCode,
         studentName: raw.studentName || raw.StudentName,

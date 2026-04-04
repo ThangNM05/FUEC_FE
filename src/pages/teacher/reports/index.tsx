@@ -676,8 +676,6 @@ function TeacherReports() {
                                 whileHover={{ scale: 1.02 }}
                                 className="group relative aspect-video bg-gray-900 rounded-2xl overflow-hidden cursor-pointer shadow-md"
                             >
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60" />
-
                                 {file.type === 'image' ? (
                                     <img
                                         src={file.url}

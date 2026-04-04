@@ -20,6 +20,8 @@ export interface CreateExamRequest {
     requireIpCheck: boolean;
     allowedIpRanges: string;
     codeDuration: number;
+    proctoringExemptStudentClassIds?: string[];
+    enableAiProctoring?: boolean;
 }
 
 export interface UpdateExamRequest {
@@ -49,6 +51,8 @@ export interface Exam {
     requireIpCheck: boolean;
     allowedIpRanges: string;
     codeDuration: number;
+    proctoringExemptStudentClassIds?: string[];
+    enableAiProctoring?: boolean;
     category: string;
     tag: string;
     subjectCode: string;
