@@ -80,7 +80,7 @@ const CHEATING_THRESHOLD = 1.0
 ======================= */
 
 function modelUrl(relative: string) {
-  return new URL(../assets/models/${relative}, import.meta.url).href
+  return new URL(`../assets/models/${relative}`, import.meta.url).href
 }
 
 /* =======================
