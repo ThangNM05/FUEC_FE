@@ -107,6 +107,15 @@ export default function PracticeRunner() {
     });
     const [isFinished, setIsFinished] = useState(false);
 
+    // Scroll to top when switching to results screen
+    useEffect(() => {
+        if (isFinished) {
+            const scrollContainer = document.querySelector('.overflow-y-auto');
+            if (scrollContainer) scrollContainer.scrollTo({ top: 0, behavior: 'instant' });
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+    }, [isFinished]);
+
     // Save progress to localStorage whenever answers change
     useEffect(() => {
         if (Object.keys(userAnswers).length > 0) {

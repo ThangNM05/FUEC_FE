@@ -629,6 +629,15 @@ export default function QuizTest() {
     setInitialized(true);
   }, [examData, studentExamId, initialized]);
 
+  // ── Scroll to top when switching to results view ──
+  useEffect(() => {
+    if (showResults) {
+      const scrollContainer = document.querySelector('.overflow-y-auto');
+      if (scrollContainer) scrollContainer.scrollTo({ top: 0, behavior: 'instant' });
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [showResults]);
+
   // ── Countdown Timer ──
   useEffect(() => {
     if (timeLeft === null || timeLeft <= 0 || showResults || !proctorReady || cheatingPaused || showFullscreenPrompt) return;
