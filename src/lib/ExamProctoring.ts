@@ -80,7 +80,7 @@ const CHEATING_THRESHOLD = 1.0
 ======================= */
 
 function modelUrl(relative: string) {
-  return new URL(`../assets/models/${relative}`, import.meta.url).href
+  return new URL(../assets/models/${relative}, import.meta.url).href
 }
 
 /* =======================
@@ -109,9 +109,6 @@ export class HeadPoseEstimator {
   /* ---- suspicion score ---- */
   private suspicionScore = 0
   private lastTimestamp?: number
-
-  /** Last timestamp sent to MediaPipe (must be strictly increasing integers). */
-  private lastMediaPipeTs = 0
 
   /* ---- canvases (lazy, created in init()) ---- */
   private resizeSrcCanvas?: HTMLCanvasElement
@@ -187,21 +184,7 @@ export class HeadPoseEstimator {
     const dt = this.lastTimestamp != null ? Math.max(0, timestamp - this.lastTimestamp) : 0
     this.lastTimestamp = timestamp
 
-    /* MediaPipe requires strictly increasing integer ms timestamps.
-       On high-DPI / Mac displays, fractional or duplicate values from
-       performance.now() can cause detectForVideo to return stale or
-       phantom landmark data. */
-    let mpTs = Math.round(timestamp)
-    if (mpTs <= this.lastMediaPipeTs) mpTs = this.lastMediaPipeTs + 1
-    this.lastMediaPipeTs = mpTs
-
-    /* Guard: video must have at least one decodable frame */
-    if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
-      state = { facesCount: 0, timestamp, status: 'safe', suspicionScore: this.suspicionScore }
-      return { faces, state }
-    }
-
-    const results = this.faceLandmarker.detectForVideo(video, mpTs)
+    const results = this.faceLandmarker.detectForVideo(video, timestamp)
     if (!results.faceLandmarks?.length) {
       this.accumulateSuspicion(dt, true)
       const status = this.suspicionStatus('no-face')
@@ -440,26 +423,12 @@ export class HeadPoseEstimator {
   ): Promise<ort.Tensor | null> {
     if (!this.resizeSrcCtx || !this.resizeDstCtx || !this.resizeSrcCanvas || !this.resizeDstCanvas) return null
 
-    const vw = video.videoWidth
-    const vh = video.videoHeight
-    if (vw === 0 || vh === 0) return null
+    const { minX, minY, maxX, maxY } = this.faceBoundingBox(lm)
 
-    const bb = this.faceBoundingBox(lm)
-
-    /* Add 20 % margin around the face for better gaze estimation */
-    const marginX = (bb.maxX - bb.minX) * 0.2
-    const marginY = (bb.maxY - bb.minY) * 0.2
-
-    /* Clamp pixel coordinates to the actual video dimensions */
-    const x = Math.max(0, Math.floor((bb.minX - marginX) * vw))
-    const y = Math.max(0, Math.floor((bb.minY - marginY) * vh))
-    const x2 = Math.min(vw, Math.ceil((bb.maxX + marginX) * vw))
-    const y2 = Math.min(vh, Math.ceil((bb.maxY + marginY) * vh))
-    const w = x2 - x
-    const h = y2 - y
-
-    /* Reject degenerate crops */
-    if (w < 10 || h < 10) return null
+    const x = minX * video.videoWidth
+    const y = minY * video.videoHeight
+    const w = (maxX - minX) * video.videoWidth
+    const h = (maxY - minY) * video.videoHeight
 
     this.resizeSrcCanvas.width = w
     this.resizeSrcCanvas.height = h
@@ -541,14 +510,7 @@ export class HeadPoseEstimator {
       maxY = Math.max(maxY, p.y)
     }
 
-    /* Clamp to valid [0, 1] range — MediaPipe landmarks can
-       extend slightly outside the frame on some cameras/resolutions. */
-    return {
-      minX: Math.max(0, minX),
-      minY: Math.max(0, minY),
-      maxX: Math.min(1, maxX),
-      maxY: Math.min(1, maxY),
-    }
+    return { minX, minY, maxX, maxY }
   }
 
   /* =======================
@@ -573,7 +535,6 @@ export class HeadPoseEstimator {
     this.gazeBaseline = undefined
     this.suspicionScore = 0
     this.lastTimestamp = undefined
-    this.lastMediaPipeTs = 0
 
     this.ready = false
   }
