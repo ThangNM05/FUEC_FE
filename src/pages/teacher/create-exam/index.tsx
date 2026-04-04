@@ -6,12 +6,12 @@ import {
     FileQuestion, Clock, Shield, Globe, Hash, Tag, Calendar, Eye, Lock, Wifi
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery } from '@/api/classDetailsApi';
+import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery, useGetStudentClassesByClassIdQuery } from '@/api/classDetailsApi';
 import { useGetSubjectSyllabusesQuery } from '@/api/subjectsApi';
 import { useGetSyllabusAssessmentsQuery } from '@/api/syllabusApi';
 import { useGetExamFormatsQuery } from '@/api/examFormatsApi';
 import { useCreateExamMutation, useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
-import { DatePicker } from 'antd';
+import { DatePicker, Select } from 'antd';
 import dayjs from 'dayjs';
 import { type ChapterQuestionCount } from '@/types/exam.types';
 
@@ -31,6 +31,8 @@ interface ExamFormData {
     requireIpCheck: boolean;
     allowedIpRanges: string;
     codeDuration: number;
+    enableAiProctoring: boolean;
+    proctoringExemptStudentClassIds: string[];
 }
 
 const Field = ({ label, required, error, children, icon: Icon, hint, isSubmitted }: {
@@ -71,6 +73,11 @@ function CreateExam() {
     const courseName = classSubject
         ? `${classSubject.subjectCode} - ${classSubject.classCode}`
         : '';
+        
+    const { data: studentsData } = useGetStudentClassesByClassIdQuery({ classSubjectId: classSubject?.id }, {
+        skip: !classSubject?.id,
+    });
+    const students = studentsData?.items || [];
 
     // Fetch Syllabus and Assessments
     const { data: syllabuses } = useGetSubjectSyllabusesQuery(classSubject?.subjectId || '', {
@@ -153,6 +160,8 @@ function CreateExam() {
         requireIpCheck: false,
         allowedIpRanges: '',
         codeDuration: 60,
+        enableAiProctoring: true,
+        proctoringExemptStudentClassIds: [],
     });
 
     // Auto-select first assessment and set initial display name
@@ -603,6 +612,49 @@ function CreateExam() {
                                     />
                                 </Field>
                             </div>
+                        )}
+
+                        {/* AI Proctoring Toggle */}
+                        <div className="pt-4 border-t border-gray-100">
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <Shield className="w-4 h-4 text-gray-500" />
+                                    <div>
+                                        <p className="text-sm font-medium text-[#0A1B3C]">AI Proctoring</p>
+                                        <p className="text-xs text-gray-500">Enable webcam & head-pose detection during exam</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => updateField('enableAiProctoring', !form.enableAiProctoring)}
+                                    className={`relative w-11 h-6 rounded-full transition-colors ${form.enableAiProctoring ? 'bg-[#F37022]' : 'bg-gray-300'
+                                        }`}
+                                >
+                                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.enableAiProctoring ? 'translate-x-[22px]' : 'translate-x-0.5'
+                                        }`} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Proctoring Exemption List — only when AI Proctoring is enabled */}
+                        {form.enableAiProctoring && (
+                        <div className="pt-4 border-t border-gray-100">
+                            <Field isSubmitted={isSubmitted} label="AI Proctoring Exemptions" icon={Shield} hint="Select students who cannot use webcams (will bypass AI proctoring)">
+                                <Select
+                                    mode="multiple"
+                                    allowClear
+                                    placeholder="Select students to exempt..."
+                                    style={{ width: '100%' }}
+                                    className="!rounded-xl"
+                                    value={form.proctoringExemptStudentClassIds}
+                                    onChange={(value) => updateField('proctoringExemptStudentClassIds', value)}
+                                    options={students.map((student) => ({
+                                        label: `${student.studentCode} - ${student.studentName}`,
+                                        value: student.id,
+                                    }))}
+                                />
+                            </Field>
+                        </div>
                         )}
                     </div>
                 </div>

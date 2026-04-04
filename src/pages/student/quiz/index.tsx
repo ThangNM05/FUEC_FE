@@ -317,16 +317,23 @@ export default function QuizTest() {
     }
   }, [maxViolations, handleViolation]);
 
-  // Auto-start proctoring when exam data is loaded
+  // Auto-start proctoring when exam data is loaded (skip for exempt students)
   useEffect(() => {
     if (!examData) return;
+    if (examData.isProctoringExempt) {
+      // Exempt students skip camera/AI entirely — mark ready so timer starts
+      setProctoringStarted(true);
+      setProctorReady(true);
+      return;
+    }
     if (!proctoringStarted) startProctoring();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examData]);
 
-  // Request fullscreen once proctoring is ready
+  // Request fullscreen once proctoring is ready (skip for exempt students)
   useEffect(() => {
     if (!proctorReady || fullscreenRequestedRef.current) return;
+    if (examData?.isProctoringExempt) return;
     fullscreenRequestedRef.current = true;
     try {
       if (document.documentElement.requestFullscreen) {
@@ -351,11 +358,12 @@ export default function QuizTest() {
 
     document.addEventListener('fullscreenchange', onFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
-  }, [proctorReady, incrementViolation]);
+  }, [proctorReady, incrementViolation, examData?.isProctoringExempt]);
 
-  // Tab-change / visibility detection
+  // Tab-change / visibility detection (skip for exempt students)
   useEffect(() => {
     if (!examData) return;
+    if (examData.isProctoringExempt) return;
 
     const handleVisibility = () => {
       if (!examData || examData.isSubmitted || showResults) return;
@@ -376,10 +384,11 @@ export default function QuizTest() {
   }, [examData, showResults, incrementViolation]);
 
   // ══════════════════════════════════════════════════════
-  // Main proctoring loop: draw + inference
+  // Main proctoring loop: draw + inference (skip for exempt students)
   // ══════════════════════════════════════════════════════
   useEffect(() => {
     if (!proctorReady) return;
+    if (examData?.isProctoringExempt) return;
 
     let rafId = 0;
     let inferenceTimer: number | null = null;
@@ -906,8 +915,8 @@ export default function QuizTest() {
   // ── Quiz UI ──
   return (
     <>
-      {/* Fullscreen Prompt Modal */}
-      {showFullscreenPrompt && (
+      {/* Fullscreen Prompt Modal (hidden for exempt students) */}
+      {showFullscreenPrompt && !examData?.isProctoringExempt && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-4 p-safe animate-fadeIn">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
             <h3 className="text-lg font-bold text-[#0A1B3C] mb-3">Please go fullscreen</h3>
@@ -960,8 +969,8 @@ export default function QuizTest() {
         </div>
       )}
 
-      {/* Cheating Pause Overlay */}
-      {cheatingPaused && (
+      {/* Cheating Pause Overlay (hidden for exempt students) */}
+      {cheatingPaused && !examData?.isProctoringExempt && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border border-red-100">
             <div className="flex items-center justify-center mb-3">
@@ -976,8 +985,8 @@ export default function QuizTest() {
       )}
 
       <div className="min-h-screen bg-gray-50/50 animate-fadeIn">
-        {/* Fullscreen Proctoring Initialization Overlay */}
-        {!proctorReady && (
+        {/* Fullscreen Proctoring Initialization Overlay (hidden for exempt students) */}
+        {!proctorReady && !examData?.isProctoringExempt && (
           <div className="fixed inset-0 z-[90] bg-white/70 backdrop-blur-md flex flex-col items-center justify-center p-4">
             <div className="bg-white p-10 rounded-[2rem] shadow-2xl flex flex-col items-center text-center max-w-sm border border-orange-100">
               <div className="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mb-6 shadow-inner ring-4 ring-white">
@@ -1221,7 +1230,8 @@ export default function QuizTest() {
                 <span>SUBMIT EXAM</span>
               </button>
 
-              {/* AI Proctoring Camera Preview Window */}
+              {/* AI Proctoring Camera Preview Window (hidden for exempt students) */}
+              {!examData?.isProctoringExempt && (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                 <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -1249,6 +1259,7 @@ export default function QuizTest() {
                   />
                 </div>
               </div>
+              )}
             </div>
           </div>
         </div>
