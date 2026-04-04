@@ -11,6 +11,7 @@ import { ConfigProvider } from 'antd';
 
 import { store } from './redux/store';
 import Router from './router';
+import ScrollToTop from './components/shared/ScrollToTop';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -34,6 +35,7 @@ createRoot(document.getElementById('root')!).render(
       >
         <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
           <BrowserRouter>
+            <ScrollToTop />
             <Router />
           </BrowserRouter>
           <Toaster richColors position="top-right" />
