@@ -262,7 +262,13 @@ export default function QuizTest() {
 
   const startProctoring = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 320 },
+          height: { ideal: 240 },
+          facingMode: 'user',
+        },
+      });
       streamRef.current = stream;
 
       if (!videoRef.current) return;
@@ -1241,10 +1247,10 @@ export default function QuizTest() {
                       <span className="text-xs font-semibold">Accessing Camera</span>
                     </div>
                   )}
-                  <video ref={videoRef} playsInline muted autoPlay className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+                  <video ref={videoRef} playsInline muted autoPlay className="w-full h-full object-contain" style={{ transform: 'scaleX(-1)' }} />
                   <canvas
                     ref={canvasRef}
-                    className="absolute inset-0 w-full h-full pointer-events-none"
+                    className="absolute inset-0 w-full h-full object-contain pointer-events-none"
                     style={{ transform: 'scaleX(-1)' }}
                   />
                 </div>
