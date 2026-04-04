@@ -107,6 +107,15 @@ export default function PracticeRunner() {
     });
     const [isFinished, setIsFinished] = useState(false);
 
+    // Scroll to top when switching to results screen
+    useEffect(() => {
+        if (isFinished) {
+            const scrollContainer = document.querySelector('.overflow-y-auto');
+            if (scrollContainer) scrollContainer.scrollTo({ top: 0, behavior: 'instant' });
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+    }, [isFinished]);
+
     // Save progress to localStorage whenever answers change
     useEffect(() => {
         if (Object.keys(userAnswers).length > 0) {
@@ -143,15 +152,10 @@ export default function PracticeRunner() {
 
         setUserAnswers(prev => {
             const currentAnswers = prev[questionId] || [];
-            
-            if (isMultipleChoice) {
-                if (currentAnswers.includes(optionId)) {
-                    return { ...prev, [questionId]: currentAnswers.filter(id => id !== optionId) };
-                } else {
-                    return { ...prev, [questionId]: [...currentAnswers, optionId] };
-                }
+            if (currentAnswers.includes(optionId)) {
+                return { ...prev, [questionId]: currentAnswers.filter(id => id !== optionId) };
             } else {
-                return { ...prev, [questionId]: [optionId] };
+                return { ...prev, [questionId]: [...currentAnswers, optionId] };
             }
         });
     };
@@ -359,12 +363,11 @@ export default function PracticeRunner() {
                                                 className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center justify-between group relative overflow-hidden ${variantClasses}`}
                                             >
                                                 <div className="flex items-center gap-3 relative z-10 w-full">
-                                                    <div className={`w-5 h-5 flex-shrink-0 border flex items-center justify-center transition-colors ${question.options.filter((o: any) => o.isCorrect).length > 1 ? 'rounded-md' : 'rounded-full'
-                                                        } ${isSelected
+                                                    <div className={`w-5 h-5 flex-shrink-0 border flex items-center justify-center transition-colors rounded-md ${isSelected
                                                             ? isAnswered ? (isThisCorrect ? 'bg-green-500 border-green-500' : 'bg-red-500 border-red-500') : 'bg-[#F37022] border-[#F37022]'
                                                             : 'border-gray-300 bg-white'
                                                         }`}>
-                                                        {isSelected && <div className={`w-2 h-2 bg-white ${question.options.filter((o: any) => o.isCorrect).length > 1 ? 'rounded-sm' : 'rounded-full'}`} />}
+                                                        {isSelected && <div className="w-2 h-2 bg-white rounded-sm" />}
                                                     </div>
                                                     <span className="flex-1">{option.choiceContent}</span>
                                                 </div>

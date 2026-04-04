@@ -629,6 +629,15 @@ export default function QuizTest() {
     setInitialized(true);
   }, [examData, studentExamId, initialized]);
 
+  // ── Scroll to top when switching to results view ──
+  useEffect(() => {
+    if (showResults) {
+      const scrollContainer = document.querySelector('.overflow-y-auto');
+      if (scrollContainer) scrollContainer.scrollTo({ top: 0, behavior: 'instant' });
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [showResults]);
+
   // ── Countdown Timer ──
   useEffect(() => {
     if (timeLeft === null || timeLeft <= 0 || showResults || !proctorReady || cheatingPaused || showFullscreenPrompt) return;
@@ -675,7 +684,7 @@ export default function QuizTest() {
         await createAnswer({
           studentExamId,
           questionId,
-          ...(questionType === 1 ? { choiceIds: newOptionIds } : { choiceId: newOptionIds[0] }),
+          choiceIds: newOptionIds, // Always send array since they can select multiple even for single choice
         }).unwrap();
         setSavingStatus('saved');
         setTimeout(() => setSavingStatus('idle'), 2000);
@@ -1127,25 +1136,24 @@ export default function QuizTest() {
                           onClick={() => {
                             const existing = answers[q.id] || [];
                             let newOptionIds: string[] = [];
-                            if (q.questionType === 1) {
-                              if (existing.includes(option.id)) {
-                                newOptionIds = existing.filter(id => id !== option.id);
-                              } else {
-                                newOptionIds = [...existing, option.id];
-                              }
+                            
+                            // User requested that even if q.questionType === 0 (Single Choice), they can select multiple!
+                            if (existing.includes(option.id)) {
+                              newOptionIds = existing.filter(id => id !== option.id);
                             } else {
-                              newOptionIds = [option.id];
+                              newOptionIds = [...existing, option.id];
                             }
+                            
                             handleAnswer(q.id, newOptionIds, q.questionType);
                           }}
                           className={`group w-full flex items-center gap-4 p-5 text-left rounded-xl border-2 transition-all duration-200 ${isSelected ? 'border-[#F37022] bg-[#F37022]/5' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
                             }`}
                         >
                           <div
-                            className={`w-6 h-6 ${q.questionType === 1 ? 'rounded-md' : 'rounded-full'} border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-[#F37022] bg-[#F37022]' : 'border-gray-200 group-hover:border-gray-300'
+                            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-[#F37022] bg-[#F37022]' : 'border-gray-200 group-hover:border-gray-300'
                               }`}
                           >
-                            {isSelected && <div className={`w-2.5 h-2.5 ${q.questionType === 1 ? 'rounded-sm' : 'rounded-full'} bg-white shadow-sm`} />}
+                            {isSelected && <div className="w-2.5 h-2.5 rounded-sm bg-white shadow-sm" />}
                           </div>
                           <span className="text-base font-semibold text-[#0A1B3C] flex items-start gap-3">
                             <span className="text-gray-400 font-bold">{String.fromCharCode(65 + oIdx)}.</span>
