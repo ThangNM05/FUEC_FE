@@ -7,7 +7,7 @@ import { BrowserRouter } from 'react-router';
 import { Toaster } from 'sonner';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App } from 'antd';
 
 import { store } from './redux/store';
 import Router from './router';
@@ -19,7 +19,6 @@ if (!GOOGLE_CLIENT_ID) {
   throw new Error('Missing Google Client ID');
 }
 
-  //test deploy
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
@@ -33,13 +32,15 @@ createRoot(document.getElementById('root')!).render(
           },
         }}
       >
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-          <BrowserRouter>
-            <ScrollToTop />
-            <Router />
-          </BrowserRouter>
-          <Toaster richColors position="top-right" />
-        </GoogleOAuthProvider>
+        <App>
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <BrowserRouter>
+              <ScrollToTop />
+              <Router />
+            </BrowserRouter>
+            <Toaster richColors position="top-right" />
+          </GoogleOAuthProvider>
+        </App>
       </ConfigProvider>
     </Provider>
   </StrictMode>,

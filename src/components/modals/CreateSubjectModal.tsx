@@ -17,7 +17,6 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
         code: '',
         name: '',
         credits: 3,
-        terms: 1,
         timeAllocation: '',
         description: '',
         minAvgMarkToPass: 5,
@@ -31,7 +30,6 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
             code: '',
             name: '',
             credits: 3,
-            terms: 1,
             timeAllocation: '',
             description: '',
             minAvgMarkToPass: 5,
@@ -68,10 +66,6 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
         // Validate ranges
         if (formData.credits < 0 || formData.credits > 10) {
             toast.error('Credits must be between 0 and 10');
-            return;
-        }
-        if (formData.terms < 1 || formData.terms > 9) {
-            toast.error('Terms must be between 1 and 9');
             return;
         }
         if (formData.minAvgMarkToPass < 0 || formData.minAvgMarkToPass > 10) {
@@ -138,7 +132,7 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
                     </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-1">
                         <span className="block text-sm font-semibold text-gray-700">Credits (0-10)</span>
                         <InputNumber
@@ -147,19 +141,6 @@ export default function CreateSubjectModal({ isOpen, onClose }: CreateSubjectMod
                             onChange={(value) => handleNumberChange('credits', value)}
                             min={0}
                             max={10}
-                            disabled={isLoading}
-                            size="large"
-                            className="w-full"
-                        />
-                    </div>
-                    <div className="grid gap-1">
-                        <span className="block text-sm font-semibold text-gray-700">Terms (1-9)</span>
-                        <InputNumber
-                            id="terms"
-                            value={formData.terms}
-                            onChange={(value) => handleNumberChange('terms', value)}
-                            min={1}
-                            max={9}
                             disabled={isLoading}
                             size="large"
                             className="w-full"

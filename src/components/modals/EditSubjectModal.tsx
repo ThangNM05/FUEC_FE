@@ -18,7 +18,6 @@ export default function EditSubjectModal({ isOpen, onClose, subject }: EditSubje
         code: '',
         name: '',
         credits: 0,
-        terms: 0,
         timeAllocation: '',
         description: '',
         minAvgMarkToPass: 0,
@@ -33,7 +32,6 @@ export default function EditSubjectModal({ isOpen, onClose, subject }: EditSubje
                 code: subject.code,
                 name: subject.name,
                 credits: subject.credits,
-                terms: subject.terms,
                 timeAllocation: subject.timeAllocation || '',
                 description: subject.description || '',
                 minAvgMarkToPass: subject.minAvgMarkToPass,
@@ -65,11 +63,6 @@ export default function EditSubjectModal({ isOpen, onClose, subject }: EditSubje
 
         if (formData.credits > 10) {
             toast.error('Credits cannot exceed 10');
-            return;
-        }
-
-        if (formData.terms > 9) {
-            toast.error('Terms cannot exceed 9');
             return;
         }
 
@@ -133,7 +126,7 @@ export default function EditSubjectModal({ isOpen, onClose, subject }: EditSubje
                     </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
                         <span className="block text-sm font-semibold text-gray-700">Credits</span>
                         <InputNumber
@@ -142,19 +135,6 @@ export default function EditSubjectModal({ isOpen, onClose, subject }: EditSubje
                             max={10}
                             value={formData.credits}
                             onChange={(val) => handleNumberChange('credits', val)}
-                            disabled={isLoading}
-                            size="large"
-                            className="w-full"
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <span className="block text-sm font-semibold text-gray-700">Terms</span>
-                        <InputNumber
-                            id="edit-terms"
-                            min={1}
-                            max={9}
-                            value={formData.terms}
-                            onChange={(val) => handleNumberChange('terms', val)}
                             disabled={isLoading}
                             size="large"
                             className="w-full"
