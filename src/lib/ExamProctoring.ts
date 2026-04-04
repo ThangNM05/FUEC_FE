@@ -423,12 +423,18 @@ export class HeadPoseEstimator {
   ): Promise<ort.Tensor | null> {
     if (!this.resizeSrcCtx || !this.resizeDstCtx || !this.resizeSrcCanvas || !this.resizeDstCanvas) return null
 
-    const { minX, minY, maxX, maxY } = this.faceBoundingBox(lm)
+    const vw = video.videoWidth
+    const vh = video.videoHeight
+    if (vw === 0 || vh === 0) return null
 
-    const x = minX * video.videoWidth
-    const y = minY * video.videoHeight
-    const w = (maxX - minX) * video.videoWidth
-    const h = (maxY - minY) * video.videoHeight
+    const { minX, minY, maxX, maxY } = this.faceCropBox(lm)
+
+    const x = Math.round(minX * vw)
+    const y = Math.round(minY * vh)
+    const w = Math.round((maxX - minX) * vw)
+    const h = Math.round((maxY - minY) * vh)
+
+    if (w < 10 || h < 10) return null
 
     this.resizeSrcCanvas.width = w
     this.resizeSrcCanvas.height = h
@@ -511,6 +517,27 @@ export class HeadPoseEstimator {
     }
 
     return { minX, minY, maxX, maxY }
+  }
+
+  /**
+   * Padded + clamped bounding box for ONNX model input.
+   * 25% padding on each side ensures the gaze model gets enough
+   * facial context regardless of webcam resolution or FOV.
+   */
+  private faceCropBox(lm: Array<{ x: number; y: number }>) {
+    const { minX, minY, maxX, maxY } = this.faceBoundingBox(lm)
+
+    const w = maxX - minX
+    const h = maxY - minY
+    const padX = w * 0.25
+    const padY = h * 0.25
+
+    return {
+      minX: Math.max(0, minX - padX),
+      minY: Math.max(0, minY - padY),
+      maxX: Math.min(1, maxX + padX),
+      maxY: Math.min(1, maxY + padY),
+    }
   }
 
   /* =======================

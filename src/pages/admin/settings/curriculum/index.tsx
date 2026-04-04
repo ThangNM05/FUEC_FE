@@ -300,6 +300,7 @@ function AdminCurriculum() {
                 onConfirm={handleConfirmImport}
                 title="Import Curriculum Subjects from Excel"
                 description="Excel columns: CurriculumCode | SubjectCode | Term"
+                templateUrl="/templates/Import_Curriculumn_Template.xlsx"
             />
 
             <CloneCurriculumModal
