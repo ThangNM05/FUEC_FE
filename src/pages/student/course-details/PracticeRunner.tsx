@@ -354,12 +354,11 @@ export default function PracticeRunner() {
                                                 className={`w-full text-left p-5 rounded-2xl border-2 transition-all flex items-center justify-between group relative overflow-hidden ${variantClasses}`}
                                             >
                                                 <div className="flex items-center gap-3 relative z-10 w-full">
-                                                    <div className={`w-5 h-5 flex-shrink-0 border flex items-center justify-center transition-colors ${question.options.filter((o: any) => o.isCorrect).length > 1 ? 'rounded-md' : 'rounded-full'
-                                                        } ${isSelected
+                                                    <div className={`w-5 h-5 flex-shrink-0 border flex items-center justify-center transition-colors rounded-md ${isSelected
                                                             ? isAnswered ? (isThisCorrect ? 'bg-green-500 border-green-500' : 'bg-red-500 border-red-500') : 'bg-[#F37022] border-[#F37022]'
                                                             : 'border-gray-300 bg-white'
                                                         }`}>
-                                                        {isSelected && <div className={`w-2 h-2 bg-white ${question.options.filter((o: any) => o.isCorrect).length > 1 ? 'rounded-sm' : 'rounded-full'}`} />}
+                                                        {isSelected && <div className="w-2 h-2 bg-white rounded-sm" />}
                                                     </div>
                                                     <span className="flex-1">{option.choiceContent}</span>
                                                 </div>

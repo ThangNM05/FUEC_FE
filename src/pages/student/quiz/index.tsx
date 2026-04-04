@@ -1141,10 +1141,10 @@ export default function QuizTest() {
                             }`}
                         >
                           <div
-                            className={`w-6 h-6 ${q.questionType === 1 ? 'rounded-md' : 'rounded-full'} border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-[#F37022] bg-[#F37022]' : 'border-gray-200 group-hover:border-gray-300'
+                            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${isSelected ? 'border-[#F37022] bg-[#F37022]' : 'border-gray-200 group-hover:border-gray-300'
                               }`}
                           >
-                            {isSelected && <div className={`w-2.5 h-2.5 ${q.questionType === 1 ? 'rounded-sm' : 'rounded-full'} bg-white shadow-sm`} />}
+                            {isSelected && <div className="w-2.5 h-2.5 rounded-sm bg-white shadow-sm" />}
                           </div>
                           <span className="text-base font-semibold text-[#0A1B3C] flex items-start gap-3">
                             <span className="text-gray-400 font-bold">{String.fromCharCode(65 + oIdx)}.</span>
