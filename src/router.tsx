@@ -14,7 +14,6 @@ import AdminStudents from './pages/admin/students';
 import AdminTeachers from './pages/admin/teachers';
 // Admin Settings Pages
 
-import AdminClassrooms from './pages/admin/settings/classrooms';
 import AdminSubjects from './pages/admin/settings/subjects';
 import AdminExamTypes from './pages/admin/settings/exam-types';
 import AdminSemesters from './pages/admin/settings/semesters';
@@ -29,7 +28,6 @@ import AssignmentDetails from './pages/student/assignment';
 import CourseDetails from './pages/student/course-details';
 import StudentCourses from './pages/student/courses';
 import StudentExamsPage from './pages/student/exams';
-import StudentForums from './pages/student/forums';
 import StudentGrades from './pages/student/grades';
 import StudentProfile from './pages/student/profile';
 import QuizTest from './pages/student/quiz';
@@ -77,7 +75,6 @@ function Router() {
         <Route path="/admin/settings/exams" element={<AdminExams />} />
         <Route path="/admin/settings/majors" element={<AdminMajors />} />
 
-        <Route path="/admin/settings/classrooms" element={<AdminClassrooms />} />
         <Route path="/admin/settings/subjects" element={<AdminSubjects />} />
         <Route path="/admin/settings/exam-types" element={<AdminExamTypes />} />
         <Route path="/admin/settings/semesters" element={<AdminSemesters />} />
@@ -94,7 +91,6 @@ function Router() {
         <Route path="/student/assignment" element={<AssignmentDetails />} />
         <Route path="/student/exam-lobby/:examId" element={<ExamLobby />} />
         <Route path="/student/quiz" element={<QuizTest />} />
-        <Route path="/student/forums" element={<StudentForums />} />
         <Route path="/student/exams" element={<StudentExamsPage />} />
         <Route path="/student/grades" element={<StudentGrades />} />
         <Route path="/student/schedule" element={<StudentSchedule />} />

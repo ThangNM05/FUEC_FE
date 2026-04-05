@@ -19,7 +19,6 @@ const allMenuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/student' },
   { id: 'courses', label: 'Courses', icon: BookOpen, path: '/student/courses' },
   { id: 'schedule', label: 'Schedule', icon: Clock, path: '/student/schedule' },
-  { id: 'forums', label: 'Forums', icon: MessageSquare, path: '/student/forums' },
   { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/messenger' },
   { id: 'exams', label: 'Exams', icon: Calendar, path: '/student/exams' },
   { id: 'grades', label: 'Grades', icon: BarChart3, path: '/student/grades' }
