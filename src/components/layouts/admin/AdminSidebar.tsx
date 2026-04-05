@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router';
 import {
   LayoutDashboard, Users, BookOpen, Database, Settings,
   ChevronDown, ChevronRight, User, LogOut, PanelLeftClose, Menu, Layers,
-  Building2, DoorOpen, GraduationCap, ClipboardList, Calendar, FileText, BookMarked, LayoutGrid
+  Building2, GraduationCap, ClipboardList, Calendar, FileText, BookMarked, LayoutGrid
 } from 'lucide-react';
 import img_fpt from '../../../assets/img_fpt.svg';
 import { useDispatch } from 'react-redux';
@@ -64,7 +64,6 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
       icon: Settings,
       subItems: [
         { id: 'majors', label: 'Majors', icon: Building2, path: '/admin/settings/majors' },
-        { id: 'classrooms', label: 'Classrooms', icon: DoorOpen, path: '/admin/settings/classrooms' },
         { id: 'subjects', label: 'Subjects', icon: GraduationCap, path: '/admin/settings/subjects' },
         { id: 'exam-types', label: 'Exam Types', icon: ClipboardList, path: '/admin/settings/exam-types' },
         { id: 'semesters', label: 'Semesters', icon: Calendar, path: '/admin/settings/semesters' },
