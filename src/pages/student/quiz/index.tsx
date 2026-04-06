@@ -484,13 +484,13 @@ export default function QuizTest() {
         const wasRecording = episodeRecorderRef.current?.isRecording ?? false;
 
         const PAUSE_THRESHOLDS: Record<string, number> = {
-          suspicious: 3000,
-          'looking-left': 6000,
-          'looking-right': 6000,
-          'no-face': 3000,
-          'multiple-faces': 3000,
+          suspicious: 8000,
+          'looking-left': 8000,
+          'looking-right': 8000,
+          'no-face': 6000,
+          'multiple-faces': 8000,
         };
-        const DEFAULT_PAUSE_THRESHOLD = 3000;
+        const DEFAULT_PAUSE_THRESHOLD = 8000;
 
 
         if (isThreat) {
@@ -984,26 +984,26 @@ export default function QuizTest() {
         </div>
       )}
 
-      <div className="min-h-screen bg-gray-50/50 animate-fadeIn">
-        {/* Fullscreen Proctoring Initialization Overlay (hidden for exempt students) */}
-        {!proctorReady && !examData?.isProctoringExempt && (
-          <div className="fixed inset-0 z-[90] bg-white/70 backdrop-blur-md flex flex-col items-center justify-center p-4">
-            <div className="bg-white p-10 rounded-[2rem] shadow-2xl flex flex-col items-center text-center max-w-sm border border-orange-100">
-              <div className="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mb-6 shadow-inner ring-4 ring-white">
-                <Loader2 className="w-12 h-12 animate-spin text-[#F37022]" />
-              </div>
-              <h2 className="text-2xl font-black text-[#0A1B3C] mb-3 tracking-tight">Proctoring Setup</h2>
-              <p className="text-gray-500 font-medium mb-8 text-sm leading-relaxed">
-                Please allow camera access and position your face visibly in the frame. The exam timer is paused.
-              </p>
-              <div className="flex items-center gap-3 text-xs font-bold text-[#F37022] bg-[#F37022]/10 px-5 py-2.5 rounded-xl uppercase tracking-widest shadow-sm">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#F37022] animate-pulse" />
-                Connecting Camera...
-              </div>
+      {/* Fullscreen Proctoring Initialization Overlay (hidden for exempt students) */}
+      {!proctorReady && !examData?.isProctoringExempt && (
+        <div className="fixed inset-0 z-[90] bg-white/70 backdrop-blur-md flex flex-col items-center justify-center p-4">
+          <div className="bg-white p-10 rounded-[2rem] shadow-2xl flex flex-col items-center text-center max-w-sm border border-orange-100">
+            <div className="w-24 h-24 bg-orange-50 rounded-full flex items-center justify-center mb-6 shadow-inner ring-4 ring-white">
+              <Loader2 className="w-12 h-12 animate-spin text-[#F37022]" />
+            </div>
+            <h2 className="text-2xl font-black text-[#0A1B3C] mb-3 tracking-tight">Proctoring Setup</h2>
+            <p className="text-gray-500 font-medium mb-8 text-sm leading-relaxed">
+              Please allow camera access and position your face visibly in the frame. The exam timer is paused.
+            </p>
+            <div className="flex items-center gap-3 text-xs font-bold text-[#F37022] bg-[#F37022]/10 px-5 py-2.5 rounded-xl uppercase tracking-widest shadow-sm">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#F37022] animate-pulse" />
+              Connecting Camera...
             </div>
           </div>
-        )}
+        </div>
+      )}
 
+      <div className="min-h-screen bg-gray-50/50 animate-fadeIn">
         {/* ── Main Layout Container ── */}
         <div className="max-w-[1600px] mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
