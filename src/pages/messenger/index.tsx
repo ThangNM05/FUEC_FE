@@ -262,6 +262,15 @@ function Messenger() {
     return () => { document.title = 'EduConnect'; };
   }, [hasNewMessages.size]);
 
+  // ── Clear unread on window focus
+  useEffect(() => {
+    const onFocus = () => {
+      setHasNewMessages(new Set());
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
+
   const isAdmin = currentUser?.role === 'Admin';
 
   // Restore scroll position when older messages are loaded
@@ -378,19 +387,25 @@ function Messenger() {
       if (msg.senderId !== userId) {
         refetchConversations();
 
-        // Add to unread set if we are not currently viewing it
-        if (msg.conversationId !== selectedConversation?.id) {
+        const isCurrentActive = msg.conversationId === selectedConversation?.id;
+        const isFocused = document.hasFocus();
+
+        // Always play sound for new messages unless we are currently typing in the active chat
+        if (!isCurrentActive || !isFocused) {
+          playNotificationSound();
+        }
+
+        // Add to unread set and show browser notification if we are not actively viewing it
+        if (!isCurrentActive || !isFocused) {
           setHasNewMessages((prev) => {
             const next = new Set(prev);
             next.add(msg.conversationId);
             return next;
           });
 
-          // Show Browser notification and Ting pop!
-          playNotificationSound();
           if (Notification.permission === 'granted') {
             new Notification('EduConnect', {
-              body: `${msg.senderName || 'Someone'}: ${msg.messageContent}`,
+              body: `${msg.senderName || 'Someone'}: ${msg.messageContent || 'Sent an attachment'}`,
               icon: '/vite.svg'
             });
           }
