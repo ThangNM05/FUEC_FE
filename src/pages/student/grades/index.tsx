@@ -185,10 +185,8 @@ function StudentGrades() {
               <tr className="border-b-2 border-gray-200">
                 <th className="p-3 text-left text-sm font-semibold text-gray-700">Class / Course</th>
                 <th className="p-3 text-left text-sm font-semibold text-gray-700">Subject</th>
-                <th className="p-3 text-center text-sm font-semibold text-gray-700">Assignments</th>
-                <th className="p-3 text-center text-sm font-semibold text-gray-700">Midterm</th>
-                <th className="p-3 text-center text-sm font-semibold text-gray-700">Final</th>
-                <th className="p-3 text-center text-sm font-semibold text-gray-700">Overall</th>
+                <th className="p-3 text-center text-sm font-semibold text-gray-700">Assignments (Avg)</th>
+                <th className="p-3 text-center text-sm font-semibold text-gray-700">Progress Tests (Avg)</th>
                 <th className="p-3 text-center text-sm font-semibold text-gray-700">Grade</th>
                 <th className="p-3 text-center text-sm font-semibold text-gray-700">Credits</th>
               </tr>
@@ -196,7 +194,7 @@ function StudentGrades() {
             <tbody>
               {studentSubjects?.length === 0 && !isLoading && !isFetching && (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-gray-500">
+                  <td colSpan={6} className="p-8 text-center text-gray-500">
                     You have not enrolled in any courses for this term.
                   </td>
                 </tr>
@@ -223,10 +221,6 @@ function StudentGrades() {
                     </td>
                     <td className="p-4 text-center font-medium text-gray-500">{course.assignmentsAverage ?? '-'}</td>
                     <td className="p-4 text-center font-medium text-gray-500">{course.midterm ?? '-'}</td>
-                    <td className="p-4 text-center font-medium text-gray-500">
-                      {course.final ?? <span className="text-gray-400">-</span>}
-                    </td>
-                    <td className="p-4 text-center font-semibold text-[#0A1B3C]">{course.overall ?? '-'}</td>
                     <td className="p-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getGradeColor(course.gradeLetter || 'In Progress')}`}>
                         {course.gradeLetter || 'In Progress'}
@@ -237,7 +231,7 @@ function StudentGrades() {
                   
                   {expandedCourseId === course.classSubjectId && course.detailedGrades && course.detailedGrades.length > 0 && (
                     <tr className="bg-gray-50/50">
-                      <td colSpan={8} className="p-4 border-b border-gray-200 shadow-inner">
+                      <td colSpan={6} className="p-4 border-b border-gray-200 shadow-inner">
                         <div className="pl-6">
                           <h4 className="text-sm font-bold text-[#F37022] mb-3">
                              Detailed Component Grades
