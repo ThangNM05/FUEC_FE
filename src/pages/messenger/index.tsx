@@ -58,6 +58,36 @@ import AdminHeader from '@/components/layouts/admin/AdminHeader';
 // Component
 // ─────────────────────────────────────────────────────────────────
 
+const parseUtcDate = (dateStr?: string) => {
+  if (!dateStr) return null;
+  return new Date(dateStr.endsWith('Z') ? dateStr : `${dateStr}Z`);
+};
+
+const playNotificationSound = () => {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const audioCtx = new AudioContextClass();
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime); 
+    osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.5);
+    
+    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.5);
+  } catch (e) {
+    console.error('Audio playback failed', e);
+  }
+};
+
 function Messenger() {
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id ?? '';
@@ -184,7 +214,11 @@ function Messenger() {
         const uniqueMap = new Map();
         combined.forEach(m => uniqueMap.set(m.id, m));
         const unique = Array.from(uniqueMap.values());
-        return unique.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
+        return unique.sort((a, b) => {
+          const tA = parseUtcDate(a.createdAt)?.getTime() || 0;
+          const tB = parseUtcDate(b.createdAt)?.getTime() || 0;
+          return tA - tB;
+        });
       });
 
       if (messagesData.items.length < 10) {
@@ -206,6 +240,13 @@ function Messenger() {
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // ── Request notification permission
+  useEffect(() => {
+    if (Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
   }, []);
 
   const isAdmin = currentUser?.role === 'Admin';
@@ -331,6 +372,15 @@ function Messenger() {
             next.add(msg.conversationId);
             return next;
           });
+          
+          // Show Browser notification and Ting pop!
+          playNotificationSound();
+          if (Notification.permission === 'granted') {
+            new Notification('EduConnect', {
+              body: `${msg.senderName || 'Someone'}: ${msg.messageContent}`,
+              icon: '/vite.svg'
+            });
+          }
         }
       }
     },
@@ -998,7 +1048,7 @@ function Messenger() {
                           <div className={`flex items-center gap-1.5 mt-1 px-1 ${isMe ? 'justify-end' : ''}`}>
                             <span className="text-[10px] text-gray-400">
                               {msg.createdAt
-                                ? new Date(msg.createdAt).toLocaleTimeString([], {
+                                ? parseUtcDate(msg.createdAt)?.toLocaleTimeString([], {
                                   hour: '2-digit',
                                   minute: '2-digit',
                                 })
