@@ -46,6 +46,7 @@ function StudentExams() {
         ...exam,
         subjectLabel: exam.subjectName || 'Unknown Subject',
         subjectCode: exam.subjectCode || '-',
+        classCode: exam.classCode || null,
         examName: exam.displayName || (exam.category ? `${exam.category} ${exam.instanceNumber}` : `Progress Test ${exam.instanceNumber}`),
         course: exam.subjectName || exam.displayName || exam.category,
         code: exam.subjectCode || '-',
@@ -171,6 +172,11 @@ function StudentExams() {
                               {exam.subjectCode}
                             </span>
                           )}
+                          {exam.classCode && (
+                            <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                              {exam.classCode}
+                            </span>
+                          )}
                           <span className="px-2 py-0.5 bg-orange-50 text-orange-600 text-xs font-semibold rounded">{exam.type}</span>
                         </div>
                         <p className="text-sm text-gray-500 mb-3">{exam.examName}</p>
@@ -243,11 +249,18 @@ function StudentExams() {
                           <div className="flex flex-col">
                             <span className="font-semibold text-[#0A1B3C]">{exam.subjectLabel}</span>
                             <span className="text-xs text-gray-500 mt-0.5">{exam.examName}</span>
-                            {exam.subjectCode && exam.subjectCode !== '-' && (
-                              <span className="text-[10px] font-bold text-[#0066b3] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 w-fit mt-1">
-                                {exam.subjectCode}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              {exam.subjectCode && exam.subjectCode !== '-' && (
+                                <span className="text-[10px] font-bold text-[#0066b3] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                  {exam.subjectCode}
+                                </span>
+                              )}
+                              {exam.classCode && (
+                                <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                                  {exam.classCode}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                         <td className="p-4 text-gray-600">{exam.type}</td>
