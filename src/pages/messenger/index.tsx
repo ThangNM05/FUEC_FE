@@ -1021,22 +1021,21 @@ function Messenger() {
                           );
                         }
 
-                        return (
                           <div
                             key={msg.id}
-                            className={`flex gap-2 ${isMe ? 'justify-end' : 'justify-start'}`}
+                            className={`flex gap-2 min-w-0 ${isMe ? 'justify-end' : 'justify-start'}`}
                           >
                             {!isMe && (
                               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 mt-5">
                                 {(msg.senderFullName || msg.senderEmail || '?').substring(0, 2).toUpperCase()}
                               </div>
                             )}
-                            <div className={`max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
-                              <span className={`text-[11px] font-medium mb-1 px-1 ${isMe ? 'text-gray-400' : 'text-gray-500'}`}>
+                            <div className={`min-w-0 max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
+                              <span className={`text-[11px] font-medium mb-1 px-1 truncate max-w-full ${isMe ? 'text-gray-400' : 'text-gray-500'}`}>
                                 {isMe ? 'You' : msg.senderFullName || msg.senderEmail || 'Unknown'}
                               </span>
                               <div
-                                className={`rounded-2xl shadow-sm ${isImage || isVideo
+                                className={`rounded-2xl shadow-sm min-w-0 ${isImage || isVideo
                                   ? 'overflow-hidden'
                                   : isMe
                                     ? 'bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white px-4 py-2.5'
@@ -1047,7 +1046,7 @@ function Messenger() {
                                   <img
                                     src={msg.messageContent || ''}
                                     alt="Shared image"
-                                    className="max-w-xs rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
+                                    className="w-full max-w-[240px] rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
                                     loading="lazy"
                                     onLoad={() => scrollToBottom(true)}
                                   />
@@ -1055,7 +1054,7 @@ function Messenger() {
                                   <video
                                     src={msg.messageContent || ''}
                                     controls
-                                    className="max-w-xs rounded-2xl"
+                                    className="w-full max-w-[240px] rounded-2xl"
                                   />
                                 ) : isFile ? (
                                   <a
@@ -1064,11 +1063,11 @@ function Messenger() {
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 underline"
                                   >
-                                    <Paperclip className="w-4 h-4" />
-                                    <span className="text-sm">Attachment</span>
+                                    <Paperclip className="w-4 h-4 flex-shrink-0" />
+                                    <span className="text-sm break-all">Attachment</span>
                                   </a>
                                 ) : (
-                                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.messageContent}</p>
+                                  <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{msg.messageContent}</p>
                                 )}
                               </div>
                               <div className={`flex items-center gap-1.5 mt-1 px-1 ${isMe ? 'justify-end' : ''}`}>
@@ -1084,13 +1083,12 @@ function Messenger() {
                               </div>
                             </div>
                           </div>
-                        );
                       })
                     )}
                     {/* Sending attachment skeleton */}
                     {sendingAttachment && (
-                      <div className="flex gap-2 justify-end">
-                        <div className="max-w-[70%] flex flex-col items-end">
+                      <div className="flex gap-2 justify-end min-w-0">
+                        <div className="min-w-0 max-w-[75%] flex flex-col items-end">
                           <span className="text-[11px] font-medium mb-1 px-1 text-gray-400">You</span>
                           <div className="rounded-2xl overflow-hidden shadow-sm">
                             {sendingAttachment.type === MessageType.Image ? (
@@ -1098,7 +1096,7 @@ function Messenger() {
                                 <img
                                   src={sendingAttachment.previewUrl}
                                   alt="Sending..."
-                                  className="max-w-xs rounded-2xl opacity-50"
+                                  className="w-full max-w-[240px] rounded-2xl opacity-50"
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-2xl">
                                   <Loader2 className="w-8 h-8 text-white animate-spin" />
