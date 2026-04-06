@@ -2,7 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck, BookOpen, ClipboardList, Award, Megaphone, Info } from 'lucide-react';
 import type { NotificationItem } from '@/types/notification.types';
-import { useNotificationHub } from '@/hooks/useNotificationHub';
+import { useNotificationHub } from '@/contexts/NotificationContext';
 
 function getTypeIcon(type: NotificationItem['type']) {
   switch (type) {

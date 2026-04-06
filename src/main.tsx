@@ -12,6 +12,7 @@ import { ConfigProvider, App } from 'antd';
 import { store } from './redux/store';
 import Router from './router';
 import ScrollToTop from './components/shared/ScrollToTop';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -34,11 +35,13 @@ createRoot(document.getElementById('root')!).render(
       >
         <App>
           <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-            <BrowserRouter>
-              <ScrollToTop />
-              <Router />
-            </BrowserRouter>
-            <Toaster richColors position="top-right" />
+            <NotificationProvider>
+              <BrowserRouter>
+                <ScrollToTop />
+                <Router />
+              </BrowserRouter>
+              <Toaster richColors position="top-right" />
+            </NotificationProvider>
           </GoogleOAuthProvider>
         </App>
       </ConfigProvider>

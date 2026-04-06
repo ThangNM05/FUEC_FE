@@ -62,32 +62,6 @@ const parseUtcDate = (dateStr?: string) => {
   if (!dateStr) return null;
   return new Date(dateStr.endsWith('Z') ? dateStr : `${dateStr}Z`);
 };
-
-const playNotificationSound = () => {
-  try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) return;
-    const audioCtx = new AudioContextClass();
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.5);
-
-    gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.5);
-  } catch (e) {
-    console.error('Audio playback failed', e);
-  }
-};
-
 function Messenger() {
   const currentUser = useSelector(selectCurrentUser);
   const userId = currentUser?.id ?? '';
@@ -242,25 +216,7 @@ function Messenger() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // ── Request notification permission
-  useEffect(() => {
-    if (Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, []);
 
-  // ── Sync document title with unread messages count
-  useEffect(() => {
-    const unreadCount = hasNewMessages.size;
-    if (unreadCount > 0) {
-      document.title = `(${unreadCount}) New Message${unreadCount > 1 ? 's' : ''} | EduConnect`;
-    } else {
-      document.title = 'EduConnect';
-    }
-
-    // Cleanup on unmount
-    return () => { document.title = 'EduConnect'; };
-  }, [hasNewMessages.size]);
 
   // ── Clear unread on window focus
   useEffect(() => {
@@ -390,25 +346,13 @@ function Messenger() {
         const isCurrentActive = msg.conversationId === selectedConversation?.id;
         const isFocused = document.hasFocus();
 
-        // Always play sound for new messages unless we are currently typing in the active chat
-        if (!isCurrentActive || !isFocused) {
-          playNotificationSound();
-        }
-
-        // Add to unread set and show browser notification if we are not actively viewing it
+        // Add to unread set if we are not actively viewing it
         if (!isCurrentActive || !isFocused) {
           setHasNewMessages((prev) => {
             const next = new Set(prev);
             next.add(msg.conversationId);
             return next;
           });
-
-          if (Notification.permission === 'granted') {
-            new Notification('EduConnect', {
-              body: `${msg.senderName || 'Someone'}: ${msg.messageContent || 'Sent an attachment'}`,
-              icon: '/vite.svg'
-            });
-          }
         }
       }
     },
@@ -949,20 +893,15 @@ function Messenger() {
                           <X className="w-5 h-5" />
                         </button>
                       ) : (
-                        <>
-                          <button className="p-2 text-gray-500 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-colors">
-                            <Phone className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => setShowInfoPanel(!showInfoPanel)}
-                            className={`p-2 rounded-lg transition-colors ${showInfoPanel
-                              ? 'text-[#F37022] bg-orange-50'
-                              : 'text-gray-500 hover:text-[#F37022] hover:bg-orange-50'
-                              }`}
-                          >
-                            <MoreVertical className="w-5 h-5" />
-                          </button>
-                        </>
+                        <button
+                          onClick={() => setShowInfoPanel(!showInfoPanel)}
+                          className={`p-2 rounded-lg transition-colors ${showInfoPanel
+                            ? 'text-[#F37022] bg-orange-50'
+                            : 'text-gray-500 hover:text-[#F37022] hover:bg-orange-50'
+                            }`}
+                        >
+                          <MoreVertical className="w-5 h-5" />
+                        </button>
                       )}
                     </div>
                   </div>
