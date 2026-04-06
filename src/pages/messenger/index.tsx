@@ -776,12 +776,13 @@ function Messenger() {
                         <span className={`font-semibold text-sm truncate ${isSelected ? 'text-[#F37022]' : 'text-gray-900'}`}>
                           {displayName}
                         </span>
+                        {/* Mock unread dot - later can be mapped to real unread state */}
+                        {!isSelected && conv.messageCount > 0 && (
+                          <span className="w-2.5 h-2.5 bg-blue-500 rounded-full flex-shrink-0 ml-1"></span>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 truncate">
-                        {isGroup 
-                          ? `${conv.memberCount || 0} members` 
-                          : conv.messageCount > 0 ? `${conv.messageCount} messages` : 'No messages yet'
-                        }
+                        {conv.memberCount || 0} members
                       </p>
                     </div>
                   </button>
