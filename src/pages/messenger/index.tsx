@@ -628,35 +628,32 @@ function Messenger() {
         {currentUser?.role === 'Teacher' && <TeacherHeader />}
         {isAdmin && <AdminHeader />}
 
-        <div className="flex flex-col flex-1 min-h-0">
-          {/* Page Header */}
-          <div className="px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-gray-200/60">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {mobileView === 'chat' && (
-                  <button
-                    onClick={() => { setMobileView('list'); setSelectedConversation(null); }}
-                    className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <ArrowLeft className="w-5 h-5" />
-                  </button>
-                )}
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#0A1B3C] to-[#1a3a6c] bg-clip-text text-transparent">
-                  Messages
-                </h1>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 shadow-emerald-400/40 shadow-sm' : 'bg-red-400'}`} />
-                <span className="text-xs text-gray-500">{isConnected ? 'Connected' : 'Offline'}</span>
-              </div>
+        <div className="flex flex-col flex-1 min-h-0 pt-4 px-4 pb-4 overflow-hidden">
+          {/* Page Title - matching other pages */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              {mobileView === 'chat' && (
+                <button
+                  onClick={() => { setMobileView('list'); setSelectedConversation(null); }}
+                  className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5" />
+                </button>
+              )}
+              <h1 className="text-2xl font-bold tracking-tight text-[#0A1B3C]">Messages</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 shadow-emerald-400/40 shadow-sm' : 'bg-red-400'}`} />
+              <span className="text-xs text-gray-500">{isConnected ? 'Connected' : 'Offline'}</span>
             </div>
           </div>
 
-          <div className="flex flex-1 min-h-0 gap-0">
+          {/* Messenger Card - glass style matching other pages */}
+          <div className="flex flex-1 min-h-0 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200/60 overflow-hidden">
             {/* ─────────────── LEFT SIDEBAR ─────────────── */}
             <div
               className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'
-                } w-full md:w-80 lg:w-96 flex-col bg-white/90 backdrop-blur-sm border-r border-gray-200/60`}
+                } w-full md:w-80 lg:w-96 flex-col border-r border-gray-200/40`}
             >
           {/* Search & Actions */}
           <div className="p-4 space-y-3">
@@ -790,12 +787,12 @@ function Messenger() {
         {/* ─────────────── MAIN CHAT AREA ─────────────── */}
         <div
           className={`${mobileView === 'list' ? 'hidden md:flex' : 'flex'
-            } flex-1 flex-col bg-white ${showInfoPanel ? 'md:mr-0' : ''}`}
+            } flex-1 flex-col ${showInfoPanel ? 'md:mr-0' : ''}`}
         >
           {selectedConversation || pendingChatUser ? (
             <>
               {/* Chat Header */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200/60 bg-white/90 backdrop-blur-sm">
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200/40">
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => { setMobileView('list'); setSelectedConversation(null); setPendingChatUser(null); }}
@@ -871,7 +868,7 @@ function Messenger() {
               <div
                 ref={chatContainerRef}
                 onScroll={handleScroll}
-                className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-gradient-to-b from-gray-50/50 to-white"
+                className="flex-1 overflow-y-auto px-5 py-4 space-y-3"
               >
                 {isFetchingMessages && messagePage > 1 && (
                   <div className="flex justify-center py-2">
@@ -1030,7 +1027,7 @@ function Messenger() {
               </div>
 
               {/* Message Input */}
-              <div className="px-5 py-3 border-t border-gray-200/60 bg-white flex flex-col gap-3 pb-20 sm:pb-3">
+              <div className="px-5 py-3 border-t border-gray-200/40 flex flex-col gap-3 pb-20 sm:pb-3">
                 {pendingAttachment && (
                   <div className="relative inline-flex items-center self-start p-2 bg-gray-50 border border-gray-200 rounded-xl">
                     <button
@@ -1122,7 +1119,7 @@ function Messenger() {
             </>
           ) : (
             /* Empty State */
-            <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-gray-50 to-white">
+            <div className="flex-1 flex items-center justify-center">
               <div className="text-center max-w-sm">
                 <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center">
                   <MessageSquare className="w-10 h-10 text-[#F37022]" />
@@ -1138,7 +1135,7 @@ function Messenger() {
 
         {/* ─────────────── RIGHT INFO PANEL ─────────────── */}
         {showInfoPanel && selectedConversation && (
-          <div className="hidden md:flex w-80 flex-col border-l border-gray-200/60 bg-white">
+          <div className="hidden md:flex w-80 flex-col border-l border-gray-200/40">
             {/* Profile Section */}
             <div className="flex flex-col items-center pt-8 pb-6 px-4 border-b border-gray-100">
               <div className="relative mb-4">
