@@ -205,7 +205,7 @@ function TeacherAssignmentReview() {
                                 </span>
                                 {currentGrade != null && (
                                     <span className="font-semibold text-[#F37022]">
-                                        Grade: {currentGrade}/100
+                                        Grade: {currentGrade}/10
                                     </span>
                                 )}
                             </div>
@@ -373,7 +373,7 @@ function TeacherAssignmentReview() {
                                                     </span>
                                                     {fb.grade !== null && (
                                                         <span className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-full font-bold border border-orange-100">
-                                                            Score: {fb.grade}/100
+                                                            Score: {fb.grade}/10
                                                         </span>
                                                     )}
                                                 </div>
@@ -424,7 +424,7 @@ function TeacherAssignmentReview() {
                                 <span className="text-sm text-gray-600">Current grade</span>
                                 <span className="text-2xl font-bold text-[#F37022]">
                                     {currentGrade}
-                                    <span className="text-sm font-normal text-gray-500">/100</span>
+                                    <span className="text-sm font-normal text-gray-500">/10</span>
                                 </span>
                             </div>
                         )}
@@ -432,19 +432,20 @@ function TeacherAssignmentReview() {
                         {/* Score Input */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Score (out of 100)
+                                Score (out of 10)
                             </label>
                             <input
                                 type="number"
                                 min="0"
-                                max="100"
+                                max="10"
+                                step="0.1"
                                 value={score}
                                 onChange={(e) => {
                                     const val = e.target.value;
-                                    setScore(val === '' ? '' : Math.min(100, Math.max(0, Number(val))));
+                                    setScore(val === '' ? '' : Math.min(10, Math.max(0, Number(val))));
                                 }}
                                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#F37022] focus:ring-2 focus:ring-orange-100 outline-none text-lg font-semibold text-center"
-                                placeholder="0 – 100"
+                                placeholder="0 – 10"
                             />
                         </div>
 
