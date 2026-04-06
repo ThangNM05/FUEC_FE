@@ -70,10 +70,8 @@ function Messenger() {
   const [showInfoPanel, setShowInfoPanel] = useState(false);
   // Custom modals
   const [showChangeNameModal, setShowChangeNameModal] = useState(false);
-  const [showChangePhotoModal, setShowChangePhotoModal] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [newChatName, setNewChatName] = useState('');
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [addMemberSearch, setAddMemberSearch] = useState('');
   const [addMemberResults, setAddMemberResults] = useState<Account[]>([]);
   const [addMemberSelected, setAddMemberSelected] = useState<Account[]>([]);
@@ -87,6 +85,8 @@ function Messenger() {
   const [sendingAttachment, setSendingAttachment] = useState<{ type: MessageType; previewUrl: string } | null>(null);
   const [messagePage, setMessagePage] = useState(1);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [adminSidebarOpen, setAdminSidebarOpen] = useState(true);
 
   // ── User search state (Teams-like) ──
   const [searchResults, setSearchResults] = useState<Account[]>([]);
@@ -191,6 +191,21 @@ function Messenger() {
       }
     }
   }, [messagesData]);
+
+  // ── Track responsive breakpoints ──
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobileDevice(mobile);
+      if (mobile) setAdminSidebarOpen(false);
+      else setAdminSidebarOpen(true);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const isAdmin = currentUser?.role === 'Admin';
 
   // Restore scroll position when older messages are loaded
   useLayoutEffect(() => {
@@ -597,42 +612,52 @@ function Messenger() {
   // ═════════════════════════════════════════════════════════════
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      {/* Top Header - Sycned with Layouts */}
-      {currentUser?.role === 'Student' && <StudentHeader />}
-      {currentUser?.role === 'Teacher' && <TeacherHeader />}
-      {currentUser?.role === 'Admin' && <AdminHeader />}
+    <div className="h-screen bg-slate-50/50 relative overflow-hidden">
+      {/* Glassmorphism Background Blobs - matching other layouts */}
+      <div className="fixed top-[-10%] left-[-5%] w-[40vw] h-[40vw] bg-[#F37022]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none z-0"></div>
+      <div className="fixed bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] bg-[#0A1B3C]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none z-0"></div>
 
-      <div className="flex flex-col h-[calc(100vh-56px)] bg-gradient-to-br from-slate-50 to-gray-100">
-      {/* Header */}
-      <div className="px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-gray-200/60">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {mobileView === 'chat' && (
-              <button
-                onClick={() => { setMobileView('list'); setSelectedConversation(null); }}
-                className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-            )}
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#0A1B3C] to-[#1a3a6c] bg-clip-text text-transparent">
-              Messages
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 shadow-emerald-400/40 shadow-sm' : 'bg-red-400'}`} />
-            <span className="text-xs text-gray-500">{isConnected ? 'Connected' : 'Offline'}</span>
-          </div>
-        </div>
-      </div>
+      {/* Admin sidebar */}
+      {isAdmin && <AdminSidebar isOpen={adminSidebarOpen} toggleSidebar={() => setAdminSidebarOpen(!adminSidebarOpen)} isMobile={isMobileDevice} />}
 
-      <div className="flex flex-1 min-h-0 gap-0">
-        {/* ─────────────── LEFT SIDEBAR ─────────────── */}
-        <div
-          className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'
-            } w-full md:w-80 lg:w-96 flex-col bg-white border-r border-gray-200/60`}
-        >
+      <div className={`relative z-10 flex flex-col h-screen transition-all duration-200 ${
+        isAdmin && !isMobileDevice ? (adminSidebarOpen ? 'ml-64' : 'ml-20') : ''
+      }`}>
+        {/* Top Header - Synced with Layouts */}
+        {currentUser?.role === 'Student' && <StudentHeader />}
+        {currentUser?.role === 'Teacher' && <TeacherHeader />}
+        {isAdmin && <AdminHeader />}
+
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Page Header */}
+          <div className="px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-gray-200/60">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {mobileView === 'chat' && (
+                  <button
+                    onClick={() => { setMobileView('list'); setSelectedConversation(null); }}
+                    className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                )}
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#0A1B3C] to-[#1a3a6c] bg-clip-text text-transparent">
+                  Messages
+                </h1>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 shadow-emerald-400/40 shadow-sm' : 'bg-red-400'}`} />
+                <span className="text-xs text-gray-500">{isConnected ? 'Connected' : 'Offline'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-1 min-h-0 gap-0">
+            {/* ─────────────── LEFT SIDEBAR ─────────────── */}
+            <div
+              className={`${mobileView === 'chat' ? 'hidden md:flex' : 'flex'
+                } w-full md:w-80 lg:w-96 flex-col bg-white/90 backdrop-blur-sm border-r border-gray-200/60`}
+            >
           {/* Search & Actions */}
           <div className="p-4 space-y-3">
             <div className="relative" ref={searchDropdownRef}>
@@ -697,7 +722,7 @@ function Messenger() {
           </div>
 
           {/* Conversation List */}
-          <div className="flex-1 overflow-y-auto px-2">
+          <div className="flex-1 overflow-y-auto px-2 pb-20 sm:pb-2">
             {filteredConversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-gray-400">
                 <MessageSquare className="w-12 h-12 mb-3 opacity-40" />
@@ -722,27 +747,19 @@ function Messenger() {
                   >
                     {/* Avatar */}
                     <div className="relative flex-shrink-0">
-                      {conv.conversationAvatar ? (
-                        <img
-                          src={conv.conversationAvatar}
-                          alt=""
-                          className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-sm"
-                        />
-                      ) : (
-                        <div
-                          className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm
-                            ${isGroup
-                              ? 'bg-gradient-to-br from-indigo-500 to-purple-500'
-                              : 'bg-gradient-to-br from-[#F37022] to-[#ff8c42]'
-                            }`}
-                        >
-                          {isGroup ? (
-                            <Users className="w-5 h-5" />
-                          ) : (
-                            displayName.substring(0, 2).toUpperCase()
-                          )}
-                        </div>
-                      )}
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm
+                          ${isGroup
+                            ? 'bg-gradient-to-br from-indigo-500 to-purple-500'
+                            : 'bg-gradient-to-br from-[#F37022] to-[#ff8c42]'
+                          }`}
+                      >
+                        {isGroup ? (
+                          <Users className="w-5 h-5" />
+                        ) : (
+                          displayName.substring(0, 2).toUpperCase()
+                        )}
+                      </div>
                       {/* Online indicator */}
                       <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white" />
                     </div>
@@ -792,14 +809,12 @@ function Messenger() {
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#F37022] to-[#ff8c42] flex items-center justify-center text-white font-bold text-sm shadow-sm">
                         {pendingChatUser.fullName?.substring(0, 2).toUpperCase() || '??'}
                       </div>
-                    ) : selectedConversation?.conversationAvatar ? (
-                      <img
-                        src={selectedConversation.conversationAvatar}
-                        alt=""
-                        className="w-10 h-10 rounded-full object-cover ring-2 ring-white shadow-sm"
-                      />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#F37022] to-[#ff8c42] flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm ${
+                        selectedConversation?.conversationType === ConversationType.Group
+                          ? 'bg-gradient-to-br from-indigo-500 to-purple-500'
+                          : 'bg-gradient-to-br from-[#F37022] to-[#ff8c42]'
+                      }`}>
                         {selectedConversation?.conversationType === ConversationType.Group ? (
                           <Users className="w-4 h-4" />
                         ) : (
@@ -1015,7 +1030,7 @@ function Messenger() {
               </div>
 
               {/* Message Input */}
-              <div className="px-5 py-3 border-t border-gray-200/60 bg-white flex flex-col gap-3">
+              <div className="px-5 py-3 border-t border-gray-200/60 bg-white flex flex-col gap-3 pb-20 sm:pb-3">
                 {pendingAttachment && (
                   <div className="relative inline-flex items-center self-start p-2 bg-gray-50 border border-gray-200 rounded-xl">
                     <button
@@ -1127,21 +1142,17 @@ function Messenger() {
             {/* Profile Section */}
             <div className="flex flex-col items-center pt-8 pb-6 px-4 border-b border-gray-100">
               <div className="relative mb-4">
-                {selectedConversation.conversationAvatar ? (
-                  <img
-                    src={selectedConversation.conversationAvatar}
-                    alt=""
-                    className="w-20 h-20 rounded-full object-cover ring-4 ring-orange-50 shadow-md"
-                  />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#F37022] to-[#ff8c42] flex items-center justify-center text-white text-2xl font-bold shadow-md">
-                    {selectedConversation.conversationType === ConversationType.Group ? (
-                      <Users className="w-8 h-8" />
-                    ) : (
-                      getConversationDisplayName(selectedConversation).substring(0, 2).toUpperCase()
-                    )}
-                  </div>
-                )}
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold shadow-md ${
+                  selectedConversation.conversationType === ConversationType.Group
+                    ? 'bg-gradient-to-br from-indigo-500 to-purple-500'
+                    : 'bg-gradient-to-br from-[#F37022] to-[#ff8c42]'
+                }`}>
+                  {selectedConversation.conversationType === ConversationType.Group ? (
+                    <Users className="w-8 h-8" />
+                  ) : (
+                    getConversationDisplayName(selectedConversation).substring(0, 2).toUpperCase()
+                  )}
+                </div>
                 <div className="absolute bottom-1 right-1 w-4 h-4 bg-emerald-400 rounded-full border-3 border-white shadow-sm" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 text-center">
@@ -1228,14 +1239,7 @@ function Messenger() {
                   <Edit3 className="w-4 h-4 text-gray-400" />
                   Change chat name
                 </button>
-                {/* Avatar upload button */}
-                <button
-                  className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
-                  onClick={() => setShowChangePhotoModal(true)}
-                >
-                  <ImageIcon className="w-4 h-4 text-gray-400" />
-                  Change photo (upload)
-                </button>
+
                 {/* Change Chat Name Modal */}
                 {showChangeNameModal && (
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -1285,73 +1289,6 @@ function Messenger() {
                             }
                           }}
                           disabled={!newChatName.trim() || isUpdating}
-                          className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-xl hover:shadow-lg hover:shadow-orange-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Change Photo Modal */}
-                {showChangePhotoModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-900">Change Group Avatar</h3>
-                        <button
-                          onClick={() => setShowChangePhotoModal(false)}
-                          className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                        >
-                          <X className="w-5 h-5 text-gray-500" />
-                        </button>
-                      </div>
-                      <div className="p-6 space-y-4">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={e => setAvatarFile(e.target.files?.[0] || null)}
-                          className="w-full"
-                        />
-                        {avatarFile && (
-                          <img src={URL.createObjectURL(avatarFile)} alt="Preview" className="w-24 h-24 rounded-full mx-auto" />
-                        )}
-                      </div>
-                      <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50/50 border-t border-gray-100">
-                        <button
-                          onClick={() => { setShowChangePhotoModal(false); setAvatarFile(null); }}
-                          className="px-5 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!selectedConversation?.id || !avatarFile) return;
-                            setIsUpdating(true);
-                            try {
-                              // Upload to S3 or cloud (simulate with local URL for now)
-                              // Replace with actual upload logic
-                              const formData = new FormData();
-                              formData.append('file', avatarFile);
-                              // Example: const res = await fetch('/api/upload', { method: 'POST', body: formData });
-                              // const { url } = await res.json();
-                              // For now, use local preview
-                              const url = URL.createObjectURL(avatarFile);
-                              await updateConversation({
-                                id: selectedConversation.id,
-                                dto: { conversationAvatar: url },
-                              });
-                              setShowChangePhotoModal(false);
-                              setAvatarFile(null);
-                              refetchConversations();
-                            } catch (err) {
-                              // handle error
-                            } finally {
-                              setIsUpdating(false);
-                            }
-                          }}
-                          disabled={!avatarFile || isUpdating}
                           className="px-5 py-2 text-sm font-medium bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-xl hover:shadow-lg hover:shadow-orange-200 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
                         >
                           Save
@@ -1554,12 +1491,12 @@ function Messenger() {
         </div>
       )}
 
+        </div>
       </div>
 
       {/* Conditionally render the dock for mobile/desktop navigation based on role */}
       {currentUser?.role === 'Student' && <StudentSidebar />}
       {currentUser?.role === 'Teacher' && <TeacherSidebar />}
-      {currentUser?.role === 'Admin' && <AdminSidebar isOpen={true} toggleSidebar={() => { }} isMobile={false} />}
     </div>
   );
 }
