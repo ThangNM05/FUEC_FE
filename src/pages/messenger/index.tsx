@@ -114,7 +114,7 @@ function Messenger() {
     isLoading: isLoadingMessages,
     isFetching: isFetchingMessages,
   } = useGetConversationMessagesQuery(
-    { conversationId: selectedConversation?.id ?? '', page: messagePage, pageSize: 10 },
+    { conversationId: selectedConversation?.id ?? '', page: messagePage, pageSize: 200 },
     { skip: !selectedConversation?.id }
   );
 
