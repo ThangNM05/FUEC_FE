@@ -1021,6 +1021,7 @@ function Messenger() {
                           );
                         }
 
+                          return (
                           <div
                             key={msg.id}
                             className={`flex gap-2 min-w-0 ${isMe ? 'justify-end' : 'justify-start'}`}
@@ -1083,7 +1084,8 @@ function Messenger() {
                               </div>
                             </div>
                           </div>
-                      })
+                          );
+                        })
                     )}
                     {/* Sending attachment skeleton */}
                     {sendingAttachment && (
