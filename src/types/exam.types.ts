@@ -57,6 +57,7 @@ export interface Exam {
     tag: string;
     subjectCode: string;
     subjectName: string;
+    classCode?: string;
     syllabusName: string;
     weight: string;
     id: string;
