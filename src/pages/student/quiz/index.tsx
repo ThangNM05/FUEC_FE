@@ -649,7 +649,7 @@ export default function QuizTest() {
 
   // ── Countdown Timer ──
   useEffect(() => {
-    if (timeLeft === null || timeLeft <= 0 || showResults || !proctorReady || cheatingPaused || showFullscreenPrompt) return;
+    if (timeLeft === null || timeLeft <= 0 || showResults || !proctorReady || showFullscreenPrompt) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -664,7 +664,7 @@ export default function QuizTest() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft, showResults, proctorReady, cheatingPaused, showFullscreenPrompt]);
+  }, [timeLeft, showResults, proctorReady, showFullscreenPrompt]);
 
   // ── Persist to localStorage every 5 seconds ──
   useEffect(() => {
@@ -969,7 +969,7 @@ export default function QuizTest() {
         </div>
       )}
 
-      {/* Cheating Pause Overlay (hidden for exempt students) */}
+      {/* Cheating Pause Overlay (hidden for exempt students)
       {cheatingPaused && !examData?.isProctoringExempt && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl border border-red-100">
@@ -982,7 +982,7 @@ export default function QuizTest() {
             </p>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Fullscreen Proctoring Initialization Overlay (hidden for exempt students) */}
       {!proctorReady && !examData?.isProctoringExempt && (
@@ -1258,6 +1258,13 @@ export default function QuizTest() {
                     style={{ transform: 'scaleX(-1)' }}
                   />
                 </div>
+                {/* Inline cheating warning under camera */}
+                {cheatingPaused && (
+                  <div className="px-3 py-2.5 bg-red-600 flex items-center justify-center gap-2 animate-pulse">
+                    <AlertTriangle className="w-4 h-4 text-white shrink-0" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wide">Suspicious Behavior Detected</span>
+                  </div>
+                )}
               </div>
               )}
             </div>
