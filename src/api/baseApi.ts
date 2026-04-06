@@ -27,12 +27,12 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
   const result = await baseQuery(args, api, extraOptions);
 
   // Handle 401 Unauthorized - token expired or invalid
+  // store.ts will automatically reset the RTK Query cache when 'auth/logout' is dispatched
   if (result.error && result.error.status === 401) {
-    console.warn('Authentication failed. Please login again.');
-    // Clear token and redirect to login
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    // You can dispatch a logout action here if needed
+    console.warn('Authentication failed. Logging out...');
+    const { logout } = await import('../redux/authSlice');
+    api.dispatch(logout());
+    sessionStorage.setItem('auth_message', 'Your session has expired. Please sign in again.');
   }
 
   return result;
