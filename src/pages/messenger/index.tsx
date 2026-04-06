@@ -216,10 +216,19 @@ function Messenger() {
     }
   }, [localMessages, messagePage]);
 
+  const scrollToBottom = (smooth = true) => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+  };
+
   // ── Scroll to bottom on first load and new messages ──
   useEffect(() => {
     if (messagePage === 1) {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      scrollToBottom();
     }
   }, [localMessages, messagePage, sendingAttachment]);
 
@@ -767,14 +776,12 @@ function Messenger() {
                         <span className={`font-semibold text-sm truncate ${isSelected ? 'text-[#F37022]' : 'text-gray-900'}`}>
                           {displayName}
                         </span>
-                        {isGroup && (
-                          <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
-                            {conv.memberCount}
-                          </span>
-                        )}
                       </div>
                       <p className="text-xs text-gray-500 truncate">
-                        {conv.messageCount > 0 ? `${conv.messageCount} messages` : 'No messages yet'}
+                        {isGroup 
+                          ? `${conv.memberCount || 0} members` 
+                          : conv.messageCount > 0 ? `${conv.messageCount} messages` : 'No messages yet'
+                        }
                       </p>
                     </div>
                   </button>
@@ -946,7 +953,7 @@ function Messenger() {
                                 alt="Shared image"
                                 className="max-w-xs rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
                                 loading="lazy"
-                                onLoad={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                                onLoad={() => scrollToBottom(true)}
                               />
                             ) : isVideo ? (
                               <video
