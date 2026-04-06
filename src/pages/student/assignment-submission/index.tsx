@@ -352,7 +352,7 @@ function AssignmentSubmission() {
                                     </div>
                                     <span className="text-4xl font-black text-[#F37022]">
                                         {latestSubmission.grade}
-                                        <span className="text-lg font-normal text-gray-400 ml-1">/ 100</span>
+                                        <span className="text-lg font-normal text-gray-400 ml-1">/ 10</span>
                                     </span>
                                 </div>
                             )}
@@ -476,7 +476,7 @@ function AssignmentSubmission() {
                                         </div>
                                         <div className="bg-gray-50 rounded-lg p-3 italic text-gray-700 text-[15px] border border-gray-100">
                                             {fb.grade !== null && (
-                                                <div className="mb-1 text-[14px] font-bold text-[#F37022]">Grade: {fb.grade}/100</div>
+                                                <div className="mb-1 text-[14px] font-bold text-[#F37022]">Grade: {fb.grade}/10</div>
                                             )}
                                             "{fb.comment}"
                                         </div>

@@ -12,8 +12,8 @@ export default function AssignmentSubmissionCount({ assignmentId, totalStudents 
 
     const items = submissionsData?.items || [];
     const submitted = items.length;
-    const graded = items.filter((s: any) => s.status === 2).length;
-    const pending = submitted - graded;
+    const gradedCount = items.filter((s: any) => s.status === 2).length;
+    const pending = submitted - gradedCount;
 
     return (
         <>
@@ -25,9 +25,9 @@ export default function AssignmentSubmissionCount({ assignmentId, totalStudents 
                     {pending} Pending Grading
                 </span>
             )}
-            {graded > 0 && (
+            {gradedCount > 0 && (
                 <span className="font-semibold text-green-600">
-                    {graded} Graded
+                    {gradedCount} Graded
                 </span>
             )}
         </>

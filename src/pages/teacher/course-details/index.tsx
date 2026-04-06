@@ -856,9 +856,10 @@ function TeacherCourseDetails() {
                                                                                                 ? new Date(assignment.dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
                                                                                                 : 'No due date'}
                                                                                         </span>
-                                                                                        <span className="text-xs font-semibold text-orange-600 whitespace-nowrap">
-                                                                                            0/{course.enrolledStudents} submitted
-                                                                                        </span>
+                                                                                        <AssignmentSubmissionCount
+                                                                                            assignmentId={assignment.id}
+                                                                                            totalStudents={course.enrolledStudents}
+                                                                                        />
                                                                                         <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                                                             <button
                                                                                                 onClick={() => navigate(`/teacher/assignment/${assignment.id}/submissions`)}
