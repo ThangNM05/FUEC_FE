@@ -19,12 +19,9 @@ function StudentLayout() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // ProtectedRoute already verified token + role from BE — no need to re-check here
   if (!user) {
     return <Navigate to="/sign-in" replace />;
-  }
-
-  if (user.role !== 'Student') {
-    return <Navigate to="/not-found" replace />;
   }
 
   return (

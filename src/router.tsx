@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router';
+import ProtectedRoute from './components/shared/ProtectedRoute';
 
 import AdminLayout from './components/layouts/admin/AdminLayout';
 import StudentLayout from './components/layouts/student/StudentLayout';
@@ -62,61 +63,66 @@ function Router() {
       {/* Root redirect to sign-in */}
       <Route path="/" element={<Navigate to="/sign-in" replace />} />
 
-      {/* Admin Routes with AdminLayout */}
-      <Route element={<AdminLayout />}>
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/students" element={<AdminStudents />} />
-        <Route path="/admin/classes" element={<AdminClasses />} />
-        <Route path="/admin/teachers" element={<AdminTeachers />} />
-        <Route path="/admin/schedule" element={<AdminSchedule />} />
-        <Route path="/admin/question-banks" element={<AdminQuestionBanks />} />
-        <Route path="/admin/question-banks/:subjectId" element={<AdminQuestionBankDetail />} />
-        <Route path="/admin/settings/courses" element={<AdminCourses />} />
-        <Route path="/admin/settings/exams" element={<AdminExams />} />
-        <Route path="/admin/settings/majors" element={<AdminMajors />} />
-
-        <Route path="/admin/settings/subjects" element={<AdminSubjects />} />
-        <Route path="/admin/settings/exam-types" element={<AdminExamTypes />} />
-        <Route path="/admin/settings/semesters" element={<AdminSemesters />} />
-        <Route path="/admin/settings/curriculum" element={<AdminCurriculum />} />
-        <Route path="/admin/settings/curriculum/:id" element={<CurriculumDetail />} />
-        <Route path="/admin/settings/syllabus" element={<AdminSyllabus />} />
+      {/* Admin Routes — role verified against BE, NOT localStorage */}
+      <Route element={<ProtectedRoute allowedRole="Admin" />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/students" element={<AdminStudents />} />
+          <Route path="/admin/classes" element={<AdminClasses />} />
+          <Route path="/admin/teachers" element={<AdminTeachers />} />
+          <Route path="/admin/schedule" element={<AdminSchedule />} />
+          <Route path="/admin/question-banks" element={<AdminQuestionBanks />} />
+          <Route path="/admin/question-banks/:subjectId" element={<AdminQuestionBankDetail />} />
+          <Route path="/admin/settings/courses" element={<AdminCourses />} />
+          <Route path="/admin/settings/exams" element={<AdminExams />} />
+          <Route path="/admin/settings/majors" element={<AdminMajors />} />
+          <Route path="/admin/settings/subjects" element={<AdminSubjects />} />
+          <Route path="/admin/settings/exam-types" element={<AdminExamTypes />} />
+          <Route path="/admin/settings/semesters" element={<AdminSemesters />} />
+          <Route path="/admin/settings/curriculum" element={<AdminCurriculum />} />
+          <Route path="/admin/settings/curriculum/:id" element={<CurriculumDetail />} />
+          <Route path="/admin/settings/syllabus" element={<AdminSyllabus />} />
+        </Route>
       </Route>
 
-      {/* Student Routes with StudentLayout */}
-      <Route element={<StudentLayout />}>
-        <Route path="/student" element={<StudentDashboard />} />
-        <Route path="/student/courses" element={<StudentCourses />} />
-        <Route path="/student/course-details/:classSubjectId" element={<CourseDetails />} />
-        <Route path="/student/assignment" element={<AssignmentDetails />} />
-        <Route path="/student/exam-lobby/:examId" element={<ExamLobby />} />
-        <Route path="/student/quiz" element={<QuizTest />} />
-        <Route path="/student/exams" element={<StudentExamsPage />} />
-        <Route path="/student/grades" element={<StudentGrades />} />
-        <Route path="/student/schedule" element={<StudentSchedule />} />
-        <Route path="/student/profile" element={<ProfilePage />} />
-        <Route path="/student/messages" element={<Navigate to="/messenger" replace />} />
-        <Route path="/student/course-details/questions/:id" element={<QuestionDetail />} />
-        <Route path="/student/assignment-submission/:id" element={<AssignmentSubmission />} />
-        <Route path="/student/practice-runner/:classSubjectId" element={<PracticeRunner />} />
+      {/* Student Routes — role verified against BE, NOT localStorage */}
+      <Route element={<ProtectedRoute allowedRole="Student" />}>
+        <Route element={<StudentLayout />}>
+          <Route path="/student" element={<StudentDashboard />} />
+          <Route path="/student/courses" element={<StudentCourses />} />
+          <Route path="/student/course-details/:classSubjectId" element={<CourseDetails />} />
+          <Route path="/student/assignment" element={<AssignmentDetails />} />
+          <Route path="/student/exam-lobby/:examId" element={<ExamLobby />} />
+          <Route path="/student/quiz" element={<QuizTest />} />
+          <Route path="/student/exams" element={<StudentExamsPage />} />
+          <Route path="/student/grades" element={<StudentGrades />} />
+          <Route path="/student/schedule" element={<StudentSchedule />} />
+          <Route path="/student/profile" element={<ProfilePage />} />
+          <Route path="/student/messages" element={<Navigate to="/messenger" replace />} />
+          <Route path="/student/course-details/questions/:id" element={<QuestionDetail />} />
+          <Route path="/student/assignment-submission/:id" element={<AssignmentSubmission />} />
+          <Route path="/student/practice-runner/:classSubjectId" element={<PracticeRunner />} />
+        </Route>
       </Route>
 
-      {/* Teacher Routes with TeacherLayout */}
-      <Route element={<TeacherLayout />}>
-        <Route path="/teacher" element={<TeacherDashboard />} />
-        <Route path="/teacher/classrooms" element={<TeacherClassrooms />} />
-        <Route path="/teacher/schedule" element={<TeacherSchedule />} />
-        <Route path="/teacher/messages" element={<Navigate to="/messenger" replace />} />
-        <Route path="/teacher/question-banks" element={<TeacherQuestionBanks />} />
-        <Route path="/teacher/question-banks/:subjectId" element={<TeacherQuestionBankDetail />} />
-        <Route path="/teacher/create-exam" element={<CreateExam />} />
-        <Route path="/teacher/course-details/:courseId" element={<TeacherCourseDetails />} />
-        <Route path="/teacher/course-details/questions/:id/answers" element={<TeacherQuestionAnswers />} />
-        <Route path="/teacher/exam-review/:studentExamId" element={<TeacherExamReview />} />
-        <Route path="/teacher/assignment/:assignmentId/submissions" element={<AssignmentSubmissionsList />} />
-        <Route path="/teacher/assignment-review/:submissionId" element={<TeacherAssignmentReview />} />
-        <Route path="/teacher/reports" element={<TeacherReports />} />
-        <Route path="/teacher/profile" element={<ProfilePage />} />
+      {/* Teacher Routes — role verified against BE, NOT localStorage */}
+      <Route element={<ProtectedRoute allowedRole="Teacher" />}>
+        <Route element={<TeacherLayout />}>
+          <Route path="/teacher" element={<TeacherDashboard />} />
+          <Route path="/teacher/classrooms" element={<TeacherClassrooms />} />
+          <Route path="/teacher/schedule" element={<TeacherSchedule />} />
+          <Route path="/teacher/messages" element={<Navigate to="/messenger" replace />} />
+          <Route path="/teacher/question-banks" element={<TeacherQuestionBanks />} />
+          <Route path="/teacher/question-banks/:subjectId" element={<TeacherQuestionBankDetail />} />
+          <Route path="/teacher/create-exam" element={<CreateExam />} />
+          <Route path="/teacher/course-details/:courseId" element={<TeacherCourseDetails />} />
+          <Route path="/teacher/course-details/questions/:id/answers" element={<TeacherQuestionAnswers />} />
+          <Route path="/teacher/exam-review/:studentExamId" element={<TeacherExamReview />} />
+          <Route path="/teacher/assignment/:assignmentId/submissions" element={<AssignmentSubmissionsList />} />
+          <Route path="/teacher/assignment-review/:submissionId" element={<TeacherAssignmentReview />} />
+          <Route path="/teacher/reports" element={<TeacherReports />} />
+          <Route path="/teacher/profile" element={<ProfilePage />} />
+        </Route>
       </Route>
 
       {/* Messenger - standalone route outside layouts to prevent double API calls */}

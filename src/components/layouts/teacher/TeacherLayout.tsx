@@ -9,12 +9,9 @@ function TeacherLayout() {
     const [isMobile, setIsMobile] = useState(false);
     const user = useSelector(selectCurrentUser);
 
+    // ProtectedRoute already verified token + role from BE — no need to re-check here
     if (!user) {
         return <Navigate to="/sign-in" replace />;
-    }
-
-    if (user.role !== 'Teacher') {
-        return <Navigate to="/not-found" replace />;
     }
 
     useEffect(() => {
