@@ -141,12 +141,14 @@ const StudentProgressionView: React.FC<StudentProgressionViewProps> = ({ exam })
             dataIndex: 'studentCode',
             key: 'studentCode',
             width: 120,
+            sorter: (a: any, b: any) => (a.studentCode || '').localeCompare(b.studentCode || ''),
             render: (text: string) => <span className="font-medium text-gray-700">{text}</span>
         },
         {
             title: 'Name',
             dataIndex: 'studentName',
             key: 'studentName',
+            sorter: (a: any, b: any) => (a.studentName || '').localeCompare(b.studentName || ''),
             render: (text: string, record: any) => (
                 <div className="flex flex-col">
                     <span className="font-semibold text-[#0A1B3C]">{text}</span>
@@ -176,6 +178,11 @@ const StudentProgressionView: React.FC<StudentProgressionViewProps> = ({ exam })
             dataIndex: 'grade',
             key: 'grade',
             width: 100,
+            sorter: (a: any, b: any) => {
+                const gradeA = a.grade !== undefined && a.grade !== null ? Number(a.grade) : -1;
+                const gradeB = b.grade !== undefined && b.grade !== null ? Number(b.grade) : -1;
+                return gradeA - gradeB;
+            },
             render: (grade: number | undefined, record: any) =>
                 record.status === 'done' && grade !== undefined && grade !== null ? (
                     <span className="font-bold text-[#F37022]">{Number(grade).toFixed(1)} / 10</span>
@@ -230,6 +237,7 @@ const StudentProgressionView: React.FC<StudentProgressionViewProps> = ({ exam })
                         columns={columns}
                         dataSource={dataSource}
                         loading={isLoadingStudents || isLoadingAttempts}
+                        scroll={{ y: 550 }}
                         pagination={{
                             pageSize: pageSize,
                             onShowSizeChange: (_, size) => setPageSize(size),
