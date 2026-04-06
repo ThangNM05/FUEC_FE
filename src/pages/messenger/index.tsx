@@ -95,6 +95,9 @@ function Messenger() {
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Track unread dot locally inside the session
+  const [hasNewMessages, setHasNewMessages] = useState<Set<string>>(new Set());
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -320,6 +323,15 @@ function Messenger() {
       // If WE are the sender, the mutation tags will handle the refresh.
       if (msg.senderId !== userId) {
         refetchConversations();
+        
+        // Add to unread set if we are not currently viewing it
+        if (msg.conversationId !== selectedConversation?.id) {
+          setHasNewMessages((prev) => {
+            const next = new Set(prev);
+            next.add(msg.conversationId);
+            return next;
+          });
+        }
       }
     },
     [selectedConversation?.id, refetchConversations, userId]
@@ -528,6 +540,13 @@ function Messenger() {
     setShowInfoPanel(false);
     setMobileView('chat');
     setTypingUsers({});
+
+    // Clear unread dot on FE
+    setHasNewMessages((prev) => {
+      const next = new Set(prev);
+      next.delete(conv.id);
+      return next;
+    });
   };
 
   // ── Select user from search results (Teams-like pending chat) ──
@@ -776,8 +795,8 @@ function Messenger() {
                         <span className={`font-semibold text-sm truncate ${isSelected ? 'text-[#F37022]' : 'text-gray-900'}`}>
                           {displayName}
                         </span>
-                        {/* Mock unread dot - later can be mapped to real unread state */}
-                        {!isSelected && conv.messageCount > 0 && (
+                        {/* Real-time unread dot handled locally on FE */}
+                        {!isSelected && hasNewMessages.has(conv.id) && (
                           <span className="w-2.5 h-2.5 bg-blue-500 rounded-full flex-shrink-0 ml-1"></span>
                         )}
                       </div>
