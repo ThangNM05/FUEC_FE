@@ -249,6 +249,19 @@ function Messenger() {
     }
   }, []);
 
+  // ── Sync document title with unread messages count
+  useEffect(() => {
+    const unreadCount = hasNewMessages.size;
+    if (unreadCount > 0) {
+      document.title = `(${unreadCount}) New Message${unreadCount > 1 ? 's' : ''} | EduConnect`;
+    } else {
+      document.title = 'Messages | EduConnect';
+    }
+    
+    // Cleanup on unmount
+    return () => { document.title = 'EduConnect'; };
+  }, [hasNewMessages.size]);
+
   const isAdmin = currentUser?.role === 'Admin';
 
   // Restore scroll position when older messages are loaded
