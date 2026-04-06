@@ -95,6 +95,9 @@ function Messenger() {
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Track unread dot locally inside the session
+  const [hasNewMessages, setHasNewMessages] = useState<Set<string>>(new Set());
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -114,7 +117,7 @@ function Messenger() {
     isLoading: isLoadingMessages,
     isFetching: isFetchingMessages,
   } = useGetConversationMessagesQuery(
-    { conversationId: selectedConversation?.id ?? '', page: messagePage, pageSize: 10 },
+    { conversationId: selectedConversation?.id ?? '', page: messagePage, pageSize: 200 },
     { skip: !selectedConversation?.id }
   );
 
@@ -216,10 +219,19 @@ function Messenger() {
     }
   }, [localMessages, messagePage]);
 
+  const scrollToBottom = (smooth = true) => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+  };
+
   // ── Scroll to bottom on first load and new messages ──
   useEffect(() => {
     if (messagePage === 1) {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      scrollToBottom();
     }
   }, [localMessages, messagePage, sendingAttachment]);
 
@@ -311,6 +323,15 @@ function Messenger() {
       // If WE are the sender, the mutation tags will handle the refresh.
       if (msg.senderId !== userId) {
         refetchConversations();
+        
+        // Add to unread set if we are not currently viewing it
+        if (msg.conversationId !== selectedConversation?.id) {
+          setHasNewMessages((prev) => {
+            const next = new Set(prev);
+            next.add(msg.conversationId);
+            return next;
+          });
+        }
       }
     },
     [selectedConversation?.id, refetchConversations, userId]
@@ -519,6 +540,13 @@ function Messenger() {
     setShowInfoPanel(false);
     setMobileView('chat');
     setTypingUsers({});
+
+    // Clear unread dot on FE
+    setHasNewMessages((prev) => {
+      const next = new Set(prev);
+      next.delete(conv.id);
+      return next;
+    });
   };
 
   // ── Select user from search results (Teams-like pending chat) ──
@@ -767,14 +795,13 @@ function Messenger() {
                         <span className={`font-semibold text-sm truncate ${isSelected ? 'text-[#F37022]' : 'text-gray-900'}`}>
                           {displayName}
                         </span>
-                        {isGroup && (
-                          <span className="text-[10px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">
-                            {conv.memberCount}
-                          </span>
+                        {/* Real-time unread dot handled locally on FE */}
+                        {!isSelected && hasNewMessages.has(conv.id) && (
+                          <span className="w-2.5 h-2.5 bg-blue-500 rounded-full flex-shrink-0 ml-1"></span>
                         )}
                       </div>
                       <p className="text-xs text-gray-500 truncate">
-                        {conv.messageCount > 0 ? `${conv.messageCount} messages` : 'No messages yet'}
+                        {conv.memberCount || 0} members
                       </p>
                     </div>
                   </button>
@@ -946,7 +973,7 @@ function Messenger() {
                                 alt="Shared image"
                                 className="max-w-xs rounded-2xl cursor-pointer hover:opacity-90 transition-opacity"
                                 loading="lazy"
-                                onLoad={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                                onLoad={() => scrollToBottom(true)}
                               />
                             ) : isVideo ? (
                               <video
