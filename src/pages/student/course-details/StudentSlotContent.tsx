@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { FileText, ClipboardCheck, BookOpen, Loader2, EyeOff, Lock as LockIcon, Play, CheckCircle, XCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { FileText, ClipboardCheck, BookOpen, Loader2, EyeOff, Lock as LockIcon, Play, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/redux/authSlice';
@@ -17,7 +17,88 @@ interface StudentSlotContentProps {
     onPassedCountChange?: (passedCount: number) => void;
 }
 
-export default function StudentSlotContent({ slotId, slotAssignments, slotExams, slotStatus, onPassedCountChange }: StudentSlotContentProps) {
+// ── Countdown to assignment due date ─────────────────────────────────────
+function AssignmentCountdown({ dueDate, isOverdue }: { dueDate: string; isOverdue: boolean }) {
+    const [timeLeft, setTimeLeft] = useState<number>(() => new Date(dueDate).getTime() - Date.now());
+
+    useEffect(() => {
+        if (isOverdue) return;
+        const timer = setInterval(() => {
+            const diff = new Date(dueDate).getTime() - Date.now();
+            setTimeLeft(diff);
+            if (diff <= 0) clearInterval(timer);
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [dueDate, isOverdue]);
+
+    if (isOverdue || timeLeft <= 0) return null;
+
+    const d = Math.floor(timeLeft / 86400000);
+    const h = Math.floor((timeLeft % 86400000) / 3600000);
+    const m = Math.floor((timeLeft % 3600000) / 60000);
+    const s = Math.floor((timeLeft % 60000) / 1000);
+    const isUrgent = timeLeft < 24 * 3600 * 1000;
+
+    return (
+        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+            isUrgent ? 'bg-red-50 text-red-600 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-200'
+        }`}>
+            <Clock className="w-2.5 h-2.5" />
+            {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{String(m).padStart(2, '0')}m {String(s).padStart(2, '0')}s
+        </span>
+    );
+}
+
+// ── Countdown to exam end (while ongoing) ────────────────────────────────
+function ExamCountdown({ endTime }: { endTime: string }) {
+    const [timeLeft, setTimeLeft] = useState<number>(() => new Date(endTime).getTime() - Date.now());
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            const diff = new Date(endTime).getTime() - Date.now();
+            setTimeLeft(diff);
+            if (diff <= 0) clearInterval(timer);
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [endTime]);
+
+    if (timeLeft <= 0) return null;
+
+    const h = Math.floor(timeLeft / 3600000);
+    const m = Math.floor((timeLeft % 3600000) / 60000);
+    const s = Math.floor((timeLeft % 60000) / 1000);
+    const isUrgent = timeLeft < 10 * 60 * 1000;
+
+    return (
+        <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded border animate-pulse ${
+            isUrgent ? 'bg-red-50 text-red-600 border-red-200' : 'bg-blue-50 text-blue-600 border-blue-200'
+        }`}>
+            <Clock className="w-2.5 h-2.5" />
+            {h > 0 ? `${h}h ` : ''}{String(m).padStart(2, '0')}m {String(s).padStart(2, '0')}s left
+        </span>
+    );
+}
+
+// ── Grade badge ──────────────────────────────────────────────────────────
+function GradeBadge({ grade }: { grade: number }) {
+    return (
+        <span className={`text-xs font-bold px-2 py-1 rounded-lg border ${
+            grade >= 8 ? 'bg-green-50 text-green-700 border-green-200'
+            : grade >= 5 ? 'bg-blue-50 text-blue-700 border-blue-200'
+            : 'bg-red-50 text-red-600 border-red-200'
+        }`}>
+            {grade}
+        </span>
+    );
+}
+
+export default function StudentSlotContent({
+    slotId,
+    slotAssignments,
+    slotExams,
+    slotStatus,
+    onPassedCountChange,
+}: StudentSlotContentProps) {
     const navigate = useNavigate();
     const { classSubjectId } = useParams<{ classSubjectId: string }>();
     const user = useSelector(selectCurrentUser);
@@ -41,8 +122,9 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams,
             acc[q.id] = 'none';
         } else {
             const hasPassed = myAnswers.some((a: any) => a.isPassed === true);
-            const latest = [...myAnswers].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
-            
+            const latest = [...myAnswers].sort(
+                (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            )[0];
             if (hasPassed) acc[q.id] = 'passed';
             else if (latest && latest.isPassed === false) acc[q.id] = 'failed';
             else acc[q.id] = 'none';
@@ -52,7 +134,6 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams,
 
     const hasContent = questions.length > 0 || slotAssignments.length > 0 || slotExams.length > 0;
 
-    // Report accurate passed count to parent so the header badge stays in sync
     const passedCount = Object.values(questionStatusMap).filter(s => s === 'passed').length;
     useEffect(() => {
         if (questions.length > 0) {
@@ -66,11 +147,13 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams,
             {isReadOnly && questions.length > 0 && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 text-xs text-gray-500">
                     <LockIcon className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span>This slot is <strong>{slotStatus?.toLowerCase()}</strong>. You can view questions but cannot submit answers.</span>
+                    <span>
+                        This slot is <strong>{slotStatus?.toLowerCase()}</strong>. You can view questions but cannot submit answers.
+                    </span>
                 </div>
             )}
 
-            {/* Questions */}
+            {/* ── Questions ─────────────────────────────────────────────────── */}
             <div>
                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 pb-1.5 border-b border-gray-100">
                     Questions
@@ -88,7 +171,11 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams,
                             <div
                                 key={q.id}
                                 className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-orange-50 border border-transparent hover:border-orange-100 transition-all cursor-pointer group"
-                                onClick={() => navigate(`/student/course-details/questions/${q.id}?slotId=${slotId}&classSubjectId=${classSubjectId}&readOnly=${readOnlyParam}`)}
+                                onClick={() =>
+                                    navigate(
+                                        `/student/course-details/questions/${q.id}?slotId=${slotId}&classSubjectId=${classSubjectId}&readOnly=${readOnlyParam}`
+                                    )
+                                }
                             >
                                 <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-orange-200 transition-colors">
                                     <BookOpen className="w-3.5 h-3.5 text-orange-600" />
@@ -116,7 +203,7 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams,
                 )}
             </div>
 
-            {/* Assignments */}
+            {/* ── Assignments ───────────────────────────────────────────────── */}
             <div>
                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 pb-1.5 border-b border-gray-100">
                     Assignment
@@ -126,51 +213,66 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams,
                 ) : (
                     <div className="space-y-2">
                         {slotAssignments.map(assignment => (
-                            <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                <div className="flex items-center gap-3">
+                            <div
+                                key={assignment.id}
+                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3"
+                            >
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
                                     <div className="w-7 h-7 bg-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
                                         <FileText className="w-3.5 h-3.5 text-pink-600" />
                                     </div>
-                                    <div>
+                                    <div className="min-w-0">
                                         <p className="text-sm font-medium text-[#0A1B3C]">
                                             {assignment.displayName || `Assignment ${assignment.instanceNumber}`}
                                         </p>
                                         {assignment.dueDate && (
-                                            <p className="text-xs text-gray-500 mt-0.5">
-                                                Due: {new Date(assignment.dueDate).toLocaleDateString()}
-                                                {assignment.timeRemaining && !assignment.submitted && (
-                                                    <span className={`ml-2 font-semibold ${assignment.isOverdue ? 'text-red-500' : 'text-blue-500'}`}>
-                                                        · {assignment.timeRemaining}
-                                                    </span>
+                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                <span className="text-xs text-gray-500">
+                                                    Due: {new Date(assignment.dueDate).toLocaleDateString('en-GB')}
+                                                </span>
+                                                {!assignment.submitted && (
+                                                    <AssignmentCountdown
+                                                        dueDate={assignment.dueDate}
+                                                        isOverdue={assignment.isOverdue}
+                                                    />
                                                 )}
-                                            </p>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => navigate(`/student/assignment-submission/${assignment.id}`)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${assignment.studentSubmission?.grade !== null && assignment.studentSubmission?.grade !== undefined
-                                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                        : assignment.submitted
-                                            ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                            : assignment.isOverdue
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    {assignment.studentSubmission?.grade != null && (
+                                        <GradeBadge grade={assignment.studentSubmission.grade} />
+                                    )}
+                                    <button
+                                        onClick={() => navigate(`/student/assignment-submission/${assignment.id}`)}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                                            assignment.studentSubmission?.grade !== null &&
+                                            assignment.studentSubmission?.grade !== undefined
+                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                : assignment.submitted
+                                                ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                                : assignment.isOverdue
                                                 ? 'bg-red-100 text-red-700'
                                                 : 'bg-[#F37022] text-white hover:bg-[#D96419]'
                                         }`}
-                                >
-                                    {assignment.submitted || (assignment.studentSubmission?.grade !== null && assignment.studentSubmission?.grade !== undefined)
-                                        ? 'Review'
-                                        : assignment.isOverdue
+                                    >
+                                        {assignment.submitted ||
+                                        (assignment.studentSubmission?.grade !== null &&
+                                            assignment.studentSubmission?.grade !== undefined)
+                                            ? 'Review'
+                                            : assignment.isOverdue
                                             ? 'Overdue'
                                             : 'Submit'}
-                                </button>
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
             </div>
 
-            {/* Progress Tests */}
+            {/* ── Progress Tests ────────────────────────────────────────────── */}
             <div>
                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 pb-1.5 border-b border-gray-100">
                     Progress Test
@@ -187,50 +289,87 @@ export default function StudentSlotContent({ slotId, slotAssignments, slotExams,
                             const isEnded = now > end;
 
                             return (
-                                <div key={exam.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${isAvailable ? 'bg-blue-100' : isEnded ? 'bg-green-100' : 'bg-gray-200'
-                                            }`}>
+                                <div
+                                    key={exam.id}
+                                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3"
+                                >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div
+                                            className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                                isAvailable ? 'bg-blue-100' : isEnded ? 'bg-green-100' : 'bg-gray-200'
+                                            }`}
+                                        >
                                             {isAvailable ? (
                                                 <Play className="w-3.5 h-3.5 text-blue-600" />
                                             ) : (
-                                                <ClipboardCheck className={`w-3.5 h-3.5 ${isEnded ? 'text-green-600' : 'text-gray-500'}`} />
+                                                <ClipboardCheck
+                                                    className={`w-3.5 h-3.5 ${isEnded ? 'text-green-600' : 'text-gray-500'}`}
+                                                />
                                             )}
                                         </div>
-                                        <div>
+                                        <div className="min-w-0">
                                             <p className="text-sm font-medium text-[#0A1B3C]">
                                                 {exam.displayName || `${exam.category} ${exam.instanceNumber}`}
                                             </p>
-                                            <p className="text-xs text-gray-500 mt-0.5">
-                                                {new Date(exam.startTime).toLocaleString()} → {new Date(exam.endTime).toLocaleString()}
-                                            </p>
+                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                <p className="text-xs text-gray-500">
+                                                    {new Date(exam.startTime).toLocaleString('en-GB', {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        day: '2-digit',
+                                                        month: '2-digit',
+                                                        year: 'numeric',
+                                                    })}{' '}
+                                                    →{' '}
+                                                    {new Date(exam.endTime).toLocaleString('en-GB', {
+                                                        hour: '2-digit',
+                                                        minute: '2-digit',
+                                                        day: '2-digit',
+                                                        month: '2-digit',
+                                                        year: 'numeric',
+                                                    })}
+                                                </p>
+                                                {isAvailable && !exam.isSubmitted && (
+                                                    <ExamCountdown endTime={exam.endTime} />
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                    {(isAvailable && !exam.isSubmitted) ? (
-                                        <button
-                                            className="px-4 py-2 bg-[#F37022] text-white rounded-lg text-sm font-medium hover:bg-[#D96419] flex items-center gap-2"
-                                            onClick={() => {
-                                                navigate(`/student/exam-lobby/${exam.id}?classSubjectId=${classSubjectId}`);
-                                            }}
-                                        >
-                                            Start Test
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${isEnded || exam.isSubmitted
-                                                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                                                }`}
-                                            disabled={!isEnded && !exam.isSubmitted}
-                                            onClick={() => {
-                                                if (isEnded || exam.isSubmitted) {
-                                                    navigate(`/student/exam-lobby/${exam.id}?classSubjectId=${classSubjectId}`);
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        {(exam as any).grade != null && (
+                                            <GradeBadge grade={(exam as any).grade} />
+                                        )}
+                                        {isAvailable && !exam.isSubmitted ? (
+                                            <button
+                                                className="px-4 py-2 bg-[#F37022] text-white rounded-lg text-sm font-medium hover:bg-[#D96419] flex items-center gap-2"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/student/exam-lobby/${exam.id}?classSubjectId=${classSubjectId}`
+                                                    )
                                                 }
-                                            }}
-                                        >
-                                            {(isEnded || exam.isSubmitted) ? 'Review' : 'Not Started'}
-                                        </button>
-                                    )}
+                                            >
+                                                Start Test
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                                                    isEnded || exam.isSubmitted
+                                                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                                                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                                                }`}
+                                                disabled={!isEnded && !exam.isSubmitted}
+                                                onClick={() => {
+                                                    if (isEnded || exam.isSubmitted) {
+                                                        navigate(
+                                                            `/student/exam-lobby/${exam.id}?classSubjectId=${classSubjectId}`
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                {isEnded || exam.isSubmitted ? 'Review' : 'Not Started'}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             );
                         })}
