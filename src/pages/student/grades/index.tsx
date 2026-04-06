@@ -1,33 +1,88 @@
-import { useState } from 'react';
-import { Search, TrendingUp, Award, BarChart2, CheckCircle, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, TrendingUp, Award, BarChart2, CheckCircle, ChevronDown, Loader2 } from 'lucide-react';
+import { useGetStudentSubjectsQuery } from '@/api/studentsApi';
+import { useGetSemestersQuery } from '@/api/semestersApi';
+import { useSelector } from 'react-redux';
+import { selectCurrentUser } from '@/redux/authSlice';
 
 function StudentGrades() {
   const [showSemesterDropdown, setShowSemesterDropdown] = useState(false);
-  const [currentSemester, setCurrentSemester] = useState('Fall 2024');
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string>('');
+  const [expandedCourseId, setExpandedCourseId] = useState<string | null>(null);
+  const user = useSelector(selectCurrentUser);
 
-  const semesters = ['Fall 2024', 'Summer 2024', 'Spring 2024', 'Fall 2023', 'Summer 2023'];
+  // Fetch real semesters
+  const { data: semestersData, isLoading: isLoadingSemesters } = useGetSemestersQuery({
+    page: 1,
+    pageSize: 100,
+  });
+
+  const semesters = semestersData?.items || [];
+
+  // Set default semester
+  useEffect(() => {
+    if (semesters.length > 0 && !selectedSemesterId) {
+      const current = semesters.find(s => s.isDefault) || semesters[0];
+      setSelectedSemesterId(current.id);
+    }
+  }, [semesters, selectedSemesterId]);
+
+  // Fetch the actual courses the student is enrolled in for the selected semester
+  const { data: studentSubjects, isLoading, isFetching } = useGetStudentSubjectsQuery(
+    { 
+      studentId: user?.entityId ?? user?.id ?? '',
+      semesterId: selectedSemesterId
+    },
+    { skip: !user?.entityId || !selectedSemesterId }
+  );
+
+  // We map the real grade data provided by our Backend heuristic logic
+  const courses = studentSubjects?.map((sub, index) => ({
+    id: sub.classSubjectId || index,
+    name: sub.subjectName,
+    code: sub.subjectCode,
+    assignments: sub.assignmentsAverage ?? '-',
+    midterm: sub.midterm ?? '-',
+    final: sub.final ?? null,
+    overall: sub.overall ?? '-',
+    grade: sub.gradeLetter ?? 'In Progress',
+    credits: sub.credits ?? 0,
+  })) || [];
+
+  const completedCoursesCount = studentSubjects?.length || 0;
+  
+  const earnedCredits = studentSubjects
+    ?.filter(sub => sub.overall && sub.overall >= 5 && sub.final)
+    .reduce((sum, sub) => sum + (sub.credits || 0), 0) || 0;
+
+  // Simplistic GPA calculation algorithm (scale 4.0) purely for UX
+  // A: 4.0 (>= 9), B+: 3.5 (>= 8), B: 3.0 (>= 7), C+: 2.5 (>= 6), C: 2.0 (>= 5), F: 0 (< 5)
+  let totalGradePoints = 0;
+  let totalCreditsForGpa = 0;
+  studentSubjects?.forEach(sub => {
+    if (sub.overall && sub.final) {
+      let gp = 0;
+      if (sub.overall >= 9) gp = 4.0;
+      else if (sub.overall >= 8) gp = 3.5;
+      else if (sub.overall >= 7) gp = 3.0;
+      else if (sub.overall >= 6) gp = 2.5;
+      else if (sub.overall >= 5) gp = 2.0;
+
+      totalGradePoints += gp * (sub.credits || 3);
+      totalCreditsForGpa += (sub.credits || 3);
+    }
+  });
+
+  const gpa = totalCreditsForGpa > 0 ? (totalGradePoints / totalCreditsForGpa).toFixed(2) : 'N/A';
 
   const gradesSummary = [
-    { label: 'GPA', value: '3.65', icon: TrendingUp, color: 'orange' },
-    { label: 'Credits Earned', value: '48', icon: Award, color: 'orange-light' },
-    { label: 'Courses Completed', value: '12', icon: CheckCircle, color: 'orange' },
-    { label: 'Current Semester', value: '4.0', icon: BarChart2, color: 'orange-light' }
+    { label: 'GPA', value: gpa, icon: TrendingUp, color: 'orange' },
+    { label: 'Credits Earned', value: earnedCredits.toString(), icon: Award, color: 'orange-light' },
+    { label: 'Courses Enrolled', value: completedCoursesCount.toString(), icon: CheckCircle, color: 'orange' },
+    { label: 'Current Semester', value: gpa, icon: BarChart2, color: 'orange-light' }
   ];
 
-  const courses = [
-    { id: 1, name: 'Software Engineering', code: 'SWE101', assignments: 85, midterm: 78, final: 88, overall: 84, grade: 'B+', credits: 4 },
-    { id: 2, name: 'Database Systems', code: 'DBS202', assignments: 92, midterm: 85, final: null, overall: 89, grade: 'In Progress', credits: 4 },
-    { id: 3, name: 'Web Development', code: 'WEB301', assignments: 88, midterm: 90, final: null, overall: 89, grade: 'In Progress', credits: 3 },
-    { id: 4, name: 'Data Structures', code: 'DSA201', assignments: 95, midterm: 92, final: 94, overall: 94, grade: 'A', credits: 4 }
-  ];
 
-  const gradeDistribution = [
-    { grade: 'A', count: 3, percentage: 25 },
-    { grade: 'B+', count: 4, percentage: 33 },
-    { grade: 'B', count: 3, percentage: 25 },
-    { grade: 'C+', count: 2, percentage: 17 },
-    { grade: 'C', count: 0, percentage: 0 }
-  ];
 
   const getGradeColor = (grade: string) => {
     if (grade === 'A' || grade === 'A+') return 'text-[#0066b3] bg-blue-50 font-bold';
@@ -59,29 +114,35 @@ function StudentGrades() {
 
           {/* Semester Selector */}
           <div className="relative">
-            <button
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg font-medium text-sm"
-              onClick={() => setShowSemesterDropdown(!showSemesterDropdown)}
-            >
-              <span>{currentSemester}</span>
-              <ChevronDown className="w-4 h-4" />
-            </button>
+            {isLoadingSemesters ? (
+              <div className="w-32 h-10 bg-gray-100 animate-pulse rounded-lg"></div>
+            ) : (
+              <>
+                <button
+                  className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-lg font-medium text-sm"
+                  onClick={() => setShowSemesterDropdown(!showSemesterDropdown)}
+                >
+                  <span>{semesters.find(s => s.id === selectedSemesterId)?.semesterCode || 'Select Term'}</span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
 
-            {showSemesterDropdown && (
-              <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
-                {semesters.map(semester => (
-                  <div
-                    key={semester}
-                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-50 ${currentSemester === semester ? 'bg-orange-50 text-orange-600' : ''}`}
-                    onClick={() => {
-                      setCurrentSemester(semester);
-                      setShowSemesterDropdown(false);
-                    }}
-                  >
-                    {semester}
+                {showSemesterDropdown && (
+                  <div className="absolute right-0 top-12 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
+                    {semesters.map(semester => (
+                      <div
+                        key={semester.id}
+                        className={`px-4 py-2 text-sm cursor-pointer hover:bg-gray-50 ${selectedSemesterId === semester.id ? 'bg-orange-50 text-orange-600' : ''}`}
+                        onClick={() => {
+                          setSelectedSemesterId(semester.id);
+                          setShowSemesterDropdown(false);
+                        }}
+                      >
+                        {semester.semesterCode}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -111,18 +172,19 @@ function StudentGrades() {
       <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
           <h2 className="text-lg font-bold text-[#0A1B3C]">Course Grades</h2>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 bg-gray-100 text-gray-700 font-medium text-sm rounded-lg hover:bg-gray-200">Fall 2024</button>
-            <button className="px-4 py-2 bg-gray-100 text-gray-700 font-medium text-sm rounded-lg hover:bg-gray-200">All Semesters</button>
-          </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto relative min-h-[200px]">
+          {(isLoading || isFetching) && (
+            <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-[#F37022] animate-spin" />
+            </div>
+          )}
           <table className="w-full">
             <thead>
               <tr className="border-b-2 border-gray-200">
-                <th className="p-3 text-left text-sm font-semibold text-gray-700">Course</th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-700">Code</th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">Class / Course</th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-700">Subject</th>
                 <th className="p-3 text-center text-sm font-semibold text-gray-700">Assignments</th>
                 <th className="p-3 text-center text-sm font-semibold text-gray-700">Midterm</th>
                 <th className="p-3 text-center text-sm font-semibold text-gray-700">Final</th>
@@ -132,46 +194,75 @@ function StudentGrades() {
               </tr>
             </thead>
             <tbody>
-              {courses.map(course => (
-                <tr key={course.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="p-4 font-medium text-[#0A1B3C]">{course.name}</td>
-                  <td className="p-4">
-                    <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block">
-                      {course.code}
-                    </span>
+              {studentSubjects?.length === 0 && !isLoading && !isFetching && (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-gray-500">
+                    You have not enrolled in any courses for this term.
                   </td>
-                  <td className="p-4 text-center font-medium text-[#0A1B3C]">{course.assignments}</td>
-                  <td className="p-4 text-center font-medium text-[#0A1B3C]">{course.midterm}</td>
-                  <td className="p-4 text-center font-medium text-[#0A1B3C]">
-                    {course.final || <span className="text-gray-400">-</span>}
-                  </td>
-                  <td className="p-4 text-center font-semibold text-orange-600">{course.overall}</td>
-                  <td className="p-4 text-center">
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getGradeColor(course.grade)}`}>
-                      {course.grade}
-                    </span>
-                  </td>
-                  <td className="p-4 text-center text-gray-700">{course.credits}</td>
                 </tr>
+              )}
+              {studentSubjects?.map(course => (
+                <React.Fragment key={course.classSubjectId}>
+                  <tr 
+                    className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setExpandedCourseId(expandedCourseId === course.classSubjectId ? null : course.classSubjectId)}
+                  >
+                    <td className="p-4 font-medium text-[#0A1B3C]">
+                      <div className="flex items-center gap-2">
+                        <ChevronDown className={`w-4 h-4 text-[#F37022] transition-transform ${expandedCourseId === course.classSubjectId ? 'rotate-180' : ''}`} />
+                        <div className="flex flex-col">
+                           <span className="font-bold text-lg text-[#0A1B3C] leading-tight">{course.classCode}</span>
+                           <span className="text-xs text-gray-500 font-normal">{course.subjectName}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded inline-block">
+                        {course.subjectCode}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center font-medium text-gray-500">{course.assignmentsAverage ?? '-'}</td>
+                    <td className="p-4 text-center font-medium text-gray-500">{course.midterm ?? '-'}</td>
+                    <td className="p-4 text-center font-medium text-gray-500">
+                      {course.final ?? <span className="text-gray-400">-</span>}
+                    </td>
+                    <td className="p-4 text-center font-semibold text-[#0A1B3C]">{course.overall ?? '-'}</td>
+                    <td className="p-4 text-center">
+                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getGradeColor(course.gradeLetter || 'In Progress')}`}>
+                        {course.gradeLetter || 'In Progress'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-center text-gray-500">{course.credits}</td>
+                  </tr>
+                  
+                  {expandedCourseId === course.classSubjectId && course.detailedGrades && course.detailedGrades.length > 0 && (
+                    <tr className="bg-gray-50/50">
+                      <td colSpan={8} className="p-4 border-b border-gray-200 shadow-inner">
+                        <div className="pl-6">
+                          <h4 className="text-sm font-bold text-[#F37022] mb-3">
+                             Detailed Component Grades
+                          </h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                            {course.detailedGrades.map(item => (
+                              <div key={item.id} className="bg-white border border-gray-200 rounded p-3 text-center shadow-sm">
+                                <div className="text-xs text-gray-500 truncate mb-1" title={item.name}>{item.name}</div>
+                                <div className={`font-bold text-lg ${item.grade != null ? 'text-[#0A1B3C]' : 'text-gray-400'}`}>
+                                  {item.grade != null ? item.grade : '-'}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Grade Distribution */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-lg font-bold text-[#0A1B3C] mb-5">Grade Distribution</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
-          {gradeDistribution.map(item => (
-            <div key={item.grade} className="text-center">
-              <div className="text-3xl font-bold text-orange-600 mb-2">{item.count}</div>
-              <div className="font-semibold text-gray-700">Grade {item.grade}</div>
-              <div className="text-sm text-gray-500">{item.percentage}%</div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
