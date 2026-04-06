@@ -10,6 +10,7 @@ interface ViewSubjectModalProps {
 export default function ViewSubjectModal({ isOpen, onClose, subject }: ViewSubjectModalProps) {
     if (!subject) return null;
 
+
     return (
         <Modal
             title="Subject Details"
