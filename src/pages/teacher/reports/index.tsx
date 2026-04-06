@@ -28,6 +28,8 @@ import { useGetAllStudentExamsQuery } from '@/api/studentExamsApi';
 import { useGetStudentCheatLogsQuery, useDeleteStudentCheatLogMutation } from '@/api/studentCheatLogsApi';
 import { useUpdateStudentExamMutation } from '@/api/studentExamsApi';
 import { Loader2 } from 'lucide-react';
+import { getApiUrl } from '@/config/appConfig';
+import JSZip from 'jszip';
 
 // --- Types ---
 interface StudentEvidence {
@@ -262,6 +264,101 @@ function TeacherReports() {
             }
         );
     };
+
+    const handleDownload = useCallback(async (fileUrl: string, fileName: string) => {
+        try {
+            let downloadUrl = fileUrl;
+            let options: RequestInit = {};
+
+            // For S3 URLs, use backend proxy to avoid CORS issues and force download
+            if (fileUrl.includes('amazonaws.com')) {
+                const urlObj = new URL(fileUrl);
+                const key = decodeURIComponent(urlObj.pathname.startsWith('/') ? urlObj.pathname.substring(1) : urlObj.pathname);
+                downloadUrl = getApiUrl(`/Files/download?key=${encodeURIComponent(key)}`);
+
+                // Add token for proxy endpoint if needed
+                const token = localStorage.getItem('token');
+                if (token) {
+                    options = {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    };
+                }
+            }
+
+            // Fetch the file through proxy/direct, convert to blob, and use local ObjectURL avoiding tab open
+            const response = await fetch(downloadUrl, options);
+            if (!response.ok) throw new Error('Download failed from server');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Download failed:', error);
+            window.open(fileUrl, '_blank');
+        }
+    }, []);
+
+    const [isZipping, setIsZipping] = useState(false);
+
+    const handleDownloadAllAsZip = useCallback(async () => {
+        if (!selectedStudent || !selectedStudent.attachments || selectedStudent.attachments.length === 0) return;
+        
+        setIsZipping(true);
+        const loadingToast = toast.loading('Bundling files into ZIP...');
+        
+        try {
+            const zip = new JSZip();
+            const studentCode = selectedStudent.studentCode || 'student';
+            
+            // Download all files and add to zip
+            const fetchPromises = selectedStudent.attachments.map(async (file: any, idx: number) => {
+                const ext = file.type === 'video' ? 'webm' : 'jpg';
+                const fileName = `${studentCode}_evidence_${idx + 1}.${ext}`;
+                let downloadUrl = file.url;
+                let options: RequestInit = {};
+
+                if (file.url.includes('amazonaws.com')) {
+                    const urlObj = new URL(file.url);
+                    const key = decodeURIComponent(urlObj.pathname.startsWith('/') ? urlObj.pathname.substring(1) : urlObj.pathname);
+                    downloadUrl = getApiUrl(`/Files/download?key=${encodeURIComponent(key)}`);
+                    const token = localStorage.getItem('token');
+                    if (token) options = { headers: { Authorization: `Bearer ${token}` } };
+                }
+
+                const response = await fetch(downloadUrl, options);
+                if (!response.ok) throw new Error(`Failed to fetch ${fileName}`);
+                const blob = await response.blob();
+                zip.file(fileName, blob);
+            });
+
+            await Promise.all(fetchPromises);
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+            const zipUrl = window.URL.createObjectURL(zipBlob);
+            
+            const link = document.createElement('a');
+            link.href = zipUrl;
+            link.download = `${studentCode}_all_evidence.zip`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(zipUrl);
+            
+            toast.success('ZIP file downloaded successfully', { id: loadingToast });
+        } catch (error) {
+            console.error('Failed to create ZIP:', error);
+            toast.error('Failed to download all files', { id: loadingToast });
+        } finally {
+            setIsZipping(false);
+        }
+    }, [selectedStudent]);
 
     // --- Breadcrumb Navigation ---
     const Breadcrumbs = () => (
@@ -674,8 +771,15 @@ function TeacherReports() {
                             <h3 className="text-xl font-bold text-[#0A1B3C]">Evidence Gallery</h3>
                             <p className="text-sm text-gray-400">{selectedStudent?.attachments.length} files captured by proctoring engine</p>
                         </div>
-                        <button className="p-2 text-gray-400 hover:text-[#0A1B3C] transition-colors bg-gray-50 rounded-xl">
-                            <Download className="w-5 h-5" />
+                        <button
+                            onClick={handleDownloadAllAsZip}
+                            disabled={isZipping || !selectedStudent?.attachments?.length}
+                            className={`p-2 transition-colors rounded-xl flex items-center gap-2 ${
+                                isZipping ? 'bg-gray-100 text-[#F37022] cursor-not-allowed' : 'text-gray-400 hover:text-[#0A1B3C] bg-gray-50'
+                            }`}
+                            title="Download All Evidence as ZIP"
+                        >
+                            {isZipping ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
                         </button>
                     </div>
 
@@ -703,12 +807,26 @@ function TeacherReports() {
                                     />
                                 )}
 
-                                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
+                                <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white bg-black/20 backdrop-blur-sm p-2 rounded-xl">
                                     <div className="flex items-center gap-2">
-                                        <Clock className="w-3.5 h-3.5 text-white/60" />
-                                        <span className="text-xs font-mono">{file.timestamp}</span>
+                                        <Clock className="w-3.5 h-3.5 text-white/80" />
+                                        <span className="text-xs font-mono font-medium">{file.timestamp}</span>
                                     </div>
-                                    <Eye className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const ext = file.type === 'video' ? 'webm' : 'jpg';
+                                                const fileName = `${selectedStudent.studentCode}_${file.timestamp.replace(/:/g, '-')}.${ext}`;
+                                                handleDownload(file.url, fileName);
+                                            }}
+                                            className="p-1.5 bg-white/20 hover:bg-[#F37022] text-white rounded-lg transition-colors group/btn"
+                                            title="Download"
+                                        >
+                                            <Download className="w-3.5 h-3.5" />
+                                        </button>
+                                        <Eye className="w-4 h-4 opacity-70 group-hover:opacity-100 transition-opacity" />
+                                    </div>
                                 </div>
                             </motion.div>
                         ))}
