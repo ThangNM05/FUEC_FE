@@ -53,7 +53,8 @@ function AssignmentSubmissionsList() {
             
             let status: StudentSubmission['status'] = 'not_submitted';
             if (submission) {
-                status = submission.status === 2 ? 'graded' : 'submitted';
+                // Status 1: Submitted, 2: Graded
+                status = (submission.status === 2 || submission.status === 1) ? (submission.status === 2 ? 'graded' : 'submitted') : 'not_submitted';
             }
 
             return {
@@ -154,7 +155,7 @@ function AssignmentSubmissionsList() {
                     <span className="px-3 py-1 bg-blue-100 text-blue-700 font-semibold rounded">
                         {stats.submitted}/{stats.total} submitted
                     </span>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 font-semibold rounded">Avg: {stats.average}/100</span>
+                    <span className="px-3 py-1 bg-green-100 text-green-700 font-semibold rounded">Avg: {stats.average}/10</span>
                 </div>
             </div>
 
@@ -226,7 +227,7 @@ function AssignmentSubmissionsList() {
                                     <td className="px-6 py-4">
                                         {submission.score !== undefined ? (
                                             <span className="font-semibold text-blue-600">
-                                                {submission.score}/100
+                                                {submission.score}/10
                                             </span>
                                         ) : (
                                             <span className="text-gray-400">-</span>

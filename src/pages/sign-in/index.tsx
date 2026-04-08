@@ -1,6 +1,6 @@
 import './sign-in.css';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google'; // Import GoogleLogin component
 import { toast } from 'sonner';
@@ -16,6 +16,15 @@ function SignInPage() {
   const [loginError, setLoginError] = useState(false);
   const [failedEmail, setFailedEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Show toast if user was redirected due to an expired session
+  useEffect(() => {
+    const msg = sessionStorage.getItem('auth_message');
+    if (msg) {
+      toast.warning(msg, { duration: 5000 });
+      sessionStorage.removeItem('auth_message');
+    }
+  }, []);
 
   const navigate = useNavigate();
   const dispatch = useDispatch();

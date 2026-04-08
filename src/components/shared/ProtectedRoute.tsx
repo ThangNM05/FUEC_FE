@@ -2,6 +2,7 @@ import { Navigate, Outlet } from 'react-router';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser, selectIsAuthenticated, setUser, logout } from '../../redux/authSlice';
 import { useGetCurrentUserQuery } from '../../api/authApi';
+import { useEffect } from 'react';
 
 interface ProtectedRouteProps {
   allowedRole: string;
@@ -25,6 +26,20 @@ function ProtectedRoute({ allowedRole }: ProtectedRouteProps) {
   // Call /Auth/me to get the REAL role from server (verified via JWT)
   // This cannot be faked by editing localStorage
   const { data: serverUser, isLoading, isError } = useGetCurrentUserQuery();
+
+  useEffect(() => {
+    if (isError || (!isLoading && !serverUser)) {
+      dispatch(logout()); // store.ts automatically resets cache on logout
+      sessionStorage.setItem('auth_message', 'Your session has expired. Please sign in again.');
+    }
+  }, [isError, isLoading, serverUser, dispatch]);
+
+  // Sync Redux + localStorage with the authoritative server role
+  useEffect(() => {
+    if (localUser && serverUser && serverUser.role !== localUser.role) {
+      dispatch(setUser({ ...localUser, ...serverUser }));
+    }
+  }, [serverUser, localUser, dispatch]);
 
   if (isLoading) {
     // Show a minimal loading state while verifying with BE
@@ -53,21 +68,14 @@ function ProtectedRoute({ allowedRole }: ProtectedRouteProps) {
           }}
         />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        <span style={{ fontSize: 14 }}>Đang xác thực...</span>
+        <span style={{ fontSize: 14 }}>Verifying...</span>
       </div>
     );
   }
 
   if (isError || !serverUser) {
-    // Token invalid / expired → force logout
-    dispatch(logout());
+    // useEffect handled logout — just redirect
     return <Navigate to="/sign-in" replace />;
-  }
-
-  // Sync Redux + localStorage with the authoritative server role
-  // This keeps the UI consistent without being the source-of-truth for auth
-  if (localUser && serverUser.role !== localUser.role) {
-    dispatch(setUser({ ...localUser, ...serverUser }));
   }
 
   // The ONLY role check that matters — role from the server, not localStorage

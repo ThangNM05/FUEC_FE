@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Table, Tag, Spin, Select, Collapse, Progress, Tooltip } from 'antd';
+import { Table, Tag, Spin, Select, Collapse, Progress, Tooltip, Input } from 'antd';
 import { useGetStudentClassesByClassIdQuery } from '@/api/classDetailsApi';
 import { useGetStudentExamsByExamIdQuery, useGetAllStudentExamsQuery, useGetStudentExamByIdQuery } from '@/api/studentExamsApi';
 import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
@@ -22,6 +22,9 @@ function formatDateTime(iso: string | null | undefined): string {
 
 const StudentProgressionView: React.FC<StudentProgressionViewProps> = ({ exam }) => {
     const [selectedStudentCode, setSelectedStudentCode] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [pageSize, setPageSize] = useState(15);
 
     // Fetch class students
     const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentClassesByClassIdQuery(
@@ -102,44 +105,57 @@ const StudentProgressionView: React.FC<StudentProgressionViewProps> = ({ exam })
         }
     };
 
-    const dataSource = allStudents.map(student => {
-        const code = student.studentCode?.toString().toLowerCase().trim() || '';
-        const attempt = studentAttemptMap.get(code);
-        let status = 'not_started';
-        if (attempt) {
-            if (attempt.grade !== null && attempt.grade !== undefined) {
-                status = 'done';
-            } else {
-                status = 'in_progress';
+    const dataSource = useMemo(() => {
+        return allStudents.map(student => {
+            const code = student.studentCode?.toString().toLowerCase().trim() || '';
+            const attempt = studentAttemptMap.get(code);
+            let status = 'not_started';
+            if (attempt) {
+                if (attempt.grade !== null && attempt.grade !== undefined) {
+                    status = 'done';
+                } else {
+                    status = 'in_progress';
+                }
             }
-        }
-        return {
-            key: student.studentId || student.studentCode,
-            studentCode: student.studentCode,
-            studentName: student.studentName,
-            status,
-            grade: attempt?.grade,
-            submittedAt: attempt?.updatedAt || attempt?.createdAt,
-        };
-    });
+            return {
+                key: student.studentId || student.studentCode,
+                studentCode: student.studentCode,
+                studentName: student.studentName,
+                status,
+                grade: attempt?.grade,
+                submittedAt: attempt?.updatedAt || attempt?.createdAt,
+            };
+        }).filter(item => {
+            const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+            const searchLower = searchQuery.toLowerCase().trim();
+            const matchesSearch = !searchLower ||
+                (item.studentName?.toLowerCase().includes(searchLower) ?? false) ||
+                (item.studentCode?.toString().toLowerCase().includes(searchLower) ?? false);
+            return matchesStatus && matchesSearch;
+        });
+    }, [allStudents, studentAttemptMap, statusFilter, searchQuery]);
 
     const columns = [
         {
             title: 'Code',
             dataIndex: 'studentCode',
             key: 'studentCode',
-            width: 120,
+            width: 100,
+            sorter: (a: any, b: any) => (a.studentCode || '').localeCompare(b.studentCode || ''),
             render: (text: string) => <span className="font-medium text-gray-700">{text}</span>
         },
         {
             title: 'Name',
             dataIndex: 'studentName',
             key: 'studentName',
+            width: 150,
+            ellipsis: true,
+            sorter: (a: any, b: any) => (a.studentName || '').localeCompare(b.studentName || ''),
             render: (text: string, record: any) => (
-                <div className="flex flex-col">
-                    <span className="font-semibold text-[#0A1B3C]">{text}</span>
+                <div className="flex flex-col overflow-hidden">
+                    <span className="font-semibold text-[#0A1B3C] truncate">{text}</span>
                     {record.status === 'done' && record.submittedAt && (
-                        <span className="text-xs text-gray-400 mt-0.5">{formatDateTime(record.submittedAt)}</span>
+                        <span className="text-xs text-gray-400 mt-0.5 truncate">{formatDateTime(record.submittedAt)}</span>
                     )}
                 </div>
             )
@@ -148,25 +164,30 @@ const StudentProgressionView: React.FC<StudentProgressionViewProps> = ({ exam })
             title: 'Status',
             dataIndex: 'status',
             key: 'status',
-            width: 140,
+            width: 130,
             render: (status: string) => {
                 if (status === 'done') {
-                    return <Tag color="green"><span className="flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Score Recorded</span></Tag>;
+                    return <Tag color="green" className="m-0"><span className="flex items-center gap-1 text-[10px]"><CheckCircle className="w-3 h-3" /> Recorded</span></Tag>;
                 }
                 if (status === 'in_progress') {
-                    return <Tag color="orange"><span className="flex items-center gap-1"><Clock className="w-3 h-3" /> In Progress</span></Tag>;
+                    return <Tag color="orange" className="m-0"><span className="flex items-center gap-1 text-[10px]"><Clock className="w-3 h-3" /> Progress</span></Tag>;
                 }
-                return <Tag color="default"><span className="flex items-center gap-1">Not Started</span></Tag>;
+                return <Tag color="default" className="m-0 text-[10px]">Not Started</Tag>;
             }
         },
         {
             title: 'Score',
             dataIndex: 'grade',
             key: 'grade',
-            width: 100,
+            width: 80,
+            sorter: (a: any, b: any) => {
+                const gradeA = a.grade !== undefined && a.grade !== null ? Number(a.grade) : -1;
+                const gradeB = b.grade !== undefined && b.grade !== null ? Number(b.grade) : -1;
+                return gradeA - gradeB;
+            },
             render: (grade: number | undefined, record: any) =>
                 record.status === 'done' && grade !== undefined && grade !== null ? (
-                    <span className="font-bold text-[#F37022]">{Number(grade).toFixed(1)} / 10</span>
+                    <span className="font-bold text-[#F37022]">{Number(grade).toFixed(1)}/10</span>
                 ) : (
                     <span className="text-gray-400">-</span>
                 )
@@ -174,9 +195,9 @@ const StudentProgressionView: React.FC<StudentProgressionViewProps> = ({ exam })
         {
             title: '',
             key: 'action',
-            width: 50,
+            width: 40,
             render: (_: any, record: any) => (
-                <ChevronRight className={`w-5 h-5 text-gray-400 transition-transform ${selectedStudentCode === record.studentCode ? 'rotate-90 text-[#F37022]' : ''}`} />
+                <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${selectedStudentCode === record.studentCode ? 'rotate-90 text-[#F37022]' : ''}`} />
             )
         }
     ];
@@ -184,19 +205,49 @@ const StudentProgressionView: React.FC<StudentProgressionViewProps> = ({ exam })
     return (
         <div className="flex flex-col md:flex-row gap-6">
             {/* Left Panel: Student List */}
-            <div className={`transition-all duration-300 ${selectedStudentCode ? 'md:w-1/3' : 'w-full'}`}>
+            <div className={`transition-all duration-300 ${selectedStudentCode ? 'md:w-[350px] shrink-0' : 'w-full'}`}>
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-[#0A1B3C] flex items-center gap-2">
                         <Users className="w-5 h-5 text-[#F37022]" />
-                        Class Roster ({allStudents.length})
+                        Class Roster ({dataSource.length}{dataSource.length !== allStudents.length ? ` of ${allStudents.length}` : ''})
                     </h3>
                 </div>
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
+
+                <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                    <Input
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                        className="flex-1 text-sm h-9"
+                        allowClear
+                    />
+                    <Select
+                        value={statusFilter}
+                        onChange={setStatusFilter}
+                        className="w-full sm:w-28 text-sm h-9"
+                        options={[
+                            { label: 'All', value: 'all' },
+                            { label: 'Done', value: 'done' },
+                            { label: 'Started', value: 'in_progress' },
+                            { label: 'None', value: 'not_started' },
+                        ]}
+                    />
+                </div>
+
+                <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
                     <Table
                         columns={columns}
                         dataSource={dataSource}
                         loading={isLoadingStudents || isLoadingAttempts}
-                        pagination={{ pageSize: 15, size: 'small' }}
+                        scroll={{ x: 450, y: 550 }}
+                        pagination={{
+                            pageSize: pageSize,
+                            onShowSizeChange: (_, size) => setPageSize(size),
+                            showSizeChanger: true,
+                            pageSizeOptions: ['15', '50', '100'],
+                            size: 'small',
+                            showTotal: (total) => `${total}`
+                        }}
                         size="small"
                         rowClassName={(record) => `cursor-pointer transition-colors ${selectedStudentCode === record.studentCode ? 'bg-orange-50' : 'hover:bg-gray-50'}`}
                         onRow={(record) => ({

@@ -44,7 +44,11 @@ function StudentExams() {
 
       const examItem = {
         ...exam,
-        course: exam.displayName || exam.subjectName || exam.category,
+        subjectLabel: exam.subjectName || 'Unknown Subject',
+        subjectCode: exam.subjectCode || '-',
+        classCode: exam.classCode || null,
+        examName: exam.displayName || (exam.category ? `${exam.category} ${exam.instanceNumber}` : `Progress Test ${exam.instanceNumber}`),
+        course: exam.subjectName || exam.displayName || exam.category,
         code: exam.subjectCode || '-',
         type: exam.tag || 'Exam',
         dueDate: exam.endTime,
@@ -161,10 +165,21 @@ function StudentExams() {
                   <div key={exam.id} className="border border-gray-200 rounded-xl p-5 hover:border-orange-200 transition-colors">
                     <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-3 mb-3">
-                          <h3 className="font-semibold text-[#0A1B3C] text-lg">{exam.course}</h3>
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <h3 className="font-bold text-[#0A1B3C] text-lg">{exam.subjectLabel}</h3>
+                          {exam.subjectCode && exam.subjectCode !== '-' && (
+                            <span className="text-xs font-semibold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                              {exam.subjectCode}
+                            </span>
+                          )}
+                          {exam.classCode && (
+                            <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                              {exam.classCode}
+                            </span>
+                          )}
                           <span className="px-2 py-0.5 bg-orange-50 text-orange-600 text-xs font-semibold rounded">{exam.type}</span>
                         </div>
+                        <p className="text-sm text-gray-500 mb-3">{exam.examName}</p>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="flex items-center gap-2">
@@ -230,7 +245,24 @@ function StudentExams() {
                   <tbody>
                     {filteredPast.map(exam => (
                       <tr key={exam.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                        <td className="p-4 font-medium text-[#0A1B3C]">{exam.course}</td>
+                        <td className="p-4">
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-[#0A1B3C]">{exam.subjectLabel}</span>
+                            <span className="text-xs text-gray-500 mt-0.5">{exam.examName}</span>
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              {exam.subjectCode && exam.subjectCode !== '-' && (
+                                <span className="text-[10px] font-bold text-[#0066b3] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                                  {exam.subjectCode}
+                                </span>
+                              )}
+                              {exam.classCode && (
+                                <span className="text-[10px] font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                                  {exam.classCode}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
                         <td className="p-4 text-gray-600">{exam.type}</td>
                         <td className="p-4 text-center text-gray-600 text-sm">
                           {new Date(exam.dueDate).toLocaleDateString('en-GB')}
