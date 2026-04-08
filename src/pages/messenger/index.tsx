@@ -120,6 +120,7 @@ function Messenger() {
     data: messagesData,
     isLoading: isLoadingMessages,
     isFetching: isFetchingMessages,
+    refetch: refetchMessages,
   } = useGetConversationMessagesQuery(
     { conversationId: selectedConversation?.id ?? '', page: messagePage, pageSize: 200 },
     { skip: !selectedConversation?.id }
@@ -453,6 +454,13 @@ function Messenger() {
   // ── If URL contains conversationId, open that conversation automatically ──
   useEffect(() => {
     if (conversationFromParam && conversationIdFromParams) {
+      // Force reload messages if same conversation is already selected
+      if (conversationFromParam.id === selectedConversation?.id) {
+        setLocalMessages([]);
+        setMessagePage(1);
+        setHasMoreMessages(true);
+        refetchMessages();
+      }
       setSelectedConversation(conversationFromParam);
       setMobileView('chat');
     }
@@ -557,6 +565,13 @@ function Messenger() {
 
   // ── Select conversation ──
   const handleSelectConversation = (conv: ConversationDto) => {
+    if (conv.id === selectedConversation?.id) {
+      // Same conversation: force reload messages
+      setLocalMessages([]);
+      setMessagePage(1);
+      setHasMoreMessages(true);
+      refetchMessages();
+    }
     setSelectedConversation(conv);
     setPendingChatUser(null); // Clear pending chat when selecting an existing conversation
     setShowInfoPanel(false);
