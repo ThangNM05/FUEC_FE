@@ -17,6 +17,7 @@ export interface ImportPreviewQuestion {
   questionContent: string;
   tag?: string | null;
   chapter?: number | null;
+  questionType?: 'Single' | 'Multiple';
   options: ImportPreviewOption[];
   isDuplicate: boolean;
 }
