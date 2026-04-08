@@ -14,6 +14,7 @@ import type { AttentionState } from '@/lib/ExamProctoring';
 import { uploadCheatVideo } from '@/lib/uploadCheatSnapshot';
 import { createEpisodeRecorder } from '@/lib/videoBuffer';
 import type { EpisodeRecorder } from '@/lib/videoBuffer';
+import { useNotificationHub } from '@/contexts/NotificationContext';
 
 // ─── Helpers ───────────────────────────────────────────
 const STORAGE_KEY = 'fuec_active_exam';
@@ -638,6 +639,16 @@ export default function QuizTest() {
     setInitialized(true);
   }, [examData, studentExamId, initialized]);
 
+  // ── Force Submit RTK Query Failsafe ──
+  useEffect(() => {
+    if (examData?.isSubmitted && !showResults) {
+      toast.error('The instructor has ended the exam.');
+      setExamResult({ grade: examData.grade ?? 0 });
+      setShowResults(true);
+      clearExamState();
+    }
+  }, [examData?.isSubmitted, examData?.grade, showResults]);
+
   // ── Scroll to top when switching to results view ──
   useEffect(() => {
     if (showResults) {
@@ -763,6 +774,30 @@ export default function QuizTest() {
       toast.error('Error submitting exam. Please try again.');
     }
   }, [studentExamId, submitExam]);
+
+  // ── Real-time Notification for Force Submit ──
+  const { notifications } = useNotificationHub();
+
+  useEffect(() => {
+    if (notifications.length > 0) {
+      const latest = notifications[0];
+      // Check if the latest notification is an Exam Force Submit
+      // NotificationType.Exam is typically 3 (System=0, Message=1, Assignment=2, Exam=3)
+      const isExamType = latest.type === 'Exam' || (latest.type as any) === 3 || (latest.type as any) === '3';
+      const isForceSubmitTitle = 
+        latest.title === 'Exam Force Submitted' || 
+        latest.title === 'Bài thi đã bị ép nộp' || 
+        latest.title?.toLowerCase().includes('force submit') ||
+        latest.title?.toLowerCase().includes('ép nộp');
+
+      if (isExamType && isForceSubmitTitle) {
+        if (!showResults && !isSubmitting && !showConfirmSubmit) {
+          toast.error(latest.message || 'Your exam has been force submitted by the instructor.');
+          handleSubmit(true);
+        }
+      }
+    }
+  }, [notifications, showResults, isSubmitting, showConfirmSubmit, handleSubmit]);
 
   const answeredCount = Object.keys(answers).length;
   const unansweredCount = questions.length - answeredCount;

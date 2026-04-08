@@ -134,6 +134,12 @@ export default function ImportPreviewModal({
           {questions.map((q, i) => {
             const isDup = q.isDuplicate;
             const isChecked = checkedSet.has(i);
+            const derivedQuestionType =
+              q.options.filter((opt) => opt.isCorrect).length > 1 ? 'Multiple' : 'Single';
+            const resolvedQuestionType =
+              q.questionType === 'Multiple' || q.questionType === 'Single'
+                ? q.questionType
+                : derivedQuestionType;
             return (
               <div
                 key={i}
@@ -189,24 +195,33 @@ export default function ImportPreviewModal({
                       </span>
                     ))}
                   </div>
-                  {(q.chapter != null || q.tag) && (
-                    <div className="mt-1.5 flex gap-2">
-                      {q.chapter != null && (
-                        <span
-                          className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${isDup ? 'bg-red-100 text-red-400' : 'bg-blue-100 text-blue-600'}`}
-                        >
-                          Ch. {q.chapter}
-                        </span>
-                      )}
-                      {q.tag && (
-                        <span
-                          className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${isDup ? 'bg-red-100 text-red-400' : 'bg-purple-100 text-purple-600'}`}
-                        >
-                          Tag: {q.tag}
-                        </span>
-                      )}
-                    </div>
-                  )}
+                  <div className="mt-1.5 flex flex-wrap gap-2">
+                    <span
+                      className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${
+                        isDup
+                          ? 'bg-red-100 text-red-400'
+                          : resolvedQuestionType === 'Multiple'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                      }`}
+                    >
+                      {resolvedQuestionType}
+                    </span>
+                    {q.chapter != null && (
+                      <span
+                        className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${isDup ? 'bg-red-100 text-red-400' : 'bg-blue-100 text-blue-600'}`}
+                      >
+                        Ch. {q.chapter}
+                      </span>
+                    )}
+                    {q.tag && (
+                      <span
+                        className={`inline-block text-xs px-1.5 py-0.5 rounded font-medium ${isDup ? 'bg-red-100 text-red-400' : 'bg-purple-100 text-purple-600'}`}
+                      >
+                        Tag: {q.tag}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );

@@ -9,6 +9,25 @@ import type {
   NotificationItem,
 } from '@/types/notification.types';
 
+export interface StudentAnswerUpdateDto {
+  studentExamId: string;
+  studentId: string;
+  studentCode: string;
+  studentName: string;
+  questionId: string;
+  choiceId?: string;
+  choiceIds?: string[];
+  answerText?: string;
+  updatedAt: string;
+}
+
+export interface StudentExamStartedDto {
+  studentExamId: string;
+  studentCode?: string;
+  studentName?: string;
+  startedAt: string;
+}
+
 /**
  * Hub URL: the BE maps NotificationHub to /hubs/notification (Program.cs line 123)
  * PathBase is /api, so full path is: {baseUrl}/hubs/notification
@@ -28,8 +47,9 @@ function toNotificationItem(
   type: NotificationItem['type'],
   createdAt: string,
   relatedEntityId?: string,
+  relatedEntityType?: string,
 ): NotificationItem {
-  return { id, title, message, type, isRead: false, createdAt, relatedEntityId };
+  return { id, title, message, type, isRead: false, createdAt, relatedEntityId, relatedEntityType };
 }
 
 export interface NotificationHubCallbacks {
@@ -40,6 +60,8 @@ export interface NotificationHubCallbacks {
   onExamNotification?: (notification: ExamNotificationDto) => void;
   onGradeNotification?: (notification: GradeNotificationDto) => void;
   onSystemAnnouncement?: (announcement: AnnouncementDto) => void;
+  onStudentAnswerUpdated?: (update: StudentAnswerUpdateDto) => void;
+  onStudentExamStarted?: (update: StudentExamStartedDto) => void;
 }
 
 export interface UseNotificationHubReturn {
@@ -52,6 +74,8 @@ export interface UseNotificationHubReturn {
   subscribeToChannel: (channelName: string) => Promise<void>;
   clearNotification: (id: string) => void;
   clearAll: () => void;
+  joinExamMonitoring: (examId: string) => Promise<void>;
+  leaveExamMonitoring: (examId: string) => Promise<void>;
 }
 
 export function useNotificationHub(
@@ -64,8 +88,9 @@ export function useNotificationHub(
   const callbacksRef = useRef(callbacks);
   callbacksRef.current = callbacks;
 
-  // Local notification store (accumulates real-time items)
+  // Local states
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [activeExamId, setActiveExamId] = useState<string | null>(null);
 
   const addNotification = useCallback((item: NotificationItem) => {
     setNotifications((prev) => {
@@ -106,6 +131,7 @@ export function useNotificationHub(
         isRead: dto.isRead,
         createdAt: dto.createdAt,
         relatedEntityId: dto.relatedEntityId,
+        relatedEntityType: dto.relatedEntityType,
       });
     });
 
@@ -134,6 +160,7 @@ export function useNotificationHub(
           'Assignment',
           dto.createdAt,
           dto.assignmentId,
+          'Assignment'
         ),
       );
     });
@@ -149,6 +176,7 @@ export function useNotificationHub(
           'Exam',
           dto.createdAt,
           dto.examId,
+          'Exam'
         ),
       );
     });
@@ -163,6 +191,8 @@ export function useNotificationHub(
           dto.message,
           'Grade',
           dto.createdAt,
+          dto.assignmentId ?? dto.examId,
+          dto.assignmentId ? 'Assignment' : 'Exam'
         ),
       );
     });
@@ -171,8 +201,22 @@ export function useNotificationHub(
     connection.on('SystemAnnouncement', (dto: AnnouncementDto) => {
       callbacksRef.current?.onSystemAnnouncement?.(dto);
       addNotification(
-        toNotificationItem(dto.id, dto.title, dto.content, 'Announcement', dto.createdAt),
+        toNotificationItem(dto.id, dto.title, dto.content, 'Announcement', dto.createdAt, dto.id, 'Announcement'),
       );
+    });
+
+    // ── Event: StudentAnswerUpdated ──
+    connection.on('StudentAnswerUpdated', (dto: StudentAnswerUpdateDto) => {
+      callbacksRef.current?.onStudentAnswerUpdated?.(dto);
+      // Dispatch global event for other components to listen
+      window.dispatchEvent(new CustomEvent('signalr:student-answer-updated', { detail: dto }));
+    });
+
+    // ── Event: StudentExamStarted ──
+    connection.on('StudentExamStarted', (dto: StudentExamStartedDto) => {
+      callbacksRef.current?.onStudentExamStarted?.(dto);
+      // Dispatch global event for other components to listen
+      window.dispatchEvent(new CustomEvent('signalr:student-exam-started', { detail: dto }));
     });
 
     // ── Connection lifecycle ──
@@ -207,6 +251,19 @@ export function useNotificationHub(
       connection.stop().catch(console.error);
     };
   }, [addNotification]);
+
+  // ── Auto-Sync Monitoring Groups on Reconnect ──
+  useEffect(() => {
+    if (connectionState === signalR.HubConnectionState.Connected && activeExamId) {
+      const conn = connectionRef.current;
+      if (conn) {
+        console.log(`[NotificationHub] Auto-joining monitoring for exam: ${activeExamId}`);
+        conn.invoke('JoinExamMonitoring', activeExamId).catch(err => {
+            console.error('[NotificationHub] Auto-join error:', err);
+        });
+      }
+    }
+  }, [connectionState, activeExamId]);
 
   // ── Hub method invocations ──
 
@@ -257,6 +314,34 @@ export function useNotificationHub(
     setNotifications([]);
   }, []);
 
+  const joinExamMonitoring = useCallback(async (examId: string) => {
+    setActiveExamId(examId);
+    const conn = connectionRef.current;
+    if (conn?.state === signalR.HubConnectionState.Connected) {
+      try {
+        await conn.invoke('JoinExamMonitoring', examId);
+        console.log(`[NotificationHub] Joined monitoring for exam: ${examId}`);
+      } catch (err) {
+        console.error('[NotificationHub] JoinExamMonitoring error:', err);
+      }
+    } else {
+        console.log('[NotificationHub] Connection not ready, group join will be handled by auto-sync.');
+    }
+  }, []);
+
+  const leaveExamMonitoring = useCallback(async (examId: string) => {
+    setActiveExamId(null);
+    const conn = connectionRef.current;
+    if (conn?.state === signalR.HubConnectionState.Connected) {
+      try {
+        await conn.invoke('LeaveExamMonitoring', examId);
+        console.log(`[NotificationHub] Left monitoring for exam: ${examId}`);
+      } catch (err) {
+        console.error('[NotificationHub] LeaveExamMonitoring error:', err);
+      }
+    }
+  }, []);
+
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return {
@@ -269,5 +354,7 @@ export function useNotificationHub(
     subscribeToChannel,
     clearNotification,
     clearAll,
+    joinExamMonitoring,
+    leaveExamMonitoring,
   };
 }

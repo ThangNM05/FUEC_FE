@@ -1,8 +1,10 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { Bell, CheckCheck, BookOpen, ClipboardList, Award, Megaphone, Info } from 'lucide-react';
 import type { NotificationItem } from '@/types/notification.types';
 import { useNotificationHub } from '@/contexts/NotificationContext';
+import { selectCurrentUser } from '@/redux/authSlice';
 
 function getTypeIcon(type: NotificationItem['type']) {
   switch (type) {
@@ -41,6 +43,7 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const navigate = useNavigate();
+  const currentUser = useSelector(selectCurrentUser);
   const { notifications, unreadCount, isConnected, markAsRead, markAllAsRead } =
     useNotificationHub();
 
@@ -71,6 +74,55 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
   async function handleMarkRead(id: string) {
     await markAsRead(id);
   }
+
+  const handleNotificationClick = (n: NotificationItem) => {
+    handleMarkRead(n.id);
+    setOpen(false);
+
+    if (!n.relatedEntityId) {
+      if (n.type === 'Grade') {
+        navigate(currentUser?.role === 'Teacher' ? '/teacher/reports' : '/student/grades');
+      }
+      return;
+    }
+
+    const { type, relatedEntityId } = n;
+    const role = currentUser?.role;
+
+    switch (type) {
+      case 'Message':
+        navigate(`/messenger?conversationId=${relatedEntityId}`);
+        break;
+
+      case 'Assignment':
+        if (role === 'Teacher') {
+          navigate(`/teacher/assignment/${relatedEntityId}/submissions`);
+        } else {
+          navigate(`/student/assignment-submission/${relatedEntityId}`);
+        }
+        break;
+
+      case 'Exam':
+        if (role === 'Teacher') {
+          navigate('/teacher/classrooms');
+        } else {
+          navigate(`/student/exam-lobby/${relatedEntityId}`);
+        }
+        break;
+
+      case 'Grade':
+        if (role === 'Teacher') {
+          navigate('/teacher/reports');
+        } else {
+          navigate('/student/grades');
+        }
+        break;
+
+      default:
+        // No specific redirect
+        break;
+    }
+  };
 
   return (
     <div className={`relative ${className}`}>
@@ -151,14 +203,7 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
                     className={`group relative flex gap-3 px-4 py-3 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50 ${
                       !n.isRead ? 'bg-[#F37022]/5' : ''
                     }`}
-                    onClick={() => {
-                      handleMarkRead(n.id);
-                      if (n.relatedEntityId && n.type === 'Message') {
-                        // Redirect to messenger conversation
-                        navigate(`/messenger?conversationId=${n.relatedEntityId}`);
-                        setOpen(false);
-                      }
-                    }}
+                    onClick={() => handleNotificationClick(n)}
                   >
                     {/* Type icon */}
                     <div className="mt-0.5 flex-shrink-0">{getTypeIcon(n.type)}</div>

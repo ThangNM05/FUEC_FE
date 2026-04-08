@@ -130,6 +130,14 @@ export const studentExamsApi = baseApi.injectEndpoints({
             transformResponse: (response: any) => response.result || response,
             invalidatesTags: (_result, _error, id) => [{ type: 'StudentExams', id }],
         }),
+        forceSubmitStudentExam: builder.mutation<any, string>({
+            query: (id) => ({
+                url: `/StudentExams/${id}/force-submit`,
+                method: 'POST',
+            }),
+            transformResponse: (response: any) => response.result || response,
+            invalidatesTags: (_result, _error, id) => [{ type: 'StudentExams', id }],
+        }),
         updateStudentExam: builder.mutation<any, { id: string; grade?: number }>({
             query: ({ id, ...body }) => ({
                 url: `/StudentExams/${id}`,
@@ -149,4 +157,5 @@ export const {
     useGetAllStudentExamsQuery,
     useSubmitStudentExamMutation,
     useUpdateStudentExamMutation,
+    useForceSubmitStudentExamMutation,
 } = studentExamsApi;
