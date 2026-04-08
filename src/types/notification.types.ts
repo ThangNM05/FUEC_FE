@@ -17,7 +17,9 @@ export type NotificationType =
   | 'Grade'
   | 'Announcement'
   | 'System'
-  | 'Message';
+  | 'Message'
+  | 'CourseMaterial'
+  | 'SlotQuestion';
 
 /** Matches AssignmentNotificationDto */
 export interface AssignmentNotificationDto {
