@@ -5,8 +5,6 @@ import {
     AlertTriangle,
     Calendar,
     Clock,
-    FileVideo,
-    Image as ImageIcon,
     Eye,
     Download,
     ChevronRight,
@@ -14,19 +12,26 @@ import {
     FileText,
     ArrowLeft,
     Search,
-    Filter,
     BarChart3,
     GraduationCap,
-    BookOpen
+    BookOpen,
+    TrendingUp,
+    Award,
+    Layers,
+    ShieldAlert,
+    FileSpreadsheet,
+    CheckCircle2,
+    ClipboardList
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import dayjs from 'dayjs';
 import { useGetAuthTeacherTeachingSubjectsQuery } from '@/api/teachersApi';
-import { useGetSemestersQuery, useGetDefaultSemesterQuery } from '@/api/semestersApi';
+import { useGetSemestersQuery, useGetDefaultSemesterQuery, useGetSemesterReportQuery } from '@/api/semestersApi';
 import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
 import { useGetAllStudentExamsQuery } from '@/api/studentExamsApi';
 import { useGetStudentCheatLogsQuery, useDeleteStudentCheatLogMutation } from '@/api/studentCheatLogsApi';
 import { useUpdateStudentExamMutation } from '@/api/studentExamsApi';
+import { useLazyExportGradesQuery } from '@/api/classDetailsApi';
 import { Loader2 } from 'lucide-react';
 import { getApiUrl } from '@/config/appConfig';
 import JSZip from 'jszip';
@@ -71,8 +76,10 @@ interface ClassSubject {
 
 // --- Views ---
 type ViewState = 'CLASSES' | 'EXAMS' | 'STUDENTS' | 'DETAIL';
+type MainTab = 'integrity' | 'academic';
 
 function TeacherReports() {
+    const [activeTab, setActiveTab] = useState<MainTab>('integrity');
     const [view, setView] = useState<ViewState>('CLASSES');
     const [semester, setSemester] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -836,6 +843,248 @@ function TeacherReports() {
         </motion.div>
     );
 
+    // --- Academic Reports ---
+    const { data: semesterReport, isLoading: loadingReport } = useGetSemesterReportQuery(
+        semester,
+        { skip: !semester || activeTab !== 'academic' }
+    );
+    const [exportGrades, { isFetching: exportingGrades }] = useLazyExportGradesQuery();
+    const [exportingSubjectId, setExportingSubjectId] = useState<string | null>(null);
+
+    const handleExportSemesterReport = useCallback(() => {
+        if (!semesterReport) return;
+        const sem = semestersData?.items?.find((s: any) => s.id === semester);
+        const rows: string[][] = [
+            ['SEMESTER SUMMARY REPORT'],
+            ['Semester', semesterReport.semesterCode],
+            ['Period', `${dayjs(semesterReport.startDate).format('DD/MM/YYYY')} - ${dayjs(semesterReport.endDate).format('DD/MM/YYYY')}`],
+            [''],
+            ['OVERVIEW'],
+            ['Total Subjects', String(semesterReport.totalSubjects)],
+            ['Total Classes', String(semesterReport.totalClasses)],
+            ['Total Students', String(semesterReport.totalStudents)],
+            ['Total Teachers', String(semesterReport.totalTeachers)],
+            ['Total Materials Uploaded', String(semesterReport.totalMaterialsUploaded)],
+            ['Total Assignments Created', String(semesterReport.totalAssignmentsCreated)],
+            ['Total Exams Created', String(semesterReport.totalExamsCreated)],
+            ['Average GPA', semesterReport.averageGpa?.toFixed(2) ?? 'N/A'],
+            ['Passing Rate', `${semesterReport.passingRate?.toFixed(1) ?? 'N/A'}%`],
+            [''],
+            ['TOP SUBJECTS BY STUDENT COUNT'],
+            ['Subject Code', 'Subject Name', 'Student Count', 'Class Count'],
+            ...(semesterReport.topSubjectsByStudentCount || []).map((s: any) => [
+                s.subjectCode, s.subjectName, String(s.studentCount), String(s.classCount)
+            ])
+        ];
+        const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `semester_report_${semesterReport.semesterCode}_${dayjs().format('YYYYMMDD')}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success('Semester report exported successfully!');
+    }, [semesterReport, semestersData, semester]);
+
+    const handleExportSubjectGrades = useCallback(async (classSubjectId: string, label: string) => {
+        setExportingSubjectId(classSubjectId);
+        try {
+            const blob = await exportGrades(classSubjectId).unwrap();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `grades_${label.replace(/\s+/g, '_')}_${dayjs().format('YYYYMMDD')}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast.success(`Grade report for ${label} exported!`);
+        } catch {
+            toast.error('Failed to export grades. Please try again.');
+        } finally {
+            setExportingSubjectId(null);
+        }
+    }, [exportGrades]);
+
+    const AcademicReports = () => {
+        if (loadingReport) {
+            return (
+                <div className="py-24 flex flex-col items-center justify-center">
+                    <Loader2 className="w-12 h-12 text-[#F37022] animate-spin mb-4" />
+                    <p className="text-gray-400 font-semibold">Loading semester report...</p>
+                </div>
+            );
+        }
+
+        const statCards = semesterReport ? [
+            { label: 'Total Subjects', value: semesterReport.totalSubjects, icon: BookOpen, color: 'bg-blue-50 text-blue-600' },
+            { label: 'Total Classes', value: semesterReport.totalClasses, icon: Layers, color: 'bg-purple-50 text-purple-600' },
+            { label: 'Total Students', value: semesterReport.totalStudents, icon: Users, color: 'bg-emerald-50 text-emerald-600' },
+            { label: 'Total Teachers', value: semesterReport.totalTeachers, icon: GraduationCap, color: 'bg-orange-50 text-orange-600' },
+            { label: 'Avg GPA', value: semesterReport.averageGpa?.toFixed(2) ?? 'N/A', icon: TrendingUp, color: 'bg-cyan-50 text-cyan-600' },
+            { label: 'Passing Rate', value: `${semesterReport.passingRate?.toFixed(1) ?? 'N/A'}%`, icon: Award, color: 'bg-rose-50 text-rose-600' },
+            { label: 'Materials', value: semesterReport.totalMaterialsUploaded, icon: FileText, color: 'bg-amber-50 text-amber-600' },
+            { label: 'Exams Created', value: semesterReport.totalExamsCreated, icon: ClipboardList, color: 'bg-indigo-50 text-indigo-600' },
+        ] : [];
+
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                className="space-y-8"
+            >
+                {!semesterReport && !loadingReport && (
+                    <div className="py-24 text-center bg-white rounded-3xl border border-dashed border-gray-200">
+                        <BarChart3 className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-gray-400">No report available</h3>
+                        <p className="text-gray-400 mt-1">Please select a semester to view the summary report.</p>
+                    </div>
+                )}
+
+                {semesterReport && (
+                    <>
+                        {/* Summary Banner */}
+                        <div className="bg-gradient-to-r from-[#0A1B3C] to-[#0066b3] text-white p-6 md:p-8 rounded-3xl relative overflow-hidden shadow-2xl">
+                            <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=60 height=60 viewBox=0 0 60 60 xmlns=http://www.w3.org/2000/svg%3E%3Cg fill=none fill-rule=evenodd%3E%3Cg fill=%23ffffff opacity=.04%3E%3Cpath d=M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-30" />
+                            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="bg-white/10 p-2.5 rounded-xl backdrop-blur">
+                                            <ClipboardList className="w-6 h-6 text-[#F37022]" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-2xl md:text-3xl font-black">{semesterReport.semesterCode}</h2>
+                                            <p className="text-blue-200 text-sm">
+                                                {dayjs(semesterReport.startDate).format('DD MMM YYYY')} &mdash; {dayjs(semesterReport.endDate).format('DD MMM YYYY')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    id="export-semester-report-btn"
+                                    onClick={handleExportSemesterReport}
+                                    className="flex items-center gap-2.5 px-6 py-3 bg-[#F37022] hover:bg-[#d95f10] text-white font-bold rounded-2xl transition-all shadow-lg shadow-orange-900/30 shrink-0"
+                                >
+                                    <FileSpreadsheet className="w-5 h-5" />
+                                    Export Report (.csv)
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Stat Cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {statCards.map((card) => (
+                                <div key={card.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className={`${card.color} w-10 h-10 rounded-xl flex items-center justify-center mb-3`}>
+                                        <card.icon className="w-5 h-5" />
+                                    </div>
+                                    <p className="text-2xl font-black text-[#0A1B3C]">{card.value}</p>
+                                    <p className="text-xs text-gray-400 font-semibold mt-0.5">{card.label}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Top Subjects */}
+                        {semesterReport.topSubjectsByStudentCount?.length > 0 && (
+                            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+                                <h3 className="text-lg font-bold text-[#0A1B3C] mb-4 flex items-center gap-2">
+                                    <Award className="w-5 h-5 text-[#F37022]" />
+                                    Top Subjects by Enrollment
+                                </h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-gray-100">
+                                                <th className="text-left py-3 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">#</th>
+                                                <th className="text-left py-3 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</th>
+                                                <th className="text-left py-3 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Name</th>
+                                                <th className="text-right py-3 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Classes</th>
+                                                <th className="text-right py-3 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Students</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {semesterReport.topSubjectsByStudentCount.map((s: any, i: number) => (
+                                                <tr key={s.subjectId} className="border-b border-gray-50 hover:bg-gray-50/80 transition-colors">
+                                                    <td className="py-3 px-3 text-gray-400 font-mono text-xs">{i + 1}</td>
+                                                    <td className="py-3 px-3">
+                                                        <span className="font-mono font-bold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded text-xs">{s.subjectCode}</span>
+                                                    </td>
+                                                    <td className="py-3 px-3 font-medium text-[#0A1B3C]">{s.subjectName}</td>
+                                                    <td className="py-3 px-3 text-right text-gray-600 font-bold">{s.classCount}</td>
+                                                    <td className="py-3 px-3 text-right">
+                                                        <span className="font-black text-[#0A1B3C]">{s.studentCount}</span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Per-Subject Grade Reports */}
+                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+                            <h3 className="text-lg font-bold text-[#0A1B3C] mb-1 flex items-center gap-2">
+                                <FileSpreadsheet className="w-5 h-5 text-[#F37022]" />
+                                Detailed Grade Reports by Subject
+                            </h3>
+                            <p className="text-sm text-gray-400 mb-5">Export the full grade breakdown for each class-subject you teach this semester.</p>
+                            {allAvailableClasses.length === 0 ? (
+                                <div className="text-center py-12 text-gray-400">
+                                    <FileText className="w-10 h-10 mx-auto mb-3 text-gray-200" />
+                                    No class-subjects found for this semester.
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead>
+                                            <tr className="border-b border-gray-100">
+                                                <th className="text-left py-3 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Class</th>
+                                                <th className="text-left py-3 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Subject</th>
+                                                <th className="text-left py-3 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Subject Name</th>
+                                                <th className="text-right py-3 px-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {allAvailableClasses.map((cs: any) => (
+                                                <tr key={cs.classSubjectId} className="border-b border-gray-50 hover:bg-gray-50/80 transition-colors">
+                                                    <td className="py-3 px-3">
+                                                        <span className="font-bold text-[#0A1B3C]">{cs.classCode}</span>
+                                                    </td>
+                                                    <td className="py-3 px-3">
+                                                        <span className="font-mono font-bold text-[#0066b3] bg-blue-50 px-2 py-0.5 rounded text-xs">{cs.subjectCode}</span>
+                                                    </td>
+                                                    <td className="py-3 px-3 text-gray-600">{cs.subjectName}</td>
+                                                    <td className="py-3 px-3 text-right">
+                                                        <button
+                                                            id={`export-grades-${cs.classSubjectId}`}
+                                                            disabled={exportingSubjectId === cs.classSubjectId}
+                                                            onClick={() => handleExportSubjectGrades(cs.classSubjectId, `${cs.classCode}_${cs.subjectCode}`)}
+                                                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0A1B3C] hover:bg-[#F37022] text-white text-xs font-bold rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                                        >
+                                                            {exportingSubjectId === cs.classSubjectId
+                                                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                                : <Download className="w-3.5 h-3.5" />}
+                                                            {exportingSubjectId === cs.classSubjectId ? 'Exporting...' : 'Export Grades'}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
+            </motion.div>
+        );
+    };
+
     return (
         <div className="min-h-screen bg-[#F8FAFC] p-4 md:p-8">
             {/* Header Area */}
@@ -846,22 +1095,24 @@ function TeacherReports() {
                             <div className="bg-[#F37022] p-2 rounded-lg shadow-lg shadow-orange-200">
                                 <BarChart3 className="w-6 h-6 text-white" />
                             </div>
-                            <h1 className="text-3xl font-black text-[#0A1B3C]">Integrity Reports</h1>
+                            <h1 className="text-3xl font-black text-[#0A1B3C]">Reports</h1>
                         </div>
-                        <p className="text-gray-500 font-medium">Monitor and review proctoring evidence across your courses</p>
+                        <p className="text-gray-500 font-medium">Monitor academic performance and proctoring evidence</p>
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
-                        <div className="relative flex-1 sm:min-w-[240px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search student or class..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F37022]/20 focus:border-[#F37022] outline-none transition-all w-full shadow-sm"
-                            />
-                        </div>
+                        {activeTab === 'integrity' && (
+                            <div className="relative flex-1 sm:min-w-[240px]">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search student or class..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#F37022]/20 focus:border-[#F37022] outline-none transition-all w-full shadow-sm"
+                                />
+                            </div>
+                        )}
                         <div className="flex items-center gap-2 w-full sm:w-auto">
                             <Select
                                 value={semester}
@@ -883,32 +1134,70 @@ function TeacherReports() {
                         </div>
                     </div>
                 </div>
+
+                {/* Tab Navigation */}
+                <div className="flex gap-1 mt-6 bg-white border border-gray-100 rounded-2xl p-1.5 w-fit shadow-sm">
+                    <button
+                        id="tab-integrity-reports"
+                        onClick={() => setActiveTab('integrity')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                            activeTab === 'integrity'
+                                ? 'bg-[#0A1B3C] text-white shadow-md'
+                                : 'text-gray-500 hover:text-[#0A1B3C] hover:bg-gray-50'
+                        }`}
+                    >
+                        <ShieldAlert className="w-4 h-4" />
+                        Integrity Reports
+                    </button>
+                    <button
+                        id="tab-academic-reports"
+                        onClick={() => setActiveTab('academic')}
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                            activeTab === 'academic'
+                                ? 'bg-[#0A1B3C] text-white shadow-md'
+                                : 'text-gray-500 hover:text-[#0A1B3C] hover:bg-gray-50'
+                        }`}
+                    >
+                        <TrendingUp className="w-4 h-4" />
+                        Academic Reports
+                    </button>
+                </div>
             </div>
 
             <div className="max-w-7xl mx-auto">
-                {/* Navigation & Toolbar */}
-                <div className="flex items-center justify-between mb-4">
-                    <Breadcrumbs />
-                    {view !== 'CLASSES' && (
-                        <button
-                            onClick={handleBack}
-                            className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#0A1B3C] transition-colors mb-6 group"
+                <AnimatePresence mode="wait">
+                    {activeTab === 'integrity' && (
+                        <motion.div
+                            key="integrity"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
                         >
-                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                            Back to {view === 'DETAIL' ? 'Students' : view === 'STUDENTS' ? 'Exams' : 'Classes'}
-                        </button>
+                            {/* Navigation & Toolbar */}
+                            <div className="flex items-center justify-between mb-4">
+                                <Breadcrumbs />
+                                {view !== 'CLASSES' && (
+                                    <button
+                                        onClick={handleBack}
+                                        className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#0A1B3C] transition-colors mb-6 group"
+                                    >
+                                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                                        Back to {view === 'DETAIL' ? 'Students' : view === 'STUDENTS' ? 'Exams' : 'Classes'}
+                                    </button>
+                                )}
+                            </div>
+                            <div className="relative">
+                                <AnimatePresence mode="wait">
+                                    {view === 'CLASSES' && <ClassesView key="classes" />}
+                                    {view === 'EXAMS' && <ExamsView key="exams" />}
+                                    {view === 'STUDENTS' && <StudentsView key="students" />}
+                                    {view === 'DETAIL' && <DetailView key="detail" />}
+                                </AnimatePresence>
+                            </div>
+                        </motion.div>
                     )}
-                </div>
-
-                {/* Main Content Area */}
-                <div className="relative">
-                    <AnimatePresence mode="wait">
-                        {view === 'CLASSES' && <ClassesView key="classes" />}
-                        {view === 'EXAMS' && <ExamsView key="exams" />}
-                        {view === 'STUDENTS' && <StudentsView key="students" />}
-                        {view === 'DETAIL' && <DetailView key="detail" />}
-                    </AnimatePresence>
-                </div>
+                    {activeTab === 'academic' && <AcademicReports key="academic" />}
+                </AnimatePresence>
             </div>
 
             {/* Confirm Modal */}
