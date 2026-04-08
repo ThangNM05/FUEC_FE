@@ -227,8 +227,16 @@ function DataTable<T extends { id: string | number }>({
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-3">
         <div className="flex-1">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-gray-200 flex-1 sm:flex-initial">
-              <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (manualPagination) onSearchChange?.(searchTerm);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200 flex-1 sm:flex-initial focus-within:ring-1 focus-within:ring-[#F37022] focus-within:border-[#F37022] transition-all"
+            >
+              <button type="submit" className="hover:bg-gray-200 p-1 rounded-md transition-colors" title="Search">
+                <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              </button>
               <input
                 type="text"
                 placeholder="Search..."
@@ -236,7 +244,7 @@ function DataTable<T extends { id: string | number }>({
                 onChange={handleSearch}
                 className="bg-transparent outline-none text-sm w-full sm:w-48 md:w-64"
               />
-            </div>
+            </form>
             {selectable && (
               <span className="text-xs sm:text-sm text-gray-500">
                 Selected {selectedItems.length} of {sortedData.length}

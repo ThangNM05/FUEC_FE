@@ -47,6 +47,7 @@ export interface AutoAssignClassRequest {
     subMajorId?: string;
     cohort?: string;
     maxStudentsPerClass?: number;
+    file?: File;
 }
 
 export interface ClassAssignmentSummary {
@@ -74,3 +75,26 @@ export interface PaginatedResponse<T> {
     itemTo: number;
 }
 
+export interface StudentGradeItem {
+    id: string;
+    name: string;
+    type: string;
+    grade: number | null;
+}
+
+export interface StudentSubject {
+    classSubjectId: string;
+    classId: string;
+    classCode: string;
+    subjectId: string;
+    subjectCode: string;
+    subjectName: string;
+    examCount: number;
+    credits: number;
+    assignmentsAverage: number | null;
+    midterm: number | null;
+    final: number | null;
+    overall: number | null;
+    gradeLetter: string;
+    detailedGrades: StudentGradeItem[];
+}

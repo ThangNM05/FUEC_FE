@@ -9,8 +9,9 @@ function TeacherLayout() {
     const [isMobile, setIsMobile] = useState(false);
     const user = useSelector(selectCurrentUser);
 
-    if (!user || user.role !== 'Teacher') {
-        return <Navigate to="/not-found" replace />;
+    // ProtectedRoute already verified token + role from BE — no need to re-check here
+    if (!user) {
+        return <Navigate to="/sign-in" replace />;
     }
 
     useEffect(() => {
@@ -35,7 +36,7 @@ function TeacherLayout() {
                 {/* Main Content */}
                 <div className="transition-all duration-200">
                     <TeacherHeader />
-                    <div className="pt-4 h-[calc(100vh-56px)] overflow-y-auto px-0">
+                    <div className="pt-4 h-[calc(100vh-56px)] overflow-y-auto px-0 pb-24">
                         <Outlet />
                     </div>
                 </div>

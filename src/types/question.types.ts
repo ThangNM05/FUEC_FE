@@ -36,6 +36,7 @@ export interface QuestionDto {
     createdBy?: string;
     updatedAt?: string;
     updatedBy?: string;
+    chapter: number;
     options: QuestionOptionDto[];
 }
 
@@ -50,6 +51,7 @@ export interface CreateQuestionDto {
     questionContent: string;
     tag?: string;
     points: number;
+    chapter: number;
     options: CreateQuestionOptionRequestDto[];
 }
 
@@ -64,6 +66,7 @@ export interface UpdateQuestionDto {
     questionContent?: string;
     tag?: string;
     points?: number;
+    chapter?: number;
     options?: UpdateQuestionOptionRequestDto[];
 }
 

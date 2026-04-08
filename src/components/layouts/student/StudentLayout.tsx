@@ -9,10 +9,6 @@ function StudentLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const user = useSelector(selectCurrentUser);
 
-  if (!user || user.role !== 'Student') {
-    return <Navigate to="/not-found" replace />;
-  }
-
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -22,6 +18,11 @@ function StudentLayout() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // ProtectedRoute already verified token + role from BE — no need to re-check here
+  if (!user) {
+    return <Navigate to="/sign-in" replace />;
+  }
 
   return (
     <div className="h-screen bg-slate-50/50 relative overflow-hidden">
@@ -35,7 +36,7 @@ function StudentLayout() {
         {/* Main Content */}
         <div className="transition-all duration-200">
           <StudentHeader />
-          <div className="pt-4 h-[calc(100vh-56px)] overflow-y-auto">
+          <div className="pt-4 h-[calc(100vh-56px)] overflow-y-auto pb-24">
             <Outlet />
           </div>
         </div>

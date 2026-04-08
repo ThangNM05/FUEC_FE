@@ -16,24 +16,23 @@ const baseQuery = fetchBaseQuery({
 
     return headers;
   },
-
 });
 
 // Custom base query with error handling and token refresh
-const baseQueryWithReauth: BaseQueryFn<
-  string | FetchArgs,
-  unknown,
-  FetchBaseQueryError
-> = async (args, api, extraOptions) => {
+const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extraOptions,
+) => {
   const result = await baseQuery(args, api, extraOptions);
 
   // Handle 401 Unauthorized - token expired or invalid
+  // store.ts will automatically reset the RTK Query cache when 'auth/logout' is dispatched
   if (result.error && result.error.status === 401) {
-    console.warn('Authentication failed. Please login again.');
-    // Clear token and redirect to login
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    // You can dispatch a logout action here if needed
+    console.warn('Authentication failed. Logging out...');
+    const { logout } = await import('../redux/authSlice');
+    api.dispatch(logout());
+    sessionStorage.setItem('auth_message', 'Your session has expired. Please sign in again.');
   }
 
   return result;
@@ -42,7 +41,36 @@ const baseQueryWithReauth: BaseQueryFn<
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Students', 'Teachers', 'Majors', 'SubMajors', 'Accounts', 'Rooms', 'Subjects', 'Syllabuses', 'Semesters', 'ExamFormats', 'Classes', 'ClassSubjectTeachers', 'StudentClasses', 'Curriculums', 'QuestionBanks', 'Question', 'TeachingSubjects', 'Exams'],
+  tagTypes: [
+    'Students',
+    'Teachers',
+    'Majors',
+    'SubMajors',
+    'Accounts',
+    'Rooms',
+    'Subjects',
+    'Syllabuses',
+    'Semesters',
+    'ExamFormats',
+    'Classes',
+    'ClassSubjectTeachers',
+    'StudentClasses',
+    'Curriculums',
+    'QuestionBanks',
+    'Question',
+    'TeachingSubjects',
+    'Exams',
+    'Assignments',
+    'StudentAssignments',
+    'Files',
+    'SlotQuestionContents',
+    'CourseMaterials',
+    'StudentExams',
+    'Conversations',
+    'Messages',
+    'AssignmentFeedbacks',
+    'StudentCheatLogs',
+    'StudentSlotAnswers',
+  ],
   endpoints: () => ({}),
 });
-

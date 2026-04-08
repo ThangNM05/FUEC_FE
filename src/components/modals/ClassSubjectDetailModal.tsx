@@ -5,8 +5,10 @@ import { toast } from 'sonner';
 import {
     useGetClassSubjectsQuery,
     useUpdateClassSubjectMutation,
-    useGetStudentClassesQuery,
-    useRemoveStudentClassMutation
+    useGetStudentClassesByClassIdQuery,
+    useAddStudentClassMutation,
+    useRemoveStudentClassMutation,
+    useGetIneligibleStudentIdsQuery
 } from '@/api/classDetailsApi';
 import { useGetTeachersQuery } from '@/api/teachersApi';
 import AddStudentToClassModal from './AddStudentToClassModal';
@@ -23,6 +25,7 @@ const ClassSubjectDetailModal = ({ isOpen, onClose, classData, subject }: ClassS
     const [selectedTeacherId, setSelectedTeacherId] = useState<string | undefined>(undefined);
     const [teacherSearch, setTeacherSearch] = useState('');
     const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState('overview'); // Added activeTab state
 
     // 1. Get ClassSubject data (contains teacher info)
     const { data: classSubjectData } = useGetClassSubjectsQuery(
@@ -39,14 +42,18 @@ const ClassSubjectDetailModal = ({ isOpen, onClose, classData, subject }: ClassS
     );
 
     // 3. Get Students in Class
-    const { data: studentsData } = useGetStudentClassesQuery(
-        { classId: classData?.id || '' },
-        { skip: !classData }
+    const {
+        data: studentsData,
+        isLoading: isLoadingEnrollments
+    } = useGetStudentClassesByClassIdQuery(
+        { classSubjectId: classSubject?.id || '' },
+        { skip: !classSubject?.id }
     );
 
     // Mutations
     const [updateClassSubject, { isLoading: isAssigningTeacher }] = useUpdateClassSubjectMutation();
     const [removeStudent, { isLoading: isRemovingStudent }] = useRemoveStudentClassMutation();
+    const [addStudent] = useAddStudentClassMutation(); // Added addStudent mutation
 
     // Selected teacher text
     const selectedTeacherText = (() => {

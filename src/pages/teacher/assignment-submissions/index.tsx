@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ChevronRight, Search, Download, FileText, Calendar, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { ChevronRight, Search, FileText, Calendar, CheckCircle, Clock, XCircle, Loader2 } from 'lucide-react';
+import { useGetAssignmentByIdQuery } from '@/api/assignmentsApi';
+import { useGetStudentAssignmentsByAssignmentIdQuery } from '@/api/studentAssignmentsApi';
+import { useGetClassSubjectByIdQuery, useGetStudentClassesByClassIdQuery } from '@/api/classDetailsApi';
 
 interface StudentSubmission {
     submissionId: string;
     studentId: string;
+    studentCode: string;
     studentName: string;
     submittedAt?: Date;
-    fileCount?: number;
     score?: number;
     status: 'submitted' | 'graded' | 'not_submitted';
 }
@@ -18,66 +21,70 @@ function AssignmentSubmissionsList() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'submitted' | 'graded' | 'not_submitted'>('all');
 
-    // Mock assignment data
-    const assignment = {
-        id: assignmentId || '1',
-        title: 'Lab 1: Introduction to React',
-        courseCode: 'SE1801',
-        courseName: 'Software Engineering',
-        dueDate: new Date('2025-01-15'),
-        maxScore: 100,
-        submissionCount: 40,
-        totalStudents: 45,
-        averageScore: 85,
-    };
+    // API Queries
+    const { data: assignmentData, isLoading: isLoadingAssignment, isFetching: isFetchingAssignment } = useGetAssignmentByIdQuery(assignmentId || '', {
+        skip: !assignmentId,
+    });
 
-    // Mock submissions
-    const allSubmissions: StudentSubmission[] = [
-        {
-            submissionId: 's1',
-            studentId: 'ST001',
-            studentName: 'Trương Nguyễn Tiến Đạt',
-            submittedAt: new Date('2025-01-10T14:30:00'),
-            fileCount: 12,
-            score: 85,
-            status: 'graded',
-        },
-        {
-            submissionId: 's2',
-            studentId: 'ST002',
-            studentName: 'Nguyễn Văn An',
-            submittedAt: new Date('2025-01-12T10:00:00'),
-            fileCount: 8,
-            status: 'submitted',
-        },
-        {
-            submissionId: 's3',
-            studentId: 'ST003',
-            studentName: 'Lê Thị Bình',
-            submittedAt: new Date('2025-01-14T16:45:00'),
-            fileCount: 15,
-            score: 92,
-            status: 'graded',
-        },
-        {
-            submissionId: 's4',
-            studentId: 'ST004',
-            studentName: 'Phạm Minh Châu',
-            status: 'not_submitted',
-        },
-        {
-            submissionId: 's5',
-            studentId: 'ST005',
-            studentName: 'Hoàng Anh Dũng',
-            submittedAt: new Date('2025-01-13T09:20:00'),
-            fileCount: 10,
-            status: 'submitted',
-        },
-    ];
+    const { data: submissionsData, isLoading: isLoadingSubmissions, isFetching: isFetchingSubmissions } = useGetStudentAssignmentsByAssignmentIdQuery(assignmentId || '', {
+        skip: !assignmentId,
+    });
+
+    const { data: classSubjectData } = useGetClassSubjectByIdQuery(assignmentData?.classSubjectId || '', {
+        skip: !assignmentData?.classSubjectId,
+    });
+
+    const { data: studentsData, isLoading: isLoadingStudents, isFetching: isFetchingStudents } = useGetStudentClassesByClassIdQuery(
+        { classSubjectId: assignmentData?.classSubjectId || '', pageSize: 200 },
+        { skip: !assignmentData?.classSubjectId }
+    );
+
+    // Process and combine data
+    const allSubmissions = useMemo(() => {
+        if (!studentsData?.items) return [];
+
+        const submissionsMap = new Map();
+        submissionsData?.items?.forEach((sub) => {
+            submissionsMap.set(sub.studentId, sub);
+        });
+
+        return studentsData.items.map((student): StudentSubmission => {
+            const submission = submissionsMap.get(student.studentId);
+            
+            let status: StudentSubmission['status'] = 'not_submitted';
+            if (submission) {
+                // Status 1: Submitted, 2: Graded
+                status = (submission.status === 2 || submission.status === 1) ? (submission.status === 2 ? 'graded' : 'submitted') : 'not_submitted';
+            }
+
+            return {
+                submissionId: submission?.id || `no-sub-${student.studentId}`,
+                studentId: student.studentId,
+                studentCode: student.studentCode || '',
+                studentName: student.studentName || 'Unknown Student',
+                submittedAt: submission?.createdAt ? new Date(submission.createdAt) : undefined,
+                score: submission?.grade,
+                status,
+            };
+        });
+    }, [studentsData, submissionsData]);
+
+    // Statistics
+    const stats = useMemo(() => {
+        const total = allSubmissions.length;
+        const submitted = allSubmissions.filter(s => s.status !== 'not_submitted').length;
+        const graded = allSubmissions.filter(s => s.status === 'graded').length;
+        const totalScore = allSubmissions.reduce((acc, curr) => acc + (curr.score || 0), 0);
+        const average = graded > 0 ? (totalScore / graded).toFixed(1) : '0';
+
+        return { total, submitted, graded, average };
+    }, [allSubmissions]);
 
     // Filter submissions
     const filteredSubmissions = allSubmissions.filter((sub) => {
-        const matchesSearch = sub.studentName.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = 
+            sub.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            sub.studentCode.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesFilter = filterStatus === 'all' || sub.status === filterStatus;
         return matchesSearch && matchesFilter;
     });
@@ -104,6 +111,15 @@ function AssignmentSubmissionsList() {
         }
     };
 
+    if (isLoadingAssignment || isLoadingSubmissions || isLoadingStudents || isFetchingSubmissions || isFetchingStudents || isFetchingAssignment) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                <Loader2 className="w-10 h-10 text-[#F37022] animate-spin" />
+                <p className="text-gray-500 font-medium">Loading submissions...</p>
+            </div>
+        );
+    }
+
     return (
         <div className="p-4 md:p-6 animate-fadeIn">
             {/* Breadcrumb */}
@@ -116,8 +132,11 @@ function AssignmentSubmissionsList() {
                     My Classes
                 </button>
                 <ChevronRight className="w-4 h-4" />
-                <button onClick={() => navigate(`/teacher/course-details/${assignment.courseCode}`)} className="hover:text-[#F37022] transition-colors">
-                    {assignment.courseName}
+                <button 
+                    onClick={() => navigate(`/teacher/course-details/${assignmentData?.classSubjectId}`)} 
+                    className="hover:text-[#F37022] transition-colors"
+                >
+                    {classSubjectData?.subjectName || 'Course'}
                 </button>
                 <ChevronRight className="w-4 h-4" />
                 <span className="text-[#0A1B3C] font-medium">Submissions</span>
@@ -125,16 +144,18 @@ function AssignmentSubmissionsList() {
 
             {/* Header */}
             <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C] mb-3">{assignment.title}</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C] mb-3">
+                    {assignmentData?.displayName || `Assignment ${assignmentData?.instanceNumber || ''}`}
+                </h1>
                 <div className="flex flex-wrap items-center gap-4 text-sm">
                     <span className="flex items-center gap-1 text-gray-600">
                         <Calendar className="w-4 h-4" />
-                        Due: {assignment.dueDate.toLocaleDateString()}
+                        Due: {assignmentData?.dueDate ? new Date(assignmentData.dueDate).toLocaleDateString() : 'No due date'}
                     </span>
                     <span className="px-3 py-1 bg-blue-100 text-blue-700 font-semibold rounded">
-                        {assignment.submissionCount}/{assignment.totalStudents} submitted
+                        {stats.submitted}/{stats.total} submitted
                     </span>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 font-semibold rounded">Avg: {assignment.averageScore}/100</span>
+                    <span className="px-3 py-1 bg-green-100 text-green-700 font-semibold rounded">Avg: {stats.average}/10</span>
                 </div>
             </div>
 
@@ -145,7 +166,7 @@ function AssignmentSubmissionsList() {
                         <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search by student name..."
+                            placeholder="Search by student name or ID..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:border-[#F37022] focus:ring-2 focus:ring-orange-100 outline-none"
@@ -168,7 +189,7 @@ function AssignmentSubmissionsList() {
             </div>
 
             {/* Submissions Table */}
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50 border-b border-gray-200">
@@ -196,7 +217,7 @@ function AssignmentSubmissionsList() {
                                             {getStatusIcon(submission.status)}
                                             <div>
                                                 <div className="font-medium text-gray-900">{submission.studentName}</div>
-                                                <div className="text-sm text-gray-500">{submission.studentId}</div>
+                                                <div className="text-sm text-gray-500">{submission.studentCode}</div>
                                             </div>
                                         </div>
                                     </td>
@@ -206,7 +227,7 @@ function AssignmentSubmissionsList() {
                                     <td className="px-6 py-4">
                                         {submission.score !== undefined ? (
                                             <span className="font-semibold text-blue-600">
-                                                {submission.score}/{assignment.maxScore}
+                                                {submission.score}/10
                                             </span>
                                         ) : (
                                             <span className="text-gray-400">-</span>
@@ -233,8 +254,9 @@ function AssignmentSubmissionsList() {
                 </div>
 
                 {filteredSubmissions.length === 0 && (
-                    <div className="text-center py-12">
-                        <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                    <div className="text-center py-12 bg-gray-50">
+                        <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p className="text-gray-500">No submissions found matching your criteria</p>
                     </div>
                 )}
             </div>

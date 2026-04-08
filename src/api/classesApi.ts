@@ -3,18 +3,21 @@ import type { Class, CreateClassRequest, UpdateClassRequest, PaginatedResponse }
 
 export const classesApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        // GET: Fetch all classes with pagination, sorting, and searching
         getClasses: builder.query<PaginatedResponse<Class>, {
             page: number;
             pageSize: number;
             sortColumn?: string;
             sortDirection?: 'asc' | 'desc';
             searchTerm?: string;
+            semesterId?: string;
         }>({
-            query: ({ page, pageSize, sortColumn, sortDirection, searchTerm }) => {
-                // Send 1-based page number to backend
-                const pageNumber = Math.max(1, page);
-                let url = `/classes?PageNumber=${pageNumber}&PageSize=${pageSize}`;
+            query: ({ page, pageSize, sortColumn, sortDirection, searchTerm, semesterId }) => {
+                const pageIndex = page - 1;
+                let url = `/classes?PageNumber=${pageIndex}&PageSize=${pageSize}`;
+
+                if (semesterId) {
+                    url += `&SemesterId=${semesterId}`;
+                }
 
                 if (sortColumn) {
                     const sortOrder = sortDirection === 'desc' ? 2 : 1;

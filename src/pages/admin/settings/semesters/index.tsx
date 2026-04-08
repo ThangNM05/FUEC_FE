@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
-import { Edit, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { Edit, Trash2, CheckCircle2, XCircle, CalendarCheck } from 'lucide-react';
 import { toast } from 'sonner';
-import { Modal, Button, Spin } from 'antd';
-import { LoadingOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Button, Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 
 import DataTable from '@/components/shared/DataTable';
 import { useGetSemestersQuery, useDeleteSemesterMutation } from '@/api/semestersApi';
@@ -10,6 +10,7 @@ import type { Semester } from '@/types/semester.types';
 import CreateSemesterModal from '@/components/modals/CreateSemesterModal';
 import EditSemesterModal from '@/components/modals/EditSemesterModal';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
+import SetDefaultSemesterModal from '@/components/modals/SetDefaultSemesterModal';
 
 export default function AdminSemesters() {
     // State
@@ -20,6 +21,7 @@ export default function AdminSemesters() {
     const [searchTerm, setSearchTerm] = useState('');
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isSetDefaultModalOpen, setIsSetDefaultModalOpen] = useState(false);
     const [editingSemester, setEditingSemester] = useState<Semester | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -190,9 +192,16 @@ export default function AdminSemesters() {
                 onCreate={() => setIsCreateModalOpen(true)}
                 createLabel="Create Semester"
                 onImport={() => toast.info('Import feature coming soon')}
+                onSecondaryAction={() => setIsSetDefaultModalOpen(true)}
+                secondaryActionLabel="Set Semester"
+                secondaryActionIcon={<CalendarCheck className="w-4 h-4" />}
             />
 
             {/* Modals */}
+            <SetDefaultSemesterModal
+                isOpen={isSetDefaultModalOpen}
+                onClose={() => setIsSetDefaultModalOpen(false)}
+            />
             <CreateSemesterModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}

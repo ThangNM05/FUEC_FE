@@ -6,6 +6,7 @@ import type {
     CreateSyllabusRequest,
     UpdateSyllabusRequest,
     ImportSyllabusesResponse,
+    ImportSyllabusSessionsResponse,
     SyllabusAssessment
 } from '@/types/syllabus.types';
 
@@ -153,6 +154,19 @@ export const syllabusApi = baseApi.injectEndpoints({
             },
             invalidatesTags: ['Syllabuses'],
         }),
+        importSyllabusSessions: builder.mutation<ImportSyllabusSessionsResponse, File>({
+            query: (file) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                return {
+                    url: '/Syllabuses/sessions/import',
+                    method: 'POST',
+                    body: formData,
+                };
+            },
+            transformResponse: (response: any) => response?.result || response,
+            invalidatesTags: ['Syllabuses'],
+        }),
     }),
 });
 
@@ -164,4 +178,5 @@ export const {
     useUpdateSyllabusMutation,
     useDeleteSyllabusMutation,
     useImportSyllabusesMutation,
+    useImportSyllabusSessionsMutation,
 } = syllabusApi;

@@ -10,6 +10,7 @@ interface ViewSubjectModalProps {
 export default function ViewSubjectModal({ isOpen, onClose, subject }: ViewSubjectModalProps) {
     if (!subject) return null;
 
+
     return (
         <Modal
             title="Subject Details"
@@ -32,7 +33,6 @@ export default function ViewSubjectModal({ isOpen, onClose, subject }: ViewSubje
                     <Descriptions.Item label="Subject Code">{subject.code}</Descriptions.Item>
                     <Descriptions.Item label="Subject Name">{subject.name}</Descriptions.Item>
                     <Descriptions.Item label="Credits">{subject.credits}</Descriptions.Item>
-                    <Descriptions.Item label="Terms">{subject.terms}</Descriptions.Item>
                     <Descriptions.Item label="Pass Mark">{subject.minAvgMarkToPass}</Descriptions.Item>
                     <Descriptions.Item label="Time Allocation">{subject.timeAllocation || '-'}</Descriptions.Item>
                     <Descriptions.Item label="Description">

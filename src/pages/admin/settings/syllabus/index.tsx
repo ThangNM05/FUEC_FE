@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit, Trash2, CheckCircle2, XCircle } from 'lucide-react'; // Added icons for status
+import { Edit, Trash2, CheckCircle2, XCircle, Layers } from 'lucide-react'; // Added icons for status
 import { toast } from 'sonner';
 import { Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -10,8 +10,8 @@ import ImportExcelModal from '@/components/shared/ImportExcelModal';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
 import EditSyllabusModal from '@/components/modals/EditSyllabusModal';
 import CreateSyllabusModal from '@/components/modals/CreateSyllabusModal';
-import type { ImportSyllabusesResponse, Syllabus } from '@/types/syllabus.types';
-import { useDeleteSyllabusMutation, useGetSyllabusesQuery, useImportSyllabusesMutation } from '@/api/syllabusApi';
+import type { ImportSyllabusesResponse, Syllabus, ImportSyllabusSessionsResponse } from '@/types/syllabus.types';
+import { useDeleteSyllabusMutation, useGetSyllabusesQuery, useImportSyllabusesMutation, useImportSyllabusSessionsMutation } from '@/api/syllabusApi';
 import { validateFileUpload } from '@/config/appConfig';
 
 
@@ -20,6 +20,11 @@ function AdminSyllabuses() {
     const [importResult, setImportResult] = useState<ImportSyllabusesResponse | null>(null);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isImportExcelModalOpen, setIsImportExcelModalOpen] = useState(false);
+
+    // Sessions Import State
+    const [sessionsImportResult, setSessionsImportResult] = useState<ImportSyllabusSessionsResponse | null>(null);
+    const [isImportSessionsModalOpen, setIsImportSessionsModalOpen] = useState(false);
+    const [isImportSessionsExcelModalOpen, setIsImportSessionsExcelModalOpen] = useState(false);
 
     // Pagination State
     const [page, setPage] = useState(1);
@@ -46,6 +51,7 @@ function AdminSyllabuses() {
 
     const [deleteSyllabus, { isLoading: isDeleting }] = useDeleteSyllabusMutation();
     const [importSyllabuses, { isLoading: isImporting }] = useImportSyllabusesMutation();
+    const [importSyllabusSessions, { isLoading: isImportingSessions }] = useImportSyllabusSessionsMutation();
 
     // Extract data from PaginatedResponse
     const syllabuses = syllabusesData?.items || [];
@@ -111,8 +117,29 @@ function AdminSyllabuses() {
             setIsImportExcelModalOpen(false);
             setIsImportModalOpen(true);
             toast.success('Import completed. Please check the results.');
-        } catch (err) {
-            toast.error('Import failed! Please check the file or try again later.');
+        } catch (err: any) {
+            toast.error(err?.data?.message || 'Import failed! Please check the file or try again later.');
+        }
+    };
+
+    // Handle Syllabus Sessions import confirm
+    const handleConfirmImportSessions = async (file: File) => {
+        const validation = validateFileUpload(file);
+        if (!validation.isValid) {
+            toast.error(validation.errors.join('\n'));
+            return;
+        }
+
+        toast.info('Processing syllabus sessions import...');
+
+        try {
+            const result = await importSyllabusSessions(file).unwrap();
+            setSessionsImportResult(result);
+            setIsImportSessionsExcelModalOpen(false);
+            setIsImportSessionsModalOpen(true);
+            toast.success('Syllabus sessions import completed.');
+        } catch (err: any) {
+            toast.error(err?.data?.message || 'Syllabus sessions import failed!');
         }
     };
 
@@ -241,7 +268,10 @@ function AdminSyllabuses() {
                 onCreate={() => setIsCreateModalOpen(true)}
                 createLabel="Add Syllabus"
                 onImport={() => setIsImportExcelModalOpen(true)}
-                importLabel={isImporting ? 'Importing...' : 'Import Excel'}
+                importLabel={isImporting ? 'Importing...' : 'Import Syllabus'}
+                onSecondaryAction={() => setIsImportSessionsExcelModalOpen(true)}
+                secondaryActionLabel={isImportingSessions ? 'Importing...' : 'Import Sessions'}
+                secondaryActionIcon={<Layers className="w-4 h-4" />}
                 selectable={true}
 
                 // Manual Pagination
@@ -265,11 +295,32 @@ function AdminSyllabuses() {
                 templateUrl="/templates/syllabus_import_template.xlsx"
             />
 
+            <ImportExcelModal
+                isOpen={isImportSessionsExcelModalOpen}
+                onClose={() => setIsImportSessionsExcelModalOpen(false)}
+                onConfirm={handleConfirmImportSessions}
+                title="Import Syllabus Sessions"
+                description="Please use the standard template to import syllabus session data"
+                templateUrl="/templates/Import_Syllabus_Session_Template.xlsx"
+            />
+
             <ImportResultModal
                 isOpen={isImportModalOpen}
                 onClose={() => setIsImportModalOpen(false)}
                 result={importResult}
                 entityName="syllabuses"
+            />
+
+            <ImportResultModal
+                isOpen={isImportSessionsModalOpen}
+                onClose={() => setIsImportSessionsModalOpen(false)}
+                result={sessionsImportResult ? {
+                    successCount: sessionsImportResult.insertedCount + sessionsImportResult.updatedCount,
+                    failureCount: sessionsImportResult.errorCount,
+                    errors: sessionsImportResult.errors,
+                    totalCount: sessionsImportResult.totalRowsProcessed
+                } : null}
+                entityName="syllabus sessions"
             />
 
             <CreateSyllabusModal

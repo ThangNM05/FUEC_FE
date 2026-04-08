@@ -1,0 +1,1599 @@
+// chapter:1 Introduction to Cross-Platform Development
+::PT1:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT2:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT3:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT4:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT5:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT6:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT7:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT8:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT9:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT10:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT11:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT12:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT13:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT14:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT15:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT16:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT17:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT18:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT19:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:1 Introduction to Cross-Platform Development
+::PT20:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:2 C# Advanced Features
+::PT1:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:2 C# Advanced Features
+::PT2:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:2 C# Advanced Features
+::PT3:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:2 C# Advanced Features
+::PT4:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:2 C# Advanced Features
+::PT5:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:2 C# Advanced Features
+::PT6:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:2 C# Advanced Features
+::PT7:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:2 C# Advanced Features
+::PT8:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:2 C# Advanced Features
+::PT9:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:2 C# Advanced Features
+::PT10:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:2 C# Advanced Features
+::PT11:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:2 C# Advanced Features
+::PT12:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:2 C# Advanced Features
+::PT13:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:2 C# Advanced Features
+::PT14:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:2 C# Advanced Features
+::PT15:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:2 C# Advanced Features
+::PT16:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:2 C# Advanced Features
+::PT17:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:2 C# Advanced Features
+::PT18:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:2 C# Advanced Features
+::PT19:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:2 C# Advanced Features
+::PT20:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT1:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT2:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT3:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT4:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT5:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT6:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT7:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT8:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT9:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT10:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT11:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT12:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT13:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT14:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT15:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT16:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT17:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT18:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT19:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:3 .NET Runtime and Architecture
+::PT20:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT1:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT2:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT3:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT4:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT5:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT6:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT7:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT8:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT9:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT10:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT11:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT12:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT13:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT14:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT15:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT16:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT17:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT18:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT19:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:4 Dependency Injection in .NET
+::PT20:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT1:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT2:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT3:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT4:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT5:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT6:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT7:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT8:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT9:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT10:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT11:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT12:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT13:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT14:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT15:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT16:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT17:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT18:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT19:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:5 Asynchronous Programming in .NET
+::PT20:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT1:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT2:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT3:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT4:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT5:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT6:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT7:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT8:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT9:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT10:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT11:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT12:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT13:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT14:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT15:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT16:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT17:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT18:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT19:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:6 Building Cross-Platform Apps with .NET MAUI
+::PT20:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT1:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT2:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT3:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT4:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT5:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT6:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT7:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT8:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT9:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT10:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT11:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT12:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT13:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT14:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT15:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT16:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT17:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT18:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT19:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:7 Data Access with Entity Framework Core
+::PT20:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT1:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT2:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT3:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT4:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT5:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT6:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT7:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT8:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT9:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT10:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT11:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT12:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT13:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT14:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT15:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT16:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT17:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT18:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT19:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:8 Web APIs with ASP.NET Core
+::PT20:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT1:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT2:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT3:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT4:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT5:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT6:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT7:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT8:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT9:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT10:: Which component manages dependency injection in ASP.NET Core? {
+  ~Middleware
+  =Service Container
+  ~Routing Engine
+  ~Controller
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT11:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT12:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT13:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT14:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT15:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT16:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT17:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT18:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT19:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:9 Testing and Debugging .NET Applications
+::PT20:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT1:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT2:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT3:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT4:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT5:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT6:: Which protocol is commonly used by ASP.NET Core Web APIs? {
+  ~FTP
+  =HTTP
+  ~SMTP
+  ~SNMP
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT7:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT8:: Which framework is primarily used for building cross-platform UI apps in .NET? {
+  ~ASP.NET Core
+  ~Blazor Server
+  ~WPF
+  =NET MAUI
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT9:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT10:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT11:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT12:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT13:: Which tool is used to build and run .NET projects from CLI? {
+  =dotnet CLI
+  ~nuget
+  ~msbuild
+  ~csc
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT14:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT15:: Which method starts a .NET application? {
+  ~Run()
+  ~Execute()
+  =Main()
+  ~Start()
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT16:: Which file defines project configuration in .NET? {
+  ~program.cs
+  ~project.json
+  =.csproj
+  ~app.config
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT17:: Which pattern helps separate UI from business logic? {
+  ~Singleton
+  ~Factory
+  =MVVM
+  ~Adapter
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT18:: Which ORM is commonly used with .NET for database access? {
+  ~Dapper
+  ~NHibernate
+  =Entity Framework Core
+  ~ADO.NET
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT19:: Which keyword is used for asynchronous methods in C#? {
+  ~await
+  =async
+  ~task
+  ~thread
+}
+
+// chapter:10 Deployment and Performance Optimization
+::PT20:: Which feature improves responsiveness in .NET applications? {
+  ~Multithreading
+  =Async/Await
+  ~Garbage Collection
+  ~Reflection
+}

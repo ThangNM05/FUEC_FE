@@ -7,10 +7,12 @@ import { BrowserRouter } from 'react-router';
 import { Toaster } from 'sonner';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App } from 'antd';
 
 import { store } from './redux/store';
 import Router from './router';
+import ScrollToTop from './components/shared/ScrollToTop';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -18,7 +20,6 @@ if (!GOOGLE_CLIENT_ID) {
   throw new Error('Missing Google Client ID');
 }
 
-  //test deploy
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
@@ -32,12 +33,17 @@ createRoot(document.getElementById('root')!).render(
           },
         }}
       >
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-          <BrowserRouter>
-            <Router />
-          </BrowserRouter>
-          <Toaster richColors position="top-right" />
-        </GoogleOAuthProvider>
+        <App>
+          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <NotificationProvider>
+              <BrowserRouter>
+                <ScrollToTop />
+                <Router />
+              </BrowserRouter>
+              <Toaster richColors position="top-right" />
+            </NotificationProvider>
+          </GoogleOAuthProvider>
+        </App>
       </ConfigProvider>
     </Provider>
   </StrictMode>,

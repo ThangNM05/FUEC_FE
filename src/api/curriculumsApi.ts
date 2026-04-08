@@ -1,6 +1,7 @@
 import { baseApi } from '@/api/baseApi';
 import type {
     Curriculum,
+    CurriculumSubject,
     CreateCurriculumRequest,
     UpdateCurriculumRequest,
     PaginatedResponse
@@ -49,6 +50,14 @@ export const curriculumsApi = baseApi.injectEndpoints({
             providesTags: (_result, _error, id) => [{ type: 'Curriculums', id }],
         }),
 
+        // GET: Fetch Curriculum Subjects by Curriculum ID
+        getCurriculumSubjects: builder.query<CurriculumSubject[], string>({
+            query: (curriculumId) => `/CurriculumSubjects/curriculum/${curriculumId}`,
+            transformResponse: (response: any) => response?.result || response || [],
+            // Using a new tag type for curriculum subjects tied to curriculum id
+            providesTags: (_result, _error, id) => [{ type: 'Curriculums', id: `subjects-${id}` }],
+        }),
+
         // POST: Create
         createCurriculum: builder.mutation<Curriculum, CreateCurriculumRequest>({
             query: (curriculum) => ({
@@ -77,13 +86,38 @@ export const curriculumsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (_result, _error, id) => [{ type: 'Curriculums', id }, 'Curriculums'],
         }),
+
+        // POST: Clone curriculum
+        cloneCurriculum: builder.mutation<Curriculum, { id: string; code: string; startYear: number; cohort?: string; category?: string }>({
+            query: ({ id, ...body }) => ({
+                url: `/Curriculums/${id}/clone`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['Curriculums'],
+        }),
+
+        // POST: Import curriculum subjects from Excel
+        importCurriculumSubjects: builder.mutation<string, FormData>({
+            query: (formData) => ({
+                url: '/CurriculumSubjects/import',
+                method: 'POST',
+                body: formData,
+            }),
+            transformResponse: (response: any) => response?.result || response,
+            // invalidate the specific curriculum subjects list as well
+            invalidatesTags: ['Curriculums', { type: 'Curriculums', id: 'subjects-LIST' }],
+        }),
     }),
 });
 
 export const {
     useGetCurriculumsQuery,
     useGetCurriculumByIdQuery,
+    useGetCurriculumSubjectsQuery,
     useCreateCurriculumMutation,
     useUpdateCurriculumMutation,
-    useDeleteCurriculumMutation
+    useDeleteCurriculumMutation,
+    useCloneCurriculumMutation,
+    useImportCurriculumSubjectsMutation,
 } = curriculumsApi;

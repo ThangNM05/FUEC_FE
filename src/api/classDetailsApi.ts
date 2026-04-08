@@ -21,6 +21,39 @@ export interface ClassSubject {
     updatedAt?: string;
 }
 
+export interface SlotSession {
+    slotSessionId: string;
+    sessionOrder: number;
+    syllabusSessionId: string;
+    sessionNumber: number;
+    topic: string;
+    learningTeachingType: string;
+    ituSkills: string;
+    studentTasks: string;
+}
+
+export interface Slot {
+    id: string;
+    slotIndex: number;
+    date: string;
+    endDate: string;
+    status: string;
+    hasQuestions: boolean;
+    totalQuestions: number;
+    answeredQuestions: number;
+    sessions: SlotSession[];
+}
+
+export interface ClassSubjectSlotsResponse {
+    subjectId: string;
+    subjectCode: string;
+    subjectName: string;
+    syllabusId: string;
+    syllabusName: string;
+    slots: Slot[];
+}
+
+
 export const classDetailsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         // Class Subjects
@@ -38,8 +71,12 @@ export const classDetailsApi = baseApi.injectEndpoints({
             query: (id) => `/ClassSubjects/${id}`,
             transformResponse: (response: any) => response?.result || response,
         }),
-        getClassSubjectSlots: builder.query<any, string>({
-            query: (id) => `/Slots/class-subject/${id}`,
+        getClassSubjectSlots: builder.query<ClassSubjectSlotsResponse, { id: string; studentId?: string }>({  
+            query: ({ id, studentId }) => {
+                let url = `/Slots/class-subject/${id}?sortBy=slotIndex&sortOrder=1`;
+                if (studentId) url += `&studentId=${studentId}`;
+                return url;
+            },
             transformResponse: (response: any) => response?.result || response,
             providesTags: ['Slots' as any],
         }),
@@ -55,8 +92,13 @@ export const classDetailsApi = baseApi.injectEndpoints({
         }),
 
         // Student Classes
-        getStudentClasses: builder.query<PaginatedResponse<StudentClass>, { classId: string; pageSize?: number }>({
-            query: ({ classId, pageSize = 100 }) => `/StudentClasses?ClassId=${classId}&PageSize=${pageSize}`,
+        getStudentClassesByClassId: builder.query<PaginatedResponse<StudentClass>, { classId?: string; classSubjectId?: string; pageSize?: number }>({
+            query: ({ classId, classSubjectId, pageSize = 100 }) => {
+                let url = `/StudentClasses?PageSize=${pageSize}`;
+                if (classId) url += `&ClassId=${classId}`;
+                if (classSubjectId) url += `&ClassSubjectId=${classSubjectId}`;
+                return url;
+            },
             transformResponse: (response: any) => response?.result || response,
             providesTags: ['StudentClasses']
         }),
@@ -125,8 +167,41 @@ export const classDetailsApi = baseApi.injectEndpoints({
             },
             invalidatesTags: ['ClassSubjectTeachers'],
         }),
+        // Clone configuration
+        cloneConfig: builder.mutation<CloneConfigResponse, CloneConfigRequest>({
+            query: (body) => ({
+                url: '/ClassSubjects/clone-config',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['ClassSubjectTeachers', 'Slots' as any, 'Exams' as any, 'Assignments' as any, 'CourseMaterials' as any],
+        }),
+        // Export grades
+        exportGrades: builder.query<Blob, string>({
+            query: (id) => ({
+                url: `/ClassSubjects/${id}/export-grades`,
+                cache: 'no-cache',
+                responseHandler: (response) => response.blob(),
+            }),
+        }),
     }),
 });
+
+export interface CloneConfigRequest {
+    sourceClassSubjectId: string;
+    targetClassSubjectIds: string[];
+    cloneMaterials: boolean;
+    cloneAssignments: boolean;
+    cloneExams: boolean;
+}
+
+export interface CloneConfigResponse {
+    success: boolean;
+    message: string;
+    materialsCloned: number;
+    assignmentsCloned: number;
+    examsCloned: number;
+}
 
 export interface ImportClassSubjectTeachersResponse {
     successCount: number;
@@ -139,9 +214,11 @@ export const {
     useGetClassSubjectByIdQuery,
     useGetClassSubjectSlotsQuery,
     useUpdateClassSubjectMutation,
-    useGetStudentClassesQuery,
+    useGetStudentClassesByClassIdQuery,
     useAddStudentClassMutation,
     useRemoveStudentClassMutation,
     useGetIneligibleStudentIdsQuery,
     useImportClassSubjectTeachersMutation,
+    useCloneConfigMutation,
+    useLazyExportGradesQuery,
 } = classDetailsApi;

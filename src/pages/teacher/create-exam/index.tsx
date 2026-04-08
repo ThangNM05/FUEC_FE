@@ -1,19 +1,26 @@
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useState, useMemo, useEffect } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query/react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-    ChevronRight, ChevronLeft, Save,
+    ChevronRight, ChevronLeft, Save, Plus,
     FileQuestion, Clock, Shield, Globe, Hash, Tag, Calendar, Eye, Lock, Wifi
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useGetClassSubjectByIdQuery } from '@/api/classDetailsApi';
+import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery, useGetStudentClassesByClassIdQuery } from '@/api/classDetailsApi';
 import { useGetSubjectSyllabusesQuery } from '@/api/subjectsApi';
 import { useGetSyllabusAssessmentsQuery } from '@/api/syllabusApi';
 import { useGetExamFormatsQuery } from '@/api/examFormatsApi';
-import { useCreateExamMutation } from '@/api/examsApi';
+import { useCreateExamMutation, useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
+import { DatePicker, Select } from 'antd';
+import dayjs from 'dayjs';
+import { type ChapterQuestionCount } from '@/types/exam.types';
 
 interface ExamFormData {
+    selectionMode: 'random' | 'chapter';
     questionCount: number;
+    chapterQuestionCounts: ChapterQuestionCount[];
     tag: string;
+    displayName: string;
     syllabusAssessmentId: string;
     examFormatId: string;
     startTime: string;
@@ -24,13 +31,40 @@ interface ExamFormData {
     requireIpCheck: boolean;
     allowedIpRanges: string;
     codeDuration: number;
+    enableAiProctoring: boolean;
+    proctoringExemptStudentClassIds: string[];
 }
+
+const Field = ({ label, required, error, children, icon: Icon, hint, isSubmitted }: {
+    label: string;
+    required?: boolean;
+    error?: string;
+    children: React.ReactNode;
+    icon?: any;
+    hint?: string;
+    isSubmitted?: boolean;
+}) => {
+    const displayError = isSubmitted ? error : undefined;
+    return (
+        <div>
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
+                {Icon && <Icon className="w-4 h-4 text-gray-400" />}
+                {label}
+                {required && <span className="text-red-500">*</span>}
+            </label>
+            {children}
+            {hint && !displayError && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+            {displayError && <p className="text-xs text-red-500 mt-1">{displayError}</p>}
+        </div>
+    );
+};
 
 // Mock data — will be replaced by API calls later
 function CreateExam() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const courseId = searchParams.get('course') || '';
+    const targetSlotId = searchParams.get('slot') || '';
 
     // Fetch course data for breadcrumb
     const { data: classSubject } = useGetClassSubjectByIdQuery(courseId, {
@@ -39,6 +73,11 @@ function CreateExam() {
     const courseName = classSubject
         ? `${classSubject.subjectCode} - ${classSubject.classCode}`
         : '';
+
+    const { data: studentsData } = useGetStudentClassesByClassIdQuery({ classSubjectId: classSubject?.id }, {
+        skip: !classSubject?.id,
+    });
+    const students = studentsData?.items || [];
 
     // Fetch Syllabus and Assessments
     const { data: syllabuses } = useGetSubjectSyllabusesQuery(classSubject?.subjectId || '', {
@@ -58,11 +97,59 @@ function CreateExam() {
 
     const [createExam, { isLoading: isCreating }] = useCreateExamMutation();
 
+    // Fetch progress based on slots
+    const { data: slotData } = useGetClassSubjectSlotsQuery(courseId ? { id: courseId } : skipToken);
+
+    const { currentChapterProgress, totalSubjectChapters } = useMemo(() => {
+        if (!slotData?.slots) return { currentChapterProgress: 1, totalSubjectChapters: 1 };
+
+        let currentMax = 1;
+        let absoluteMax = 1;
+
+        const targetIndex = targetSlotId ? slotData.slots.findIndex(s => s.id === targetSlotId) : -1;
+
+        slotData.slots.forEach((slot, index) => {
+            slot.sessions?.forEach((session: any) => {
+                const topic = session.topic.trim();
+                const keywordMatch = topic.match(/\b(?:Chương|Chapter|Ch|Chap)\.?\s*(\d+)\b/i);
+                const leadingNumberMatch = topic.match(/^(\d+)(?:\.|\s|$)/);
+
+                let ch = 0;
+                if (keywordMatch) ch = parseInt(keywordMatch[1]);
+                else if (leadingNumberMatch) {
+                    const val = parseInt(leadingNumberMatch[1]);
+                    if (val > 0 && val < 50) ch = val;
+                }
+
+                if (ch > 0 && ch <= 50) {
+                    if (ch > absoluteMax) absoluteMax = ch;
+                    if (targetIndex === -1 || index <= targetIndex) {
+                        if (ch > currentMax) currentMax = ch;
+                    }
+                }
+            });
+        });
+
+        return { currentChapterProgress: currentMax, totalSubjectChapters: absoluteMax };
+    }, [slotData, targetSlotId]);
+
+    const availableChapters = Array.from(
+        { length: Math.min(currentChapterProgress + 1, totalSubjectChapters) },
+        (_, i) => i + 1
+    );
+
+    // Fetch existing exams to handle sequence (Progress Test 1, 2, 3...)
+    const { data: existingExamsData } = useGetExamsByClassSubjectIdQuery(courseId, { skip: !courseId });
+    const existingExams = existingExamsData?.items || [];
+
     const [isSubmitted, setIsSubmitted] = useState(false);
 
     const [form, setForm] = useState<ExamFormData>({
+        selectionMode: 'random',
         questionCount: 30,
+        chapterQuestionCounts: [],
         tag: 'PT1',
+        displayName: 'Progress Test 1',
         syllabusAssessmentId: '',
         examFormatId: '',
         startTime: '',
@@ -72,15 +159,80 @@ function CreateExam() {
         securityMode: 1,
         requireIpCheck: false,
         allowedIpRanges: '',
-        codeDuration: 60,
+        codeDuration: 240,
+        enableAiProctoring: true,
+        proctoringExemptStudentClassIds: [],
     });
+
+    // Auto-select first assessment and set initial display name
+    useEffect(() => {
+        if (!form.syllabusAssessmentId && filteredAssessments.length > 0) {
+            setForm(prev => ({ ...prev, syllabusAssessmentId: filteredAssessments[0].id }));
+        }
+    }, [filteredAssessments, form.syllabusAssessmentId]);
+
+    // Handle initial sequence for PT titles based on target slot or existing exams
+    useEffect(() => {
+        if (slotData?.slots && targetSlotId) {
+            const targetSlot = slotData.slots.find(s => s.id === targetSlotId);
+            if (targetSlot) {
+                setForm(prev => ({
+                    ...prev,
+                    instanceNumber: targetSlot.slotIndex,
+                    tag: `PT${targetSlot.slotIndex}`,
+                    displayName: `Progress Test ${targetSlot.slotIndex}`
+                }));
+            }
+        } else if (existingExams.length > 0 && form.displayName === 'Progress Test 1') {
+            const ptExams = existingExams.filter(e => e.tag?.startsWith('PT'));
+            const nextIndex = ptExams.length + 1;
+            setForm(prev => ({
+                ...prev,
+                tag: `PT${nextIndex}`,
+                displayName: `Progress Test ${nextIndex}`,
+                instanceNumber: nextIndex
+            }));
+        }
+    }, [existingExams.length, slotData, targetSlotId]);
+
+    const updateChapterCount = (chapter: number, count: number) => {
+        setForm(prev => {
+            const existing = prev.chapterQuestionCounts.find(c => c.chapter === chapter);
+            let nextCounts;
+            if (count < 0) return prev;
+
+            if (count === 0) {
+                nextCounts = prev.chapterQuestionCounts.filter(c => c.chapter !== chapter);
+            } else if (existing) {
+                nextCounts = prev.chapterQuestionCounts.map(c => c.chapter === chapter ? { ...c, count } : c);
+            } else {
+                nextCounts = [...prev.chapterQuestionCounts, { chapter, count }].sort((a, b) => a.chapter - b.chapter);
+            }
+
+            const total = nextCounts.reduce((acc, c) => acc + c.count, 0);
+            return { ...prev, chapterQuestionCounts: nextCounts, questionCount: total };
+        });
+    };
 
     const updateField = <K extends keyof ExamFormData>(key: K, value: ExamFormData[K]) => {
         if (key === 'tag') {
+            const tagVal = value as string;
             let instanceNum = 1;
-            if (value === 'PT2') instanceNum = 2;
-            if (value === 'PT3') instanceNum = 3;
-            setForm(prev => ({ ...prev, tag: value as string, instanceNumber: instanceNum }));
+            if (tagVal === 'PT2') instanceNum = 2;
+            if (tagVal === 'PT3') instanceNum = 3;
+
+            setForm(prev => {
+                const defaultPrevTitle = prev.tag.startsWith('PT') ? `Progress Test ${prev.tag.match(/\d+/)?.[0] || '1'}` : prev.tag;
+                const isTitleStillDefault = prev.displayName === defaultPrevTitle;
+                const newTitle = tagVal.startsWith('PT') ? `Progress Test ${tagVal.match(/\d+/)?.[0] || '1'}` : tagVal;
+
+                return {
+                    ...prev,
+                    tag: tagVal,
+                    instanceNumber: instanceNum,
+                    displayName: isTitleStillDefault ? newTitle : prev.displayName
+                };
+            });
         } else {
             setForm(prev => ({ ...prev, [key]: value }));
         }
@@ -88,7 +240,9 @@ function CreateExam() {
 
     // Validation
     const errors: Partial<Record<keyof ExamFormData, string>> = {};
-    if (!form.syllabusAssessmentId) errors.syllabusAssessmentId = 'Required';
+    if (!form.displayName.trim()) errors.displayName = 'Required';
+    // Only require syllabusAssessmentId if data is loaded, otherwise it will be auto-set by useEffect
+    if (filteredAssessments.length > 0 && !form.syllabusAssessmentId) errors.syllabusAssessmentId = 'Required';
     if (!form.examFormatId) errors.examFormatId = 'Required';
     if (form.questionCount <= 0 || form.questionCount > 60) errors.questionCount = 'Must be 1–60';
     if (!form.startTime) errors.startTime = 'Required';
@@ -109,12 +263,18 @@ function CreateExam() {
             return;
         }
 
-        // Build API payload
+        // Build API payload (Filter out selectionMode which is UI-only)
+        const { selectionMode, ...formData } = form;
+
         const payload = {
-            ...form,
+            ...formData,
+            chapterQuestionCounts: selectionMode === 'chapter' ? formData.chapterQuestionCounts : [],
             classSubjectId: courseId,
-            startTime: new Date(form.startTime).toISOString(),
-            endTime: new Date(form.endTime).toISOString(),
+            slotId: targetSlotId || undefined,
+            startTime: new Date(formData.startTime).toISOString(),
+            endTime: new Date(formData.endTime).toISOString(),
+            // Hardcode codeDuration to 240 for Dynamic Code
+            codeDuration: 240,
         };
 
         try {
@@ -127,28 +287,6 @@ function CreateExam() {
         }
     };
 
-    const Field = ({ label, required, error, children, icon: Icon, hint }: {
-        label: string;
-        required?: boolean;
-        error?: string;
-        children: React.ReactNode;
-        icon?: any;
-        hint?: string;
-    }) => {
-        const displayError = isSubmitted ? error : undefined;
-        return (
-            <div>
-                <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
-                    {Icon && <Icon className="w-4 h-4 text-gray-400" />}
-                    {label}
-                    {required && <span className="text-red-500">*</span>}
-                </label>
-                {children}
-                {hint && !displayError && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
-                {displayError && <p className="text-xs text-red-500 mt-1">{displayError}</p>}
-            </div>
-        );
-    };
 
     const inputClass = (hasError?: string) =>
         `w-full px-3.5 py-2.5 border rounded-xl text-sm transition-all focus:outline-none focus:ring-2 ${(isSubmitted && hasError)
@@ -196,66 +334,119 @@ function CreateExam() {
                         <h2 className="text-lg font-bold text-[#0A1B3C]">Basic Configuration</h2>
                     </div>
 
-                    <div className="space-y-5">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            {/* Syllabus Assessment */}
-                            <Field label="Assessment Type" required error={errors.syllabusAssessmentId} icon={Eye}>
-                                <select
-                                    value={form.syllabusAssessmentId}
-                                    onChange={e => updateField('syllabusAssessmentId', e.target.value)}
-                                    className={selectClass(errors.syllabusAssessmentId)}
-                                >
-                                    <option value="">Select assessment...</option>
-                                    {filteredAssessments.map(sa => (
-                                        <option key={sa.id} value={sa.id}>
-                                            {sa.category} — {sa.duration}m ({sa.weight}%)
-                                        </option>
-                                    ))}
-                                </select>
-                            </Field>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {/* Exam Format */}
+                        <Field isSubmitted={isSubmitted} label="Exam Format" required error={errors.examFormatId} icon={FileQuestion}>
+                            <select
+                                value={form.examFormatId}
+                                onChange={e => updateField('examFormatId', e.target.value)}
+                                className={selectClass(errors.examFormatId)}
+                            >
+                                <option value="">Select format...</option>
+                                {examFormats.map(ef => (
+                                    <option key={ef.id} value={ef.id}>{ef.typeName} ({ef.code})</option>
+                                ))}
+                            </select>
+                        </Field>
 
-                            {/* Exam Format */}
-                            <Field label="Exam Format" required error={errors.examFormatId} icon={FileQuestion}>
-                                <select
-                                    value={form.examFormatId}
-                                    onChange={e => updateField('examFormatId', e.target.value)}
-                                    className={selectClass(errors.examFormatId)}
-                                >
-                                    <option value="">Select format...</option>
-                                    {examFormats.map(ef => (
-                                        <option key={ef.id} value={ef.id}>{ef.typeName} ({ef.code})</option>
-                                    ))}
-                                </select>
-                            </Field>
-                        </div>
+                        {/* Tag */}
+                        <Field isSubmitted={isSubmitted} label="Tag / Label" icon={Tag}>
+                            <select
+                                value={form.tag}
+                                onChange={e => updateField('tag', e.target.value)}
+                                className={selectClass()}
+                            >
+                                <option value="PT1">PT1</option>
+                                <option value="PT2">PT2</option>
+                                <option value="PT3">PT3</option>
+                            </select>
+                        </Field>
+                    </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            {/* Question Count */}
-                            <Field label="Question Count" required error={errors.questionCount} icon={Hash} hint="Max 60 questions">
-                                <input
-                                    type="number"
-                                    value={form.questionCount}
-                                    onChange={e => updateField('questionCount', parseInt(e.target.value) || 0)}
-                                    min={1}
-                                    max={60}
-                                    className={inputClass(errors.questionCount)}
-                                />
-                            </Field>
-
-                            {/* Tag */}
-                            <Field label="Tag / Label" icon={Tag}>
-                                <select
-                                    value={form.tag}
-                                    onChange={e => updateField('tag', e.target.value)}
-                                    className={selectClass()}
-                                >
-                                    <option value="PT1">PT1</option>
-                                    <option value="PT2">PT2</option>
-                                    <option value="PT3">PT3</option>
-                                </select>
-                            </Field>
+                    <div className="space-y-4 pt-4 border-t border-gray-100">
+                        <label className="text-sm font-medium text-gray-700">Question Selection Mode</label>
+                        <div className="flex gap-4">
+                            <button
+                                type="button"
+                                onClick={() => setForm(f => ({ ...f, selectionMode: 'random', chapterQuestionCounts: [] }))}
+                                className={`flex-1 py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all ${form.selectionMode === 'random'
+                                    ? 'border-[#F37022] bg-orange-50 text-[#F37022]'
+                                    : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
+                                    }`}
+                            >
+                                Random Questions
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setForm(f => ({ ...f, selectionMode: 'chapter', questionCount: 0 }))}
+                                className={`flex-1 py-3 px-4 rounded-xl border-2 text-sm font-semibold transition-all ${form.selectionMode === 'chapter'
+                                    ? 'border-[#F37022] bg-orange-50 text-[#F37022]'
+                                    : 'border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200'
+                                    }`}
+                            >
+                                Select by Chapter
+                            </button>
                         </div>
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        {/* Question Count */}
+                        <Field
+                            label={form.selectionMode === 'random' ? "Question Count" : "Total Question Count"}
+                            required={form.selectionMode === 'random'}
+                            error={errors.questionCount}
+                            icon={Hash}
+                            hint={form.selectionMode === 'random' ? "Number of random questions to generate" : "Calculated from chapter distribution"}
+                        >
+                            <input
+                                type="number"
+                                value={form.questionCount || ''}
+                                onChange={e => form.selectionMode === 'random' && updateField('questionCount', parseInt(e.target.value) || 0)}
+                                readOnly={form.selectionMode === 'chapter'}
+                                className={`${inputClass(errors.questionCount)} ${form.selectionMode === 'chapter' ? 'bg-gray-50 font-semibold text-[#F37022]' : ''}`}
+                                placeholder="e.g. 30"
+                            />
+                        </Field>
+                    </div>
+
+                    {/* Chapter Question Distribution - ONLY if selectionMode is 'chapter' */}
+                    {form.selectionMode === 'chapter' && (
+                        <div className="pt-4 border-t border-gray-100 animate-fadeIn">
+                            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-3">
+                                <Plus className="w-4 h-4 text-gray-400" />
+                                Chapter Question Distribution
+                                <span className="text-xs font-normal text-gray-400 ml-auto">
+                                    Current Course Progress: Ch. {currentChapterProgress}
+                                </span>
+                            </label>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                                {availableChapters.map(ch => {
+                                    const count = form.chapterQuestionCounts.find(c => c.chapter === ch)?.count || 0;
+                                    return (
+                                        <div key={ch} className={`p-3 rounded-xl border transition-all ${count > 0 ? 'border-[#F37022] bg-orange-50/30' : 'border-gray-100 bg-gray-50/50'}`}>
+                                            <div className="text-xs font-bold text-[#0A1B3C] mb-1.5 flex items-center justify-between">
+                                                <span>Ch. {ch}</span>
+                                                {ch > currentChapterProgress && <span className="text-[10px] text-orange-600 bg-orange-100 px-1 rounded">Extra</span>}
+                                            </div>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                max="60"
+                                                value={count || ''}
+                                                onChange={e => updateChapterCount(ch, parseInt(e.target.value) || 0)}
+                                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-center focus:ring-1 focus:ring-[#F37022] focus:border-transparent"
+                                                placeholder="0"
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <p className="text-[11px] text-gray-400 mt-3 italic">
+                                * Select questions manually for each chapter.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* ═══════════════════════════════════════════
@@ -270,22 +461,25 @@ function CreateExam() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <Field label="Start Time" required error={errors.startTime} icon={Clock}>
-                            <input
-                                type="datetime-local"
-                                value={form.startTime}
-                                onChange={e => updateField('startTime', e.target.value)}
-                                className={inputClass(errors.startTime)}
+                        <Field isSubmitted={isSubmitted} label="Start Time" required error={errors.startTime} icon={Clock}>
+                            <DatePicker
+                                showTime
+                                format="YYYY-MM-DD HH:mm"
+                                className="w-full h-[42px] border-gray-200 rounded-xl hover:border-[#F37022] focus:border-[#F37022]"
+                                value={form.startTime ? dayjs(form.startTime) : null}
+                                onChange={(date) => updateField('startTime', date ? date.toISOString() : '')}
+                                placeholder="Select start date & time"
                             />
                         </Field>
 
-                        <Field label="End Time" required error={errors.endTime} icon={Clock}>
-                            <input
-                                type="datetime-local"
-                                value={form.endTime}
-                                onChange={e => updateField('endTime', e.target.value)}
-                                min={form.startTime}
-                                className={inputClass(errors.endTime)}
+                        <Field isSubmitted={isSubmitted} label="End Time" required error={errors.endTime} icon={Clock}>
+                            <DatePicker
+                                showTime
+                                format="YYYY-MM-DD HH:mm"
+                                className="w-full h-[42px] border-gray-200 rounded-xl hover:border-[#F37022] focus:border-[#F37022]"
+                                value={form.endTime ? dayjs(form.endTime) : null}
+                                onChange={(date) => updateField('endTime', date ? date.toISOString() : '')}
+                                placeholder="Select end date & time"
                             />
                         </Field>
                     </div>
@@ -304,7 +498,7 @@ function CreateExam() {
 
                     <div className="space-y-5">
                         {/* Security Mode */}
-                        <Field label="Security Mode" icon={Lock}>
+                        <Field isSubmitted={isSubmitted} label="Security Mode" icon={Lock}>
                             <div className="flex gap-3">
                                 {[
                                     { value: 1, label: 'Static Code', desc: 'One exam code for the entire session' },
@@ -336,22 +530,32 @@ function CreateExam() {
                             </div>
                         </Field>
 
-                        {/* Code Duration (only relevant for Dynamic Code) */}
-                        {form.securityMode === 2 && (
-                            <div className="animate-fadeIn">
-                                <Field label="Code Duration (seconds)" icon={Clock} hint="How long each code remains valid">
-                                    <input
-                                        type="number"
-                                        value={form.codeDuration}
-                                        onChange={e => updateField('codeDuration', parseInt(e.target.value) || 60)}
-                                        min={10}
-                                        className={inputClass()}
-                                    />
-                                </Field>
-                            </div>
-                        )}
+                        <div className="hidden">
+                            <Field isSubmitted={isSubmitted} label="Code Duration (seconds)" icon={Clock} hint="How long each code remains valid">
+                                <input
+                                    type="number"
+                                    value={form.codeDuration}
+                                    onChange={e => updateField('codeDuration', parseInt(e.target.value) || 240)}
+                                    min={10}
+                                    className={inputClass()}
+                                />
+                            </Field>
+                        </div>
 
                         {/* Toggles Row */}
+                        <div className="grid grid-cols-1 gap-5">
+                            {/* Display Name */}
+                            <Field isSubmitted={isSubmitted} label="Exam Title / Display Name" required error={errors.displayName} icon={FileQuestion} hint="Enter a clear name for students (e.g. Progress Test 1 - Logic Circuit)">
+                                <input
+                                    type="text"
+                                    value={form.displayName}
+                                    onChange={e => updateField('displayName', e.target.value)}
+                                    className={inputClass(errors.displayName)}
+                                    placeholder="Enter exam title..."
+                                />
+                            </Field>
+                        </div>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             {/* Public Grade Toggle */}
                             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
@@ -397,13 +601,56 @@ function CreateExam() {
                         {/* Allowed IP Ranges — conditional */}
                         {form.requireIpCheck && (
                             <div className="animate-fadeIn">
-                                <Field label="Allowed IP Ranges" required error={errors.allowedIpRanges} icon={Wifi} hint="e.g. 192.168.1.0/24, 10.0.0.0/8">
+                                <Field isSubmitted={isSubmitted} label="Allowed IP Ranges" required error={errors.allowedIpRanges} icon={Wifi} hint="e.g. 192.168.1.0/24, 10.0.0.0/8">
                                     <input
                                         type="text"
                                         value={form.allowedIpRanges}
                                         onChange={e => updateField('allowedIpRanges', e.target.value)}
                                         placeholder="192.168.1.0/24"
                                         className={inputClass(errors.allowedIpRanges)}
+                                    />
+                                </Field>
+                            </div>
+                        )}
+
+                        {/* AI Proctoring Toggle */}
+                        <div className="pt-4 border-t border-gray-100">
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <Shield className="w-4 h-4 text-gray-500" />
+                                    <div>
+                                        <p className="text-sm font-medium text-[#0A1B3C]">AI Proctoring</p>
+                                        <p className="text-xs text-gray-500">Enable webcam & head-pose detection during exam</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => updateField('enableAiProctoring', !form.enableAiProctoring)}
+                                    className={`relative w-11 h-6 rounded-full transition-colors ${form.enableAiProctoring ? 'bg-[#F37022]' : 'bg-gray-300'
+                                        }`}
+                                >
+                                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.enableAiProctoring ? 'translate-x-[22px]' : 'translate-x-0.5'
+                                        }`} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Proctoring Exemption List — only when AI Proctoring is enabled */}
+                        {form.enableAiProctoring && (
+                            <div className="pt-4 border-t border-gray-100">
+                                <Field isSubmitted={isSubmitted} label="AI Proctoring Exemptions" icon={Shield} hint="Select students who cannot use webcams (will bypass AI proctoring)">
+                                    <Select
+                                        mode="multiple"
+                                        allowClear
+                                        placeholder="Select students to exempt..."
+                                        style={{ width: '100%' }}
+                                        className="!rounded-xl"
+                                        value={form.proctoringExemptStudentClassIds}
+                                        onChange={(value) => updateField('proctoringExemptStudentClassIds', value)}
+                                        options={students.map((student) => ({
+                                            label: `${student.studentCode} - ${student.studentName}`,
+                                            value: student.id,
+                                        }))}
                                     />
                                 </Field>
                             </div>
@@ -427,7 +674,7 @@ function CreateExam() {
                         </div>
                         {form.securityMode === 2 && (
                             <div>
-                                <div className="text-2xl font-bold">{form.codeDuration}s</div>
+                                <div className="text-2xl font-bold">240s</div>
                                 <div className="text-xs text-white/60">Code Duration</div>
                             </div>
                         )}

@@ -133,12 +133,6 @@ function AdminSubjects() {
             align: 'center' as const
         },
         {
-            header: 'Terms',
-            accessor: 'terms' as keyof Subject,
-            sortable: true,
-            align: 'center' as const
-        },
-        {
             header: 'Pass Mark',
             accessor: 'minAvgMarkToPass' as keyof Subject,
             sortable: true,

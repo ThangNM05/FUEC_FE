@@ -1,259 +1,337 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { useSelector } from 'react-redux';
 import {
     ChevronRight,
     Send,
-    Sparkles,
-    CheckCircle,
-    AlertCircle,
     BookOpen,
-    TrendingUp,
     Calendar,
-    Clock,
-    ChevronDown,
-    ChevronUp,
     FileText,
-    Lock
+    CheckCircle,
+    XCircle,
+    Clock,
+    Loader2,
+    Trash2,
+    Edit2
 } from 'lucide-react';
-import { Button as AntButton } from 'antd';
-
-interface AIFeedback {
-    analysis: string;
-    strengths: string[];
-    improvements: string[];
-    resources: string[];
-    score: number;
-    passed: boolean;
-}
-
-interface QuestionComment {
-    id: string;
-    author: string;
-    content: string;
-    timestamp: Date;
-    aiFeedback?: AIFeedback;
-}
-
-interface SlotQuestion {
-    id: number;
-    title: string;
-    status: 'custom' | 'finished';
-}
-
-interface Slot {
-    id: number;
-    title: string;
-    status: 'locked' | 'completed' | 'pending' | 'urgent' | 'overdue';
-    remaining?: string;
-    questions: SlotQuestion[];
-    expanded: boolean;
-}
+import { Button as AntButton, message } from 'antd';
+import { selectCurrentUser } from '@/redux/authSlice';
+import { useGetSlotQuestionContentsBySlotIdQuery } from '@/api/slotQuestionContentsApi';
+import { useGetClassSubjectSlotsQuery } from '@/api/classDetailsApi';
+import {
+    useGetSlotAnswersByStudentAndSlotQuery,
+    useGetSlotAnswersByQuestionIdQuery,
+    useSubmitSlotAnswerMutation,
+    useDeleteSlotAnswerMutation,
+    useEditSlotAnswerMutation,
+} from '@/api/studentSlotAnswersApi';
+import type { StudentSlotAnswerDto } from '@/api/studentSlotAnswersApi';
 
 function QuestionDetail() {
     const navigate = useNavigate();
+    const { id: questionId } = useParams<{ id: string }>();
+    const [searchParams] = useSearchParams();
+    const slotId = searchParams.get('slotId') || '';
+    const classSubjectId = searchParams.get('classSubjectId') || '';
+    const readOnlyParam = searchParams.get('readOnly') ?? '';
+    const isReadOnly = readOnlyParam === 'true' || readOnlyParam === 'inactive' || readOnlyParam === 'expired';
+    const user = useSelector(selectCurrentUser);
+    const studentId = user?.entityId ?? user?.id ?? '';
+
     const [answer, setAnswer] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [slotsExpanded, setSlotsExpanded] = useState(true);
-    const [activeSection, setActiveSection] = useState('slot-contents');
+    const [cooldownSeconds, setCooldownSeconds] = useState<number | null>(null);
+    const cooldownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const myAnswerRef = useRef<HTMLDivElement | null>(null);
 
-    const question = {
-        id: '1',
-        slotId: 1,
-        courseCode: 'PRN212',
-        courseName: 'Mobile Programming',
-        slotNumber: 1,
-        title: 'What is android?',
-        content: 'What is android?',
-        slotTime: '12:30 10/09/2025 - 14:45 10/09/2025'
+    // Format seconds to mm:ss
+    const formatCooldown = (secs: number) => {
+        const m = Math.floor(secs / 60).toString().padStart(2, '0');
+        const s = (secs % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
     };
 
-    // Mock slots matching the image
-    const getSlotStatus = (slotId: number): 'locked' | 'completed' | 'pending' | 'urgent' | 'overdue' => {
-        if (slotId <= 5) return 'completed';
-        if (slotId === 6) return 'overdue';
-        if (slotId <= 8) return 'urgent';
-        if (slotId <= 10) return 'pending';
-        return 'locked';
-    };
+    // Fetch all questions for this slot
+    const { data: questions = [], isLoading: isLoadingQuestions } = useGetSlotQuestionContentsBySlotIdQuery(slotId, {
+        skip: !slotId,
+    });
 
-    const getRemaining = (slotId: number): string | undefined => {
-        if (slotId === 6) return 'OVERDUE';
-        if (slotId === 7) return '23 hours';
-        if (slotId === 8) return '4 hours 30 min';
-        if (slotId === 9) return '2 days';
-        if (slotId === 10) return '5 days';
-        return undefined;
-    };
+    // Find the current question from the list
+    const currentQuestion = useMemo(() => {
+        return questions.find(q => q.id === questionId);
+    }, [questions, questionId]);
 
-    const [slots, setSlots] = useState<Slot[]>(
-        Array.from({ length: 15 }, (_, i) => ({
-            id: i + 1,
-            title: `Slot ${i + 1}`,
-            status: getSlotStatus(i + 1),
-            remaining: getRemaining(i + 1),
-            expanded: i === 0, // Only slot 1 expanded
-            questions: i === 0 ? [
-                { id: 1, title: 'What is android?', status: 'finished' as const },
-                { id: 2, title: 'What is Android Structure?', status: 'finished' as const },
-                { id: 3, title: 'Explain android activity life cycle?', status: 'custom' as const }
-            ] : [
-                { id: 1, title: 'Question 1', status: 'finished' as const },
-                { id: 2, title: 'Question 2', status: 'custom' as const }
-            ]
-        }))
+    // Find slot index for display
+    const currentQuestionIndex = useMemo(() => {
+        return questions.findIndex(q => q.id === questionId);
+    }, [questions, questionId]);
+
+    // Fetch slot data to get the countdown end time
+    const { data: slotsData, refetch: refetchSlotData } = useGetClassSubjectSlotsQuery(
+        { id: classSubjectId, studentId },
+        { skip: !classSubjectId || !studentId }
     );
 
-    const toggleSlot = (slotId: number) => {
-        setSlots(slots.map(slot =>
-            slot.id === slotId ? { ...slot, expanded: !slot.expanded } : slot
-        ));
+    const currentSlot = useMemo(() => {
+        if (!slotsData?.slots || !slotId) return null;
+        const index = slotsData.slots.findIndex((s: any) => s.id === slotId);
+        if (index === -1) return null;
+
+        const s = slotsData.slots[index];
+        const nextDate = (index + 1 < slotsData.slots.length) ? slotsData.slots[index + 1].date : null;
+        const calcEndTime = nextDate || new Date(new Date(s.date).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
+
+        return { ...s, calculatedEndTime: calcEndTime };
+    }, [slotsData, slotId]);
+
+    const SlotCountdownRed = ({ endTime, onFinished }: { endTime: string, onFinished: () => void }) => {
+        const [timeLeft, setTimeLeft] = useState<number>(0);
+
+        useEffect(() => {
+            const calculateTime = () => {
+                const now = Date.now();
+                const end = new Date(endTime).getTime();
+                return Math.max(0, end - now);
+            };
+
+            setTimeLeft(calculateTime());
+            const timer = setInterval(() => {
+                const remaining = calculateTime();
+                setTimeLeft(remaining);
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    onFinished();
+                }
+            }, 1000);
+            return () => clearInterval(timer);
+        }, [endTime, onFinished]);
+
+        if (timeLeft <= 0) return null;
+
+        const d = Math.floor(timeLeft / 86400000);
+        const h = Math.floor((timeLeft % 86400000) / 3600000);
+        const m = Math.floor((timeLeft % 3600000) / 60000);
+        const s = Math.floor((timeLeft % 60000) / 1000);
+
+        return (
+            <div className="flex items-center gap-2 text-red-600 font-mono font-bold tabular-nums bg-red-50 border border-red-100 rounded-lg px-3 py-1.5 w-fit">
+                <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                <div className="flex items-baseline gap-1.5 whitespace-nowrap text-[12px]">
+                    <span>Questions end in:</span>
+                    <span>
+                        {d > 0 ? `${d}d ` : ''}{h > 0 ? `${h}h ` : ''}{m.toString().padStart(2, '0')}m {s.toString().padStart(2, '0')}s
+                    </span>
+                </div>
+            </div>
+        );
     };
 
-    // Mock discussions with AI feedback
-    const [discussions, setDiscussions] = useState<QuestionComment[]>([
-        {
-            id: '1',
-            author: 'Trương Nguyễn Tiến Đạt',
-            content: 'Android is an open-source mobile operating system developed by Google, based on the Linux kernel. It\'s mainly used for smartphones, tablets, smart TVs, and wearables. Provides a platform for developers to build apps using Java, Kotlin, or C++. Supports features like touch screen UI, multi-tasking, connectivity (Wi-Fi, Bluetooth, 5G), and access to hardware (camera, GPS, sensors). Apps are distributed through Google Play Store or other marketplaces.',
-            timestamp: new Date('2025-09-17T12:09:48'),
-            aiFeedback: {
-                analysis: 'Excellent comprehensive answer! You\'ve covered all the key aspects of Android including its open-source nature, developer ecosystem, and major features.',
-                strengths: [
-                    'Clear mention of Android being open-source and based on Linux kernel',
-                    'Good coverage of supported devices',
-                    'Accurate description of programming languages',
-                    'Well-explained key features'
-                ],
-                improvements: [],
-                resources: [
-                    'Android Developer Documentation - developer.android.com',
-                    'Google I/O Android sessions'
-                ],
-                score: 9.5,
-                passed: true
+    // Fetch existing answers for this student + slot
+    const { data: allSlotAnswers = [], isLoading: isLoadingAnswers, refetch: refetchSlotAnswers } = useGetSlotAnswersByStudentAndSlotQuery(
+        { studentId, slotId },
+        { skip: !studentId || !slotId }
+    );
+
+    // Fetch ALL answers for this question (so student can see classmates' answers too)
+    const { data: questionAnswers = [], isLoading: isLoadingQuestionAnswers, refetch: refetchQuestionAnswers } = useGetSlotAnswersByQuestionIdQuery(questionId!, {
+        skip: !questionId,
+    });
+
+    // Determine the student's own answers for this question to enforce attempt limits
+    const myAnswers = useMemo(() => {
+        return questionAnswers.filter(a => a.studentId === studentId);
+    }, [questionAnswers, studentId]);
+
+    // The most recent answer for this question from THIS student
+    const latestAnswer = useMemo(() => {
+        if (myAnswers.length === 0) return undefined;
+        return myAnswers.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+    }, [myAnswers]);
+
+    const hasPassed = useMemo(() => myAnswers.some(a => a.isPassed === true), [myAnswers]);
+
+    // Locked only when the student has passed
+    const isLocked = hasPassed;
+
+    // Can submit: slot is active, not passed, and no active cooldown
+    const canSubmit = useMemo(() => {
+        if (isReadOnly) return false;
+        if (hasPassed) return false;
+        if (cooldownSeconds !== null) return false;
+        return true;
+    }, [isReadOnly, hasPassed, cooldownSeconds]);
+
+
+    // Status map for sidebar: { questionId: 'passed' | 'failed' | 'none' }
+    const questionStatusMap = useMemo(() => {
+        const map: Record<string, 'passed' | 'failed' | 'none'> = {};
+
+        // Group answers by question ID
+        const groupedAnswers: Record<string, StudentSlotAnswerDto[]> = {};
+        allSlotAnswers.forEach(ans => {
+            if (!groupedAnswers[ans.slotQuestionContentId]) {
+                groupedAnswers[ans.slotQuestionContentId] = [];
             }
-        },
-        {
-            id: '2',
-            author: 'Trương Anh Tuấn',
-            content: 'Android is a mobile operating system.',
-            timestamp: new Date('2025-09-17T14:30:00'),
-            aiFeedback: {
-                analysis: 'Your answer is too brief and lacks important details. While you correctly identified Android as a mobile operating system, you need to provide more comprehensive information.',
-                strengths: [
-                    'Correctly identified Android as a mobile operating system'
-                ],
-                improvements: [
-                    'Add information about Android being open-source',
-                    'Mention that it\'s developed by Google',
-                    'Describe the Linux kernel foundation',
-                    'Include programming languages (Java, Kotlin, C++)',
-                    'Discuss supported devices and key features'
-                ],
-                resources: [
-                    'Android Developer Official Documentation',
-                    'Android Basics Course on Coursera'
-                ],
-                score: 3.5,
-                passed: false
+            groupedAnswers[ans.slotQuestionContentId].push(ans);
+        });
+
+        questions.forEach(q => {
+            const qAnswers = groupedAnswers[q.id] || [];
+            if (qAnswers.length === 0) {
+                map[q.id] = 'none';
+            } else if (qAnswers.some(a => a.isPassed === true)) {
+                map[q.id] = 'passed';
+            } else if (qAnswers.some(a => a.isPassed === false)) {
+                // If all attempts failed (we check if there are no 'true' above)
+                map[q.id] = 'failed';
+            } else {
+                map[q.id] = 'none'; // Pending review
             }
-        }
-    ]);
+        });
 
-    const scrollToSection = (sectionId: string) => {
-        setActiveSection(sectionId);
-    };
+        return map;
+    }, [allSlotAnswers, questions]);
 
-    // Simulate AI feedback generation
-    const generateAIFeedback = (userAnswer: string): AIFeedback => {
-        const words = userAnswer.toLowerCase();
-        const hasAndroid = words.includes('android');
-        const hasOpenSource = words.includes('open-source') || words.includes('open source');
-        const hasGoogle = words.includes('google');
-        const hasLinux = words.includes('linux');
-        const hasApps = words.includes('app') || words.includes('application');
+    const answeredQuestionIds = useMemo(() => {
+        return new Set(allSlotAnswers.map(a => a.slotQuestionContentId));
+    }, [allSlotAnswers]);
 
-        let score = 5;
-        const strengths: string[] = [];
-        const improvements: string[] = [];
+    // Mutations
+    const [submitSlotAnswer, { isLoading: isSubmitting }] = useSubmitSlotAnswerMutation();
+    const [deleteSlotAnswer] = useDeleteSlotAnswerMutation();
+    const [editSlotAnswer, { isLoading: isEditing }] = useEditSlotAnswerMutation();
 
-        if (hasAndroid) score += 1;
-        if (hasOpenSource) {
-            score += 1.5;
-            strengths.push('Correctly identified Android as open-source');
+    // ── Account-based cooldown: recalculate from DB timestamp on load ──────────
+    // When a student has exactly 2 failed answers, the cooldown end is
+    // (createdAt of the 2nd answer) + 1 hour.  We compute remaining seconds
+    // from the server data so it works across page reloads and devices.
+    const parseUTC = (dateStr: string) => new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+
+    // Cooldown: after any failed attempt, the student must wait 5 min before retrying.
+    // Computed from the latest failed answer's createdAt.
+    useEffect(() => {
+        const latestFailed = [...myAnswers]
+            .filter(a => a.isPassed === false)
+            .sort((a, b) => parseUTC(b.createdAt).getTime() - parseUTC(a.createdAt).getTime())[0];
+
+        if (latestFailed && !hasPassed) {
+            const cooldownEnd = parseUTC(latestFailed.createdAt).getTime() + 5 * 60 * 1000; // 5 min (change to 60*60*1000 for prod)
+            const remaining = Math.floor((cooldownEnd - Date.now()) / 1000);
+            if (remaining > 0) {
+                setCooldownSeconds(prev => (prev === null ? remaining : prev));
+            } else {
+                setCooldownSeconds(null);
+            }
         } else {
-            improvements.push('Consider mentioning that Android is an open-source platform');
+            setCooldownSeconds(null);
         }
-        if (hasGoogle) {
-            score += 1.5;
-            strengths.push('Mentioned Google as the developer');
-        } else {
-            improvements.push('Could add that Android is developed by Google');
-        }
-        if (hasLinux) {
-            score += 1;
-            strengths.push('Good understanding of Android\'s Linux kernel foundation');
-        } else {
-            improvements.push('Consider mentioning Android is based on Linux kernel');
-        }
-        if (hasApps) {
-            score += 1;
-            strengths.push('Mentioned application development aspect');
-        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [myAnswers.length, questionId]);
 
-        if (userAnswer.length < 50) {
-            score -= 1;
-            improvements.push('Provide more detailed explanation with examples');
-        } else if (userAnswer.length > 150) {
-            strengths.push('Comprehensive and detailed answer');
+    // Tick the countdown every second while active
+    useEffect(() => {
+        if (cooldownSeconds !== null && cooldownSeconds > 0) {
+            cooldownTimerRef.current = setInterval(() => {
+                setCooldownSeconds(prev => {
+                    if (prev === null || prev <= 1) {
+                        if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+                        return null;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
         }
+        return () => { if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [cooldownSeconds !== null]);
 
-        const passed = score >= 7;
-        let analysis = '';
-        if (passed) {
-            analysis = 'Great work! Your answer demonstrates good understanding of Android fundamentals. You\'ve covered the essential concepts clearly.';
-        } else {
-            analysis = 'Your answer needs improvement. Please review the course materials and provide more comprehensive information with specific details.';
+    const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
+    const [editContent, setEditContent] = useState('');
+
+    useEffect(() => {
+        if (!isLoadingAnswers && !isLoadingQuestionAnswers && myAnswerRef.current) {
+            setTimeout(() => {
+                myAnswerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 600);
         }
-
-        return {
-            analysis,
-            strengths: strengths.length > 0 ? strengths : ['You attempted to answer the question'],
-            improvements: improvements.length > 0 ? improvements : [],
-            resources: [
-                'Android Developer Official Documentation',
-                'Android Basics Course on Coursera'
-            ],
-            score: Math.min(10, Math.max(0, score)),
-            passed
-        };
-    };
+    }, [isLoadingAnswers, isLoadingQuestionAnswers, questionId]);
 
     const handleSubmitAnswer = async () => {
-        if (!answer.trim()) return;
-        setIsSubmitting(true);
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        if (!answer.trim() || !questionId || !studentId) return;
 
-        const aiFeedback = generateAIFeedback(answer);
-        const newComment: QuestionComment = {
-            id: `comment-${Date.now()}`,
-            author: 'YOU',
-            content: answer,
-            timestamp: new Date(),
-            aiFeedback
-        };
+        try {
+            await submitSlotAnswer({
+                studentId,
+                slotQuestionContentId: questionId,
+                answerText: answer.trim(),
+            }).unwrap();
 
-        setDiscussions([...discussions, newComment]);
-        setIsSubmitting(false);
-        setAnswer('');
+            message.success('Answer submitted successfully!');
+            setAnswer('');
+        } catch (err: any) {
+            const raw = err?.data?.message || err?.data?.result || '';
+            if (raw.startsWith('COOLDOWN:')) {
+                const seconds = parseInt(raw.split(':')[1], 10);
+                setCooldownSeconds(seconds);
+            } else {
+                message.error(raw || 'Failed to submit answer');
+            }
+        } finally {
+            // Always refetch so FE state stays in sync with DB
+            refetchQuestionAnswers();
+            refetchSlotAnswers();
+        }
     };
 
-    const getScoreColor = (score: number) => {
-        if (score >= 9) return 'text-green-600';
-        if (score >= 7) return 'text-blue-600';
-        if (score >= 5) return 'text-orange-600';
-        return 'text-red-600';
+    const handleEditSave = async (id: string) => {
+        if (!editContent.trim()) return;
+        try {
+            await editSlotAnswer({
+                id,
+                studentId,
+                answerText: editContent.trim(),
+            }).unwrap();
+            message.success('Answer updated successfully!');
+            setEditingAnswerId(null);
+            setEditContent('');
+        } catch (err: any) {
+            message.error(err?.data?.message || err?.data?.result || 'Failed to update answer');
+        }
     };
+
+    const handleDeleteAnswer = async (answerId: string) => {
+        try {
+            await deleteSlotAnswer(answerId).unwrap();
+            message.success('Answer deleted');
+        } catch {
+            message.error('Failed to delete answer');
+        }
+    };
+
+    const isLoading = isLoadingQuestions || isLoadingAnswers || isLoadingQuestionAnswers;
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-[#F37022]" />
+            </div>
+        );
+    }
+
+    if (!currentQuestion) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-gray-500">
+                <BookOpen className="w-12 h-12 mb-4 text-gray-300" />
+                <p className="text-lg font-medium">Question not found</p>
+                <p className="text-sm mt-1">The question may have been removed or the link is invalid.</p>
+                <button
+                    onClick={() => navigate(-1)}
+                    className="mt-4 px-4 py-2 bg-[#F37022] text-white rounded-lg hover:bg-[#D96419] transition-colors"
+                >
+                    Go Back
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 relative p-4 md:p-6 animate-fadeIn">
@@ -265,121 +343,269 @@ function QuestionDetail() {
                         Home
                     </button>
                     <ChevronRight className="w-4 h-4" />
-                    <button onClick={() => navigate(`/student/course-details?code=${question.courseCode}`)} className="hover:text-[#F37022] transition-colors">
-                        {question.courseName}
+                    <button
+                        onClick={() => classSubjectId ? navigate(`/student/course-details/${classSubjectId}`) : navigate('/student')}
+                        className="hover:text-[#F37022] transition-colors"
+                    >
+                        Course Details
                     </button>
                     <ChevronRight className="w-4 h-4" />
-                    <button onClick={() => navigate(`/student/course-details?code=${question.courseCode}`)} className="hover:text-[#F37022] transition-colors">
-                        Slot {question.slotNumber}
-                    </button>
-                    <ChevronRight className="w-4 h-4" />
-                    <span className="text-[#0A1B3C] font-medium">{question.title}</span>
+                    <span className="text-[#0A1B3C] font-medium truncate max-w-xs">
+                        {currentQuestion.content}
+                    </span>
                 </div>
 
                 {/* Header */}
                 <div className="mb-6">
-                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C] mb-2">{question.title}</h1>
-                    <div className="flex flex-wrap items-center gap-3 text-sm">
-                        <div className="flex items-center gap-2 text-gray-600">
+                    <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C] mb-2">
+                        {currentQuestion.content}
+                    </h1>
+                    {currentQuestion.description && (
+                        <p className="text-gray-600 mt-2">{currentQuestion.description}</p>
+                    )}
+                    <div className="space-y-3 mt-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Calendar className="w-4 h-4" />
-                            <span>{question.slotTime}</span>
+                            <span>Created: {new Date(currentQuestion.createdAt).toLocaleDateString()}</span>
                         </div>
+
                     </div>
                 </div>
 
                 {/* Question Content */}
+                {isReadOnly && (
+                    <div className="flex items-center gap-2 mb-4 px-4 py-2.5 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-500">
+                        <XCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span>
+                            {readOnlyParam === 'inactive'
+                                ? 'This slot has not started yet. You can view questions but cannot submit answers.'
+                                : 'This slot has ended. You can view answers but cannot submit or edit.'}
+                        </span>
+                    </div>
+                )}
                 <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
                     <h2 className="text-lg font-bold text-[#0A1B3C] mb-4">Content</h2>
-                    <p className="text-gray-700">{question.content}</p>
+                    <p className="text-gray-700">{currentQuestion.content}</p>
+                    {currentQuestion.description && (
+                        <p className="text-gray-500 mt-3 text-sm">{currentQuestion.description}</p>
+                    )}
                 </div>
 
-                {/* Discussion */}
+                {/* Discussion / Answers */}
                 <div className="bg-white rounded-xl border border-gray-200 p-6">
-                    <h2 className="text-lg font-bold text-[#0A1B3C] mb-6">Discussion</h2>
+                    <h2 className="text-lg font-bold text-[#0A1B3C] mb-6">
+                        Discussion
+                        {questionAnswers.length > 0 && (
+                            <span className="ml-2 text-sm font-normal text-gray-500">
+                                ({questionAnswers.length} {questionAnswers.length === 1 ? 'answer' : 'answers'})
+                            </span>
+                        )}
+                    </h2>
 
-                    {/* Answer Submission */}
-                    <div className="space-y-3 mb-6">
-                        <label className="block text-sm font-semibold text-[#0A1B3C]">
-                            Your Answer
-                        </label>
-                        <textarea
-                            value={answer}
-                            onChange={(e) => setAnswer(e.target.value)}
-                            placeholder="Write your answer here..."
-                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:border-[#F37022] focus:ring-2 focus:ring-orange-100 outline-none resize-none transition-all"
-                            rows={6}
-                        />
-                        <div className="flex items-center justify-end">
-                            <AntButton
-                                type="primary"
-                                onClick={handleSubmitAnswer}
-                                loading={isSubmitting}
-                                disabled={!answer.trim()}
-                                className="flex items-center gap-2 h-10 px-6 bg-[#F37022] hover:bg-[#D96419] border-none text-white font-semibold rounded-lg transition-all hover-lift"
-                                icon={!isSubmitting && <Send className="w-4 h-4" />}
-                            >
-                                {isSubmitting ? 'Processing...' : 'Submit Answer'}
-                            </AntButton>
+                    {/* Answer Submission — shown when student has not passed and not permanently locked */}
+                    {!isReadOnly && !isLocked && (
+                        <div className="space-y-3 mb-6">
+                            <label className="block text-sm font-semibold text-[#0A1B3C]">
+                                {latestAnswer?.isPassed === false ? 'Retry — write a new answer:' : 'Your Answer'}
+                            </label>
+                            <div className={`relative rounded-lg transition-all ${cooldownSeconds !== null ? 'opacity-60' : ''}`}>
+                                <textarea
+                                    value={answer}
+                                    onChange={(e) => setAnswer(e.target.value)}
+                                    placeholder={cooldownSeconds !== null ? 'You are on cooldown. Please wait before retrying...' : 'Write your answer here...'}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:border-[#F37022] focus:ring-2 focus:ring-orange-100 outline-none resize-none transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                                    rows={6}
+                                    maxLength={4000}
+                                    disabled={cooldownSeconds !== null}
+                                />
+                                {cooldownSeconds !== null && (
+                                    <div className="absolute inset-0 rounded-lg cursor-not-allowed" />
+                                )}
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-400">{answer.length}/4000</span>
+                                <AntButton
+                                    type="primary"
+                                    onClick={handleSubmitAnswer}
+                                    loading={isSubmitting}
+                                    disabled={!answer.trim() || cooldownSeconds !== null}
+                                    className="flex items-center gap-2 h-10 px-6 bg-[#F37022] hover:bg-[#D96419] border-none text-white font-semibold rounded-lg transition-all hover-lift disabled:opacity-50"
+                                    icon={!isSubmitting && <Send className="w-4 h-4" />}
+                                >
+                                    {isSubmitting ? 'Submitting...' : 'Submit Answer'}
+                                </AntButton>
+                            </div>
+
+                            {/* Cooldown countdown below textarea */}
+                            {cooldownSeconds !== null && (
+                                <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                    <div className="flex-shrink-0 w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center">
+                                        <Clock className="w-4 h-4 text-amber-600" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-semibold text-amber-700">Cooldown active</p>
+                                        <p className="text-xs text-amber-600">You can retry in <span className="font-bold font-mono">{formatCooldown(cooldownSeconds)}</span></p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    </div>
+                    )}
 
-                    {/* Discussions List */}
-                    <div className="space-y-6">
-                        {discussions.map((comment) => (
-                            <div key={comment.id} className="animate-slideUp">
-                                {/* Student Comment */}
-                                <div>
-                                    {/* Name and Timestamp - Outside box */}
-                                    <div className="flex items-center gap-2 mb-2">
+                    {/* Permanently locked (all 3 attempts failed) */}
+                    {!isReadOnly && isLocked && !hasPassed && (
+                        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 flex items-center gap-2">
+                            <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                            You have used all 3 attempts for this question. The answer is permanently locked.
+                        </div>
+                    )}
+
+                    {/* Passed — show success */}
+                    {!isReadOnly && hasPassed && (
+                        <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                            You have passed this question.
+                        </div>
+                    )}
+
+                    {/* Answers List */}
+                    <div className="space-y-4">
+                        {questionAnswers.length === 0 && (
+                            <div className="text-center py-8 text-gray-400">
+                                <BookOpen className="w-10 h-10 mx-auto mb-3 text-gray-300" />
+                                <p className="text-sm">No answers yet. Be the first to answer!</p>
+                            </div>
+                        )}
+
+                        {questionAnswers.map((ans: StudentSlotAnswerDto) => (
+                            <div
+                                key={ans.id}
+                                className="animate-slideUp"
+                                ref={ans.studentId === studentId ? myAnswerRef : null}
+                            >
+                                {/* Author and Timestamp */}
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
                                         <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                                             <span className="text-white text-xs font-semibold">
-                                                {comment.author.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                                {(ans.studentName || 'U')
+                                                    .split(' ')
+                                                    .map(n => n[0])
+                                                    .join('')
+                                                    .slice(0, 2)}
                                             </span>
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-[#0A1B3C]">{comment.author}</p>
+                                            <p className="font-semibold text-[#0A1B3C]">
+                                                {ans.studentName || 'Unknown Student'}
+                                                {ans.studentCode && (
+                                                    <span className="ml-2 text-xs text-gray-400 font-normal">
+                                                        ({ans.studentCode})
+                                                    </span>
+                                                )}
+                                                {ans.studentId === studentId && (
+                                                    <span className="ml-2 text-xs font-semibold text-[#F37022] bg-orange-50 px-2 py-0.5 rounded-full">
+                                                        You
+                                                    </span>
+                                                )}
+                                            </p>
                                             <p className="text-xs text-gray-500">
-                                                {comment.timestamp.toLocaleDateString()} {comment.timestamp.toLocaleTimeString()}
+                                                {new Date(ans.createdAt.endsWith('Z') ? ans.createdAt : ans.createdAt + 'Z').toLocaleDateString()}{' '}
+                                                {new Date(ans.createdAt.endsWith('Z') ? ans.createdAt : ans.createdAt + 'Z').toLocaleTimeString()}
+                                                {ans.updatedAt && new Date(ans.updatedAt.endsWith('Z') ? ans.updatedAt : ans.updatedAt + 'Z').getTime() > new Date(ans.createdAt.endsWith('Z') ? ans.createdAt : ans.createdAt + 'Z').getTime() + 1000 && (
+                                                    <span className="italic ml-1">(edited)</span>
+                                                )}
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* Content Box */}
-                                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                                        <p className="text-gray-700 text-sm leading-relaxed">{comment.content}</p>
+                                    <div className="flex items-center gap-2">
+                                        {/* Grade badge */}
+                                        {ans.isPassed === true && (
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
+                                                Passed ✓
+                                            </span>
+                                        )}
+                                        {ans.isPassed === false && (
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
+                                                Not Passed ✗
+                                            </span>
+                                        )}
+
+                                        {/* Edit/Delete actions — only for ungraded own answers */}
+                                        {ans.studentId === studentId && !ans.isPassed && !ans.teacherFeedback && !ans.isAIGraded && (
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingAnswerId(ans.id);
+                                                        setEditContent(ans.answerText);
+                                                    }}
+                                                    className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    title="Edit answer"
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteAnswer(ans.id)}
+                                                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Delete answer"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* AI Assistant Reply (indented like a reply) */}
-                                {comment.aiFeedback && (
-                                    <div className="ml-8 mt-3">
-                                        {/* AI Name and Timestamp - Outside box */}
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <div className="w-8 h-8 bg-gradient-to-br from-[#F37022] to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                                                <Sparkles className="w-4 h-4 text-white" />
-                                            </div>
-                                            <div>
-                                                <p className="font-semibold text-[#0A1B3C]">FUEC AI Assistant</p>
-                                                <p className="text-xs text-gray-500">
-                                                    {new Date().toLocaleString()}
-                                                </p>
+                                {/* Content Box */}
+                                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                    {editingAnswerId === ans.id ? (
+                                        <div className="space-y-3">
+                                            <textarea
+                                                value={editContent}
+                                                onChange={(e) => setEditContent(e.target.value)}
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none resize-none transition-all text-sm"
+                                                rows={4}
+                                            />
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingAnswerId(null);
+                                                        setEditContent('');
+                                                    }}
+                                                    className="px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <AntButton
+                                                    type="primary"
+                                                    loading={isEditing}
+                                                    onClick={() => handleEditSave(ans.id)}
+                                                    className="bg-blue-600 border-none hover:bg-blue-700"
+                                                >
+                                                    Save Edit
+                                                </AntButton>
                                             </div>
                                         </div>
+                                    ) : (
+                                        <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                                            {ans.answerText}
+                                        </p>
+                                    )}
+                                </div>
 
-                                        {/* Content Box */}
-                                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                                            <p className="text-sm text-gray-700 leading-relaxed mb-3">
-                                                {comment.aiFeedback.analysis}
-                                            </p>
-                                            <p className={`text-sm font-semibold ${comment.aiFeedback.passed ? 'text-green-600' : 'text-red-600'
-                                                }`}>
-                                                {comment.aiFeedback.passed
-                                                    ? '✓ Review passed - Great work!'
-                                                    : '✗ Review not passed - Please resubmit with improvements.'
-                                                }
-                                            </p>
+                                {/* Teacher or AI feedback */}
+                                {ans.teacherFeedback && (
+                                    ans.isAIGraded ? (
+                                        <div className="mt-2 flex items-start gap-2 bg-purple-50 border border-purple-100 rounded-lg p-3">
+                                            <span className="text-purple-600 font-bold text-xs mt-0.5 flex-shrink-0">✨ AI Feedback:</span>
+                                            <p className="text-sm text-gray-700">{ans.teacherFeedback}</p>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="mt-2 flex items-start gap-2 bg-orange-50 border border-orange-100 rounded-lg p-3">
+                                            <span className="text-[#F37022] font-bold text-xs mt-0.5 flex-shrink-0">💬 Teacher:</span>
+                                            <p className="text-sm text-gray-700">{ans.teacherFeedback}</p>
+                                        </div>
+                                    )
                                 )}
                             </div>
                         ))}
@@ -387,27 +613,33 @@ function QuestionDetail() {
                 </div>
             </div>
 
-            {/* Right Sidebar - Slot Questions Only */}
+            {/* Right Sidebar - Slot Questions */}
             <div className="w-full lg:w-64 flex-shrink-0">
                 <div className="sticky top-6">
                     <div className="bg-white rounded-xl border border-gray-200 p-4">
-                        <h3 className="font-bold text-[#0A1B3C] mb-1">Slot {question.slotNumber}</h3>
+                        <h3 className="font-bold text-[#0A1B3C] mb-3">Questions</h3>
 
                         {/* Questions List */}
                         <div className="space-y-1">
-                            {slots[0].questions.map(q => (
+                            {questions.map((q, idx) => (
                                 <button
                                     key={q.id}
-                                    onClick={() => navigate(`/student/course-details/questions/${question.slotId}-${q.id}`)}
-                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${question.id === q.id.toString()
+                                    onClick={() => navigate(`/student/course-details/questions/${q.id}?slotId=${slotId}&classSubjectId=${classSubjectId}`)}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${questionId === q.id
                                         ? 'bg-orange-50 text-[#F37022] font-medium'
                                         : 'text-gray-700 hover:bg-gray-50 hover:text-[#F37022]'
                                         }`}
                                 >
                                     <FileText className="w-4 h-4 flex-shrink-0" />
-                                    <span className="flex-1 truncate">{q.title}</span>
-                                    {q.status === 'finished' && (
+                                    <span className="flex-1 truncate">{idx + 1}. {q.content}</span>
+                                    {questionStatusMap[q.id] === 'passed' && (
                                         <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                                    )}
+                                    {questionStatusMap[q.id] === 'failed' && (
+                                        <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                    )}
+                                    {questionStatusMap[q.id] === 'none' && answeredQuestionIds.has(q.id) && (
+                                        <div className="w-4 h-4 rounded-full bg-gray-200" title="Answered, pending review" />
                                     )}
                                 </button>
                             ))}

@@ -11,8 +11,9 @@ function AdminLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const user = useSelector(selectCurrentUser);
 
-  if (!user || user.role !== 'Admin') {
-    return <Navigate to="/not-found" replace />;
+  // ProtectedRoute already verified token + role from BE — no need to re-check here
+  if (!user) {
+    return <Navigate to="/sign-in" replace />;
   }
 
   // Check screen size

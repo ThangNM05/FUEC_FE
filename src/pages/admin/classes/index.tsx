@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Edit, Trash2, Wand2 } from 'lucide-react';
+import { Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Spin } from 'antd';
-import { LoadingOutlined } from '@ant-design/icons';
+import { Select } from 'antd';
 
 import DataTable from '@/components/shared/DataTable';
 import ConfirmDeleteModal from '@/components/shared/ConfirmDeleteModal';
@@ -21,16 +20,23 @@ import {
 import {
     useImportClassSubjectTeachersMutation,
 } from '@/api/classDetailsApi';
+import {
+    useGetSemestersQuery,
+    useGetDefaultSemesterQuery
+} from '@/api/semestersApi';
 import type { ImportClassSubjectTeachersResponse } from '@/api/classDetailsApi';
 import type { Class } from '@/types/class.types';
 
 function AdminClasses() {
-    // Pagination State
+    // Pagination/Search/Sort State
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [sortColumn, setSortColumn] = useState<string>('');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     const [searchTerm, setSearchTerm] = useState<string>('');
+
+    // Filter States
+    const [semesterId, setSemesterId] = useState<string>('');
 
     // Delete Modal State
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -52,13 +58,26 @@ function AdminClasses() {
     const [isImportResultModalOpen, setIsImportResultModalOpen] = useState(false);
     const [importResult, setImportResult] = useState<ImportClassSubjectTeachersResponse | null>(null);
 
-    // RTK Query hooks
+    // RTK Query hooks (Semester)
+    const { data: semestersData } = useGetSemestersQuery({ page: 1, pageSize: 100 });
+    const { data: defaultSemester } = useGetDefaultSemesterQuery();
+    const semestersList = semestersData?.items || [];
+
+    // Set default semester
+    useEffect(() => {
+        if (defaultSemester?.id && !semesterId) {
+            setSemesterId(defaultSemester.id);
+        }
+    }, [defaultSemester, semesterId]);
+
+    // RTK Query hooks (Classes)
     const { data: classesData, isLoading, error } = useGetClassesQuery({
         page,
         pageSize,
         sortColumn,
         sortDirection,
-        searchTerm
+        searchTerm,
+        semesterId: semesterId || undefined
     });
 
     const [deleteClass, { isLoading: isDeleting }] = useDeleteClassMutation();
@@ -294,8 +313,27 @@ function AdminClasses() {
 
     return (
         <div className="p-4 md:p-6">
-            <div className="mb-4 md:mb-6">
+            <div className="mb-4 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                 <h1 className="text-2xl md:text-3xl font-bold text-[#0A1B3C]">Class Management</h1>
+                <Select
+                    value={semesterId}
+                    onChange={(value) => {
+                        setSemesterId(value);
+                        setPage(1); // Reset page on filter change
+                    }}
+                    className="w-48"
+                    placeholder="Select semester"
+                    options={[
+                        ...semestersList.map((sem) => ({
+                            label: sem.semesterCode,
+                            value: sem.id,
+                        })),
+                        ...(semestersList.length === 0 && defaultSemester ? [{
+                            label: defaultSemester.semesterCode,
+                            value: defaultSemester.id,
+                        }] : [])
+                    ]}
+                />
             </div>
 
             <DataTable

@@ -19,8 +19,7 @@ const allMenuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/student' },
   { id: 'courses', label: 'Courses', icon: BookOpen, path: '/student/courses' },
   { id: 'schedule', label: 'Schedule', icon: Clock, path: '/student/schedule' },
-  { id: 'forums', label: 'Forums', icon: MessageSquare, path: '/student/forums' },
-  { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/student/messages' },
+  { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/messenger' },
   { id: 'exams', label: 'Exams', icon: Calendar, path: '/student/exams' },
   { id: 'grades', label: 'Grades', icon: BarChart3, path: '/student/grades' }
 ];
@@ -37,6 +36,7 @@ function StudentSidebar() {
   const location = useLocation();
   const dispatch = useDispatch();
   const [isMobile, setIsMobile] = useState(false);
+  const [isDockVisible, setIsDockVisible] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
 
@@ -46,6 +46,13 @@ function StudentSidebar() {
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
   }, []);
+
+  // Auto-hide dock logic for desktop — triggered by hovering the home indicator pill
+  // (no longer uses raw mouse distance from bottom)
+  const handlePillMouseEnter = () => setIsDockVisible(true);
+  const handlePillMouseLeave = () => setIsDockVisible(false);
+  const handleDockMouseEnter = () => setIsDockVisible(true);
+  const handleDockMouseLeave = () => setIsDockVisible(false);
 
   // Close "More" menu on outside click
   useEffect(() => {
@@ -176,63 +183,89 @@ function StudentSidebar() {
 
   // ─── macOS Dock (desktop ≥ 640px) ───
   return (
-    <div className="fixed bottom-4 left-1/2 max-w-full -translate-x-1/2 z-50 pointer-events-none px-4">
-      <Dock className="pointer-events-auto">
-        {allMenuItems.map(item => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
-          const unreadCount = item.id === 'messages' ? 4 : 0;
+    <>
+      {/* Dock panel */}
+      <div
+        onMouseEnter={handleDockMouseEnter}
+        onMouseLeave={handleDockMouseLeave}
+        className={`fixed bottom-4 left-1/2 max-w-full -translate-x-1/2 z-50 transition-all duration-300 ease-in-out pointer-events-none px-4 ${
+          isDockVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'
+        }`}
+      >
+        <Dock className="pointer-events-auto">
+          {allMenuItems.map(item => {
+            const Icon = item.icon;
+            const isActive = location.pathname === item.path;
+            const unreadCount = item.id === 'messages' ? 4 : 0;
 
-          return (
-            <DockItem key={item.id}>
-              <button
-                onClick={() => handleMenuClick(item.path)}
-                className="flex h-full w-full items-center justify-center outline-none border-0 focus:outline-none relative"
-              >
-                <DockIcon className={isActive ? "text-[#F37022]" : "text-[#0A1B3C]"}>
-                  <Icon className="w-5 h-5" />
-                </DockIcon>
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-[#F37022] text-white text-[10px] font-bold rounded-full flex items-center justify-center -translate-y-1/2 translate-x-1/2">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-                <DockLabel>{item.label}</DockLabel>
-              </button>
-            </DockItem>
-          );
-        })}
+            return (
+              <DockItem key={item.id}>
+                <button
+                  onClick={() => handleMenuClick(item.path)}
+                  className="flex h-full w-full items-center justify-center outline-none border-0 focus:outline-none relative"
+                >
+                  <DockIcon className={isActive ? "text-[#F37022]" : "text-[#0A1B3C]"}>
+                    <Icon className="w-5 h-5" />
+                  </DockIcon>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-[#F37022] text-white text-[10px] font-bold rounded-full flex items-center justify-center -translate-y-1/2 translate-x-1/2">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                  <DockLabel>{item.label}</DockLabel>
+                </button>
+              </DockItem>
+            );
+          })}
 
-        <DockSeparator />
+          <DockSeparator />
 
-        <DockItem>
-          <button
-            onClick={() => handleMenuClick('/student/profile')}
-            className="flex h-full w-full items-center justify-center outline-none border-0 focus:outline-none"
-          >
-            <DockIcon className="text-[#0A1B3C]">
-              <User className="w-5 h-5" />
-            </DockIcon>
-            <DockLabel>Profile</DockLabel>
-          </button>
-        </DockItem>
+          <DockItem>
+            <button
+              onClick={() => handleMenuClick('/student/profile')}
+              className="flex h-full w-full items-center justify-center outline-none border-0 focus:outline-none"
+            >
+              <DockIcon className="text-[#0A1B3C]">
+                <User className="w-5 h-5" />
+              </DockIcon>
+              <DockLabel>Profile</DockLabel>
+            </button>
+          </DockItem>
 
-        <DockItem>
-          <button
-            onClick={() => {
-              dispatch(logout());
-              navigate('/sign-in');
-            }}
-            className="flex h-full w-full items-center justify-center outline-none border-0 focus:outline-none"
-          >
-            <DockIcon className="text-[#0A1B3C]">
-              <LogOut className="w-5 h-5" />
-            </DockIcon>
-            <DockLabel>Logout</DockLabel>
-          </button>
-        </DockItem>
-      </Dock>
-    </div>
+          <DockItem>
+            <button
+              onClick={() => {
+                dispatch(logout());
+                navigate('/sign-in');
+              }}
+              className="flex h-full w-full items-center justify-center outline-none border-0 focus:outline-none"
+            >
+              <DockIcon className="text-[#0A1B3C]">
+                <LogOut className="w-5 h-5" />
+              </DockIcon>
+              <DockLabel>Logout</DockLabel>
+            </button>
+          </DockItem>
+        </Dock>
+      </div>
+
+      {/* iOS home indicator pill — always visible, hover triggers dock */}
+      {!isMobile && (
+        <div
+          onMouseEnter={handlePillMouseEnter}
+          onMouseLeave={handlePillMouseLeave}
+          className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-1 pointer-events-auto"
+        >
+          <div
+            className={`h-[5px] rounded-full transition-all duration-300 ease-out ${
+              isDockVisible
+                ? 'w-32 bg-[#0A1B3C]/40'
+                : 'w-24 bg-[#0A1B3C]/20 hover:w-32 hover:bg-[#0A1B3C]/35'
+            }`}
+          />
+        </div>
+      )}
+    </>
   );
 }
 

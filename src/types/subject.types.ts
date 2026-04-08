@@ -3,8 +3,7 @@ export interface Subject {
     code: string;
     name: string;
     credits: number;
-    terms: number;
-    timeAllocation: string; 
+    timeAllocation: string;
     description: string;
     minAvgMarkToPass: number;
     isActive: boolean;
@@ -28,7 +27,6 @@ export interface CreateSubjectRequest {
     code: string;
     name: string;
     credits: number;
-    terms: number;
     timeAllocation?: string;
     description?: string;
     minAvgMarkToPass: number;
