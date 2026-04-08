@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Bell, CheckCheck, BookOpen, ClipboardList, Award, Megaphone, Info } from 'lucide-react';
+import { Bell, CheckCheck, BookOpen, ClipboardList, Award, Megaphone, Info, MessageSquare, FileText, HelpCircle } from 'lucide-react';
 import type { NotificationItem } from '@/types/notification.types';
 import { useNotificationHub } from '@/contexts/NotificationContext';
 import { selectCurrentUser } from '@/redux/authSlice';
@@ -16,6 +16,12 @@ function getTypeIcon(type: NotificationItem['type']) {
       return <Award className="w-4 h-4 text-green-500" />;
     case 'Announcement':
       return <Megaphone className="w-4 h-4 text-orange-500" />;
+    case 'Message':
+      return <MessageSquare className="w-4 h-4 text-teal-500" />;
+    case 'CourseMaterial':
+      return <FileText className="w-4 h-4 text-indigo-500" />;
+    case 'SlotQuestion':
+      return <HelpCircle className="w-4 h-4 text-amber-500" />;
     default:
       return <Info className="w-4 h-4 text-gray-500" />;
   }
@@ -79,26 +85,35 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
     handleMarkRead(n.id);
     setOpen(false);
 
-    if (!n.relatedEntityId) {
-      if (n.type === 'Grade') {
-        navigate(currentUser?.role === 'Teacher' ? '/teacher/reports' : '/student/grades');
+    const role = currentUser?.role;
+    const entityType = n.relatedEntityType;
+    const entityId = n.relatedEntityId;
+
+    // For notifications without a related entity, use type-based fallback
+    if (!entityId) {
+      switch (n.type) {
+        case 'Grade':
+          navigate(role === 'Teacher' ? '/teacher/reports' : '/student/grades');
+          break;
+        case 'Announcement':
+        case 'System':
+          // No specific page, just mark as read
+          break;
       }
       return;
     }
 
-    const { type, relatedEntityId } = n;
-    const role = currentUser?.role;
-
-    switch (type) {
-      case 'Message':
-        navigate(`/messenger?conversationId=${relatedEntityId}`);
+    // Route based on relatedEntityType — precisely describes what entityId refers to
+    switch (entityType) {
+      case 'Conversation':
+        navigate(`/messenger?conversationId=${entityId}`);
         break;
 
       case 'Assignment':
         if (role === 'Teacher') {
-          navigate(`/teacher/assignment/${relatedEntityId}/submissions`);
+          navigate(`/teacher/assignment/${entityId}/submissions`);
         } else {
-          navigate(`/student/assignment-submission/${relatedEntityId}`);
+          navigate(`/student/assignment-submission/${entityId}`);
         }
         break;
 
@@ -106,20 +121,40 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
         if (role === 'Teacher') {
           navigate('/teacher/classrooms');
         } else {
-          navigate(`/student/exam-lobby/${relatedEntityId}`);
+          navigate(`/student/exam-lobby/${entityId}`);
         }
         break;
 
-      case 'Grade':
-        if (role === 'Teacher') {
-          navigate('/teacher/reports');
-        } else {
-          navigate('/student/grades');
-        }
+      case 'CourseMaterial':
+        navigate(role === 'Teacher' ? '/teacher/classrooms' : '/student/courses');
+        break;
+
+      case 'SlotQuestionContent':
+        navigate(role === 'Teacher' ? '/teacher/classrooms' : '/student/courses');
         break;
 
       default:
-        // No specific redirect
+        // Fallback: use notification type for routing
+        switch (n.type) {
+          case 'Message':
+            navigate('/messenger');
+            break;
+          case 'Grade':
+            navigate(role === 'Teacher' ? '/teacher/reports' : '/student/grades');
+            break;
+          case 'Assignment':
+            navigate(role === 'Teacher' ? '/teacher/classrooms' : '/student/courses');
+            break;
+          case 'Exam':
+            navigate(role === 'Teacher' ? '/teacher/classrooms' : '/student/exams');
+            break;
+          case 'CourseMaterial':
+            navigate(role === 'Teacher' ? '/teacher/classrooms' : '/student/courses');
+            break;
+          case 'SlotQuestion':
+            navigate(role === 'Teacher' ? '/teacher/classrooms' : '/student/courses');
+            break;
+        }
         break;
     }
   };

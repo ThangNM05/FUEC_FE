@@ -691,10 +691,6 @@ function Messenger() {
               )}
               <h1 className="text-2xl font-bold tracking-tight text-[#0A1B3C]">Messages</h1>
             </div>
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 shadow-emerald-400/40 shadow-sm' : 'bg-red-400'}`} />
-              <span className="text-xs text-gray-500">{isConnected ? 'Connected' : 'Offline'}</span>
-            </div>
           </div>
 
           {/* Messenger Card - glass style matching other pages */}
@@ -1071,7 +1067,7 @@ function Messenger() {
                   {/* Message Input */}
                   <div className="px-5 py-3 border-t border-gray-200/40 flex flex-col gap-3 pb-20 sm:pb-3">
                     {pendingAttachment && (
-                      <div className="relative inline-flex items-center self-start p-2 bg-gray-50 border border-gray-200 rounded-xl">
+                      <div className="relative inline-flex items-center self-start p-2 bg-gray-50 border border-gray-200 rounded-xl mb-3">
                         <button
                           onClick={() => {
                             URL.revokeObjectURL(pendingAttachment.previewUrl);
@@ -1093,8 +1089,8 @@ function Messenger() {
                         )}
                       </div>
                     )}
-                    <div className="flex items-end gap-3 w-full">
-                      <div className="flex gap-1">
+                    <div className="flex items-center justify-between gap-3 w-full">
+                      <div className="flex items-center gap-1 shrink-0">
                         <input
                           type="file"
                           ref={fileInputRef}
@@ -1104,7 +1100,7 @@ function Messenger() {
                         <button
                           onClick={() => { if (fileInputRef.current) { fileInputRef.current.accept = "*/*"; fileInputRef.current.click(); } }}
                           disabled={isUploadingFile || isSending}
-                          className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                           title="Attach File"
                         >
                           <Paperclip className="w-5 h-5" />
@@ -1112,7 +1108,7 @@ function Messenger() {
                         <button
                           onClick={() => { if (fileInputRef.current) { fileInputRef.current.accept = "image/*"; fileInputRef.current.click(); } }}
                           disabled={isUploadingFile || isSending}
-                          className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                           title="Attach Image"
                         >
                           <ImageIcon className="w-5 h-5" />
@@ -1120,13 +1116,13 @@ function Messenger() {
                         <button
                           onClick={() => { if (fileInputRef.current) { fileInputRef.current.accept = "video/*"; fileInputRef.current.click(); } }}
                           disabled={isUploadingFile || isSending}
-                          className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="p-2 text-gray-400 hover:text-[#F37022] hover:bg-orange-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                           title="Attach Video"
                         >
                           <VideoIcon className="w-5 h-5" />
                         </button>
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <textarea
                           value={messageInput}
                           onChange={(e) => pendingChatUser && !selectedConversation
@@ -1138,17 +1134,17 @@ function Messenger() {
                             ? `Message ${pendingChatUser.fullName}...`
                             : 'Type a message...'}
                           rows={1}
-                          className="w-full px-4 py-2.5 bg-gray-50/80 border border-gray-200 rounded-xl text-sm
+                          className="w-full px-4 py-2.5 bg-gray-50/80 border border-gray-200 rounded-full text-sm
                                  focus:outline-none focus:ring-2 focus:ring-[#F37022]/40 focus:border-[#F37022]
-                                 transition-all duration-200 resize-none placeholder-gray-400"
+                                 transition-all duration-200 resize-none placeholder-gray-400 max-h-[44px] overflow-hidden leading-snug flex items-center"
                         />
                       </div>
                       <button
                         onClick={handleSendMessage}
                         disabled={(!messageInput.trim() && !pendingAttachment) || isCreatingConversation || isUploadingFile || isSending}
-                        className="p-2.5 bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-xl
+                        className="p-2.5 shrink-0 bg-gradient-to-r from-[#F37022] to-[#ff8c42] text-white rounded-full
                                hover:shadow-lg hover:shadow-orange-200 disabled:opacity-40 disabled:cursor-not-allowed
-                               disabled:shadow-none transition-all duration-200 active:scale-95"
+                               disabled:shadow-none transition-all duration-200 active:scale-95 flex items-center justify-center h-[44px] w-[44px]"
                       >
                         {isCreatingConversation || isUploadingFile || isSending ? (
                           <Loader2 className="w-5 h-5 animate-spin" />
