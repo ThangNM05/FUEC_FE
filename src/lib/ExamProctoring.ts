@@ -59,8 +59,8 @@ const SMOOTHING_ALPHA = 0.25
 /* ---------- Suspicion scoring (all values in ms) ---------- */
 
 /** How fast the score rises while looking away (score += dt / RISE_MS).            *
- *  At RISE_MS = 5000 the student must look away for 5 s straight to go 0 → 1.      */
-const SUSPICION_RISE_MS = 5000
+ *  At RISE_MS = 4000 the student must look away for 4 s straight to go 0 → 1.      */
+const SUSPICION_RISE_MS = 4000
 
 /** How fast the score drops while looking at the screen (score -= dt / DECAY_MS).   *
  *  At DECAY_MS = 3000 the score drops from 1 → 0 in ~3 s of attentive behaviour.   */
