@@ -1330,6 +1330,7 @@ function TeacherCourseDetails() {
                     setCreateAssignmentSlotInfo(null);
                 }}
                 classSubjectId={classSubject?.id || courseId || ''}
+                subjectId={classSubject?.subjectId}
                 slotId={createAssignmentSlotInfo?.id}
                 slotTitle={createAssignmentSlotInfo?.title}
                 existingCount={assignments.length}

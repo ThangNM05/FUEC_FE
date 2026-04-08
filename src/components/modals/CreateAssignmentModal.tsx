@@ -1,15 +1,18 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Modal, DatePicker } from 'antd';
 import dayjs from 'dayjs';
-import { Upload, X, FileText, Calendar, ClipboardList, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Upload, X, FileText, Calendar, ClipboardList, AlertCircle, CheckCircle, Loader2, Users, CheckSquare, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUploadFileMutation } from '@/api/filesApi';
 import { useCreateAssignmentMutation } from '@/api/assignmentsApi';
+import { useGetAuthTeacherTeachingSubjectsQuery } from '@/api/teachersApi';
+import { useGetDefaultSemesterQuery } from '@/api/semestersApi';
 
 interface CreateAssignmentModalProps {
     isOpen: boolean;
     onClose: () => void;
     classSubjectId: string;
+    subjectId?: string;
     slotId?: string;
     slotTitle?: string;
     existingCount?: number;
@@ -19,6 +22,7 @@ export default function CreateAssignmentModal({
     isOpen,
     onClose,
     classSubjectId,
+    subjectId,
     slotId,
     slotTitle,
     existingCount = 0,
@@ -31,10 +35,31 @@ export default function CreateAssignmentModal({
     const [uploadProgress, setUploadProgress] = useState<'idle' | 'uploading' | 'done' | 'error'>('idle');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Multi-class selection
+    const [selectedClassSubjectIds, setSelectedClassSubjectIds] = useState<string[]>([classSubjectId]);
+
     const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation();
     const [createAssignment, { isLoading: isCreating }] = useCreateAssignmentMutation();
 
+    const { data: defaultSemester } = useGetDefaultSemesterQuery();
+    const { data: teachingData } = useGetAuthTeacherTeachingSubjectsQuery(
+        { semesterId: defaultSemester?.id },
+        { skip: !defaultSemester?.id || !subjectId }
+    );
+
+    // Sibling class-subjects (same subject, excluding current one)
+    const siblingClasses = teachingData?.subjects
+        ?.find((s: any) => s.subjectId === subjectId)
+        ?.classes?.filter((c: any) => c.classSubjectId !== classSubjectId) || [];
+
     const isSubmitting = isUploading || isCreating;
+
+    // Keep current class always selected; sync on open
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedClassSubjectIds([classSubjectId]);
+        }
+    }, [isOpen, classSubjectId]);
 
     const handleClose = () => {
         if (isSubmitting) return;
@@ -48,6 +73,22 @@ export default function CreateAssignmentModal({
         setInstanceNumber(existingCount + 1);
         setSelectedFile(null);
         setUploadProgress('idle');
+        setSelectedClassSubjectIds([classSubjectId]);
+    };
+
+    const toggleSiblingClass = (id: string) => {
+        setSelectedClassSubjectIds(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
+
+    const toggleAllSiblings = () => {
+        const allIds = [classSubjectId, ...siblingClasses.map((c: any) => c.classSubjectId)];
+        if (selectedClassSubjectIds.length === allIds.length) {
+            setSelectedClassSubjectIds([classSubjectId]);
+        } else {
+            setSelectedClassSubjectIds(allIds);
+        }
     };
 
     const handleFileSelect = (file: File) => {
@@ -85,12 +126,14 @@ export default function CreateAssignmentModal({
             toast.error('Please enter a description for the assignment.');
             return;
         }
-
+        if (selectedClassSubjectIds.length === 0) {
+            toast.error('Please select at least one class.');
+            return;
+        }
 
         try {
             let attachedFileId = undefined;
 
-            // Step 1: Upload the file if one is selected
             if (selectedFile) {
                 setUploadProgress('uploading');
                 const fileResult = await uploadFile({ file: selectedFile, folder: 'assignments' }).unwrap();
@@ -98,9 +141,8 @@ export default function CreateAssignmentModal({
                 attachedFileId = fileResult.id;
             }
 
-            // Step 2: Create the assignment
             await createAssignment({
-                classSubjectIds: [classSubjectId],
+                classSubjectIds: selectedClassSubjectIds,
                 slotId: slotId || undefined,
                 attachedFileId,
                 instanceNumber,
@@ -108,7 +150,12 @@ export default function CreateAssignmentModal({
                 dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
             }).unwrap();
 
-            toast.success(`Assignment ${instanceNumber} created successfully!`);
+            const classCount = selectedClassSubjectIds.length;
+            toast.success(
+                classCount > 1
+                    ? `Assignment ${instanceNumber} created for ${classCount} classes!`
+                    : `Assignment ${instanceNumber} created successfully!`
+            );
             resetForm();
             onClose();
         } catch (error: any) {
@@ -131,6 +178,9 @@ export default function CreateAssignmentModal({
         }
     };
 
+    const allIds = [classSubjectId, ...siblingClasses.map((c: any) => c.classSubjectId)];
+    const allSelected = selectedClassSubjectIds.length === allIds.length;
+
     return (
         <Modal
             title={
@@ -145,12 +195,71 @@ export default function CreateAssignmentModal({
             open={isOpen}
             onCancel={handleClose}
             footer={null}
-            width={600}
+            width={640}
             centered
             closable={!isSubmitting}
             maskClosable={!isSubmitting}
         >
             <div className="py-4 space-y-5">
+                {/* Multi-class Selector */}
+                {siblingClasses.length > 0 && (
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-sm font-semibold text-[#0A1B3C] flex items-center gap-1.5">
+                                <Users className="w-4 h-4 text-gray-400" />
+                                Apply to Classes
+                            </label>
+                            <button
+                                type="button"
+                                onClick={toggleAllSiblings}
+                                disabled={isSubmitting}
+                                className="text-xs text-[#F37022] font-semibold hover:underline disabled:opacity-50"
+                            >
+                                {allSelected ? 'Deselect all' : 'Select all'}
+                            </button>
+                        </div>
+                        <div className="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100">
+                            {/* Current class — always checked, not toggleable */}
+                            <div className="flex items-center gap-3 px-4 py-3 bg-orange-50/60">
+                                <CheckSquare className="w-4 h-4 text-[#F37022] flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <span className="text-sm font-medium text-[#0A1B3C]">
+                                        {/* Will be filled by the parent via classSubjectId; show placeholder */}
+                                        Current class
+                                    </span>
+                                    <span className="ml-2 text-xs text-[#F37022] font-semibold bg-orange-100 px-1.5 py-0.5 rounded">Current</span>
+                                </div>
+                            </div>
+                            {siblingClasses.map((cls: any) => {
+                                const checked = selectedClassSubjectIds.includes(cls.classSubjectId);
+                                return (
+                                    <button
+                                        key={cls.classSubjectId}
+                                        type="button"
+                                        disabled={isSubmitting}
+                                        onClick={() => toggleSiblingClass(cls.classSubjectId)}
+                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${checked ? 'bg-blue-50/50' : 'hover:bg-gray-50'} disabled:opacity-60`}
+                                    >
+                                        {checked
+                                            ? <CheckSquare className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                            : <Square className="w-4 h-4 text-gray-300 flex-shrink-0" />
+                                        }
+                                        <span className="text-sm font-medium text-gray-800">
+                                            {cls.classCode || cls.classSubjectId}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {selectedClassSubjectIds.length > 1 && (
+                            <p className="text-xs text-blue-600 font-semibold mt-1.5 flex items-center gap-1">
+                                <Users className="w-3.5 h-3.5" />
+                                Will create assignment for {selectedClassSubjectIds.length} classes simultaneously
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 {/* Instance Number */}
                 <div>
                     <label className="block text-sm font-semibold text-[#0A1B3C] mb-1.5">
@@ -296,7 +405,9 @@ export default function CreateAssignmentModal({
                         ) : (
                             <>
                                 <ClipboardList className="w-4 h-4" />
-                                Create Assignment
+                                {selectedClassSubjectIds.length > 1
+                                    ? `Create for ${selectedClassSubjectIds.length} Classes`
+                                    : 'Create Assignment'}
                             </>
                         )}
                     </button>
