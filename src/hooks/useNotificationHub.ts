@@ -52,6 +52,35 @@ function toNotificationItem(
   return { id, title, message, type, isRead: false, createdAt, relatedEntityId, relatedEntityType };
 }
 
+function normalizeNotificationType(type: NotificationDto['type'] | number): NotificationItem['type'] {
+  if (typeof type !== 'number') {
+    return type;
+  }
+
+  switch (type) {
+    case 0:
+      return 'System';
+    case 1:
+      return 'Message';
+    case 2:
+      return 'Assignment';
+    case 3:
+      return 'Exam';
+    case 4:
+      return 'Grade';
+    case 5:
+      return 'Announcement';
+    case 6:
+      return 'CourseMaterial';
+    case 7:
+      return 'SlotQuestion';
+    case 8:
+      return 'CheatDetected';
+    default:
+      return 'General';
+  }
+}
+
 export interface NotificationHubCallbacks {
   onReceiveNotification?: (notification: NotificationDto) => void;
   onNotificationRead?: (event: { NotificationId: string }) => void;
@@ -127,7 +156,7 @@ export function useNotificationHub(
         id: dto.id,
         title: dto.title,
         message: dto.message,
-        type: dto.type,
+        type: normalizeNotificationType(dto.type as NotificationDto['type'] | number),
         isRead: dto.isRead,
         createdAt: dto.createdAt,
         relatedEntityId: dto.relatedEntityId,
