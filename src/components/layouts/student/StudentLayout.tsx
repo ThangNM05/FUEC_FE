@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Navigate } from 'react-router';
+import { useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../../redux/authSlice';
 import StudentSidebar from './StudentSidebar';
@@ -8,6 +9,16 @@ import StudentHeader from './StudentHeader';
 function StudentLayout() {
   const [isMobile, setIsMobile] = useState(false);
   const user = useSelector(selectCurrentUser);
+  const location = useLocation();
+
+  const hideHeaderRoutes = ['/student/quiz'];
+  const hideDockRoutes = ['/student/quiz'];
+  const shouldHideHeader = hideHeaderRoutes.some((route) =>
+    location.pathname.startsWith(route)
+  );
+  const shouldHideDock = hideDockRoutes.some((route) =>
+    location.pathname.startsWith(route)
+  );
 
   useEffect(() => {
     const checkMobile = () => {
@@ -31,12 +42,14 @@ function StudentLayout() {
       <div className="fixed bottom-[-10%] right-[-5%] w-[40vw] h-[40vw] bg-[#0A1B3C]/10 rounded-full mix-blend-multiply filter blur-[100px] opacity-70 pointer-events-none"></div>
 
       <div className="relative z-10">
-        <StudentSidebar />
+        {!shouldHideDock && <StudentSidebar />}
 
         {/* Main Content */}
         <div className="transition-all duration-200">
-          <StudentHeader />
-          <div className="pt-4 h-[calc(100vh-56px)] overflow-y-auto pb-24">
+          {!shouldHideHeader && <StudentHeader />}
+          <div
+            className={`overflow-y-auto pb-24 ${shouldHideHeader ? 'h-screen pt-0' : 'pt-4 h-[calc(100vh-56px)]'}`}
+          >
             <Outlet />
           </div>
         </div>

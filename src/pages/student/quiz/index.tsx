@@ -496,15 +496,10 @@ export default function QuizTest() {
 
         if (isThreat) {
           // ── Threat detected — ensure we're recording ──
-          if (!wasRecording) {
+          if (!wasRecording && !cheatingPaused) {
             cheatStartRef.current = performance.now();
             cheatCapturedRef.current = false;
             episodeRecorderRef.current?.start();
-          }
-
-          // Confirm cheat frame for video recording
-          if (st !== 'suspicious' && !cheatCapturedRef.current) {
-            cheatCapturedRef.current = true;
           }
 
           // Pause exam after threshold exceeded for the current status
@@ -513,6 +508,10 @@ export default function QuizTest() {
             const threshold = PAUSE_THRESHOLDS[st] ?? DEFAULT_PAUSE_THRESHOLD;
             if (elapsed >= threshold && !cheatingPaused) {
               setCheatingPaused(true);
+
+              // Confirm cheating only when the pause threshold is reached
+              // (this is when "Suspicious Behavior Detected" is shown to the student).
+              cheatCapturedRef.current = true;
             }
           }
         } else {
@@ -542,8 +541,8 @@ export default function QuizTest() {
                 }
               })();
             } else {
-              // Only suspicious — discard the recording silently
-              console.log('[Proctor] Episode was only suspicious — discarding clip');
+              // Keep this branch for future stricter policies; currently all threat states are captured.
+              console.log('[Proctor] Episode not confirmed — discarding clip');
               recorder?.stop();
             }
           }
@@ -568,6 +567,34 @@ export default function QuizTest() {
       if (inferenceTimer) window.clearTimeout(inferenceTimer);
     };
   }, [proctorReady, cheatingPaused]);
+
+  // Send evidence exactly when the UI enters the "Suspicious Behavior Detected" state.
+  useEffect(() => {
+    if (!cheatingPaused) return;
+
+    const studentCode = examDataRef.current?.studentCode || userRef.current?.entityId || 'unknown';
+    const classSubject = classSubjectIdRef.current || 'unknown';
+    const sExamId = studentExamIdRef.current;
+    const capturedStatus = lastStateRef.current?.status || 'suspicious';
+    const recorder = episodeRecorderRef.current;
+
+    (async () => {
+      try {
+        const clip = await recorder?.stop();
+        if (clip && clip.size > 0) {
+          console.log('[Proctor] Uploading paused-state clip:', clip.size, 'bytes');
+          await uploadCheatVideo(clip, capturedStatus, studentCode, classSubject, sExamId);
+        } else {
+          console.warn('[Proctor] Paused-state clip was empty or null');
+        }
+      } catch (err) {
+        console.warn('[Proctor] Paused-state upload failed:', err);
+      } finally {
+        // Prevent duplicate upload on the safe-state branch for the same pause cycle.
+        cheatCapturedRef.current = false;
+      }
+    })();
+  }, [cheatingPaused]);
 
   // Resume exam when attention becomes safe
   useEffect(() => {

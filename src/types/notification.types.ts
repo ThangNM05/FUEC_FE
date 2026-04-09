@@ -19,7 +19,8 @@ export type NotificationType =
   | 'System'
   | 'Message'
   | 'CourseMaterial'
-  | 'SlotQuestion';
+  | 'SlotQuestion'
+  | 'CheatDetected';
 
 /** Matches AssignmentNotificationDto */
 export interface AssignmentNotificationDto {

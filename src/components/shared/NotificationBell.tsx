@@ -1,10 +1,11 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Bell, CheckCheck, BookOpen, ClipboardList, Award, Megaphone, Info, MessageSquare, FileText, HelpCircle } from 'lucide-react';
+import { Bell, CheckCheck, BookOpen, ClipboardList, Award, Megaphone, Info, MessageSquare, FileText, HelpCircle, ShieldAlert, Trash2 } from 'lucide-react';
 import type { NotificationItem } from '@/types/notification.types';
 import { useNotificationHub } from '@/contexts/NotificationContext';
 import { selectCurrentUser } from '@/redux/authSlice';
+import { useDeleteNotificationMutation } from '@/api/notificationsApi';
 
 function getTypeIcon(type: NotificationItem['type']) {
   switch (type) {
@@ -22,6 +23,8 @@ function getTypeIcon(type: NotificationItem['type']) {
       return <FileText className="w-4 h-4 text-indigo-500" />;
     case 'SlotQuestion':
       return <HelpCircle className="w-4 h-4 text-amber-500" />;
+    case 'CheatDetected':
+      return <ShieldAlert className="w-4 h-4 text-red-500" />;
     default:
       return <Info className="w-4 h-4 text-gray-500" />;
   }
@@ -50,8 +53,17 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
 
   const navigate = useNavigate();
   const currentUser = useSelector(selectCurrentUser);
-  const { notifications, unreadCount, isConnected, markAsRead, markAllAsRead } =
+  const {
+    notifications,
+    unreadCount,
+    isConnected,
+    markAsRead,
+    markAllAsRead,
+    clearNotification,
+    clearAll,
+  } =
     useNotificationHub();
+  const [deleteNotification] = useDeleteNotificationMutation();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -81,6 +93,26 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
     await markAsRead(id);
   }
 
+  async function handleClearAll() {
+    if (notifications.length === 0) return;
+
+    await Promise.allSettled(
+      notifications.map((notification) => deleteNotification(notification.id).unwrap()),
+    );
+    clearAll();
+  }
+
+  async function handleDeleteNotification(id: string, event: React.MouseEvent<HTMLButtonElement>) {
+    event.stopPropagation();
+
+    try {
+      await deleteNotification(id).unwrap();
+      clearNotification(id);
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+    }
+  }
+
   const handleNotificationClick = (n: NotificationItem) => {
     handleMarkRead(n.id);
     setOpen(false);
@@ -88,6 +120,12 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
     const role = currentUser?.role;
     const entityType = n.relatedEntityType;
     const entityId = n.relatedEntityId;
+
+    // Always deep-link cheating alerts to the exact evidence detail page when an id exists.
+    if (role === 'Teacher' && n.type === 'CheatDetected' && entityId) {
+      navigate(`/teacher/reports?cheatLogId=${entityId}`);
+      return;
+    }
 
     // For notifications without a related entity, use type-based fallback
     if (!entityId) {
@@ -133,6 +171,14 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
         navigate(role === 'Teacher' ? '/teacher/classrooms' : '/student/courses');
         break;
 
+      case 'StudentCheatLog':
+      case 'StudentCheatLogs':
+      case 'CheatLog':
+        if (role === 'Teacher') {
+          navigate(`/teacher/reports?cheatLogId=${entityId}`);
+        }
+        break;
+
       default:
         // Fallback: use notification type for routing
         switch (n.type) {
@@ -153,6 +199,11 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
             break;
           case 'SlotQuestion':
             navigate(role === 'Teacher' ? '/teacher/classrooms' : '/student/courses');
+            break;
+          case 'CheatDetected':
+            if (role === 'Teacher') {
+              navigate('/teacher/reports');
+            }
             break;
         }
         break;
@@ -207,6 +258,16 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
               )}
             </div>
             <div className="flex items-center gap-1">
+              {notifications.length > 0 && (
+                <button
+                  onClick={handleClearAll}
+                  className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                  title="Clear all notifications"
+                  aria-label="Clear all notifications"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
@@ -235,7 +296,7 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
                 {notifications.map((n) => (
                   <li
                     key={n.id}
-                    className={`group relative flex gap-3 px-4 py-3 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50 ${
+                    className={`group relative flex gap-3 px-4 py-3 pr-11 border-b border-gray-50 cursor-pointer transition-colors hover:bg-gray-50 ${
                       !n.isRead ? 'bg-[#F37022]/5' : ''
                     }`}
                     onClick={() => handleNotificationClick(n)}
@@ -262,10 +323,20 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
 
                     {/* Unread dot */}
                     {!n.isRead && (
-                      <div className="flex-shrink-0 mt-1.5">
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 transition-opacity group-hover:opacity-0">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#F37022] block" />
                       </div>
                     )}
+
+                    <button
+                      type="button"
+                      onClick={(event) => handleDeleteNotification(n.id, event)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50"
+                      aria-label="Delete notification"
+                      title="Delete notification"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </li>
                 ))}
               </ul>

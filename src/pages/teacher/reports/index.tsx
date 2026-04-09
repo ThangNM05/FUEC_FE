@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Select } from 'antd';
 import {
@@ -29,8 +30,8 @@ import { useGetAuthTeacherTeachingSubjectsQuery } from '@/api/teachersApi';
 import { useGetSemestersQuery, useGetDefaultSemesterQuery, useGetSemesterReportQuery } from '@/api/semestersApi';
 import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
 import { useGetAllStudentExamsQuery } from '@/api/studentExamsApi';
-import { useGetStudentCheatLogsQuery, useDeleteStudentCheatLogMutation } from '@/api/studentCheatLogsApi';
-import { useUpdateStudentExamMutation } from '@/api/studentExamsApi';
+import { useGetStudentCheatLogsQuery, useDeleteStudentCheatLogMutation, useGetStudentCheatLogByIdQuery } from '@/api/studentCheatLogsApi';
+import { useUpdateStudentExamMutation, useGetStudentExamByIdQuery } from '@/api/studentExamsApi';
 import { useLazyExportGradesQuery } from '@/api/classDetailsApi';
 import { Loader2 } from 'lucide-react';
 import { getApiUrl } from '@/config/appConfig';
@@ -79,6 +80,7 @@ type ViewState = 'CLASSES' | 'EXAMS' | 'STUDENTS' | 'DETAIL';
 type MainTab = 'integrity' | 'academic';
 
 function TeacherReports() {
+    const [searchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState<MainTab>('integrity');
     const [view, setView] = useState<ViewState>('CLASSES');
     const [semester, setSemester] = useState('');
@@ -87,6 +89,7 @@ function TeacherReports() {
     const [selectedClass, setSelectedClass] = useState<any | null>(null);
     const [selectedExam, setSelectedExam] = useState<any | null>(null);
     const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+    const handledCheatLogIdRef = useRef<string | null>(null);
 
     const [deleteLog, { isLoading: isDeletingLogs }] = useDeleteStudentCheatLogMutation();
     const [updateStudentExam, { isLoading: isConfirmingCheating }] = useUpdateStudentExamMutation();
@@ -132,6 +135,17 @@ function TeacherReports() {
             classSubjectId: selectedClass?.classSubjectId
         },
         { skip: !selectedExam || view !== 'STUDENTS' }
+    );
+
+    const cheatLogIdFromUrl = searchParams.get('cheatLogId');
+    const { data: deepLinkCheatLog } = useGetStudentCheatLogByIdQuery(
+        cheatLogIdFromUrl || '',
+        { skip: !cheatLogIdFromUrl }
+    );
+
+    const { data: deepLinkStudentExam } = useGetStudentExamByIdQuery(
+        deepLinkCheatLog?.studentExamId || '',
+        { skip: !deepLinkCheatLog?.studentExamId }
     );
 
     const { data: studentExamsData } = useGetAllStudentExamsQuery(
@@ -181,6 +195,43 @@ function TeacherReports() {
 
         return Object.values(grouped) as StudentEvidence[];
     }, [logsData, studentExamsData]);
+
+    useEffect(() => {
+        if (!cheatLogIdFromUrl || !deepLinkCheatLog) return;
+        if (handledCheatLogIdRef.current === cheatLogIdFromUrl) return;
+
+        const attachmentUrl = deepLinkCheatLog.capturedImageUrl;
+        const isVideo = typeof attachmentUrl === 'string' && attachmentUrl.toLowerCase().includes('.webm');
+
+        setActiveTab('integrity');
+        setSelectedExam({
+            id: deepLinkStudentExam?.examId || '',
+            displayName: deepLinkStudentExam?.examDisplayName || 'Exam'
+        });
+        setSelectedStudent({
+            id: deepLinkCheatLog.studentExamId,
+            studentName: deepLinkCheatLog.studentName || deepLinkStudentExam?.studentName || 'Student',
+            studentCode: deepLinkStudentExam?.studentCode || 'Unknown',
+            suspiciousActivity: deepLinkCheatLog.status,
+            severity: 'medium',
+            timestamp: deepLinkCheatLog.timestamp,
+            duration: 'N/A',
+            description: `Captured proctoring log: ${deepLinkCheatLog.status}`,
+            attachments: [
+                {
+                    id: deepLinkCheatLog.id,
+                    type: isVideo ? 'video' : 'image',
+                    url: attachmentUrl,
+                    timestamp: dayjs(deepLinkCheatLog.timestamp).format('HH:mm:ss')
+                }
+            ],
+            grade: deepLinkStudentExam?.grade,
+            isSubmitted: deepLinkStudentExam?.isSubmitted
+        });
+        setView('DETAIL');
+
+        handledCheatLogIdRef.current = cheatLogIdFromUrl;
+    }, [cheatLogIdFromUrl, deepLinkCheatLog, deepLinkStudentExam]);
 
     // --- Helpers ---
     const getSeverityStyles = (severity: string) => {
