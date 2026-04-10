@@ -62,6 +62,8 @@ export default function ExamLobby() {
   const status = exam ? getExamStatus(exam.startTime, exam.endTime) : 'upcoming';
   const requiresCode = exam ? (exam.securityMode === SecurityMode.StaticCode || exam.securityMode === SecurityMode.DynamicCode) : false;
   const securityLabel = exam?.securityMode === SecurityMode.DynamicCode ? 'Dynamic Code' : exam?.securityMode === SecurityMode.StaticCode ? 'Static Code' : 'None';
+  
+  const isLockdownBrowser = navigator.userAgent.includes('FUECLockdownBrowser');
 
   // Auto-refresh countdown
   const [, setTick] = useState(0);
@@ -90,7 +92,22 @@ export default function ExamLobby() {
       // Authorized for this session
       sessionStorage.setItem(`quiz_authorized_${examId}`, 'true');
 
-      navigate(`/student/quiz?studentExamId=${response.studentExamId}&examId=${response.examId}&classSubjectId=${classSubjectId}`);
+      // Check Lockdown Browser requirement
+      const targetPath = `/student/quiz?studentExamId=${response.studentExamId}&examId=${response.examId}&classSubjectId=${classSubjectId}&appAuth=true`;
+      
+      if (exam?.requireLockdownBrowser && !isLockdownBrowser) {
+          // Redirect via custom protocol to launch the app
+          const token = localStorage.getItem('token') || '';
+          const userObj = localStorage.getItem('user') || '';
+          const encodedUrl = encodeURIComponent(targetPath);
+          const encodedUser = encodeURIComponent(userObj);
+          
+          window.location.href = `fuec://start?token=${token}&user=${encodedUser}&target=${encodedUrl}`;
+          setErrorMsg('Launching FUEC Lockdown Browser... Please click "Allow" or "Open". If nothing happens, make sure the app is installed.');
+          return;
+      }
+
+      navigate(targetPath);
     } catch (error: any) {
       console.error('Failed to start exam', error);
       const msg = error?.data?.message || error?.data?.result || error?.message || 'Could not start the exam.';
@@ -276,17 +293,49 @@ export default function ExamLobby() {
 
           {/* Start Button */}
           {status === 'available' && !exam.isSubmitted && (
-            <button
-              onClick={handleStart}
-              disabled={isStarting}
-              className="w-full py-4 bg-[#F37022] text-white rounded-lg font-bold text-lg hover:bg-[#D96419] disabled:opacity-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-orange-200"
-            >
-              {isStarting ? (
-                <><Loader2 className="w-5 h-5 animate-spin" /> Opening exam...</>
-              ) : (
-                <><Play className="w-5 h-5" /> Start Exam</>
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={handleStart}
+                disabled={isStarting}
+                className="w-full py-4 bg-[#F37022] text-white rounded-lg font-bold text-lg hover:bg-[#D96419] disabled:opacity-50 transition-all flex items-center justify-center gap-3 shadow-lg shadow-orange-200"
+              >
+                {isStarting ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> {exam.requireLockdownBrowser && !isLockdownBrowser ? 'Launching App...' : 'Opening exam...'}</>
+                ) : (
+                  <><Play className="w-5 h-5" /> {exam.requireLockdownBrowser && !isLockdownBrowser ? 'Start & Open Lockdown Browser' : 'Start Exam'}</>
+                )}
+              </button>
+              
+              {exam.requireLockdownBrowser && !isLockdownBrowser && (
+                <div className="bg-red-50/50 border border-red-200 rounded-lg p-4 flex flex-col items-center justify-center gap-2 text-center mt-2">
+                  <Lock className="w-6 h-6 text-red-500 mb-1" />
+                  <p className="text-sm font-semibold text-[#0A1B3C]">This exam requires the FUEC Lockdown Browser.</p>
+                  <p className="text-xs text-gray-600 px-4">You will be prompted to open the app when you click Start. If you haven't downloaded it yet, please do so below.</p>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-3 mt-3 w-full sm:w-auto">
+                    <a 
+                      href="https://drive.google.com/file/d/1RbGHtArMEbjVjAcNwWP8MlT6Ux0yiHoR/view?usp=sharing" 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-50 border-2 border-blue-500 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-bold transition-colors"
+                    >
+                      <svg viewBox="0 0 87.6 87.6" className="w-4 h-4 fill-current"><path d="M0,12.4H39.2V41.6H0V12.4z M0,45.2H39.2V74.4H0V45.2z M42.4,8.1H87.6V41.6H42.4V8.1z M42.4,45.2H87.6V78.7H42.4V45.2z"/></svg>
+                      Download for Windows
+                    </a>
+                    
+                    <a 
+                      href="https://drive.google.com/file/d/1JHdzprcbj7-xBmfroG0YHZMOR-EbHuxb/view?usp=sharing" 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gray-50 border-2 border-gray-600 text-gray-800 hover:bg-gray-100 rounded-lg text-sm font-bold transition-colors"
+                    >
+                      <svg viewBox="0 0 384 512" className="w-4 h-4 fill-current"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+                      Download for macOS
+                    </a>
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
           )}
 
           {/* View Result Button for submitted exams */}

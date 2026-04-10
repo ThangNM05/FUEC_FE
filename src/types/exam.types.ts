@@ -22,6 +22,7 @@ export interface CreateExamRequest {
     codeDuration: number;
     proctoringExemptStudentClassIds?: string[];
     enableAiProctoring?: boolean;
+    requireLockdownBrowser?: boolean;
 }
 
 export interface UpdateExamRequest {
@@ -34,6 +35,7 @@ export interface UpdateExamRequest {
     codeDuration?: number;
     securityMode?: number;
     displayName?: string;
+    requireLockdownBrowser?: boolean;
 }
 
 export interface Exam {
@@ -53,6 +55,7 @@ export interface Exam {
     codeDuration: number;
     proctoringExemptStudentClassIds?: string[];
     enableAiProctoring?: boolean;
+    requireLockdownBrowser?: boolean;
     category: string;
     tag: string;
     subjectCode: string;
