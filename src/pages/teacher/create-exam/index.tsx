@@ -32,6 +32,7 @@ interface ExamFormData {
     allowedIpRanges: string;
     codeDuration: number;
     enableAiProctoring: boolean;
+    requireLockdownBrowser: boolean;
     proctoringExemptStudentClassIds: string[];
 }
 
@@ -161,6 +162,7 @@ function CreateExam() {
         allowedIpRanges: '',
         codeDuration: 240,
         enableAiProctoring: true,
+        requireLockdownBrowser: false,
         proctoringExemptStudentClassIds: [],
     });
 
@@ -630,6 +632,28 @@ function CreateExam() {
                                         }`}
                                 >
                                     <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.enableAiProctoring ? 'translate-x-[22px]' : 'translate-x-0.5'
+                                        }`} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Require Lockdown Browser Toggle */}
+                        <div className="pt-4 border-t border-gray-100">
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <div className="flex items-center gap-3">
+                                    <Lock className="w-4 h-4 text-gray-500" />
+                                    <div>
+                                        <p className="text-sm font-medium text-[#0A1B3C]">Require Lockdown Browser</p>
+                                        <p className="text-xs text-gray-500">Force students to take this exam via the official Lockdown Browser app</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => updateField('requireLockdownBrowser', !form.requireLockdownBrowser)}
+                                    className={`relative w-11 h-6 rounded-full transition-colors ${form.requireLockdownBrowser ? 'bg-red-500' : 'bg-gray-300'
+                                        }`}
+                                >
+                                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.requireLockdownBrowser ? 'translate-x-[22px]' : 'translate-x-0.5'
                                         }`} />
                                 </button>
                             </div>

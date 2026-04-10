@@ -34,6 +34,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                 securityMode: exam.securityMode,
                 displayName: exam.displayName,
                 enableAiProctoring: exam.enableAiProctoring ?? true,
+                requireLockdownBrowser: exam.requireLockdownBrowser ?? false,
                 proctoringExemptStudentClassIds: exam.proctoringExemptStudentClassIds || [],
             });
         }
@@ -81,6 +82,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                     requireIpCheck: false,
                     displayName: '',
                     enableAiProctoring: true,
+                    requireLockdownBrowser: false,
                     proctoringExemptStudentClassIds: [],
                 }}
             >
@@ -122,7 +124,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                 </Form.Item>
 
                 {/* Toggle switches — stacked on mobile, row on desktop */}
-                <div className="grid grid-cols-3 gap-4 mb-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                     <Form.Item name="isPublicGrade" label="Public Grade" valuePropName="checked" className="!mb-0">
                         <Switch />
                     </Form.Item>
@@ -132,6 +134,10 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                     </Form.Item>
 
                     <Form.Item name="enableAiProctoring" label="AI Proctoring" valuePropName="checked" className="!mb-0">
+                        <Switch />
+                    </Form.Item>
+
+                    <Form.Item name="requireLockdownBrowser" label="Lockdown App" valuePropName="checked" className="!mb-0">
                         <Switch />
                     </Form.Item>
                 </div>

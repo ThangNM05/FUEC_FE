@@ -625,12 +625,19 @@ export default function QuizTest() {
 
     const requiresCode = (examData as any).securityMode !== 0;
     const isCompleted = examData.isSubmitted;
+    const isLockdownBrowser = navigator.userAgent.includes('FUECLockdownBrowser');
+    const appAuth = searchParams.get('appAuth') === 'true';
 
-    if (requiresCode && !isCompleted && !sessionStorage.getItem(`quiz_authorized_${examId}`)) {
+    // If appAuth is present, automatically set session storage to true
+    if (appAuth) {
+      sessionStorage.setItem(`quiz_authorized_${examId}`, 'true');
+    }
+
+    if (requiresCode && !isCompleted && !isLockdownBrowser && !appAuth && !sessionStorage.getItem(`quiz_authorized_${examId}`)) {
       console.warn('Unauthorized quiz access detected. Redirecting to lobby.');
       navigate(`/student/exam-lobby/${examId}?classSubjectId=${classSubjectId}`);
     }
-  }, [examData, examId, navigate, classSubjectId]);
+  }, [examData, examId, navigate, classSubjectId, searchParams]);
 
   // ── Initialize timer & restore answers ──
   useEffect(() => {
@@ -811,9 +818,9 @@ export default function QuizTest() {
       // Check if the latest notification is an Exam Force Submit
       // NotificationType.Exam is typically 3 (System=0, Message=1, Assignment=2, Exam=3)
       const isExamType = latest.type === 'Exam' || (latest.type as any) === 3 || (latest.type as any) === '3';
-      const isForceSubmitTitle = 
-        latest.title === 'Exam Force Submitted' || 
-        latest.title === 'Bài thi đã bị ép nộp' || 
+      const isForceSubmitTitle =
+        latest.title === 'Exam Force Submitted' ||
+        latest.title === 'Bài thi đã bị ép nộp' ||
         latest.title?.toLowerCase().includes('force submit') ||
         latest.title?.toLowerCase().includes('ép nộp');
 
@@ -1207,14 +1214,14 @@ export default function QuizTest() {
                           onClick={() => {
                             const existing = answers[q.id] || [];
                             let newOptionIds: string[] = [];
-                            
+
                             // User requested that even if q.questionType === 0 (Single Choice), they can select multiple!
                             if (existing.includes(option.id)) {
                               newOptionIds = existing.filter(id => id !== option.id);
                             } else {
                               newOptionIds = [...existing, option.id];
                             }
-                            
+
                             handleAnswer(q.id, newOptionIds, q.questionType);
                           }}
                           className={`group w-full flex items-center gap-4 p-5 text-left rounded-xl border-2 transition-all duration-200 ${isSelected ? 'border-[#F37022] bg-[#F37022]/5' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
@@ -1294,40 +1301,40 @@ export default function QuizTest() {
 
               {/* AI Proctoring Camera Preview Window (hidden for exempt students) */}
               {!examData?.isProctoringExempt && (
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
-                    <span className="text-xs font-bold text-[#0A1B3C] uppercase tracking-wider">AI Proctoring</span>
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                  <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                      <span className="text-xs font-bold text-[#0A1B3C] uppercase tracking-wider">AI Proctoring</span>
+                    </div>
+                    {proctorReady ? (
+                      <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full uppercase">Active</span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full uppercase">Starting</span>
+                    )}
                   </div>
-                  {proctorReady ? (
-                    <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full uppercase">Active</span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full uppercase">Starting</span>
-                  )}
-                </div>
-                <div className="relative aspect-video bg-black w-full flex items-center justify-center">
-                  {!proctorReady && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-white/80">
-                      <Loader2 className="w-6 h-6 animate-spin mb-2 text-[#F37022]" />
-                      <span className="text-xs font-semibold">Accessing Camera</span>
+                  <div className="relative aspect-video bg-black w-full flex items-center justify-center">
+                    {!proctorReady && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-white/80">
+                        <Loader2 className="w-6 h-6 animate-spin mb-2 text-[#F37022]" />
+                        <span className="text-xs font-semibold">Accessing Camera</span>
+                      </div>
+                    )}
+                    <video ref={videoRef} playsInline muted autoPlay className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+                    <canvas
+                      ref={canvasRef}
+                      className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                      style={{ transform: 'scaleX(-1)' }}
+                    />
+                  </div>
+                  {/* Inline cheating warning under camera */}
+                  {cheatingPaused && (
+                    <div className="px-3 py-2.5 bg-red-600 flex items-center justify-center gap-2 animate-pulse">
+                      <AlertTriangle className="w-4 h-4 text-white shrink-0" />
+                      <span className="text-xs font-bold text-white uppercase tracking-wide">Suspicious Behavior Detected</span>
                     </div>
                   )}
-                  <video ref={videoRef} playsInline muted autoPlay className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
-                  <canvas
-                    ref={canvasRef}
-                    className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                    style={{ transform: 'scaleX(-1)' }}
-                  />
                 </div>
-                {/* Inline cheating warning under camera */}
-                {cheatingPaused && (
-                  <div className="px-3 py-2.5 bg-red-600 flex items-center justify-center gap-2 animate-pulse">
-                    <AlertTriangle className="w-4 h-4 text-white shrink-0" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wide">Suspicious Behavior Detected</span>
-                  </div>
-                )}
-              </div>
               )}
             </div>
           </div>
