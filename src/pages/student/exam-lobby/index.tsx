@@ -314,7 +314,7 @@ export default function ExamLobby() {
                   
                   <div className="flex flex-col sm:flex-row items-center gap-3 mt-3 w-full sm:w-auto">
                     <a 
-                      href="https://drive.google.com/file/d/1RbGHtArMEbjVjAcNwWP8MlT6Ux0yiHoR/view?usp=sharing" 
+                      href="https://drive.google.com/file/d/16xG2UtHfEOp37Z48K6c0lkI3kcfO14yG/view" 
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-50 border-2 border-blue-500 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-bold transition-colors"
