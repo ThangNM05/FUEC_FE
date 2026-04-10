@@ -314,7 +314,7 @@ export default function ExamLobby() {
                   
                   <div className="flex flex-col sm:flex-row items-center gap-3 mt-3 w-full sm:w-auto">
                     <a 
-                      href="https://drive.google.com/file/d/1OXqx1OsVyG-uslbpzs4rnJfyhPuX_S3I/view?usp=sharing" 
+                      href="https://drive.google.com/file/d/1vhmry7VoybI-Wh7FjifQttM0wZVtH6ol/view?usp=sharing" 
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-blue-50 border-2 border-blue-500 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-bold transition-colors"
@@ -324,7 +324,7 @@ export default function ExamLobby() {
                     </a>
                     
                     <a 
-                      href="https://drive.google.com/file/d/1JHdzprcbj7-xBmfroG0YHZMOR-EbHuxb/view?usp=sharing" 
+                      href="https://drive.google.com/file/d/1vtDOnyqdG6E5YKKuFcbdasD6jz-S98RM/view?usp=sharing" 
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gray-50 border-2 border-gray-600 text-gray-800 hover:bg-gray-100 rounded-lg text-sm font-bold transition-colors"

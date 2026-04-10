@@ -331,10 +331,11 @@ export default function QuizTest() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examData]);
 
-  // Request fullscreen once proctoring is ready (skip for exempt students)
+  // Request fullscreen once proctoring is ready (skip for exempt students or lockdown browser)
   useEffect(() => {
+    const isLockdownBrowser = navigator.userAgent.includes('FUECLockdownBrowser');
     if (!proctorReady || fullscreenRequestedRef.current) return;
-    if (examData?.isProctoringExempt) return;
+    if (examData?.isProctoringExempt || isLockdownBrowser) return;
     fullscreenRequestedRef.current = true;
     try {
       if (document.documentElement.requestFullscreen) {
@@ -984,8 +985,8 @@ export default function QuizTest() {
   // ── Quiz UI ──
   return (
     <>
-      {/* Fullscreen Prompt Modal (hidden for exempt students) */}
-      {showFullscreenPrompt && !examData?.isProctoringExempt && (
+      {/* Fullscreen Prompt Modal (hidden for exempt students or lockdown browser) */}
+      {showFullscreenPrompt && !examData?.isProctoringExempt && !navigator.userAgent.includes('FUECLockdownBrowser') && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-4 p-safe animate-fadeIn">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
             <h3 className="text-lg font-bold text-[#0A1B3C] mb-3">Please go fullscreen</h3>
