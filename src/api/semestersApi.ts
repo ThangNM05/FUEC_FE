@@ -5,7 +5,8 @@ import type {
     CreateSemesterRequest,
     UpdateSemesterRequest,
     PaginatedResponse,
-    SemesterReport
+    SemesterReport,
+    AutoCreateSemesterResult
 } from '@/types/semester.types';
 
 export const semestersApi = baseApi.injectEndpoints({
@@ -97,6 +98,13 @@ export const semestersApi = baseApi.injectEndpoints({
             providesTags: (_result, _error, id) => [{ type: 'Semesters', id }],
             transformResponse: (response: any) => response.result,
         }),
+        autoCreateSemester: builder.mutation<AutoCreateSemesterResult, void>({
+            query: () => ({
+                url: '/Semesters/auto-create',
+                method: 'POST',
+            }),
+            invalidatesTags: ['Semesters'],
+        }),
     }),
 });
 
@@ -109,4 +117,5 @@ export const {
     useGetDefaultSemesterQuery,
     useSetDefaultSemesterMutation,
     useGetSemesterReportQuery,
+    useAutoCreateSemesterMutation,
 } = semestersApi;
