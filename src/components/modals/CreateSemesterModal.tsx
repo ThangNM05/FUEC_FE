@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Modal, Input, Checkbox, DatePicker, Button } from 'antd';
+import { SyncOutlined } from '@ant-design/icons';
 import dayjs, { type Dayjs } from 'dayjs';
 
-import { useCreateSemesterMutation } from '@/api/semestersApi';
+import { useCreateSemesterMutation, useAutoCreateSemesterMutation } from '@/api/semestersApi';
 import type { CreateSemesterRequest } from '@/types/semester.types';
 
 interface CreateSemesterModalProps {
@@ -20,6 +21,9 @@ export default function CreateSemesterModal({ isOpen, onClose }: CreateSemesterM
     });
 
     const [createSemester, { isLoading }] = useCreateSemesterMutation();
+    const [autoCreateSemester, { isLoading: isAutoLoading }] = useAutoCreateSemesterMutation();
+
+    const anyLoading = isLoading || isAutoLoading;
 
     const resetForm = () => {
         setFormData({
@@ -69,6 +73,27 @@ export default function CreateSemesterModal({ isOpen, onClose }: CreateSemesterM
         }
     };
 
+    const handleAutoCreate = async () => {
+        try {
+            const result = await autoCreateSemester().unwrap();
+            const res = (result as any)?.result ?? result;
+            if (res.wasCreated && res.semester) {
+                setFormData({
+                    semesterCode: res.semester.semesterCode,
+                    startDate: res.semester.startDate,
+                    endDate: res.semester.endDate,
+                    isDefault: res.semester.isDefault ?? false,
+                });
+                toast.success(res.message || 'Semester auto-generated successfully');
+            } else {
+                toast.info(res.message || 'Semester already exists for next period');
+            }
+        } catch (err: any) {
+            const errorMessage = err?.data?.message || err?.message || 'Auto create failed';
+            toast.error(errorMessage);
+        }
+    };
+
     const handleCancel = () => {
         resetForm();
         onClose();
@@ -80,19 +105,33 @@ export default function CreateSemesterModal({ isOpen, onClose }: CreateSemesterM
             onCancel={handleCancel}
             title="Create New Semester"
             width={800}
-            footer={[
-                <Button key="cancel" onClick={handleCancel} disabled={isLoading}>
+        footer={[
+                <Button key="cancel" onClick={handleCancel} disabled={anyLoading}>
                     Cancel
+                </Button>,
+                <Button
+                    key="auto-create"
+                    icon={<SyncOutlined spin={isAutoLoading} />}
+                    loading={isAutoLoading}
+                    disabled={anyLoading}
+                    onClick={handleAutoCreate}
+                    style={{
+                        borderColor: '#F37022',
+                        color: '#F37022',
+                    }}
+                >
+                    Auto Create
                 </Button>,
                 <Button
                     key="submit"
                     type="primary"
                     loading={isLoading}
+                    disabled={anyLoading}
                     onClick={handleSubmit}
                     className="bg-[#F37022] hover:bg-[#d95f19] border-none"
                 >
                     Create
-                </Button>
+                </Button>,
             ]}
         >
             <div className="grid gap-6 py-6">

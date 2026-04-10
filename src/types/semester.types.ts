@@ -70,3 +70,10 @@ export interface SemesterReport {
     passingRate: number;
     topSubjectsByStudentCount: SubjectReportItem[];
 }
+
+export interface AutoCreateSemesterResult {
+    success: boolean;
+    wasCreated: boolean;
+    message: string;
+    semester?: Semester;
+}
