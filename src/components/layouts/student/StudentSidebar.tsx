@@ -39,20 +39,39 @@ function StudentSidebar() {
   const [isDockVisible, setIsDockVisible] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
+  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
     check();
     window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
+    return () => {
+      window.removeEventListener('resize', check);
+      if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    };
   }, []);
 
   // Auto-hide dock logic for desktop — triggered by hovering the home indicator pill
   // (no longer uses raw mouse distance from bottom)
-  const handlePillMouseEnter = () => setIsDockVisible(true);
-  const handlePillMouseLeave = () => setIsDockVisible(false);
-  const handleDockMouseEnter = () => setIsDockVisible(true);
-  const handleDockMouseLeave = () => setIsDockVisible(false);
+  const showDock = () => {
+    if (hideTimeoutRef.current) {
+      clearTimeout(hideTimeoutRef.current);
+      hideTimeoutRef.current = null;
+    }
+    setIsDockVisible(true);
+  };
+
+  const hideDock = () => {
+    if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
+    hideTimeoutRef.current = setTimeout(() => {
+      setIsDockVisible(false);
+    }, 300);
+  };
+
+  const handlePillMouseEnter = showDock;
+  const handlePillMouseLeave = hideDock;
+  const handleDockMouseEnter = showDock;
+  const handleDockMouseLeave = hideDock;
 
   // Close "More" menu on outside click
   useEffect(() => {
