@@ -366,3 +366,29 @@ html {
   background-color: rgba(255, 255, 255, 0.45) !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
 }
+
+/* Ant Design Portal & Animation Fixes (Cross-platform) */
+:root {
+  --antd-z-index-popup: 2000;
+}
+
+.ant-picker-dropdown,
+.ant-select-dropdown,
+.ant-dropdown,
+.ant-popover,
+.ant-modal-mask,
+.ant-modal-wrap {
+  z-index: 2000 !important;
+}
+
+/* Ensure Antd animations (Spin, Pulse) work in Tailwind v4 environment */
+.ant-spin, 
+.ant-spin-dot,
+.ant-spin-dot-item {
+  animation-play-state: running !important;
+}
+
+/* Fix for portals appearing in wrong positions on some Windows browsers */
+.ant-picker-dropdown {
+  position: absolute !important;
+}

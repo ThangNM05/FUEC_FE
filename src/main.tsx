@@ -34,7 +34,6 @@ createRoot(document.getElementById('root')!).render(
               borderRadius: 8,
             },
           }}
-          getPopupContainer={(trigger) => (trigger?.parentElement || document.body)}
         >
           <App>
             <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
