@@ -8,6 +8,7 @@ import { Toaster } from 'sonner';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ConfigProvider, App } from 'antd';
+import { StyleProvider } from '@ant-design/cssinjs';
 
 import { store } from './redux/store';
 import Router from './router';
@@ -23,28 +24,31 @@ if (!GOOGLE_CLIENT_ID) {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
-      <ConfigProvider
-        theme={{
-          token: {
-            colorPrimary: '#F37022',
-            colorLink: '#F37022',
-            colorLinkHover: '#d95f19',
-            borderRadius: 8,
-          },
-        }}
-      >
-        <App>
-          <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-            <NotificationProvider>
-              <BrowserRouter>
-                <ScrollToTop />
-                <Router />
-              </BrowserRouter>
-              <Toaster richColors position="top-right" />
-            </NotificationProvider>
-          </GoogleOAuthProvider>
-        </App>
-      </ConfigProvider>
+      <StyleProvider hashPriority="high">
+        <ConfigProvider
+          theme={{
+            token: {
+              colorPrimary: '#F37022',
+              colorLink: '#F37022',
+              colorLinkHover: '#d95f19',
+              borderRadius: 8,
+              zIndexPopupBase: 2000,
+            },
+          }}
+        >
+          <App>
+            <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+              <NotificationProvider>
+                <BrowserRouter>
+                  <ScrollToTop />
+                  <Router />
+                </BrowserRouter>
+                <Toaster richColors position="top-right" />
+              </NotificationProvider>
+            </GoogleOAuthProvider>
+          </App>
+        </ConfigProvider>
+      </StyleProvider>
     </Provider>
   </StrictMode>,
 );
