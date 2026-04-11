@@ -366,3 +366,32 @@ html {
   background-color: rgba(255, 255, 255, 0.45) !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
 }
+
+/* Ant Design v5 Portal & Animation Fixes (Cross-platform) */
+.ant-picker-dropdown,
+.ant-select-dropdown,
+.ant-dropdown,
+.ant-popover,
+.ant-tooltip,
+.ant-modal-mask,
+.ant-modal-wrap {
+  z-index: 2000 !important;
+}
+
+/* Fix for Antd animations appearing static due to Tailwind v4 resets */
+.ant-spin-nested-loading .ant-spin {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+.ant-spin-dot {
+  animation: antSpinMove 1s infinite linear !important;
+}
+
+@keyframes antSpinMove {
+  to {
+    transform: rotate(405deg);
+  }
+}
