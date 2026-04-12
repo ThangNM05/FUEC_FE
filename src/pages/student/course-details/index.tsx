@@ -124,8 +124,8 @@ function CourseDetails() {
   const navigate = useNavigate();
   const { classSubjectId } = useParams<{ classSubjectId: string }>();
   const [activeSection, setActiveSection] = useState('assignments');
+  const [slotContentsExpanded, setSlotContentsExpanded] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [slotContentsExpanded, setSlotContentsExpanded] = useState(false);
   const SLOTS_PER_PAGE = 10;
 
   const user = useSelector(selectCurrentUser);
