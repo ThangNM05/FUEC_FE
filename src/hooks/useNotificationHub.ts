@@ -140,6 +140,9 @@ export function useNotificationHub(
     const hubUrl = getHubUrl();
     console.log('[NotificationHub] Connecting to:', hubUrl);
 
+    let retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let isCancelled = false;
+
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {
         accessTokenFactory: () => localStorage.getItem('token') || '',
@@ -148,6 +151,27 @@ export function useNotificationHub(
       .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
       .configureLogging(signalR.LogLevel.Information)
       .build();
+
+    const MAX_RETRY_DELAY = 60000;
+
+    function startConnection(attempt = 0) {
+      if (isCancelled) return;
+      connection
+        .start()
+        .then(() => {
+          console.log('[NotificationHub] Connected successfully.');
+          setConnectionState(signalR.HubConnectionState.Connected);
+        })
+        .catch((err) => {
+          console.error(`[NotificationHub] Connection error (attempt ${attempt + 1}):`, err);
+          setConnectionState(signalR.HubConnectionState.Disconnected);
+          if (!isCancelled) {
+            const delay = Math.min(2000 * Math.pow(2, attempt), MAX_RETRY_DELAY);
+            console.log(`[NotificationHub] Retrying in ${delay}ms...`);
+            retryTimeoutId = setTimeout(() => startConnection(attempt + 1), delay);
+          }
+        });
+    }
 
     // ── Event: ReceiveNotification (general) ──
     connection.on('ReceiveNotification', (dto: NotificationDto) => {
@@ -260,23 +284,21 @@ export function useNotificationHub(
     connection.onclose(() => {
       console.log('[NotificationHub] Connection closed.');
       setConnectionState(signalR.HubConnectionState.Disconnected);
+      // Retry connection after all automatic reconnect attempts are exhausted
+      if (!isCancelled) {
+        console.log('[NotificationHub] All automatic reconnects exhausted, retrying manually...');
+        startConnection(0);
+      }
     });
 
-    // Start connection
-    connection
-      .start()
-      .then(() => {
-        console.log('[NotificationHub] Connected successfully.');
-        setConnectionState(signalR.HubConnectionState.Connected);
-      })
-      .catch((err) => {
-        console.error('[NotificationHub] Connection error:', err);
-        setConnectionState(signalR.HubConnectionState.Disconnected);
-      });
+    // Start connection with retry
+    startConnection(0);
 
     connectionRef.current = connection;
 
     return () => {
+      isCancelled = true;
+      if (retryTimeoutId) clearTimeout(retryTimeoutId);
       connection.stop().catch(console.error);
     };
   }, [addNotification]);
