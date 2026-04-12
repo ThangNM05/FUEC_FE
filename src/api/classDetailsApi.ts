@@ -174,6 +174,7 @@ export const classDetailsApi = baseApi.injectEndpoints({
                 method: 'POST',
                 body,
             }),
+            transformResponse: (response: any) => response?.result || response,
             invalidatesTags: ['ClassSubjectTeachers', 'Slots' as any, 'Exams' as any, 'Assignments' as any, 'CourseMaterials' as any],
         }),
         // Export grades

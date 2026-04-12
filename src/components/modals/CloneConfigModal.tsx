@@ -29,8 +29,8 @@ function TargetClassItem({ cls, isChecked, onChange }: { cls: any, isChecked: bo
                     onChange={e => onChange(e.target.checked)}
                     className="flex-shrink-0"
                 />
-                <div 
-                    className="flex flex-col flex-1 cursor-pointer select-none" 
+                <div
+                    className="flex flex-col flex-1 cursor-pointer select-none"
                     onClick={() => onChange(!isChecked)}
                 >
                     <span className="text-sm font-bold text-[#0A1B3C] mb-0.5">{cls.classCode}</span>
@@ -85,7 +85,7 @@ export default function CloneConfigModal({
             }).unwrap();
 
             if (result.success) {
-                toast.success(result.message || 'Configuration cloned successfully!');
+                toast.success('Configurations cloned successfully');
                 onClose();
             } else {
                 toast.error(result.message || 'Failed to clone configuration');
@@ -160,7 +160,7 @@ export default function CloneConfigModal({
                                 <List
                                     dataSource={targetClasses}
                                     renderItem={cls => (
-                                        <TargetClassItem 
+                                        <TargetClassItem
                                             cls={cls}
                                             isChecked={targetClassSubjectIds.includes(cls.classSubjectId)}
                                             onChange={(checked) => {
