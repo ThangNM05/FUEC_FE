@@ -14,6 +14,7 @@ export interface CreateExamRequest {
     examFormatId: string;
     startTime: string; // ISO 8601 string
     endTime: string; // ISO 8601 string
+    duration: number; // in minutes
     isPublicGrade: boolean;
     instanceNumber: number;
     securityMode: number;
@@ -29,6 +30,7 @@ export interface UpdateExamRequest {
     id: string;
     startTime?: string;
     endTime?: string;
+    duration?: number;
     isPublicGrade?: boolean;
     requireIpCheck?: boolean;
     allowedIpRanges?: string;
@@ -45,6 +47,7 @@ export interface Exam {
     examFormatId: string;
     startTime: string;
     endTime: string;
+    duration: number;
     isPublicGrade: boolean;
     instanceNumber: number;
     displayName: string;

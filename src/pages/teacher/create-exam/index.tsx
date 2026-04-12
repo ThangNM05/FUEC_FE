@@ -33,6 +33,7 @@ interface ExamFormData {
     codeDuration: number;
     enableAiProctoring: boolean;
     requireLockdownBrowser: boolean;
+    duration: number; // minutes
     proctoringExemptStudentClassIds: string[];
 }
 
@@ -163,6 +164,7 @@ function CreateExam() {
         codeDuration: 240,
         enableAiProctoring: true,
         requireLockdownBrowser: false,
+        duration: 30, // Default 30 min as per request example
         proctoringExemptStudentClassIds: [],
     });
 
@@ -484,6 +486,16 @@ function CreateExam() {
                                 placeholder="Select end date & time"
                             />
                         </Field>
+
+                        <Field isSubmitted={isSubmitted} label="Duration (Minutes)" required icon={Clock} hint="Number of minutes students have to complete the exam.">
+                            <input
+                                type="number"
+                                value={form.duration || ''}
+                                onChange={e => updateField('duration', parseInt(e.target.value) || 0)}
+                                className={inputClass()}
+                                placeholder="e.g. 30"
+                            />
+                        </Field>
                     </div>
                 </div>
 
@@ -578,42 +590,7 @@ function CreateExam() {
                                         }`} />
                                 </button>
                             </div>
-
-                            {/* IP Check Toggle */}
-                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                                <div className="flex items-center gap-3">
-                                    <Wifi className="w-4 h-4 text-gray-500" />
-                                    <div>
-                                        <p className="text-sm font-medium text-[#0A1B3C]">Require IP Check</p>
-                                        <p className="text-xs text-gray-500">Restrict by IP address</p>
-                                    </div>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => updateField('requireIpCheck', !form.requireIpCheck)}
-                                    className={`relative w-11 h-6 rounded-full transition-colors ${form.requireIpCheck ? 'bg-[#F37022]' : 'bg-gray-300'
-                                        }`}
-                                >
-                                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.requireIpCheck ? 'translate-x-[22px]' : 'translate-x-0.5'
-                                        }`} />
-                                </button>
-                            </div>
                         </div>
-
-                        {/* Allowed IP Ranges — conditional */}
-                        {form.requireIpCheck && (
-                            <div className="animate-fadeIn">
-                                <Field isSubmitted={isSubmitted} label="Allowed IP Ranges" required error={errors.allowedIpRanges} icon={Wifi} hint="e.g. 192.168.1.0/24, 10.0.0.0/8">
-                                    <input
-                                        type="text"
-                                        value={form.allowedIpRanges}
-                                        onChange={e => updateField('allowedIpRanges', e.target.value)}
-                                        placeholder="192.168.1.0/24"
-                                        className={inputClass(errors.allowedIpRanges)}
-                                    />
-                                </Field>
-                            </div>
-                        )}
 
                         {/* AI Proctoring Toggle */}
                         <div className="pt-4 border-t border-gray-100">

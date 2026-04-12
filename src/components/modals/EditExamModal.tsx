@@ -33,6 +33,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                 codeDuration: 240,
                 securityMode: exam.securityMode,
                 displayName: exam.displayName,
+                duration: exam.duration ?? 60,
                 enableAiProctoring: exam.enableAiProctoring ?? true,
                 requireLockdownBrowser: exam.requireLockdownBrowser ?? false,
                 proctoringExemptStudentClassIds: exam.proctoringExemptStudentClassIds || [],
@@ -112,6 +113,14 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                     </Form.Item>
                 </div>
 
+                <Form.Item
+                    name="duration"
+                    label="Duration (Minutes)"
+                    rules={[{ required: true, message: 'Please enter duration' }]}
+                >
+                    <InputNumber min={1} className="w-full" placeholder="e.g. 30" />
+                </Form.Item>
+
                 <Form.Item name="securityMode" label="Security Mode">
                     <Select options={[
                         { value: 1, label: 'Static Access Code' },
@@ -119,9 +128,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                     ]} />
                 </Form.Item>
 
-                <Form.Item name="allowedIpRanges" label="Allowed IP Ranges (comma separated)">
-                    <Input placeholder="Leave empty for any IP" />
-                </Form.Item>
+
 
                 {/* Toggle switches — stacked on mobile, row on desktop */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
@@ -129,9 +136,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                         <Switch />
                     </Form.Item>
 
-                    <Form.Item name="requireIpCheck" label="Require IP Check" valuePropName="checked" className="!mb-0">
-                        <Switch />
-                    </Form.Item>
+
 
                     <Form.Item name="enableAiProctoring" label="AI Proctoring" valuePropName="checked" className="!mb-0">
                         <Switch />
