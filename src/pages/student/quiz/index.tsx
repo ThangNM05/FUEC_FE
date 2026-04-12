@@ -674,6 +674,18 @@ export default function QuizTest() {
     setInitialized(true);
   }, [examData, studentExamId, initialized]);
 
+  // ── Sync Timer if Backend updates (e.g. Teacher extends time) ──
+  useEffect(() => {
+    if (!initialized || !examData?.remainingTime || showResults) return;
+
+    const serverTimeLeft = parseRemainingTime(examData.remainingTime);
+    // Only sync if the difference is more than 5 seconds to avoid jitter/drift issues
+    if (timeLeft !== null && Math.abs(serverTimeLeft - timeLeft) > 5) {
+      console.log(`[Quiz] Syncing timer: ${timeLeft}s -> ${serverTimeLeft}s`);
+      setTimeLeft(serverTimeLeft);
+    }
+  }, [examData?.remainingTime, initialized, showResults]);
+
   // ── Force Submit RTK Query Failsafe ──
   useEffect(() => {
     if (examData?.isSubmitted && !showResults) {
