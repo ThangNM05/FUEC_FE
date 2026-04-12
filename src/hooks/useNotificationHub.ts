@@ -1,5 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { useSelector } from 'react-redux';
 import * as signalR from '@microsoft/signalr';
+import { selectIsAuthenticated } from '@/redux/authSlice';
 import type {
   NotificationDto,
   AssignmentNotificationDto,
@@ -121,6 +123,8 @@ export function useNotificationHub(
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
 
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+
   const addNotification = useCallback((item: NotificationItem) => {
     setNotifications((prev) => {
       // Avoid duplicates by id
@@ -132,7 +136,7 @@ export function useNotificationHub(
   // ── Build and start connection ──
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
+    if (!token || !isAuthenticated) {
       console.warn('[NotificationHub] No auth token found, skipping connection.');
       return;
     }
@@ -301,7 +305,7 @@ export function useNotificationHub(
       if (retryTimeoutId) clearTimeout(retryTimeoutId);
       connection.stop().catch(console.error);
     };
-  }, [addNotification]);
+  }, [addNotification, isAuthenticated]);
 
   // ── Auto-Sync Monitoring Groups on Reconnect ──
   useEffect(() => {
