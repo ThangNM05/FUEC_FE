@@ -391,15 +391,20 @@ export default function QuizTest() {
   useEffect(() => {
     if (!proctorReady) return;
     if (examData?.isProctoringExempt) return;
+    if (examData?.isSubmitted || showResults) return;
 
     let rafId = 0;
     let inferenceTimer: number | null = null;
     let stopped = false;
     let inFlight = false;
 
-    const video = videoRef.current!;
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext('2d')!;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    
+    if (!video || !canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     const ensureCanvasSize = () => {
       if (video.videoWidth === 0 || video.videoHeight === 0) return false;
@@ -567,7 +572,7 @@ export default function QuizTest() {
       cancelAnimationFrame(rafId);
       if (inferenceTimer) window.clearTimeout(inferenceTimer);
     };
-  }, [proctorReady, cheatingPaused]);
+  }, [proctorReady, cheatingPaused, examData?.isSubmitted, showResults, examData?.isProctoringExempt]);
 
   // Send evidence exactly when the UI enters the "Suspicious Behavior Detected" state.
   useEffect(() => {
