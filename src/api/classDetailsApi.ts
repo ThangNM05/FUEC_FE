@@ -184,6 +184,14 @@ export const classDetailsApi = baseApi.injectEndpoints({
                 responseHandler: (response) => response.blob(),
             }),
         }),
+        // Export question report
+        exportQuestionReport: builder.query<Blob, string>({
+            query: (id) => ({
+                url: `/ClassSubjects/${id}/export-question-report`,
+                cache: 'no-cache',
+                responseHandler: (response) => response.blob(),
+            }),
+        }),
     }),
 });
 
@@ -221,4 +229,5 @@ export const {
     useImportClassSubjectTeachersMutation,
     useCloneConfigMutation,
     useLazyExportGradesQuery,
+    useLazyExportQuestionReportQuery,
 } = classDetailsApi;

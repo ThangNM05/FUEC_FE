@@ -10,7 +10,8 @@ import {
     useGetClassSubjectByIdQuery,
     useGetClassSubjectSlotsQuery,
     useGetStudentClassesByClassIdQuery,
-    useLazyExportGradesQuery
+    useLazyExportGradesQuery,
+    useLazyExportQuestionReportQuery
 } from '@/api/classDetailsApi';
 import { useGetExamsByClassSubjectIdQuery, useDeleteExamMutation } from '@/api/examsApi';
 import { useGetAssignmentsByClassSubjectIdQuery, useDeleteAssignmentMutation } from '@/api/assignmentsApi';
@@ -69,6 +70,7 @@ function TeacherCourseDetails() {
     const [assignmentToEdit, setAssignmentToEdit] = useState<Assignment | null>(null);
 
     const [triggerExportGrades, { isLoading: isExporting }] = useLazyExportGradesQuery();
+    const [triggerExportQuestionReport, { isLoading: isExportingReport }] = useLazyExportQuestionReportQuery();
 
     const handleExportGrades = async () => {
         if (!courseId) return;
@@ -86,6 +88,25 @@ function TeacherCourseDetails() {
         } catch (error) {
             console.error('Failed to export grades:', error);
             toast.error('Failed to export grades. Please try again.');
+        }
+    };
+
+    const handleExportQuestionReport = async () => {
+        if (!courseId) return;
+        try {
+            const blob = await triggerExportQuestionReport(courseId).unwrap();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `QuestionReport_${classSubject?.classCode || ''}_${classSubject?.subjectCode || ''}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success('Question report exported successfully');
+        } catch (error) {
+            console.error('Failed to export question report:', error);
+            toast.error('Failed to export question report. Please try again.');
         }
     };
 
@@ -521,6 +542,18 @@ function TeacherCourseDetails() {
                                 <Download className="w-4 h-4" />
                             )}
                             Export Grades
+                        </button>
+                        <button
+                            onClick={handleExportQuestionReport}
+                            disabled={isExportingReport}
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-[#0A1B3C] bg-white border border-[#0A1B3C] rounded-lg hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
+                        >
+                            {isExportingReport ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <FileText className="w-4 h-4" />
+                            )}
+                            Export Question Report
                         </button>
                     </div>
                 </div>
