@@ -10,7 +10,6 @@ import AdminCourses from './pages/admin/courses';
 import AdminQuestionBanks from './pages/admin/question-banks';
 import AdminQuestionBankDetail from './pages/admin/question-banks/detail';
 import AdminExams from './pages/admin/exams';
-import AdminSchedule from './pages/admin/schedule';
 import AdminStudents from './pages/admin/students';
 import AdminTeachers from './pages/admin/teachers';
 // Admin Settings Pages
@@ -70,7 +69,6 @@ function Router() {
           <Route path="/admin/students" element={<AdminStudents />} />
           <Route path="/admin/classes" element={<AdminClasses />} />
           <Route path="/admin/teachers" element={<AdminTeachers />} />
-          <Route path="/admin/schedule" element={<AdminSchedule />} />
           <Route path="/admin/question-banks" element={<AdminQuestionBanks />} />
           <Route path="/admin/question-banks/:subjectId" element={<AdminQuestionBankDetail />} />
           <Route path="/admin/settings/courses" element={<AdminCourses />} />

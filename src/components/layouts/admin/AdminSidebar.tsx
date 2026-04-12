@@ -56,7 +56,6 @@ function AdminSidebar({ isOpen, toggleSidebar, isMobile = false }: SidebarProps)
       ]
     },
     { id: 'teachers', label: 'Teacher Management', icon: Users, path: '/admin/teachers' },
-    { id: 'schedule', label: 'Schedule', icon: Calendar, path: '/admin/schedule' },
     { id: 'database', label: 'Question Banks', icon: Database, path: '/admin/question-banks' },
     {
       id: 'settings',
