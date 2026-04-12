@@ -22,7 +22,8 @@ import {
     ShieldAlert,
     FileSpreadsheet,
     CheckCircle2,
-    ClipboardList
+    ClipboardList,
+    Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import dayjs from 'dayjs';
@@ -32,8 +33,7 @@ import { useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
 import { useGetAllStudentExamsQuery } from '@/api/studentExamsApi';
 import { useGetStudentCheatLogsQuery, useDeleteStudentCheatLogMutation, useGetStudentCheatLogByIdQuery } from '@/api/studentCheatLogsApi';
 import { useUpdateStudentExamMutation, useGetStudentExamByIdQuery } from '@/api/studentExamsApi';
-import { useLazyExportGradesQuery } from '@/api/classDetailsApi';
-import { Loader2 } from 'lucide-react';
+import { useLazyExportGradesQuery, useLazyExportQuestionReportQuery } from '@/api/classDetailsApi';
 import { getApiUrl } from '@/config/appConfig';
 import JSZip from 'jszip';
 
@@ -900,7 +900,9 @@ function TeacherReports() {
         { skip: !semester || activeTab !== 'academic' }
     );
     const [exportGrades, { isFetching: exportingGrades }] = useLazyExportGradesQuery();
+    const [exportQuestionReport, { isFetching: exportingReport }] = useLazyExportQuestionReportQuery();
     const [exportingSubjectId, setExportingSubjectId] = useState<string | null>(null);
+    const [exportingReportId, setExportingReportId] = useState<string | null>(null);
 
     const handleExportSemesterReport = useCallback(() => {
         if (!semesterReport) return;
@@ -959,6 +961,26 @@ function TeacherReports() {
             setExportingSubjectId(null);
         }
     }, [exportGrades]);
+
+    const handleExportQuestionReport = useCallback(async (classSubjectId: string, label: string) => {
+        setExportingReportId(classSubjectId);
+        try {
+            const blob = await exportQuestionReport(classSubjectId).unwrap();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `question_report_${label.replace(/\s+/g, '_')}_${dayjs().format('YYYYMMDD')}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast.success(`Question report for ${label} exported!`);
+        } catch {
+            toast.error('Failed to export question report. Please try again.');
+        } finally {
+            setExportingReportId(null);
+        }
+    }, [exportQuestionReport]);
 
     const AcademicReports = () => {
         if (loadingReport) {
@@ -1111,17 +1133,32 @@ function TeacherReports() {
                                                     </td>
                                                     <td className="py-3 px-3 text-gray-600">{cs.subjectName}</td>
                                                     <td className="py-3 px-3 text-right">
-                                                        <button
-                                                            id={`export-grades-${cs.classSubjectId}`}
-                                                            disabled={exportingSubjectId === cs.classSubjectId}
-                                                            onClick={() => handleExportSubjectGrades(cs.classSubjectId, `${cs.classCode}_${cs.subjectCode}`)}
-                                                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0A1B3C] hover:bg-[#F37022] text-white text-xs font-bold rounded-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                                                        >
-                                                            {exportingSubjectId === cs.classSubjectId
-                                                                ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                                : <Download className="w-3.5 h-3.5" />}
-                                                            {exportingSubjectId === cs.classSubjectId ? 'Exporting...' : 'Export Grades'}
-                                                        </button>
+                                                        <div className="flex justify-end gap-2">
+                                                            <button
+                                                                id={`export-grades-${cs.classSubjectId}`}
+                                                                disabled={exportingSubjectId === cs.classSubjectId}
+                                                                onClick={() => handleExportSubjectGrades(cs.classSubjectId, `${cs.classCode}_${cs.subjectCode}`)}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#0A1B3C] hover:bg-[#F37022] text-white text-[10px] md:text-xs font-bold rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                title="Export Grades"
+                                                            >
+                                                                {exportingSubjectId === cs.classSubjectId
+                                                                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                                    : <Download className="w-3.5 h-3.5" />}
+                                                                {exportingSubjectId === cs.classSubjectId ? 'Exporting...' : 'Grades'}
+                                                            </button>
+                                                            <button
+                                                                id={`export-questions-${cs.classSubjectId}`}
+                                                                disabled={exportingReportId === cs.classSubjectId}
+                                                                onClick={() => handleExportQuestionReport(cs.classSubjectId, `${cs.classCode}_${cs.subjectCode}`)}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#0A1B3C] text-[#0A1B3C] hover:bg-gray-50 text-[10px] md:text-xs font-bold rounded-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                title="Export Question Report"
+                                                            >
+                                                                {exportingReportId === cs.classSubjectId
+                                                                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                                    : <FileText className="w-3.5 h-3.5" />}
+                                                                {exportingReportId === cs.classSubjectId ? 'Exporting...' : 'Questions'}
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ))}
