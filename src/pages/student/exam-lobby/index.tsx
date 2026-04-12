@@ -102,8 +102,30 @@ export default function ExamLobby() {
           const encodedUrl = encodeURIComponent(targetPath);
           const encodedUser = encodeURIComponent(userObj);
           
-          window.location.href = `fuec://start?token=${token}&user=${encodedUser}&target=${encodedUrl}`;
-          setErrorMsg('Launching FUEC Lockdown Browser... Please click "Allow" or "Open". If nothing happens, make sure the app is installed.');
+          const launchUrl = `fuec://start?token=${token}&user=${encodedUser}&target=${encodedUrl}`;
+          console.log('FUEC Lockdown Browser Launch URL:', launchUrl);
+          
+          window.location.href = launchUrl;
+          setErrorMsg(
+            <div className="flex flex-col gap-3">
+              <p>Launching FUEC Lockdown Browser... Please click "Allow" or "Open".</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <a 
+                  href={launchUrl}
+                  className="inline-flex items-center justify-center px-4 py-2 bg-[#0A1B3C] text-white rounded-lg text-sm font-bold hover:bg-[#1a3a6c] transition-colors"
+                >
+                  Click here to open app manually
+                </a>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="inline-flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-200"
+                >
+                  I have opened the app
+                </button>
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1 italic">If nothing happens, make sure the app is installed. Check console log (F12) for launch URL.</p>
+            </div> as any
+          );
           return;
       }
 
