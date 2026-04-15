@@ -107,9 +107,38 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                     <Form.Item
                         name="endTime"
                         label="End Time"
-                        rules={[{ required: true, message: 'Please select end time' }]}
+                        dependencies={['startTime']}
+                        rules={[
+                            { required: true, message: 'Please select end time' },
+                            ({ getFieldValue }) => ({
+                                validator(_, value) {
+                                    if (!value || !getFieldValue('startTime') || value.isAfter(getFieldValue('startTime'))) {
+                                        return Promise.resolve();
+                                    }
+                                    return Promise.reject(new Error('End time must be after start time'));
+                                },
+                            }),
+                        ]}
                     >
-                        <DatePicker showTime className="w-full" />
+                        <DatePicker
+                            showTime
+                            className="w-full"
+                            disabledDate={(current) => {
+                                const startTime = form.getFieldValue('startTime');
+                                return current && startTime && current.isBefore(startTime, 'day');
+                            }}
+                            disabledTime={(current) => {
+                                const startTime = form.getFieldValue('startTime');
+                                if (!startTime || !current || !current.isSame(startTime, 'day')) {
+                                    return {};
+                                }
+                                return {
+                                    disabledHours: () => Array.from({ length: startTime.hour() }, (_, i) => i),
+                                    disabledMinutes: (h) => h === startTime.hour() ? Array.from({ length: startTime.minute() }, (_, i) => i) : [],
+                                    disabledSeconds: (h, m) => h === startTime.hour() && m === startTime.minute() ? Array.from({ length: startTime.second() }, (_, i) => i) : [],
+                                };
+                            }}
+                        />
                     </Form.Item>
                 </div>
 

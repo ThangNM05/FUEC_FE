@@ -166,7 +166,13 @@ export default function ExamLobby() {
     <div className="p-4 md:p-6 max-w-3xl mx-auto animate-fadeIn">
       {/* Back button */}
       <button
-        onClick={() => navigate('/student/exams')}
+        onClick={() => {
+          if (classSubjectId) {
+            navigate(`/student/course-details/${classSubjectId}`);
+          } else {
+            navigate('/student/exams');
+          }
+        }}
         className="flex items-center gap-2 text-gray-600 hover:text-[#0A1B3C] mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />

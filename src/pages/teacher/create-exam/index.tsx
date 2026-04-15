@@ -3,11 +3,12 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     ChevronRight, ChevronLeft, Save, Plus,
-    FileQuestion, Clock, Shield, Globe, Hash, Tag, Calendar, Eye, Lock, Wifi
+    FileQuestion, Clock, Shield, Globe, Hash, Tag, Calendar, Eye, Lock, Wifi, Users
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGetClassSubjectByIdQuery, useGetClassSubjectSlotsQuery, useGetStudentClassesByClassIdQuery } from '@/api/classDetailsApi';
 import { useGetSubjectSyllabusesQuery } from '@/api/subjectsApi';
+import { useGetChapterQuestionCountsQuery } from '@/api/questionsApi';
 import { useGetSyllabusAssessmentsQuery } from '@/api/syllabusApi';
 import { useGetExamFormatsQuery } from '@/api/examFormatsApi';
 import { useCreateExamMutation, useGetExamsByClassSubjectIdQuery } from '@/api/examsApi';
@@ -35,6 +36,7 @@ interface ExamFormData {
     requireLockdownBrowser: boolean;
     duration: number; // minutes
     proctoringExemptStudentClassIds: string[];
+    questionMode: number; // 0 = SharedExam, 1 = UniqueExam
 }
 
 const Field = ({ label, required, error, children, icon: Icon, hint, isSubmitted }: {
@@ -98,6 +100,12 @@ function CreateExam() {
     const examFormats = examFormatsData?.items || [];
 
     const [createExam, { isLoading: isCreating }] = useCreateExamMutation();
+
+    // Fetch question counts per chapter for the subject
+    const { data: chapterQuestionCounts } = useGetChapterQuestionCountsQuery(
+        classSubject?.subjectId || '',
+        { skip: !classSubject?.subjectId }
+    );
 
     // Fetch progress based on slots
     const { data: slotData } = useGetClassSubjectSlotsQuery(courseId ? { id: courseId } : skipToken);
@@ -166,6 +174,7 @@ function CreateExam() {
         requireLockdownBrowser: false,
         duration: 30, // Default 30 min as per request example
         proctoringExemptStudentClassIds: [],
+        questionMode: 0, // SharedExam by default
     });
 
     // Auto-select first assessment and set initial display name
@@ -199,18 +208,27 @@ function CreateExam() {
         }
     }, [existingExams.length, slotData, targetSlotId]);
 
+    const getMaxQuestionsForChapter = (chapter: number): number => {
+        if (!chapterQuestionCounts) return 60;
+        return chapterQuestionCounts[chapter] || 0;
+    };
+
     const updateChapterCount = (chapter: number, count: number) => {
         setForm(prev => {
             const existing = prev.chapterQuestionCounts.find(c => c.chapter === chapter);
             let nextCounts;
             if (count < 0) return prev;
 
-            if (count === 0) {
+            // Auto-cap at max available
+            const maxAvailable = getMaxQuestionsForChapter(chapter);
+            const cappedCount = Math.min(count, maxAvailable);
+
+            if (cappedCount === 0) {
                 nextCounts = prev.chapterQuestionCounts.filter(c => c.chapter !== chapter);
             } else if (existing) {
-                nextCounts = prev.chapterQuestionCounts.map(c => c.chapter === chapter ? { ...c, count } : c);
+                nextCounts = prev.chapterQuestionCounts.map(c => c.chapter === chapter ? { ...c, count: cappedCount } : c);
             } else {
-                nextCounts = [...prev.chapterQuestionCounts, { chapter, count }].sort((a, b) => a.chapter - b.chapter);
+                nextCounts = [...prev.chapterQuestionCounts, { chapter, count: cappedCount }].sort((a, b) => a.chapter - b.chapter);
             }
 
             const total = nextCounts.reduce((acc, c) => acc + c.count, 0);
@@ -393,6 +411,47 @@ function CreateExam() {
                         </div>
                     </div>
 
+                    <div className="space-y-4 pt-4 border-t border-gray-100">
+                        <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+                            <Users className="w-4 h-4 text-gray-400" />
+                            Exam Distribution Mode
+                        </label>
+                        <div className="flex gap-4">
+                            <button
+                                type="button"
+                                onClick={() => updateField('questionMode', 0)}
+                                className={`flex-1 p-4 rounded-xl border-2 text-left transition-all ${form.questionMode === 0
+                                    ? 'border-[#F37022] bg-orange-50/50 ring-1 ring-[#F37022]/20'
+                                    : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${form.questionMode === 0 ? 'border-[#F37022]' : 'border-gray-300'}`}>
+                                        {form.questionMode === 0 && <div className="w-2 h-2 rounded-full bg-[#F37022]" />}
+                                    </div>
+                                    <span className="text-sm font-semibold text-[#0A1B3C]">Shared Exam</span>
+                                </div>
+                                <p className="text-xs text-gray-500 ml-6">All students receive the same set of questions</p>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => updateField('questionMode', 1)}
+                                className={`flex-1 p-4 rounded-xl border-2 text-left transition-all ${form.questionMode === 1
+                                    ? 'border-[#F37022] bg-orange-50/50 ring-1 ring-[#F37022]/20'
+                                    : 'border-gray-100 bg-gray-50 hover:border-gray-200'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-2 mb-1">
+                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${form.questionMode === 1 ? 'border-[#F37022]' : 'border-gray-300'}`}>
+                                        {form.questionMode === 1 && <div className="w-2 h-2 rounded-full bg-[#F37022]" />}
+                                    </div>
+                                    <span className="text-sm font-semibold text-[#0A1B3C]">Unique Exam</span>
+                                </div>
+                                <p className="text-xs text-gray-500 ml-6">Each student receives a different random set of questions</p>
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         {/* Question Count */}
                         <Field
@@ -427,21 +486,27 @@ function CreateExam() {
                             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
                                 {availableChapters.map(ch => {
                                     const count = form.chapterQuestionCounts.find(c => c.chapter === ch)?.count || 0;
+                                    const maxAvailable = getMaxQuestionsForChapter(ch);
                                     return (
                                         <div key={ch} className={`p-3 rounded-xl border transition-all ${count > 0 ? 'border-[#F37022] bg-orange-50/30' : 'border-gray-100 bg-gray-50/50'}`}>
                                             <div className="text-xs font-bold text-[#0A1B3C] mb-1.5 flex items-center justify-between">
                                                 <span>Ch. {ch}</span>
                                                 {ch > currentChapterProgress && <span className="text-[10px] text-orange-600 bg-orange-100 px-1 rounded">Extra</span>}
                                             </div>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="60"
-                                                value={count || ''}
-                                                onChange={e => updateChapterCount(ch, parseInt(e.target.value) || 0)}
-                                                className="w-full px-2 py-1.5 bg-white border border-gray-200 rounded-lg text-sm text-center focus:ring-1 focus:ring-[#F37022] focus:border-transparent"
-                                                placeholder="0"
-                                            />
+                                            <div className={`flex items-center justify-center bg-white border rounded-lg py-1.5 px-2 focus-within:ring-1 focus-within:ring-[#F37022] focus-within:border-transparent transition-all ${maxAvailable === 0 ? 'border-red-200' : 'border-gray-200'
+                                                }`}>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    max={maxAvailable}
+                                                    value={count || ''}
+                                                    onChange={e => updateChapterCount(ch, parseInt(e.target.value) || 0)}
+                                                    className="w-2 bg-transparent text-sm text-right focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                    placeholder="0"
+                                                />
+                                                <span className={`text-sm font-medium ${maxAvailable === 0 ? 'text-red-400' : count >= maxAvailable ? 'text-orange-500' : 'text-gray-400'
+                                                    }`}>/{maxAvailable}</span>
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -484,6 +549,10 @@ function CreateExam() {
                                 value={form.endTime ? dayjs(form.endTime) : null}
                                 onChange={(date) => updateField('endTime', date ? date.toISOString() : '')}
                                 placeholder="Select end date & time"
+                                disabledDate={(current) => {
+                                    if (!form.startTime) return false;
+                                    return current && current.isBefore(dayjs(form.startTime), 'day');
+                                }}
                             />
                         </Field>
 
@@ -672,6 +741,10 @@ function CreateExam() {
                         <div>
                             <div className="text-2xl font-bold">{form.securityMode === 1 ? 'Static' : 'Dynamic'}</div>
                             <div className="text-xs text-white/60">Security Mode</div>
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold">{form.questionMode === 0 ? 'Shared' : 'Unique'}</div>
+                            <div className="text-xs text-white/60">Distribution</div>
                         </div>
                         {form.securityMode === 2 && (
                             <div>
