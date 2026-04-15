@@ -134,6 +134,14 @@ export const questionsApi = baseApi.injectEndpoints({
       transformResponse: (response: any) => response.result,
       invalidatesTags: [{ type: 'Question', id: `LIST-${'ALL'}` }],
     }),
+
+    getChapterQuestionCounts: builder.query<Record<number, number>, string>({
+      query: (subjectId) => ({
+        url: '/Questions/chapter-counts',
+        params: { subjectId },
+      }),
+      transformResponse: (response: any) => response.result,
+    }),
   }),
   overrideExisting: false,
 });
@@ -148,4 +156,5 @@ export const {
   usePreviewImportQuestionsMutation,
   usePreviewImportGiftMutation,
   useImportQuestionsMutation,
+  useGetChapterQuestionCountsQuery,
 } = questionsApi;

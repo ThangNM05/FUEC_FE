@@ -25,6 +25,7 @@ export interface StudentExam {
     studentExamId: string;
     examId: string;
     examDisplayName: string;
+    duration?: number;
     remainingTime: string;
     endTime: string;
     questions: QuizQuestion[];
@@ -48,6 +49,7 @@ const normalizeStudentExam = (data: any): StudentExam => {
         studentExamId: raw.studentExamId || raw.StudentExamId || raw.id || raw.Id,
         examId: raw.examId || raw.ExamId,
         examDisplayName: raw.examDisplayName || raw.ExamDisplayName,
+        duration: raw.duration || raw.Duration,
         remainingTime: raw.remainingTime || raw.RemainingTime,
         endTime: raw.endTime || raw.ExamEndTime || raw.EndTime,
         isSubmitted: raw.isSubmitted || raw.IsSubmitted || (raw.grade !== null && raw.grade !== undefined),

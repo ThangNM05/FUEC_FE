@@ -147,7 +147,9 @@ function clearExamState() {
 function parseRemainingTime(remaining: string): number {
   if (!remaining) return 45 * 60;
   if (remaining.includes('T')) {
-    const end = new Date(remaining).getTime();
+    // Ensure the timestamp is parsed as UTC by appending 'Z' if missing
+    const dateStr = remaining.endsWith('Z') ? remaining : remaining + 'Z';
+    const end = new Date(dateStr).getTime();
     return Math.max(0, Math.floor((end - Date.now()) / 1000));
   }
   const parts = remaining.split(':');
@@ -400,9 +402,9 @@ export default function QuizTest() {
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    
+
     if (!video || !canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -655,11 +657,13 @@ export default function QuizTest() {
       setStarred(saved.starred);
       setTimeLeft(saved.timeLeftSeconds);
     } else {
-      let initialTime = 45 * 60;
+      let initialTime = examData.duration ? examData.duration * 60 : 45 * 60;
       if (examData.remainingTime) {
-        initialTime = parseRemainingTime(examData.remainingTime);
+        const remaining = parseRemainingTime(examData.remainingTime);
+        if (remaining > 0) initialTime = remaining;
       } else if (examData.endTime) {
-        initialTime = Math.max(0, Math.floor((new Date(examData.endTime).getTime() - Date.now()) / 1000));
+        const dateStr = examData.endTime.endsWith('Z') ? examData.endTime : examData.endTime + 'Z';
+        initialTime = Math.max(0, Math.floor((new Date(dateStr).getTime() - Date.now()) / 1000));
       }
       setTimeLeft(initialTime);
 
@@ -952,7 +956,13 @@ export default function QuizTest() {
 
               <div className="flex flex-wrap gap-3 justify-center md:justify-end mt-4 md:mt-0">
                 <button
-                  onClick={() => navigate('/student/exams')}
+                  onClick={() => {
+                    if (classSubjectId) {
+                      navigate(`/student/course-details/${classSubjectId}`);
+                    } else {
+                      navigate('/student/exams');
+                    }
+                  }}
                   className="px-8 py-4 bg-[#F37022] text-white rounded-2xl font-bold hover:bg-[#D96419] transition-all flex items-center gap-2 shadow-xl shadow-orange-100 active:scale-95 group/btn"
                 >
                   <ArrowLeft className="w-5 h-5 group-hover/btn:-translate-x-1 transition-transform" />
