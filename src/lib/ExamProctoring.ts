@@ -51,8 +51,8 @@ export type DetectionResult = {
    Thresholds
 ======================= */
 
-const HEAD_STRAIGHT_YAW = 16
-const HEAD_STRAIGHT_PITCH = 16
+const HEAD_STRAIGHT_YAW = 18
+const HEAD_STRAIGHT_PITCH = 18
 const EYE_DISTANCE_TOO_FAR = 0.035
 const SMOOTHING_ALPHA = 0.25
 
