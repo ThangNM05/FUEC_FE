@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@/redux/authSlice';
-import { Clock, ChevronLeft, ChevronRight, CheckCircle, Loader2, Cloud, CloudOff, Send, AlertTriangle, Check, BookOpen, LogOut, ArrowLeft, Star, GraduationCap } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, CheckCircle, Loader2, Cloud, CloudOff, Send, AlertTriangle, Check, BookOpen, LogOut, ArrowLeft, Star, GraduationCap, Flag } from 'lucide-react';
 import ExamDetailModal from '@/components/modals/ExamDetailModal';
 import ExamReviewList from '@/components/quiz/ExamReviewList';
 import { useGetStudentExamByIdQuery, useSubmitStudentExamMutation } from '@/api/studentExamsApi';
@@ -15,6 +15,7 @@ import { uploadCheatVideo } from '@/lib/uploadCheatSnapshot';
 import { createEpisodeRecorder } from '@/lib/videoBuffer';
 import type { EpisodeRecorder } from '@/lib/videoBuffer';
 import { useNotificationHub } from '@/contexts/NotificationContext';
+import { useReportQuestionMutation } from '@/api/notificationsApi';
 
 // ─── Helpers ───────────────────────────────────────────
 const STORAGE_KEY = 'fuec_active_exam';
@@ -211,6 +212,7 @@ export default function QuizTest() {
   });
   const [createAnswer] = useCreateStudentAnswerMutation();
   const [submitExam, { isLoading: isSubmitting }] = useSubmitStudentExamMutation();
+  const [reportQuestion] = useReportQuestionMutation();
 
   // ── State ──
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -222,6 +224,13 @@ export default function QuizTest() {
   const [examResult, setExamResult] = useState<{ grade: number } | null>(null);
   const [showConfirmSubmit, setShowConfirmSubmit] = useState(false);
   const [initialized, setInitialized] = useState(false);
+
+  // ── Question Report State ──
+  const [reportingQuestionId, setReportingQuestionId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDescription, setReportDescription] = useState('');
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportedQuestions, setReportedQuestions] = useState<Record<string, boolean>>({});
 
   const questions: QuizQuestion[] = useMemo(() => examData?.questions || [], [examData]);
 
@@ -493,13 +502,13 @@ export default function QuizTest() {
         const wasRecording = episodeRecorderRef.current?.isRecording ?? false;
 
         const PAUSE_THRESHOLDS: Record<string, number> = {
-          suspicious: 8000,
-          'looking-left': 8000,
-          'looking-right': 8000,
-          'no-face': 6000,
-          'multiple-faces': 8000,
+          suspicious: 4000,
+          'looking-left': 4000,
+          'looking-right': 4000,
+          'no-face': 2000,
+          'multiple-faces': 2000,
         };
-        const DEFAULT_PAUSE_THRESHOLD = 8000;
+        const DEFAULT_PAUSE_THRESHOLD = 4000;
 
 
         if (isThreat) {
@@ -776,6 +785,27 @@ export default function QuizTest() {
   const toggleStar = useCallback((questionId: string) => {
     setStarred((prev) => ({ ...prev, [questionId]: !prev[questionId] }));
   }, []);
+
+  const handleReportSubmit = useCallback(async () => {
+    if (!reportingQuestionId || !reportReason) return;
+    setIsReporting(true);
+    try {
+      await reportQuestion({
+        questionId: reportingQuestionId,
+        reason: reportReason,
+        description: reportDescription || undefined,
+      }).unwrap();
+      setReportedQuestions((prev) => ({ ...prev, [reportingQuestionId]: true }));
+      toast.success('Question reported successfully');
+    } catch {
+      toast.error('Failed to report question');
+    } finally {
+      setIsReporting(false);
+      setReportingQuestionId(null);
+      setReportReason('');
+      setReportDescription('');
+    }
+  }, [reportingQuestionId, reportReason, reportDescription, reportQuestion]);
 
   const attemptFullscreen = useCallback(() => {
     try {
@@ -1066,6 +1096,63 @@ export default function QuizTest() {
         </div>
       )}
 
+      {/* Question Report Modal */}
+      {reportingQuestionId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl relative">
+            <div className="flex items-center gap-4 mb-5">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <Flag className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-[#0A1B3C]">Report Question</h3>
+            </div>
+            <p className="text-gray-600 mb-4 text-sm">Select a reason for reporting this question to the instructor:</p>
+            <div className="space-y-2 mb-4">
+              {['Wrong/Incorrect Answer', 'Unclear Question', 'Missing Options', 'Duplicate Question', 'Other'].map((reason) => (
+                <button
+                  key={reason}
+                  onClick={() => setReportReason(reason)}
+                  className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                    reportReason === reason
+                      ? 'border-red-500 bg-red-50 text-red-700'
+                      : 'border-gray-100 hover:border-gray-200 text-gray-700'
+                  }`}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+            <textarea
+              placeholder="Additional details (optional)"
+              value={reportDescription}
+              onChange={(e) => setReportDescription(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 mb-4"
+              maxLength={500}
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setReportingQuestionId(null);
+                  setReportReason('');
+                  setReportDescription('');
+                }}
+                className="flex-1 px-5 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReportSubmit}
+                disabled={!reportReason || isReporting}
+                className="flex-1 px-5 py-3 bg-red-500 text-white rounded-xl font-bold hover:bg-red-600 disabled:opacity-50 transition-all active:scale-95 shadow-lg shadow-red-100 flex items-center justify-center gap-2"
+              >
+                {isReporting && <Loader2 className="w-4 h-4 animate-spin" />}
+                Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Cheating Pause Overlay (hidden for exempt students)
       {cheatingPaused && !examData?.isProctoringExempt && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -1228,9 +1315,24 @@ export default function QuizTest() {
                       </div>
                       <h3 className="text-xl font-bold text-[#0A1B3C] leading-relaxed">{q.questionContent}</h3>
                     </div>
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mt-1 ml-4 whitespace-nowrap">
-                      {q.questionType === 1 ? 'Multiple Choice' : 'Single Choice'}
-                    </span>
+                    <div className="flex items-center gap-2 mt-1 ml-4 flex-shrink-0">
+                      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                        {q.questionType === 1 ? 'Multiple Choice' : 'Single Choice'}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!reportedQuestions[q.id]) {
+                            setReportingQuestionId(q.id);
+                          }
+                        }}
+                        disabled={reportedQuestions[q.id]}
+                        className={`p-1.5 rounded-lg transition-all ${reportedQuestions[q.id] ? 'bg-red-50 text-red-400 cursor-not-allowed' : 'bg-gray-50 text-gray-300 hover:text-red-500 hover:bg-red-50'}`}
+                        title={reportedQuestions[q.id] ? 'Already reported' : 'Report this question'}
+                      >
+                        <Flag className={`w-4 h-4 ${reportedQuestions[q.id] ? 'fill-current' : ''}`} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-4">

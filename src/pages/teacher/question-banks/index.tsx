@@ -1,14 +1,32 @@
 import { Database, FolderOpen } from 'lucide-react';
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 
 import DataTable from '@/components/shared/DataTable';
 import { useGetMyQuestionBanksQuery } from '@/api/questionBanksApi';
+import { useGetQuestionByIdQuery } from '@/api/questionsApi';
 import type { SubjectQuestionBankManager } from '@/types/questionBank.types';
 
 function TeacherQuestionBanks() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const reportedQuestionId = searchParams.get('questionId');
+
+    // If we have a questionId from a notification, look up the question to find its subject
+    const { data: reportedQuestion } = useGetQuestionByIdQuery(reportedQuestionId!, {
+        skip: !reportedQuestionId,
+    });
+
+    // Redirect to the question bank detail page when we resolve the subject
+    useEffect(() => {
+        if (reportedQuestion?.subjectCode && reportedQuestionId) {
+            navigate(
+                `/teacher/question-banks/${reportedQuestion.subjectCode}?questionId=${reportedQuestionId}`,
+                { replace: true }
+            );
+        }
+    }, [reportedQuestion, reportedQuestionId, navigate]);
 
     // Filter & sort state
     const [pageSize, setPageSize] = useState(10);

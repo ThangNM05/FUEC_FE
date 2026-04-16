@@ -8,7 +8,14 @@ export const notificationsApi = baseApi.injectEndpoints({
         method: 'DELETE',
       }),
     }),
+    reportQuestion: builder.mutation<void, { questionId: string; reason: string; description?: string }>({
+      query: ({ questionId, ...body }) => ({
+        url: `/Questions/${questionId}/report`,
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
-export const { useDeleteNotificationMutation } = notificationsApi;
+export const { useDeleteNotificationMutation, useReportQuestionMutation } = notificationsApi;
