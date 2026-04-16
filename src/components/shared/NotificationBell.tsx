@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Bell, CheckCheck, BookOpen, ClipboardList, Award, Megaphone, Info, MessageSquare, FileText, HelpCircle, ShieldAlert, Trash2 } from 'lucide-react';
+import { Bell, CheckCheck, BookOpen, ClipboardList, Award, Megaphone, Info, MessageSquare, FileText, HelpCircle, ShieldAlert, Trash2, Flag } from 'lucide-react';
 import type { NotificationItem } from '@/types/notification.types';
 import { useNotificationHub } from '@/contexts/NotificationContext';
 import { selectCurrentUser } from '@/redux/authSlice';
@@ -25,6 +25,8 @@ function getTypeIcon(type: NotificationItem['type']) {
       return <HelpCircle className="w-4 h-4 text-amber-500" />;
     case 'CheatDetected':
       return <ShieldAlert className="w-4 h-4 text-red-500" />;
+    case 'QuestionReport':
+      return <Flag className="w-4 h-4 text-red-500" />;
     default:
       return <Info className="w-4 h-4 text-gray-500" />;
   }
@@ -179,6 +181,12 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
         }
         break;
 
+      case 'Question':
+        if (role === 'Teacher') {
+          navigate(`/teacher/question-banks?questionId=${entityId}`);
+        }
+        break;
+
       default:
         // Fallback: use notification type for routing
         switch (n.type) {
@@ -203,6 +211,11 @@ export function NotificationBell({ className = '' }: NotificationBellProps) {
           case 'CheatDetected':
             if (role === 'Teacher') {
               navigate('/teacher/reports');
+            }
+            break;
+          case 'QuestionReport':
+            if (role === 'Teacher') {
+              navigate(`/teacher/question-banks?questionId=${entityId}`);
             }
             break;
         }

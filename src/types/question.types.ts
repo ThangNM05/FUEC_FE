@@ -28,6 +28,7 @@ export interface QuestionDto {
     questionType: QuestionType;
     subjectId: string;
     subjectName?: string;
+    subjectCode?: string;
     questionContent: string;
     tag?: string;
     points: number;

@@ -51,26 +51,26 @@ export type DetectionResult = {
    Thresholds
 ======================= */
 
-const HEAD_STRAIGHT_YAW = 20
-const HEAD_STRAIGHT_PITCH = 20
+const HEAD_STRAIGHT_YAW = 16
+const HEAD_STRAIGHT_PITCH = 16
 const EYE_DISTANCE_TOO_FAR = 0.035
 const SMOOTHING_ALPHA = 0.25
 
 /* ---------- Suspicion scoring (all values in ms) ---------- */
 
 /** How fast the score rises while looking away (score += dt / RISE_MS).            *
- *  At RISE_MS = 4000 the student must look away for 4 s straight to go 0 → 1.      */
-const SUSPICION_RISE_MS = 4000
+ *  At RISE_MS = 3000 the student must look away for 3 s straight to go 0 → 1.      */
+const SUSPICION_RISE_MS = 3000
 
 /** How fast the score drops while looking at the screen (score -= dt / DECAY_MS).   *
- *  At DECAY_MS = 3000 the score drops from 1 → 0 in ~3 s of attentive behaviour.   */
-const SUSPICION_DECAY_MS = 3000
+ *  At DECAY_MS = 2500 the score drops from 1 → 0 in ~2.5 s of attentive behaviour.   */
+const SUSPICION_DECAY_MS = 2500
 
 /** Score rises faster for no-face / multiple-faces (multiplied by this factor).     */
 const CRITICAL_MULTIPLIER = 1.5
 
 /** Score in [0, SUSPICIOUS_THRESHOLD) → 'safe'.                                     */
-const SUSPICIOUS_THRESHOLD = 0.5
+const SUSPICIOUS_THRESHOLD = 0.35
 
 /** Score in [SUSPICIOUS_THRESHOLD, CHEATING_THRESHOLD) → 'suspicious' (warning).    */
 const CHEATING_THRESHOLD = 1.0
@@ -238,7 +238,7 @@ export class HeadPoseEstimator {
       if (current) {
         const yawAbs = Math.abs(current.yaw)
         const pitchAbs = Math.abs(current.pitch)
-        const isLookingDown = current.pitch > 0 && pitchAbs > HEAD_STRAIGHT_PITCH
+        const isLookingDown = current.pitch < 0 && pitchAbs > HEAD_STRAIGHT_PITCH
         if (yawAbs > HEAD_STRAIGHT_YAW || pitchAbs > HEAD_STRAIGHT_PITCH) {
           // Skip bottomleft / bottomright — treat as non-threatening like looking-down
           if (isLookingDown) {

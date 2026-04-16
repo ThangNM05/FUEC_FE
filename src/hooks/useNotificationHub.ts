@@ -78,6 +78,8 @@ function normalizeNotificationType(type: NotificationDto['type'] | number): Noti
       return 'SlotQuestion';
     case 8:
       return 'CheatDetected';
+    case 9:
+      return 'QuestionReport';
     default:
       return 'General';
   }
