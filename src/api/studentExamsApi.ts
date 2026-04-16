@@ -25,12 +25,14 @@ export interface StudentExam {
     studentExamId: string;
     examId: string;
     examDisplayName: string;
+    classSubjectId?: string;
     duration?: number;
     remainingTime: string;
     endTime: string;
     questions: QuizQuestion[];
     grade?: number;
     isPublicGrade: boolean;
+    showAnswers: boolean;
     isSubmitted: boolean;
     isProctoringExempt: boolean;
     studentCode?: string;
@@ -48,12 +50,14 @@ const normalizeStudentExam = (data: any): StudentExam => {
     return {
         studentExamId: raw.studentExamId || raw.StudentExamId || raw.id || raw.Id,
         examId: raw.examId || raw.ExamId,
+        classSubjectId: raw.classSubjectId || raw.ClassSubjectId,
         examDisplayName: raw.examDisplayName || raw.ExamDisplayName,
         duration: raw.duration || raw.Duration,
         remainingTime: raw.remainingTime || raw.RemainingTime,
         endTime: raw.endTime || raw.ExamEndTime || raw.EndTime,
         isSubmitted: raw.isSubmitted || raw.IsSubmitted || (raw.grade !== null && raw.grade !== undefined),
         isPublicGrade: raw.isPublicGrade !== undefined ? raw.isPublicGrade : (raw.IsPublicGrade ?? true),
+        showAnswers: raw.showAnswers !== undefined ? raw.showAnswers : (raw.ShowAnswers ?? true),
         isProctoringExempt: raw.isProctoringExempt || raw.IsProctoringExempt || false,
         grade: raw.grade !== undefined ? raw.grade : raw.Grade,
         studentCode: raw.studentCode || raw.StudentCode,

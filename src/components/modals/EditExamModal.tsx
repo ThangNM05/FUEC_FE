@@ -28,6 +28,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                 startTime: dayjs(exam.startTime),
                 endTime: dayjs(exam.endTime),
                 isPublicGrade: exam.isPublicGrade,
+                showAnswers: exam.showAnswers,
                 requireIpCheck: exam.requireIpCheck,
                 allowedIpRanges: exam.allowedIpRanges,
                 codeDuration: 240,
@@ -40,6 +41,8 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
             });
         }
     }, [exam, isOpen, form]);
+
+    const isPublicGrade = Form.useWatch('isPublicGrade', form);
 
     const handleSubmit = async () => {
         try {
@@ -80,6 +83,7 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                     securityMode: 1,
                     codeDuration: 240,
                     isPublicGrade: true,
+                    showAnswers: true,
                     requireIpCheck: false,
                     displayName: '',
                     enableAiProctoring: true,
@@ -163,6 +167,15 @@ export default function EditExamModal({ exam, isOpen, onClose }: EditExamModalPr
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
                     <Form.Item name="isPublicGrade" label="Public Grade" valuePropName="checked" className="!mb-0">
                         <Switch />
+                    </Form.Item>
+                    <Form.Item
+                        name="showAnswers"
+                        label="Show Answers"
+                        valuePropName="checked"
+                        className="!mb-0"
+                        style={{ opacity: isPublicGrade ? 1 : 0.5, transition: 'all 0.3s' }}
+                    >
+                        <Switch disabled={!isPublicGrade} />
                     </Form.Item>
 
 

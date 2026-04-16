@@ -27,6 +27,7 @@ interface ExamFormData {
     startTime: string;
     endTime: string;
     isPublicGrade: boolean;
+    showAnswers: boolean;
     instanceNumber: number;
     securityMode: number; // 1 = Static Code, 2 = Dynamic Code
     requireIpCheck: boolean;
@@ -165,6 +166,7 @@ function CreateExam() {
         startTime: '',
         endTime: '',
         isPublicGrade: true,
+        showAnswers: true,
         instanceNumber: 1,
         securityMode: 1,
         requireIpCheck: false,
@@ -656,6 +658,27 @@ function CreateExam() {
                                         }`}
                                 >
                                     <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.isPublicGrade ? 'translate-x-[22px]' : 'translate-x-0.5'
+                                        }`} />
+                                </button>
+                            </div>
+
+                            {/* Show Answers Toggle */}
+                            <div className={`flex items-center justify-between p-4 bg-gray-50 rounded-xl transition-all ${!form.isPublicGrade ? 'opacity-50 pointer-events-none' : ''}`}>
+                                <div className="flex items-center gap-3">
+                                    <Eye className="w-4 h-4 text-gray-500" />
+                                    <div>
+                                        <p className="text-sm font-medium text-[#0A1B3C]">Show Answers</p>
+                                        <p className="text-xs text-gray-500">Students can see correct answers</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    disabled={!form.isPublicGrade}
+                                    onClick={() => updateField('showAnswers', !form.showAnswers)}
+                                    className={`relative w-11 h-6 rounded-full transition-colors ${form.showAnswers ? 'bg-[#F37022]' : 'bg-gray-300'
+                                        }`}
+                                >
+                                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${form.showAnswers ? 'translate-x-[22px]' : 'translate-x-0.5'
                                         }`} />
                                 </button>
                             </div>

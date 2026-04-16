@@ -313,6 +313,7 @@ export default function QuizTest() {
   }, [studentExamId, submitExam]);
 
   const incrementViolation = useCallback((msg: string) => {
+    if (showResults || examDataRef.current?.isSubmitted) return;
     const now = Date.now();
     if (now - lastViolationTimeRef.current < 2000) return;
     lastViolationTimeRef.current = now;
@@ -329,24 +330,33 @@ export default function QuizTest() {
     }
   }, [maxViolations, handleViolation]);
 
-  // Auto-start proctoring when exam data is loaded (skip for exempt students)
+  // Auto-start proctoring when exam data is loaded (skip for exempt students or already submitted)
   useEffect(() => {
     if (!examData) return;
-    if (examData.isProctoringExempt) {
-      // Exempt students skip camera/AI entirely — mark ready so timer starts
+    if (examData.isProctoringExempt || examData.isSubmitted || showResults) {
+      // Exempt students or finished exams skip camera/AI entirely — mark ready so timer starts or results show
       setProctoringStarted(true);
       setProctorReady(true);
       return;
     }
     if (!proctoringStarted) startProctoring();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [examData]);
+  }, [examData, showResults]);
 
   // Request fullscreen once proctoring is ready (skip for exempt students or lockdown browser)
   useEffect(() => {
     const isLockdownBrowser = navigator.userAgent.includes('FUECLockdownBrowser');
-    if (!proctorReady || fullscreenRequestedRef.current) return;
+    const isFinished = examData?.isSubmitted || showResults;
+
+    if (!proctorReady || isFinished) {
+      // If finished, ensure we're NOT showing prompt
+      setShowFullscreenPrompt(false);
+      return;
+    }
+
+    if (fullscreenRequestedRef.current) return;
     if (examData?.isProctoringExempt || isLockdownBrowser) return;
+
     fullscreenRequestedRef.current = true;
     try {
       if (document.documentElement.requestFullscreen) {
@@ -357,6 +367,12 @@ export default function QuizTest() {
     }
 
     const onFullscreenChange = () => {
+      // Don't trigger violations if exam is finished
+      if (examData?.isSubmitted || showResults) {
+        setShowFullscreenPrompt(false);
+        return;
+      }
+
       if (!document.fullscreenElement) {
         setShowFullscreenPrompt(true);
         incrementViolation('Fullscreen exited. Please return to fullscreen mode immediately.');
@@ -370,8 +386,10 @@ export default function QuizTest() {
     }
 
     document.addEventListener('fullscreenchange', onFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
-  }, [proctorReady, incrementViolation, examData?.isProctoringExempt]);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+    };
+  }, [proctorReady, incrementViolation, examData?.isProctoringExempt, examData?.isSubmitted, showResults]);
 
   // Tab-change / visibility detection (skip for exempt students)
   useEffect(() => {
@@ -395,6 +413,39 @@ export default function QuizTest() {
       window.removeEventListener('blur', handleVisibility);
     };
   }, [examData, showResults, incrementViolation]);
+
+  // Cleanup proctoring resources (camera stream, recording, etc.)
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
+      if (engineRef.current) {
+        engineRef.current = null;
+      }
+      if (episodeRecorderRef.current) {
+        episodeRecorderRef.current.stop();
+        episodeRecorderRef.current = null;
+      }
+    };
+  }, []);
+
+  // Stop camera stream immediately when exam is submitted or result page is shown
+  useEffect(() => {
+    if (examData?.isSubmitted || showResults) {
+      if (streamRef.current) {
+        console.log('[Proctor] Stopping camera stream - Exam finished');
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+        if (videoRef.current) videoRef.current.srcObject = null;
+      }
+      if (episodeRecorderRef.current) {
+        episodeRecorderRef.current.stop();
+        episodeRecorderRef.current = null;
+      }
+    }
+  }, [examData?.isSubmitted, showResults]);
 
   // ══════════════════════════════════════════════════════
   // Main proctoring loop: draw + inference (skip for exempt students)
@@ -839,6 +890,9 @@ export default function QuizTest() {
         const result = await submitExam(studentExamId).unwrap();
         setExamResult({ grade: result?.result?.grade ?? result?.grade ?? 0 });
         setShowResults(true);
+        if (document.fullscreenElement) {
+          document.exitFullscreen().catch(() => { });
+        }
         clearExamState();
       } catch (err) {
         console.error('Failed to submit exam', err);
@@ -987,8 +1041,9 @@ export default function QuizTest() {
               <div className="flex flex-wrap gap-3 justify-center md:justify-end mt-4 md:mt-0">
                 <button
                   onClick={() => {
-                    if (classSubjectId) {
-                      navigate(`/student/course-details/${classSubjectId}`);
+                    const targetId = classSubjectId || examData?.classSubjectId;
+                    if (targetId) {
+                      navigate(`/student/course-details/${targetId}`);
                     } else {
                       navigate('/student/exams');
                     }
@@ -1009,7 +1064,7 @@ export default function QuizTest() {
               <BookOpen className="w-5 h-5 text-[#F37022]" />
               Exam Details
             </h2>
-            <ExamReviewList questions={questions} />
+            <ExamReviewList questions={questions} showAnswers={examData?.showAnswers} />
           </div>
         )}
         <div className="h-28" />
@@ -1112,11 +1167,10 @@ export default function QuizTest() {
                 <button
                   key={reason}
                   onClick={() => setReportReason(reason)}
-                  className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${
-                    reportReason === reason
-                      ? 'border-red-500 bg-red-50 text-red-700'
-                      : 'border-gray-100 hover:border-gray-200 text-gray-700'
-                  }`}
+                  className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium ${reportReason === reason
+                    ? 'border-red-500 bg-red-50 text-red-700'
+                    : 'border-gray-100 hover:border-gray-200 text-gray-700'
+                    }`}
                 >
                   {reason}
                 </button>
