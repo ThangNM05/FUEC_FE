@@ -4,9 +4,10 @@ import type { ExamQuestion } from '@/types/exam.types';
 
 interface ExamReviewListProps {
     questions: any[]; // Extended QuestionDto with choiceId
+    showAnswers?: boolean;
 }
 
-const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions }) => {
+const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions, showAnswers = true }) => {
     if (!questions || questions.length === 0) return null;
 
     return (
@@ -33,20 +34,22 @@ const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions }) => {
                                 <span className="px-3 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full uppercase tracking-wider">
                                     Question {index + 1}
                                 </span>
-                                {isAnswered ? (
-                                    isCorrect ? (
-                                        <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
-                                            <Check className="w-3.5 h-3.5" /> Correct
-                                        </span>
+                                {showAnswers && (
+                                    isAnswered ? (
+                                        isCorrect ? (
+                                            <span className="flex items-center gap-1 text-xs font-semibold text-green-600">
+                                                <Check className="w-3.5 h-3.5" /> Correct
+                                            </span>
+                                        ) : (
+                                            <span className="flex items-center gap-1 text-xs font-semibold text-red-600">
+                                                <X className="w-3.5 h-3.5" /> Incorrect
+                                            </span>
+                                        )
                                     ) : (
-                                        <span className="flex items-center gap-1 text-xs font-semibold text-red-600">
-                                            <X className="w-3.5 h-3.5" /> Incorrect
+                                        <span className="flex items-center gap-1 text-xs font-semibold text-gray-400">
+                                            <AlertCircle className="w-3.5 h-3.5" /> Unanswered
                                         </span>
                                     )
-                                ) : (
-                                        <span className="flex items-center gap-1 text-xs font-semibold text-gray-400">
-                                        <AlertCircle className="w-3.5 h-3.5" /> Unanswered
-                                    </span>
                                 )}
                             </div>
                         </div>
@@ -65,18 +68,24 @@ const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions }) => {
                                 let textClass = 'text-[#0A1B3C]';
                                 let icon = null;
 
-                                if (isSelected) {
-                                    if (isCorrectOption) {
-                                        borderClass = 'border-green-500 bg-green-50/50';
-                                        icon = <Check className="w-4 h-4 text-green-600" />;
-                                    } else {
-                                        borderClass = 'border-red-500 bg-red-50/50';
-                                        icon = <X className="w-4 h-4 text-red-600" />;
+                                if (showAnswers) {
+                                    if (isSelected) {
+                                        if (isCorrectOption) {
+                                            borderClass = 'border-green-500 bg-green-50/50';
+                                            icon = <Check className="w-4 h-4 text-green-600" />;
+                                        } else {
+                                            borderClass = 'border-red-500 bg-red-50/50';
+                                            icon = <X className="w-4 h-4 text-red-600" />;
+                                        }
+                                    } else if (isCorrectOption && isAnswered) {
+                                        // Highlight the correct answer if student chose wrong
+                                        borderClass = 'border-green-200 bg-green-50/30';
+                                        icon = <Check className="w-4 h-4 text-green-400" />;
                                     }
-                                } else if (isCorrectOption && isAnswered) {
-                                    // Highlight the correct answer if student chose wrong
-                                    borderClass = 'border-green-200 bg-green-50/30';
-                                    icon = <Check className="w-4 h-4 text-green-400" />;
+                                } else {
+                                    if (isSelected) {
+                                        borderClass = 'border-[#F37022] bg-orange-50/30';
+                                    }
                                 }
 
                                 const isMulti = correctOptionIds.length > 1;
@@ -87,7 +96,7 @@ const ExamReviewList: React.FC<ExamReviewListProps> = ({ questions }) => {
                                         className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${borderClass} ${bgClass}`}
                                     >
                                         <div className={`w-6 h-6 ${isMulti ? 'rounded-md' : 'rounded-full'} border-2 flex items-center justify-center flex-shrink-0 ${
-                                            isSelected ? (isCorrectOption ? 'border-green-500 bg-green-500' : 'border-red-500 bg-red-500') : 'border-gray-200'
+                                            isSelected ? (showAnswers ? (isCorrectOption ? 'border-green-500 bg-green-500' : 'border-red-500 bg-red-500') : 'border-[#F37022] bg-[#F37022]') : 'border-gray-200'
                                         }`}>
                                             {isSelected && <div className={`w-2 h-2 ${isMulti ? 'rounded-sm' : 'rounded-full'} bg-white`} />}
                                         </div>
