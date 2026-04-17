@@ -343,27 +343,29 @@ export default function QuizTest() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [examData, showResults]);
 
-  // Request fullscreen once proctoring is ready (skip for exempt students or lockdown browser)
+  // Request fullscreen once proctoring is ready (separate effect)
   useEffect(() => {
     const isLockdownBrowser = navigator.userAgent.includes('FUECLockdownBrowser');
     const isFinished = examData?.isSubmitted || showResults;
 
-    if (!proctorReady || isFinished) {
-      // If finished, ensure we're NOT showing prompt
-      setShowFullscreenPrompt(false);
-      return;
-    }
-
+    if (!proctorReady || isFinished || isLockdownBrowser) return;
     if (fullscreenRequestedRef.current) return;
-    if (examData?.isProctoringExempt || isLockdownBrowser) return;
 
     fullscreenRequestedRef.current = true;
     try {
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => { });
       }
-    } catch {
-      // ignore
+    } catch { /* ignore */ }
+  }, [proctorReady, examData?.isSubmitted, showResults]);
+
+  // Fullscreen enforcement and violation tracking
+  useEffect(() => {
+    const isLockdownBrowser = navigator.userAgent.includes('FUECLockdownBrowser');
+    const isFinished = examData?.isSubmitted || showResults;
+    if (!proctorReady || isLockdownBrowser || isFinished) {
+      setShowFullscreenPrompt(false);
+      return;
     }
 
     const onFullscreenChange = () => {
@@ -381,7 +383,8 @@ export default function QuizTest() {
       }
     };
 
-    if (!document.fullscreenElement) {
+    // Initial check
+    if (!document.fullscreenElement && !(examData?.isSubmitted || showResults)) {
       setShowFullscreenPrompt(true);
     }
 
@@ -389,12 +392,11 @@ export default function QuizTest() {
     return () => {
       document.removeEventListener('fullscreenchange', onFullscreenChange);
     };
-  }, [proctorReady, incrementViolation, examData?.isProctoringExempt, examData?.isSubmitted, showResults]);
+  }, [proctorReady, incrementViolation, examData?.isSubmitted, showResults]);
 
-  // Tab-change / visibility detection (skip for exempt students)
+  // Tab-change / visibility detection
   useEffect(() => {
     if (!examData) return;
-    if (examData.isProctoringExempt) return;
 
     const handleVisibility = () => {
       if (!examData || examData.isSubmitted || showResults) return;
@@ -1097,8 +1099,8 @@ export default function QuizTest() {
   // ── Quiz UI ──
   return (
     <>
-      {/* Fullscreen Prompt Modal (hidden for exempt students or lockdown browser) */}
-      {showFullscreenPrompt && !examData?.isProctoringExempt && !navigator.userAgent.includes('FUECLockdownBrowser') && (
+      {/* Fullscreen Prompt Modal (hidden for lockdown browser) */}
+      {showFullscreenPrompt && !navigator.userAgent.includes('FUECLockdownBrowser') && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[9999] p-4 p-safe animate-fadeIn">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl relative">
             <h3 className="text-lg font-bold text-[#0A1B3C] mb-3">Please go fullscreen</h3>
